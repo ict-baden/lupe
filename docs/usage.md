@@ -159,10 +159,10 @@ Changes apply and are saved immediately – there is no *Save* button. The page 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/about-dark.png">
-  <img alt="Info page: Lupe version 0.1.0 and .NET version; publisher ICT-Baden; licence not yet determined; source code link with “Im Browser öffnen”; origin from Barcode-Reader with “Ansehen”; recognition with ZXing.Net; “Ihre Daten” with “Ordner öffnen”; the heading Befehlszeile." src="assets/screenshots/about-light.png" width="900">
+  <img alt="Info page: Lupe version 0.1.0 and .NET version; publisher ICT-Baden; licence not yet determined; source code link with “Im Browser öffnen”; origin from Barcode-Reader with “Ansehen”; recognition with zxing-cpp and the button “Lizenztexte”; “Ihre Daten” with “Ordner öffnen”; the heading Befehlszeile." src="assets/screenshots/about-light.png" width="900">
 </picture>
 
-Version and .NET version, publisher, *Lizenz: Die Lizenz ist noch nicht festgelegt.* (the licence has not been decided yet), the source code link, the origin (*Herkunft*: rewrite of Barcode-Reader), the decoding library (*Erkennung*: ZXing.Net, Apache-2.0), *Ihre Daten* (your data) with *Ordner öffnen* for `%LocalAppData%\Lupe`, a short introduction to the command line with the exit codes, and the keyboard shortcuts (*Tastatur*).
+Version and .NET version, publisher, *Lizenz: Die Lizenz ist noch nicht festgelegt.* (the licence has not been decided yet), the source code link, the origin (*Herkunft*: rewrite of Barcode-Reader), the decoding library (*Erkennung*: zxing-cpp, Apache-2.0, with libzint and libzueci, BSD-3-Clause; *Lizenztexte* opens the licence texts of all bundled components), *Ihre Daten* (your data) with *Ordner öffnen* for `%LocalAppData%\Lupe`, a short introduction to the command line with the exit codes, and the keyboard shortcuts (*Tastatur*).
 
 ## Workflows
 

@@ -22,22 +22,21 @@ What Lupe cannot do, what was not tested the way it will be used, and the pitfal
 
 ## Decoding
 
-- **The thorough second stage only runs when the first found nothing.** If a picture contains one easy and one hard code – very small, blurred, slanted – the easy one can stop the search before the hard one is tried. Select or crop the hard code on its own.
-- **MaxiCode only from clean images.** ZXing's MaxiCode reader has no detector that searches a larger picture: the code has to be practically alone on a plain background, e.g. a cropped image.
-- **Shift_JIS content** (QR codes with Japanese Kanji) may be decoded wrongly – ZXing.Net has no Shift_JIS code page under .NET and falls back to UTF-8. Lupe's repair only covers ISO-8859-1 text that ZXing mistakes for Shift_JIS.
-- **Intelligent Mail (`IMB`) is enabled but untested.** ZXing.Net has a reader for it, but there is no test image for this format.
-- **Code 39** is read as printed: a check digit is not verified, Full ASCII sequences are not expanded.
+- **Very small barcodes in reduced screenshots.** A barcode shown at about one pixel per bar – for example in a document preview scaled to half size – is usually not readable; a QR code at that size often is. Zoom in or open the original.
+- **MaxiCode only from clean, upright images.** zxing-cpp's MaxiCode reader has no detector that searches a larger picture: the code has to be the only dark thing on a plain background and must not be rotated, noisy or part of a busy picture.
+- **Code 39** is read as printed: a check digit is not verified, Full ASCII sequences (`+A` for `a`, `/N` for `.`) are not expanded, Code 32 (Italian pharmacy code) is not converted – like hardware scanners in their factory setting.
 - **EAN/UPC add-ons** (2 or 5 digits) are not part of the result.
-- **GS1 DataBar Expanded** is read in a single row only, not stacked.
-- **Not supported at all:** MSI, Pharmacode (phantom codes) and Plessey (ZXing.Net cannot read it) – see [How it works › Phantom-code protection](how-it-works.md#phantom-code-protection).
+- **Misreads in very blurry product photos.** In a handful of zxing-cpp's own sample photos of strongly blurred UPC codes, a wrong but check-digit-valid EAN-13 is read. The earlier version had the same problem.
+- **Not supported at all:** Intelligent Mail (`IMB`, read by earlier versions of Lupe – zxing-cpp has no reader for it), MSI, Pharmacode, Plessey and Aztec runes – see [How it works › Phantom-code protection](how-it-works.md#phantom-code-protection). History entries with `IMB` stay visible; a settings file that lists only `IMB` means “all formats”.
+- **Two identical codes in one picture** are reported once (same format, same content).
 - **Very large pictures** are reduced to 40 megapixels while loading. Codes with very fine modules in huge photos can be lost by that.
 
 ## Camera
 
 - **Fixed resolution.** Lupe picks a camera format near 1280 × 720 and searches at most that. A small code far away from the camera needs to come closer.
 - **No camera controls.** Lupe does not set focus, zoom, exposure or a light; it uses what the driver does by itself.
-- **Live search only.** The camera uses the fast first stage; the thorough search with enlarged and rotated versions is reserved for the screen scan and files.
-- **No light-on-dark barcodes from the camera.** The live search reads inverted codes with the 2D readers only; a light 1D barcode on a dark background is not found there. A photo of it on the page *Datei* gets the thorough search.
+- **Live search only.** The camera reads the whole frame; the slanted and enlarged versions of the thorough search are reserved for the screen scan and files. A barcode held at a steep angle is found once you hold it straighter.
+- **No light-on-dark barcodes from the camera.** The live search reads light 2D codes (QR, Data Matrix, Aztec, PDF417, MaxiCode), but not a light 1D barcode on a dark background. A photo of it on the page *Datei* gets the thorough search.
 - **Shared mode.** If another program holds the camera, Lupe may get it only in shared read-only mode with that program's format, or not at all.
 - **No typing from the camera** – Lupe is the active window then. Copy, or use the screen scan.
 

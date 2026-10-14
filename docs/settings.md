@@ -66,7 +66,7 @@ How links are built, examples and the safety checks: **[Link rules](link-rules.m
 
 ## Formats
 
-***Alle Formate erkennen*** (recognise all formats) – on by default. Switched off, all 17 formats are listed, with only the common ones ticked at first: QR Code, Data Matrix, EAN-13, EAN-8, Code 128, Code 39, ITF and UPC-A. At least one format has to stay ticked; ticking all of them is the same as *Alle Formate erkennen*.
+***Alle Formate erkennen*** (recognise all formats) – on by default. Switched off, all 22 formats are listed, with only the common ones ticked at first: QR Code, Data Matrix, EAN-13, EAN-8, Code 128, Code 39, ITF and UPC-A. At least one format has to stay ticked; ticking all of them is the same as *Alle Formate erkennen*.
 
 Fewer formats mean a faster search and fewer chances for a false hit in pictures with a lot of text (*schneller und weniger Fehlerkennungen bei Bildern mit viel Text*). The selection applies to the camera, the screen scan, files and the clipboard. The command line has its own option, `--format`, and ignores this setting.
 
@@ -135,7 +135,7 @@ Path: `%LocalAppData%\Lupe\einstellungen.json` – shown at the bottom of the pa
 | `Actions`, `ScreenActions` | `Keine`, or a comma-separated combination of `Kopieren`, `Eintippen`, `LinkOeffnen`, e.g. `"Kopieren, Eintippen"`. `Eintippen` in `Actions` has no effect. |
 | `TypeSuffix` | `""`, `"Enter"` or `"Tab"` |
 | `LinkRules` | list of `Pattern` (.NET regular expression), `Prefix`, `Enabled` |
-| `Formats` | `[]` = all, otherwise names such as `"QR_CODE"`, `"EAN_13"` – see [Supported formats](../README.md#supported-formats) |
+| `Formats` | `[]` = all, otherwise names such as `"QR_CODE"`, `"EAN_13"` – see [Supported formats](../README.md#supported-formats). Names Lupe does not know (or no longer reads, such as `IMB`) are dropped when the file is loaded |
 | `ScreenHotkey` | `Ctrl`, `Alt`, `Shift`, `Win` and `Key` – a Windows virtual-key code (`81` = Q) |
 | `RepeatSuppressMs` | milliseconds, 0 to 3,600,000 |
 | `Camera` | the camera's identifier, `""` = the first camera |
