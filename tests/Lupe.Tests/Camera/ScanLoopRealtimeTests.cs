@@ -46,12 +46,14 @@ public sealed class ScanLoopRealtimeTests
     {
         await using var source = new FakeFrameSource([Scene("Lupe-1")], framesPerSecond: 30);
         int decodes = 0;
-        await using var loop = new ScanLoop(source, img => { Interlocked.Increment(ref decodes); return ZxingDecode(img); }, repeatSuppressMs: 500);
+        // Sperre 1,5 s statt kürzer: Auf GitHub-Runnern lagen zwischen zwei erfolgreichen Erkennungen schon über 500 ms,
+        // dann gilt der Code zu Recht als neu (die Sperre zählt ab der letzten Sichtung)
+        await using var loop = new ScanLoop(source, img => { Interlocked.Increment(ref decodes); return ZxingDecode(img); }, repeatSuppressMs: 1500);
         var rec = new Recorder();
         rec.Attach(loop);
 
         await loop.StartAsync();
-        await Task.Delay(1500); // dreimal so lang wie die Sperre – aber der Code verschwindet nie
+        await Task.Delay(4500); // dreimal so lang wie die Sperre – aber der Code verschwindet nie
         await loop.StopAsync();
 
         var (_, code) = Assert.Single(rec.Detections);
