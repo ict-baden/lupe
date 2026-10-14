@@ -161,6 +161,20 @@ public sealed class CommandLineTests
     }
 
     [AppCoreFact]
+    public void GS1_Trennzeichen_erscheint_maskiert()
+    {
+        // GS1-128: nach der Charge (10, variable Länge) steht ein Gruppentrennzeichen – ZXing.Net ließ es weg
+        using var temp = new TempFolder();
+        var file = temp.File("gs1.bmp");
+        AppExe.WriteBmp(TestCodes.Embed(TestCodes.Render("(01)04012345000009(10)ABC123(21)XYZ987", BarcodeFormat.CODE_128, 700, 120,
+            margin: 10, options: "gs1"), 900, 300, 100, 90, background: 255), file);
+
+        var r = AppExe.Run("lesen", file);
+        Assert.Equal(0, r.ExitCode);
+        Assert.Equal(["CODE_128\t010401234500000910ABC123\\x1D21XYZ987"], r.Lines);
+    }
+
+    [AppCoreFact]
     public void Bild_ohne_Code_ergibt_Exitcode_1()
     {
         using var temp = new TempFolder();
