@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ZXing.Net" Version="0.16.11" />
+    <PackageReference Include="ZXingCpp" Version="0.5.3" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,8 +1,7 @@
 using System.Diagnostics;
 using Lupe.Core.Model;
 using Lupe.Core.Screen;
-using ZXing;
-using ZXing.Common;
+using Lupe.Tests.TestSupport;
 
 namespace Lupe.Tests.Screen;
 
@@ -95,19 +94,8 @@ internal static class DesktopProbe
         return (double)same / total;
     }
 
-    /// <summary>Liest einen QR-Code mit ZXing direkt (unabhängig vom Baustein „decoding“).</summary>
-    public static string? DecodeQr(PixelImage image)
-    {
-        var tight = new byte[image.Width * image.Height * 4];
-        for (int row = 0; row < image.Height; row++)
-            Buffer.BlockCopy(image.Bgra, row * image.Stride, tight, row * image.Width * 4, image.Width * 4);
-        var reader = new BarcodeReaderGeneric
-        {
-            AutoRotate = false,
-            Options = new DecodingOptions { TryHarder = true, PossibleFormats = [BarcodeFormat.QR_CODE] },
-        };
-        return reader.Decode(tight, image.Width, image.Height, RGBLuminanceSource.BitmapFormat.BGRA32)?.Text;
-    }
+    /// <summary>Liest einen QR-Code mit zxing-cpp direkt (unabhängig vom Baustein „decoding“).</summary>
+    public static string? DecodeQr(PixelImage image) => ReferenceReader.ReadQr(image).FirstOrDefault()?.Text;
 
     /// <summary>Wo Testfenster hin sollen: in den Arbeitsbereich des Hauptmonitors, etwas eingerückt.</summary>
     public static (int X, int Y) Spot(int inset = 40)

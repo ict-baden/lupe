@@ -1,7 +1,6 @@
+using System.Text;
 using Lupe.Core.Model;
-using ZXing;
-using ZXing.Common;
-using ZXing.QrCode;
+using Lupe.Tests.TestSupport;
 
 namespace Lupe.Tests.Decoding;
 
@@ -23,13 +22,18 @@ internal static class DecodingImages
         BarcodeFormat.CODE_39 => "LUPE-123",
         BarcodeFormat.CODE_93 => "LUPE93",
         BarcodeFormat.CODE_128 => "Lupe 128/ok",
-        BarcodeFormat.MSI => "1234567",
-        BarcodeFormat.PLESSEY => "12345",
+        // GTIN ohne Prüfziffer – zxing-cpp ergänzt sie, gelesen wird 09501101530010
+        BarcodeFormat.RSS_14 or BarcodeFormat.RSS_LIMITED => "0950110153001",
+        BarcodeFormat.RSS_EXPANDED => "(01)98898765432106(3202)012345(15)991231",
+        BarcodeFormat.TELEPEN => "Lupe Telepen",
+        BarcodeFormat.DX_FILM_EDGE => "77-2/18A",
+        BarcodeFormat.MAXICODE => "Lupe MaxiCode 4711",
+        BarcodeFormat.MICRO_QR_CODE => "LUPE 42",
+        BarcodeFormat.MICRO_PDF_417 => "MicroPDF 4711",
         _ => "https://ict-baden.de/lupe?x=1",
     };
 
-    public static bool IsOneD(BarcodeFormat f) => f is not (BarcodeFormat.QR_CODE or BarcodeFormat.DATA_MATRIX or BarcodeFormat.AZTEC
-        or BarcodeFormat.PDF_417 or BarcodeFormat.MAXICODE);
+    public static bool IsOneD(BarcodeFormat f) => TestCodes.IsLinear(f);
 
     /// <summary>Code in passender Größe: 2D quadratisch, 1D breit und flach.</summary>
     public static PixelImage RenderSized(BarcodeFormat format, string? text = null, int scale = 1)
@@ -37,25 +41,17 @@ internal static class DecodingImages
         text ??= SampleText(format);
         var (w, h) = format switch
         {
-            BarcodeFormat.PDF_417 => (400, 160),
+            BarcodeFormat.PDF_417 or BarcodeFormat.MICRO_PDF_417 or BarcodeFormat.RMQR_CODE => (400, 160),
             _ when IsOneD(format) => (360, 120),
             _ => (240, 240),
         };
         return TestSupport.TestCodes.Render(text, format, w * scale, h * scale, margin: 10);
     }
 
-    /// <summary>QR mit ausdrücklicher Zeichenkodierung (z. B. UTF-8 mit ECI) – TestCodes.Render nimmt die Voreinstellung.</summary>
-    public static PixelImage RenderQr(string text, string characterSet, bool disableEci = false, int size = 300)
-    {
-        var writer = new BarcodeWriterPixelData
-        {
-            Format = BarcodeFormat.QR_CODE,
-            Options = new QrCodeEncodingOptions { Width = size, Height = size, Margin = 4, CharacterSet = characterSet, DisableECI = disableEci },
-        };
-        var data = writer.Write(text);
-        for (int i = 3; i < data.Pixels.Length; i += 4) data.Pixels[i] = 255;
-        return new PixelImage(data.Width, data.Height, data.Pixels);
-    }
+    /// <summary>QR mit ausdrücklicher Zeichenkodierung (z. B. UTF-8 mit ECI-Kennung oder ohne) – TestCodes.Render nimmt die Voreinstellung.</summary>
+    public static PixelImage RenderQr(string text, string characterSet, bool disableEci = false, int size = 300) =>
+        TestCodes.RenderBytes(Encoding.GetEncoding(characterSet).GetBytes(text), BarcodeFormat.QR_CODE,
+            disableEci ? "ecLevel=L,eci=0" : $"ecLevel=L,eci={characterSet}", size, size);
 
     /// <summary>Gleichmäßig gefülltes Bild.</summary>
     public static PixelImage Solid(int width, int height, byte gray = 200, byte alpha = 255)

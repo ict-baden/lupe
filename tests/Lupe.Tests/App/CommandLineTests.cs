@@ -1,5 +1,4 @@
 using Lupe.Tests.TestSupport;
-using ZXing;
 
 namespace Lupe.Tests.App;
 

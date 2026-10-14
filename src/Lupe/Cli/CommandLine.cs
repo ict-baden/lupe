@@ -139,8 +139,9 @@ internal static class CommandLine
     }
 
     /// <summary>
-    /// „QR_CODE,ean13“ → ZXing-Namen. Groß/klein, Bindestriche und Unterstriche sind egal („qr-code“, „EAN13“),
-    /// „QR“ steht für QR_CODE. Leer = alle Formate (null).
+    /// „QR_CODE,ean13“ → Formatnamen der Erkennung (ZXing-Schreibweise). Groß/klein, Bindestriche und Unterstriche sind
+    /// egal („qr-code“, „EAN13“); „QR“, „MicroQR“ und „rMQR“ stehen für QR_CODE, MICRO_QR_CODE und RMQR_CODE.
+    /// Leer = alle Formate (null).
     /// </summary>
     internal static IReadOnlyList<string>? ResolveFormats(IEnumerable<string> args)
     {
@@ -152,7 +153,7 @@ internal static class CommandLine
         foreach (var w in wanted)
         {
             var key = Simplify(w);
-            if (key == "QR") key = "QRCODE";
+            if (key is "QR" or "MICROQR" or "RMQR") key += "CODE";
             var match = all.FirstOrDefault(f => Simplify(f) == key)
                 ?? throw new UsageException($"Unbekanntes Format „{w}“. Möglich: {string.Join(", ", all)}.");
             if (!result.Contains(match)) result.Add(match);

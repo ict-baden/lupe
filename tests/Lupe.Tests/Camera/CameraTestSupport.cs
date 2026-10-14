@@ -1,8 +1,7 @@
 using System.Diagnostics;
 using Lupe.Core.Camera;
 using Lupe.Core.Model;
-using ZXing;
-using ZXing.Common;
+using Lupe.Tests.TestSupport;
 
 namespace Lupe.Tests.Camera;
 
@@ -113,31 +112,7 @@ internal static class CameraTestSupport
     }
 
     /// <summary>
-    /// Erkennung direkt mit ZXing (unabhängig vom Baustein „decoding“): alle QR-Codes im Bild, auch mehrere.
+    /// Erkennung direkt mit zxing-cpp (unabhängig vom Baustein „decoding“): alle QR-Codes im Bild, auch mehrere.
     /// </summary>
-    public static IReadOnlyList<DecodedCode> ZxingDecode(PixelImage image)
-    {
-        byte[] bytes = image.Bgra;
-        if (image.Stride != image.Width * 4)
-        {
-            bytes = new byte[image.Width * image.Height * 4];
-            for (int y = 0; y < image.Height; y++)
-                Buffer.BlockCopy(image.Bgra, y * image.Stride, bytes, y * image.Width * 4, image.Width * 4);
-        }
-        var source = new RGBLuminanceSource(bytes, image.Width, image.Height, RGBLuminanceSource.BitmapFormat.BGRA32);
-        var reader = new BarcodeReaderGeneric
-        {
-            AutoRotate = false,
-            Options = new DecodingOptions { TryHarder = true, PossibleFormats = [BarcodeFormat.QR_CODE] },
-        };
-        var results = reader.DecodeMultiple(source);
-        if (results is null) return [];
-        return results.Select(r => new DecodedCode
-        {
-            Text = r.Text,
-            Format = r.BarcodeFormat.ToString(),
-            Points = r.ResultPoints.Select(p => (p.X, p.Y)).ToList(),
-            RawBytes = r.RawBytes,
-        }).ToList();
-    }
+    public static IReadOnlyList<DecodedCode> ZxingDecode(PixelImage image) => ReferenceReader.ReadQr(image);
 }

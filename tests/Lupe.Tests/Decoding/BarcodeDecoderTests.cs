@@ -3,8 +3,6 @@ using System.Text;
 using Lupe.Core.Decoding;
 using Lupe.Core.Model;
 using Lupe.Tests.TestSupport;
-using ZXing;
-using ZXing.Common;
 
 namespace Lupe.Tests.Decoding;
 
@@ -12,7 +10,7 @@ public sealed class BarcodeDecoderTests
 {
     private static readonly BarcodeDecoder Decoder = new();
 
-    /// <summary>Formate aus <see cref="BarcodeDecoder.AllFormats"/>, für die ZXing einen Schreiber hat.</summary>
+    /// <summary>Formate aus <see cref="BarcodeDecoder.AllFormats"/>, für die zxing-cpp einen Schreiber hat.</summary>
     public static TheoryData<string> WritableFormats()
     {
         var data = new TheoryData<string>();
@@ -25,10 +23,10 @@ public sealed class BarcodeDecoderTests
     {
         try
         {
-            new MultiFormatWriter().encode(DecodingImages.SampleText(format), format, 200, 100);
+            TestCodes.Modules(DecodingImages.SampleText(format), format);
             return true;
         }
-        catch (ArgumentException)
+        catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             return false;
         }
@@ -38,6 +36,8 @@ public sealed class BarcodeDecoderTests
     {
         // Codabar: Start-/Stoppzeichen (A … B) gehören nicht zum Inhalt
         BarcodeFormat.CODABAR => "40156",
+        // DataBar: die 14-stellige GTIN mit Prüfziffer, ohne den Datenbezeichner (01)
+        BarcodeFormat.RSS_14 or BarcodeFormat.RSS_LIMITED => "09501101530010",
         _ => DecodingImages.SampleText(format),
     };
 
@@ -54,12 +54,12 @@ public sealed class BarcodeDecoderTests
     // ---------- Formate ----------
 
     [Fact]
-    public void Nicht_schreibbare_Formate_sind_genau_die_erwarteten()
+    public void Jedes_Format_laesst_sich_schreiben()
     {
-        // Für diese Formate hat ZXing.Net keinen Schreiber – sie werden nur gelesen und hier nicht im Rundlauf geprüft,
-        // sondern mit Bildern aus zxing-cpp (ForeignFormatTests)
-        var notWritable = BarcodeDecoder.AllFormats.Where(f => !CanWrite(Enum.Parse<BarcodeFormat>(f)));
-        Assert.Equal(["MAXICODE", "RSS_14", "RSS_EXPANDED", "IMB"], notWritable);
+        // Mit ZXing.Net fehlten Schreiber für MaxiCode, DataBar und IMB – sie ließen sich nur mit fertigen Bildern prüfen.
+        // zxing-cpp (mit libzint) schreibt alle Formate, die Lupe liest: Jedes läuft also durch die Rundlauf- und
+        // Robustheitstests.
+        Assert.All(BarcodeDecoder.AllFormats, f => Assert.True(CanWrite(Enum.Parse<BarcodeFormat>(f)), f));
     }
 
     [Theory]
@@ -177,7 +177,7 @@ public sealed class BarcodeDecoderTests
 
     [Theory]
     [InlineData("UTF-8", false)]
-    [InlineData("UTF-8", true)] // ohne ECI-Kennung: ZXing erkennt UTF-8 am Inhalt
+    [InlineData("UTF-8", true)] // ohne ECI-Kennung: zxing-cpp erkennt UTF-8 am Inhalt
     public void Umlaute_und_Emoji_als_UTF8_im_QR(string charset, bool disableEci)
     {
         const string text = "Grüße aus Baden – 10 € – Ωμέγα – 日本 – 😀";
@@ -196,6 +196,7 @@ public sealed class BarcodeDecoderTests
     [InlineData("PDF_417")]
     public void Umlaute_in_der_Voreinstellung_der_Schreiber(string formatName)
     {
+        // Die meisten Schreiber legen Umlaute als ISO-8859-1 ohne ECI-Kennung ab (wie früher ZXing.Net)
         const string text = "Größe: Übermaß, Äpfel & Öl";
         var img = TestCodes.Render(text, Enum.Parse<BarcodeFormat>(formatName), 360, formatName == "PDF_417" ? 160 : 360);
 
@@ -211,36 +212,45 @@ public sealed class BarcodeDecoderTests
     [InlineData("Jürgen Müller")]
     [InlineData("Übermaß")]
     [InlineData("Straße 5, 76530 Baden-Baden")]
-    public void Kurze_Latin1_Texte_trotz_ZXing_Zeichensatzfehler(string text)
+    public void Kurze_Latin1_Texte_ohne_Zeichensatzangabe(string text)
     {
-        // ZXing.Net hält diese Bytes für Shift_JIS und liest sie unter .NET als UTF-8 („Gro�“) – Lupe korrigiert das
+        // ZXing.Net hielt diese Bytes für Shift_JIS und las sie unter .NET als UTF-8 („Gro�“) – Lupe musste das reparieren.
+        // zxing-cpp erkennt ISO-8859-1 selbst; die Reparatur ist entfallen, der Test bleibt, damit es so bleibt.
         var code = Assert.Single(Decoder.Decode(TestCodes.Render(text, width: 200, height: 200)));
         Assert.Equal(text, code.Text);
         Assert.Equal(Encoding.Latin1.GetBytes(text), code.RawBytes);
     }
 
-    [Fact]
-    public void Latin1_Reparatur_laesst_echtes_UTF8_und_andere_Segmente_in_Ruhe()
+    [Theory]
+    [InlineData("eci=0")]          // ohne Kennung: zxing-cpp erkennt Shift_JIS am Inhalt
+    [InlineData("eci=Shift_JIS")]
+    public void Japanisch_in_Shift_JIS(string eci)
     {
-        static Result WithSegments(string text, params byte[][] segments)
-        {
-            var r = new Result(text, null, [], BarcodeFormat.QR_CODE);
-            r.putMetadata(ResultMetadataType.BYTE_SEGMENTS, segments.ToList());
-            return r;
-        }
+        // Mit ZXing.Net kam Shift_JIS unter .NET verstümmelt an (keine Shift_JIS-Codepage) – eine bekannte Grenze von Lupe
+        byte[] nihongo = [0x93, 0xFA, 0x96, 0x7B, 0x8C, 0xEA, 0x82, 0xCC, 0x83, 0x65, 0x83, 0x4C, 0x83, 0x58, 0x83, 0x67]; // 日本語のテキスト
+        var img = TestCodes.RenderBytes(nihongo, BarcodeFormat.QR_CODE, eci, 240, 240);
 
-        Assert.Equal("Grüße", BarcodeDecoder.RepairLatin1(WithSegments("Grüße", Encoding.UTF8.GetBytes("Grüße"))));
-        Assert.Equal("ABC123Groß", BarcodeDecoder.RepairLatin1(WithSegments("ABC123Gro" + (char)0xFFFD, Encoding.Latin1.GetBytes("Groß"))));
-        // Ein Ersatzzeichen, das nicht aus einem Byte-Segment stammt, bleibt
-        Assert.Equal("x" + (char)0xFFFD, BarcodeDecoder.RepairLatin1(WithSegments("x" + (char)0xFFFD, Encoding.UTF8.GetBytes("y"))));
-        Assert.Equal("ohne", BarcodeDecoder.RepairLatin1(new Result("ohne", null, [], BarcodeFormat.QR_CODE)));
+        Assert.Equal("日本語のテキスト", Assert.Single(Decoder.Decode(img)).Text);
     }
 
     [Fact]
-    public void Rohbytes_nur_bei_Byte_Inhalten()
+    public void Binaerinhalt_mit_Nullbytes_bleibt_vollstaendig()
     {
-        Assert.Null(Assert.Single(Decoder.Decode(TestCodes.Render("0123456789"))).RawBytes); // Ziffernmodus
-        Assert.Null(Assert.Single(Decoder.Decode(DecodingImages.RenderSized(BarcodeFormat.CODE_128))).RawBytes);
+        // zxing-cpp gibt den Text als C-Zeichenkette heraus – ohne Gegenmaßnahme endete er am ersten Nullbyte („A“)
+        byte[] data = [0x41, 0x00, 0x42, 0xFF, 0x80, 0x00, 0x7F];
+        var code = Assert.Single(Decoder.Decode(TestCodes.RenderBytes(data, BarcodeFormat.QR_CODE, "eci=0", 240, 240)));
+
+        Assert.Equal(Encoding.Latin1.GetString(data), code.Text);
+        Assert.Equal(data, code.RawBytes);
+    }
+
+    [Fact]
+    public void Rohbytes_sind_der_Inhalt_wie_gespeichert()
+    {
+        // ZXing.Net lieferte Rohbytes nur für Byte-Segmente (QR im Byte-Modus); zxing-cpp liefert den Inhalt jedes Codes
+        // als Bytes – im Ziffernmodus und bei Strichcodes eben die Ziffern bzw. Zeichen
+        Assert.Equal("0123456789"u8.ToArray(), Assert.Single(Decoder.Decode(TestCodes.Render("0123456789"))).RawBytes);
+        Assert.Equal("Lupe 128/ok"u8.ToArray(), Assert.Single(Decoder.Decode(DecodingImages.RenderSized(BarcodeFormat.CODE_128))).RawBytes);
         Assert.Equal(Encoding.Latin1.GetBytes("Lupe ü"), Assert.Single(Decoder.Decode(TestCodes.Render("Lupe ü"))).RawBytes);
     }
 
@@ -430,16 +440,32 @@ public sealed class LiveBarcodeDecoderTests
     }
 
     [Fact]
-    public void Ohne_zweite_Stufe_bleiben_Sonderfaelle_dem_gruendlichen_Decoder()
+    public void Sonderfaelle_bleiben_dem_gruendlichen_Decoder()
     {
-        // Heller Strichcode auf dunklem Grund und 1-Pixel-QR brauchen die zweite Stufe
+        // Ein heller Strichcode auf dunklem Grund braucht die invertierte Fassung, ein schräger Strichcode die gedrehten,
+        // ein Strichcode, der nur eine einzige Pixelzeile hoch ist, die Vergrößerung (zxing-cpp will ihn auf zwei Zeilen
+        // gleich lesen) – das alles spart sich der Kamerastrom
         var invertedBars = TestCodes.Invert(DecodingImages.RenderSized(BarcodeFormat.CODE_128));
-        var tinyQr = TestCodes.Embed(TestCodes.Render("winzig", width: 1, height: 1, margin: 1), 60, 40, 20, 8, background: 255);
+        var slanted = DecodingImages.Rotate(DecodingImages.RenderSized(BarcodeFormat.CODE_128, scale: 2), 30);
+        var flat = LineConfirmationTests.OneRowBarcode();
 
-        Assert.Empty(Live.Decode(invertedBars));
-        Assert.Empty(Live.Decode(tinyQr));
-        Assert.Single(new BarcodeDecoder().Decode(invertedBars));
-        Assert.Single(new BarcodeDecoder().Decode(tinyQr));
+        foreach (var img in new[] { invertedBars, slanted, flat })
+        {
+            Assert.Empty(Live.Decode(img));
+            Assert.Single(new BarcodeDecoder().Decode(img));
+        }
+    }
+
+    [Fact]
+    public void Kleine_und_helle_2D_Codes_auch_live()
+    {
+        // Einen QR-Code mit einem Pixel je Modul liest zxing-cpp schon im ganzen Bild; helle QR-Codes kehrt es selbst um,
+        // helles PDF417 liest die invertierte Fassung
+        var tinyQr = TestCodes.Embed(TestCodes.Render("winzig", width: 1, height: 1, margin: 1), 60, 40, 20, 8, background: 255);
+        Assert.Equal("winzig", Assert.Single(Live.Decode(tinyQr)).Text);
+        Assert.Equal("hell", Assert.Single(Live.Decode(TestCodes.Invert(TestCodes.Render("hell", width: 200, height: 200)))).Text);
+        Assert.Equal(DecodingImages.SampleText(BarcodeFormat.PDF_417),
+            Assert.Single(Live.Decode(TestCodes.Invert(DecodingImages.RenderSized(BarcodeFormat.PDF_417)))).Text);
     }
 
     [Fact]

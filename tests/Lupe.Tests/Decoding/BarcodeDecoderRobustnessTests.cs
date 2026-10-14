@@ -1,7 +1,6 @@
 using Lupe.Core.Decoding;
 using Lupe.Core.Model;
 using Lupe.Tests.TestSupport;
-using ZXing;
 
 namespace Lupe.Tests.Decoding;
 
@@ -11,6 +10,20 @@ public sealed class BarcodeDecoderRobustnessTests
     private static readonly BarcodeDecoder Decoder = new();
 
     public static TheoryData<string> WritableFormats() => BarcodeDecoderTests.WritableFormats();
+
+    /// <summary>
+    /// Alle schreibbaren Formate außer MaxiCode: Den liest zxing-cpp – wie zuvor ZXing.Net – nur ungedreht auf ruhigem
+    /// Grund (ohne Suchmuster-Erkennung, es nimmt den Umriss aller dunklen Pixel als Code). Verrauscht, gedreht oder in
+    /// einem unruhigen Bild findet es ihn nicht; das steht in den Grenzen (docs/limitations.md). Geprüft wird MaxiCode
+    /// im Rundlauf, invertiert und mitten auf einer ruhigen Fläche (ForeignFormatTests).
+    /// </summary>
+    public static TheoryData<string> DetectableFormats()
+    {
+        var data = new TheoryData<string>();
+        foreach (var name in BarcodeDecoder.AllFormats)
+            if (name != "MAXICODE" && BarcodeDecoderTests.CanWrite(Enum.Parse<BarcodeFormat>(name))) data.Add(name);
+        return data;
+    }
 
     private static void AssertFound(PixelImage img, BarcodeFormat format, string? text = null)
     {
@@ -23,7 +36,7 @@ public sealed class BarcodeDecoderRobustnessTests
     // ---------- Drehung ----------
 
     [Theory]
-    [MemberData(nameof(WritableFormats))]
+    [MemberData(nameof(DetectableFormats))]
     public void Um_90_180_und_270_Grad_gedreht(string formatName)
     {
         var format = Enum.Parse<BarcodeFormat>(formatName);
@@ -111,7 +124,7 @@ public sealed class BarcodeDecoderRobustnessTests
     // ---------- Rauschen und Unschärfe ----------
 
     [Theory]
-    [MemberData(nameof(WritableFormats))]
+    [MemberData(nameof(DetectableFormats))]
     public void Verrauscht(string formatName)
     {
         var format = Enum.Parse<BarcodeFormat>(formatName);
@@ -234,7 +247,7 @@ public sealed class BarcodeDecoderRobustnessTests
     // ---------- Unruhige Umgebung ----------
 
     [Theory]
-    [MemberData(nameof(WritableFormats))]
+    [MemberData(nameof(DetectableFormats))]
     public void Im_unruhigen_Bildschirmfoto(string formatName)
     {
         var format = Enum.Parse<BarcodeFormat>(formatName);
@@ -243,7 +256,7 @@ public sealed class BarcodeDecoderRobustnessTests
     }
 
     [Theory]
-    [MemberData(nameof(WritableFormats))]
+    [MemberData(nameof(DetectableFormats))]
     public void Invertiert_im_unruhigen_Bildschirmfoto(string formatName)
     {
         var format = Enum.Parse<BarcodeFormat>(formatName);

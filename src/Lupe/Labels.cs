@@ -22,6 +22,11 @@ public static class Labels
 {
     public static readonly CultureInfo German = CultureInfo.GetCultureInfo("de-DE");
 
+    /// <summary>
+    /// Anzeigenamen aller Formate der Erkennung (<c>BarcodeDecoder.AllFormats</c>) und früherer Formate, die noch im
+    /// Verlauf stehen können (IMB las nur ZXing.Net; MSI, Plessey, Pharmacode und UPC/EAN-Zusatz las Lupe nie, sie
+    /// konnten aber von Hand in den Einstellungen stehen).
+    /// </summary>
     private static readonly Dictionary<string, string> FormatNames = new(StringComparer.OrdinalIgnoreCase)
     {
         ["QR_CODE"] = "QR-Code",
@@ -29,6 +34,9 @@ public static class Labels
         ["AZTEC"] = "Aztec",
         ["PDF_417"] = "PDF417",
         ["MAXICODE"] = "MaxiCode",
+        ["MICRO_QR_CODE"] = "Micro-QR-Code",
+        ["RMQR_CODE"] = "rMQR-Code",
+        ["MICRO_PDF_417"] = "MicroPDF417",
         ["EAN_13"] = "EAN-13",
         ["EAN_8"] = "EAN-8",
         ["UPC_A"] = "UPC-A",
@@ -41,6 +49,9 @@ public static class Labels
         ["ITF"] = "ITF",
         ["RSS_14"] = "GS1 DataBar",
         ["RSS_EXPANDED"] = "GS1 DataBar Expanded",
+        ["RSS_LIMITED"] = "GS1 DataBar Limited",
+        ["TELEPEN"] = "Telepen",
+        ["DX_FILM_EDGE"] = "DX-Filmrand",
         ["MSI"] = "MSI",
         ["PLESSEY"] = "Plessey",
         ["IMB"] = "Intelligent Mail",
@@ -52,7 +63,8 @@ public static class Labels
         FormatNames.TryGetValue(zxingName, out var name) ? name : zxingName.Replace('_', ' ');
 
     /// <summary>Zweidimensionale Formate (für die Markierung: Fläche statt Linie).</summary>
-    public static bool Is2D(string zxingName) => zxingName.ToUpperInvariant() is "QR_CODE" or "DATA_MATRIX" or "AZTEC" or "PDF_417" or "MAXICODE";
+    public static bool Is2D(string zxingName) => zxingName.ToUpperInvariant() is "QR_CODE" or "DATA_MATRIX" or "AZTEC" or "PDF_417"
+        or "MAXICODE" or "MICRO_QR_CODE" or "RMQR_CODE" or "MICRO_PDF_417";
 
     public static string Source(ScanSource source) => source switch
     {

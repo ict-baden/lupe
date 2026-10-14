@@ -5,8 +5,7 @@ using Lupe.Tests.TestSupport;
 namespace Lupe.Tests.Decoding;
 
 /// <summary>
-/// DataBar (RSS_14, RSS_EXPANDED) und MaxiCode – Formate aus <see cref="BarcodeDecoder.AllFormats"/>, die ZXing.Net nicht
-/// schreiben kann; die Bilder kommen aus <see cref="ForeignCodeImages"/> (zxing-cpp).
+/// DataBar (RSS_14, RSS_EXPANDED, auch gestapelt) und MaxiCode aus fertigen PNG-Dateien (<see cref="ForeignCodeImages"/>).
 /// </summary>
 public sealed class ForeignFormatTests
 {
@@ -38,7 +37,8 @@ public sealed class ForeignFormatTests
 
     [Theory]
     [InlineData(nameof(ForeignCodeImages.Rss14), "RSS_14", ForeignCodeImages.Gtin, true)]
-    // Gestapelt und um 180° gedreht scheitert ZXing selbst in manchen großen unruhigen Bildern – hier auf ruhigem Grund
+    // Gestapelt auf ruhigem Grund (so war der Test schon für ZXing.Net angelegt, das gestapelt um 180° gedreht in manchen
+    // unruhigen Bildern scheiterte)
     [InlineData(nameof(ForeignCodeImages.Rss14Gestapelt), "RSS_14", ForeignCodeImages.Gtin, false)]
     [InlineData(nameof(ForeignCodeImages.RssExpanded), "RSS_EXPANDED", ForeignCodeImages.Gs1, true)]
     public async Task DataBar_gedreht_mit_zwei_Punkten_auf_dem_Code(string image, string format, string text, bool busy)
@@ -68,26 +68,34 @@ public sealed class ForeignFormatTests
     }
 
     [Fact]
-    public async Task Gestapeltes_DataBar_Expanded_wird_bewusst_nicht_gelesen()
+    public async Task Gestapeltes_DataBar_Expanded_wird_gelesen()
     {
-        // ZXings gestapelte Suche setzt Zeilen aus dem ganzen Bild zusammen und erfindet dabei Codes (siehe
-        // OneDFormatsReader) – schon das invertierte Bild dieses Codes ergab ein zweites, falsches RSS_EXPANDED.
-        // Lupe liest DataBar Expanded deshalb nur einzeilig. Wer das ändert, muss die Phantom-Tests weiter bestehen.
+        // Mit ZXing.Net las Lupe DataBar Expanded bewusst nur einzeilig: dessen gestapelte Suche setzte Zeilen aus dem ganzen
+        // Bild zusammen und erfand dabei Codes (schon das invertierte Bild dieses Codes ergab ein zweites, falsches
+        // RSS_EXPANDED). zxing-cpp liest die gestapelte Form ohne diese Phantome – die Phantom-Tests
+        // (BarcodeDecoderRobustnessTests.Keine_zusammengestueckelten_DataBar_Codes) laufen mit.
         var img = await ForeignCodeImages.LoadAsync(nameof(ForeignCodeImages.RssExpandedGestapelt));
-        Assert.Empty(Decoder.Decode(img));
-        Assert.Empty(Decoder.Decode(TestCodes.Invert(img)));
+        var code = Assert.Single(Decoder.Decode(img));
+        Assert.Equal(("RSS_EXPANDED", ForeignCodeImages.Gs1), (code.Format, code.Text));
+        Assert.Equal(ForeignCodeImages.Gs1, Assert.Single(Decoder.Decode(TestCodes.Invert(img))).Text);
     }
 
     [Fact]
-    public async Task MaxiCode_nur_als_alleiniger_Bildinhalt()
+    public async Task MaxiCode_mitten_im_Bild()
     {
-        // ZXings MaxiCode-Leser hat keinen Detektor: er nimmt die Fläche aller dunklen Pixel als Code
         var img = await ForeignCodeImages.LoadAsync(nameof(ForeignCodeImages.MaxiCode));
         var framed = TestCodes.Embed(img, img.Width + 400, img.Height + 300, 200, 150, background: 255);
 
-        Assert.Equal(ForeignCodeImages.MaxiText, Assert.Single(Decoder.Decode(framed)).Text);
-        // ohne Punkte (ZXing liefert keine) – solche Codes stehen am Ende der Lesereihenfolge
-        Assert.Empty(Assert.Single(Decoder.Decode(framed)).Points);
+        var code = Assert.Single(Decoder.Decode(framed));
+
+        Assert.Equal(ForeignCodeImages.MaxiText, code.Text);
+        // ZXing.Net lieferte für MaxiCode keine Punkte, zxing-cpp die vier Ecken
+        Assert.Equal(4, code.Points.Count);
+        Assert.All(code.Points, p =>
+        {
+            Assert.InRange(p.X, 190, 210 + img.Width);
+            Assert.InRange(p.Y, 140, 160 + img.Height);
+        });
     }
 
     [Fact]

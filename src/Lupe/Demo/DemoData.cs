@@ -4,14 +4,13 @@ using System.Windows.Media.Imaging;
 using Lupe.Core.Camera;
 using Lupe.Core.Model;
 using Lupe.Services;
-using ZXing;
-using ZXing.Common;
+using ZXingCpp;
 
 namespace Lupe.Demo;
 
 /// <summary>
 /// Eingebaute Beispiele für <c>--demo</c> und <c>--screenshots</c>: Demo-Kamera mit erzeugten Codes, Verlauf,
-/// ein Lieferschein mit mehreren Codes, ein Desktop für das Auswahl-Overlay. Alle Codes erzeugt ZXing – sie sind
+/// ein Lieferschein mit mehreren Codes, ein Desktop für das Auswahl-Overlay. Alle Codes erzeugt zxing-cpp – sie sind
 /// also echt lesbar. Links nur auf example.org/.example (reserviert, gehören niemandem).
 /// </summary>
 internal static class DemoData
@@ -74,7 +73,7 @@ internal static class DemoData
     {
         var blank = Scene(640, 360, null, 0, 0);
         var frames = new List<PixelImage>();
-        (string Text, BarcodeFormat Format)[] codes = [(DeliveryUrl, BarcodeFormat.QR_CODE), (Ean, BarcodeFormat.EAN_13), (Serial, BarcodeFormat.DATA_MATRIX)];
+        (string Text, DemoFormat Format)[] codes = [(DeliveryUrl, DemoFormat.Qr), (Ean, DemoFormat.Ean13), (Serial, DemoFormat.DataMatrix)];
         foreach (var (text, format) in codes)
         {
             var card = Card(text, format);
@@ -86,7 +85,7 @@ internal static class DemoData
     }
 
     /// <summary>Ein Kamerabild für den Screenshot: Etikett mit QR-Code auf dem Tisch.</summary>
-    public static PixelImage CameraFrame() => Scene(1280, 720, Card(DeliveryUrl, BarcodeFormat.QR_CODE, scale: 2), 40, -10);
+    public static PixelImage CameraFrame() => Scene(1280, 720, Card(DeliveryUrl, DemoFormat.Qr, scale: 2), 40, -10);
 
     /// <summary>Lieferschein mit vier Codes (QR, Data Matrix, Code 128, EAN-13) – für die Seite „Datei“.</summary>
     public static PixelImage DeliveryNoteImage()
@@ -99,7 +98,7 @@ internal static class DemoData
             Text(dc, "Lieferschein", 64, 56, 40, FontWeights.SemiBold);
             Text(dc, $"Nr. {DeliveryNote} · 14.10.2026", 64, 112, 20, FontWeights.Normal, Gray(90));
             Text(dc, "ICT-Baden · Musterstrasse 1 · 5400 Baden", 64, 146, 16, FontWeights.Normal, Gray(120));
-            dc.DrawImage(Code(DeliveryUrl, BarcodeFormat.QR_CODE, 210, 210), new Rect(w - 64 - 210, 40, 210, 210));
+            dc.DrawImage(Code(DeliveryUrl, DemoFormat.Qr, 210, 210), new Rect(w - 64 - 210, 40, 210, 210));
 
             // Tabelle
             var line = new Pen(Gray(205), 1.5);
@@ -118,11 +117,11 @@ internal static class DemoData
                 dc.DrawLine(line, new Point(64, row + 32), new Point(w - 64, row + 32));
             }
 
-            dc.DrawImage(Code(DeliveryNote, BarcodeFormat.CODE_128, 460, 110), new Rect(64, 560, 460, 110));
+            dc.DrawImage(Code(DeliveryNote, DemoFormat.Code128, 460, 110), new Rect(64, 560, 460, 110));
             Text(dc, "Lieferschein-Nr.", 64, 680, 14, FontWeights.Normal, Gray(110));
-            dc.DrawImage(Code(Ean, BarcodeFormat.EAN_13, 300, 120), new Rect(600, 552, 300, 120));
+            dc.DrawImage(Code(Ean, DemoFormat.Ean13, 300, 120), new Rect(600, 552, 300, 120));
             Text(dc, "Artikel (EAN)", 600, 680, 14, FontWeights.Normal, Gray(110));
-            dc.DrawImage(Code(Serial, BarcodeFormat.DATA_MATRIX, 150, 150), new Rect(w - 64 - 150, 532, 150, 150));
+            dc.DrawImage(Code(Serial, DemoFormat.DataMatrix, 150, 150), new Rect(w - 64 - 150, 532, 150, 150));
             Text(dc, "Seriennummer", w - 64 - 150, 690, 14, FontWeights.Normal, Gray(110));
             Text(dc, "Bitte bei Rückfragen die Lieferschein-Nummer angeben.", 64, 790, 15, FontWeights.Normal, Gray(120));
         }
@@ -151,7 +150,7 @@ internal static class DemoData
                 dc.DrawRoundedRectangle(new SolidColorBrush(Gray(228).Color), null, new Rect(paper.X + 40, paper.Y + 96 + i * 26, (i % 3 == 2 ? 0.45 : 0.75) * paper.Width, 10), 3, 3);
             Text(dc, "Bequem bezahlen: Code scannen", paper.X + 40, code.Y + 20, 15, FontWeights.SemiBold, Gray(70));
             Text(dc, "Betrag CHF 1’240.00 · fällig am 13.11.2026", paper.X + 40, code.Y + 48, 14, FontWeights.Normal, Gray(110));
-            dc.DrawImage(Code(InvoiceUrl, BarcodeFormat.QR_CODE, (int)code.Width, (int)code.Height), code);
+            dc.DrawImage(Code(InvoiceUrl, DemoFormat.Qr, (int)code.Width, (int)code.Height), code);
 
             // Taskleiste
             dc.DrawRectangle(new SolidColorBrush(Color.FromArgb(0xE6, 0x20, 0x20, 0x20)), null, new Rect(0, h - 44, w, 44));
@@ -164,9 +163,9 @@ internal static class DemoData
     // ================= Bausteine =================
 
     /// <summary>Ein Etikett (weiße Karte) mit Code und kleiner Beschriftung.</summary>
-    private static BitmapSource Card(string text, BarcodeFormat format, double scale = 1)
+    private static BitmapSource Card(string text, DemoFormat format, double scale = 1)
     {
-        bool linear = format is BarcodeFormat.EAN_13 or BarcodeFormat.CODE_128;
+        bool linear = format is DemoFormat.Ean13 or DemoFormat.Code128;
         int codeW = (int)((linear ? 200 : 130) * scale), codeH = (int)((linear ? 80 : 130) * scale);
         int pad = (int)(18 * scale);
         int w = codeW + 2 * pad, h = codeH + 2 * pad + (int)(26 * scale);
@@ -177,8 +176,8 @@ internal static class DemoData
             dc.DrawImage(Code(text, format, codeW, codeH), new Rect(pad, pad, codeW, codeH));
             var caption = format switch
             {
-                BarcodeFormat.QR_CODE => "Lieferung 4711",
-                BarcodeFormat.EAN_13 => "Artikel",
+                DemoFormat.Qr => "Lieferung 4711",
+                DemoFormat.Ean13 => "Artikel",
                 _ => "Typenschild",
             };
             Text(dc, caption, pad, pad + codeH + 4 * scale, 14 * scale, FontWeights.SemiBold, Gray(70));
@@ -211,17 +210,48 @@ internal static class DemoData
         return Render(visual, w, h);
     }
 
-    /// <summary>Ein echter Code von ZXing, genau in der gewünschten Pixelgröße (scharf, ohne Skalieren).</summary>
-    private static BitmapSource Code(string text, BarcodeFormat format, int width, int height)
+    private enum DemoFormat { Qr, DataMatrix, Ean13, Code128 }
+
+    /// <summary>
+    /// Ein echter Code von zxing-cpp, genau in der gewünschten Pixelgröße und scharf: ganzzahlig viele Pixel je Modul,
+    /// mittig mit Ruhezone (QR und Data Matrix 1 Modul, Strichcodes 6), Striche über die ganze Höhe – so wie die
+    /// Bilder, die Lupe bisher mit ZXing.Net erzeugte.
+    /// </summary>
+    private static BitmapSource Code(string text, DemoFormat format, int width, int height)
     {
-        var writer = new BarcodeWriterPixelData
+        var (zx, options) = format switch
         {
-            Format = format,
-            Options = new EncodingOptions { Width = width, Height = height, Margin = format is BarcodeFormat.QR_CODE or BarcodeFormat.DATA_MATRIX ? 1 : 6, PureBarcode = true },
+            DemoFormat.Qr => (BarcodeFormat.QRCode, "ecLevel=L"),
+            DemoFormat.DataMatrix => (BarcodeFormat.DataMatrix, "forceSquare"),
+            DemoFormat.Ean13 => (BarcodeFormat.EAN13, ""),
+            _ => (BarcodeFormat.Code128, ""),
         };
-        var data = writer.Write(text);
-        for (int i = 3; i < data.Pixels.Length; i += 4) data.Pixels[i] = 255;
-        var bitmap = BitmapSource.Create(data.Width, data.Height, 96, 96, PixelFormats.Bgra32, null, data.Pixels, data.Width * 4);
+        bool linear = format is DemoFormat.Ean13 or DemoFormat.Code128;
+        int margin = linear ? 6 : 1;
+        using var creator = new CreatorOptions(zx, options);
+        using var barcode = new Barcode(text, creator);
+        using var writer = new WriterOptions { Scale = 1, AddQuietZones = false };
+        using var symbol = barcode.ToImage(writer);
+        var modules = symbol.ToArray(); // ein Pixel je Modul, 0 = dunkel
+        int mw = symbol.Width, mh = linear ? 1 : symbol.Height;
+
+        int unit = Math.Max(1, Math.Min(width / (mw + 2 * margin), linear ? int.MaxValue : height / (mh + 2 * margin)));
+        int left = (width - mw * unit) / 2, top = linear ? 0 : (height - mh * unit) / 2, codeHeight = linear ? height : mh * unit;
+        var pixels = new byte[width * height * 4];
+        Array.Fill(pixels, (byte)255);
+        for (int y = 0; y < codeHeight; y++)
+        {
+            int my = linear ? 0 : y / unit;
+            for (int x = 0; x < mw * unit; x++)
+            {
+                if (modules[my * symbol.Width + x / unit] >= 128) continue;
+                int px = left + x, py = top + y;
+                if (px < 0 || py < 0 || px >= width || py >= height) continue;
+                int i = (py * width + px) * 4;
+                pixels[i] = pixels[i + 1] = pixels[i + 2] = 0;
+            }
+        }
+        var bitmap = BitmapSource.Create(width, height, 96, 96, PixelFormats.Bgra32, null, pixels, width * 4);
         bitmap.Freeze();
         return bitmap;
     }

@@ -3,7 +3,6 @@ using Lupe.Core.Decoding;
 using Lupe.Core.Model;
 using Lupe.Tests.TestSupport;
 using Xunit.Abstractions;
-using ZXing;
 
 namespace Lupe.Tests.Decoding;
 

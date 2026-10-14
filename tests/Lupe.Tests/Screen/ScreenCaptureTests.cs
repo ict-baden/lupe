@@ -2,7 +2,6 @@ using System.Runtime.CompilerServices;
 using Lupe.Core.Model;
 using Lupe.Core.Screen;
 using Lupe.Tests.TestSupport;
-using ZXing;
 using CoreNative = Lupe.Core.Screen.Native;
 
 namespace Lupe.Tests.Screen;

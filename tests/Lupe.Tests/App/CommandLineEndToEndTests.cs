@@ -3,7 +3,6 @@ using Lupe.Core.Model;
 using Lupe.Tests.Decoding;
 using Lupe.Tests.TestSupport;
 using Windows.Graphics.Imaging;
-using ZXing;
 
 namespace Lupe.Tests.App;
 

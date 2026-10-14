@@ -1,9 +1,9 @@
-using System.Numerics;
 using System.Reflection;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using Lupe.Core.Decoding;
 using Lupe.Core.Model;
 
 namespace Lupe.Core.Settings;
@@ -333,7 +333,10 @@ public static class SettingsStore
         .Select(r => r with { Prefix = r.Prefix?.Trim() ?? "" })
         .ToArray();
 
-    /// <summary>Formatnamen in ZXing-Schreibweise (QR_CODE …); nur einzelne, bekannte Formate, ohne Doppelte.</summary>
+    /// <summary>
+    /// Formatnamen in ZXing-Schreibweise (QR_CODE …); nur bekannte Formate der Erkennung, ohne Doppelte. Formate, die
+    /// Lupe nicht mehr liest (z. B. IMB seit dem Wechsel auf zxing-cpp), fallen dabei weg.
+    /// </summary>
     private static string[] NormalizeFormats(IReadOnlyList<string> formats)
     {
         var result = new List<string>();
@@ -341,11 +344,8 @@ public static class SettingsStore
         {
             var name = raw?.Trim();
             if (string.IsNullOrEmpty(name) || !name.All(c => char.IsAsciiLetterOrDigit(c) || c == '_') || char.IsAsciiDigit(name[0])) continue;
-            if (!Enum.TryParse<ZXing.BarcodeFormat>(name, ignoreCase: true, out var format)) continue;
-            // Sammelwerte wie All_1D sind keine einzelnen Formate
-            if (!Enum.IsDefined(format) || !BitOperations.IsPow2((uint)format)) continue;
-            var canonical = format.ToString();
-            if (!result.Contains(canonical, StringComparer.Ordinal)) result.Add(canonical);
+            if (FormatCatalog.Find(name) is not { } format) continue;
+            if (!result.Contains(format.Name, StringComparer.Ordinal)) result.Add(format.Name);
         }
         return result.ToArray();
     }

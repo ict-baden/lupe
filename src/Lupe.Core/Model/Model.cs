@@ -38,13 +38,13 @@ public enum ScanSource
 /// <summary>Ein erkannter Code.</summary>
 public sealed record DecodedCode
 {
-    /// <summary>Inhalt als Text (bei Binärinhalten so, wie ZXing ihn liefert).</summary>
+    /// <summary>Inhalt als Text (Binärinhalte Byte für Byte als ISO-8859-1, wie schon mit ZXing.Net).</summary>
     public required string Text { get; init; }
-    /// <summary>Format in ZXing-Schreibweise, z. B. QR_CODE, DATA_MATRIX, EAN_13, CODE_128.</summary>
+    /// <summary>Format in ZXing-Schreibweise, z. B. QR_CODE, DATA_MATRIX, EAN_13, CODE_128 (siehe BarcodeDecoder.AllFormats).</summary>
     public required string Format { get; init; }
-    /// <summary>Eckpunkte im Bild (Pixel), 2 Punkte bei 1D-Codes, meist 3–4 bei 2D-Codes. Für die Markierung.</summary>
+    /// <summary>Punkte im Bild (Pixel) für die Markierung: bei 2D-Codes die vier Ecken im Uhrzeigersinn ab oben links, bei Strichcodes die zwei Enden der Leselinie.</summary>
     public IReadOnlyList<(float X, float Y)> Points { get; init; } = [];
-    /// <summary>Rohbytes, falls das Format welche liefert (z. B. QR im Byte-Modus).</summary>
+    /// <summary>Inhalt als Bytes, wie im Code gespeichert (ohne ECI-Kennungen); null, wenn der Code leer ist.</summary>
     public byte[]? RawBytes { get; init; }
 }
 
