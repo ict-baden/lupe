@@ -168,5 +168,13 @@ foreach ($stale in @(Invoke-Retry { Get-Assets $release.id } | Where-Object { $_
     Remove-Asset $stale
     Write-Host "Entfernt: $($stale.name)"
 }
+
+# 5. GitHub zeigt beim Release das Datum der Veröffentlichung – beim Aktualisieren an Ort und Stelle bliebe das der
+#    allererste Build („vor 8 Stunden“). Kurz Entwurf und gleich wieder veröffentlicht, steht dort dieser Build. Die
+#    Dateien sind dazwischen für einen API-Aufruf nicht erreichbar, wie beim Tausch. Bleibt das Veröffentlichen hängen,
+#    schlägt der Lauf fehl, statt einen unsichtbaren Entwurf stehen zu lassen.
+$makeLatest = if ($tagged -gt 0) { 'false' } else { 'true' }
+Invoke-Retry { Invoke-Gh api -X PATCH "repos/$repo/releases/$($release.id)" -F draft=true | Out-Null }
+Invoke-Retry { Invoke-Gh api -X PATCH "repos/$repo/releases/$($release.id)" -F draft=false -f make_latest=$makeLatest | Out-Null }
 Write-Host "'$Tag' zeigt jetzt auf $sha."
 $global:LASTEXITCODE = 0
