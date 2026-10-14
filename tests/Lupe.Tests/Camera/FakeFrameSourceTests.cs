@@ -7,6 +7,8 @@ using static Lupe.Tests.Camera.CameraTestSupport;
 
 namespace Lupe.Tests.Camera;
 
+// Zählt Bilder in Echtzeit – allein ausführen, damit parallele Tests die Bildrate nicht verfälschen
+[Collection(EchtzeitCollection.Name)]
 public sealed class FakeFrameSourceTests
 {
     [Fact]

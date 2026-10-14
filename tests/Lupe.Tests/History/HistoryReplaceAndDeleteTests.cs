@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Lupe.Core.History;
 using Xunit.Abstractions;
 using Lupe.Core.Model;
+using Lupe.Tests.Decoding;
 using static Lupe.Tests.History.TestEntries;
 
 namespace Lupe.Tests.History;
@@ -168,7 +169,8 @@ public sealed class HistoryReplaceAndDeleteTests(ITestOutputHelper output) : IDi
         Assert.Equal(HistoryStore.MaxLimit, Core.Settings.SettingsStore.MaxHistoryLimit);
     }
 
-    [Fact]
+    // Feste Zeitgrenze – nur auf Entwicklungsrechnern (auf GitHub-Runnern dauerte das Speichern bis zu 2,5 s)
+    [LeistungFact]
     public void Voller_Verlauf_mit_zehntausend_Eintraegen_speichert_zuegig()
     {
         // Je Treffer wird die ganze Datei neu geschrieben – bei der Obergrenze muss das auf dem Oberflächen-Thread
