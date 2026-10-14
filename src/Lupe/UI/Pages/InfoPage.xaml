@@ -39,8 +39,14 @@
                     </StackPanel>
                 </Button>
             </ui:SettingCard>
-            <ui:SettingCard Glyph="&#xED14;" Header="Erkennung" Description="ZXing.Net (Apache-2.0) – QR, Data Matrix, Aztec, PDF417, EAN, UPC, Code 128/39/93, ITF, Codabar und weitere.">
-                <TextBlock/>
+            <ui:SettingCard Glyph="&#xED14;" Header="Erkennung"
+                            Description="zxing-cpp 3.1.1 (Apache-2.0) mit libzint und libzueci (BSD-3-Clause) – QR und Micro QR, Data Matrix, Aztec, PDF417, MaxiCode, EAN, UPC, Code 128/39/93, ITF, Codabar, GS1 DataBar und weitere.">
+                <Button Click="OpenNotices_Click" AutomationProperties.Name="Lizenztexte der mitgelieferten Bibliotheken anzeigen">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8A5;" FontFamily="{StaticResource IconFont}" FontSize="13" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock Text="Lizenztexte" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </ui:SettingCard>
             <ui:SettingCard Glyph="&#xE72E;" Header="Ihre Daten" x:Name="DataCard"
                             Description="Einstellungen und Verlauf liegen unter %LocalAppData%\Lupe – nur für Sie. Lupe schickt nichts ins Internet; Links öffnet nur der Browser, wenn Sie es einstellen.">

@@ -5,7 +5,7 @@ using Lupe.Services;
 
 namespace Lupe.UI.Pages;
 
-/// <summary>Info: Version, Herausgeber, Lizenz (noch offen), Repo, Herkunft vom Barcode-Reader, Daten, Befehlszeile, Tastatur.</summary>
+/// <summary>Info: Version, Herausgeber, Lizenz (noch offen), Repo, Herkunft vom Barcode-Reader, Erkennung mit Lizenztexten, Daten, Befehlszeile, Tastatur.</summary>
 public partial class InfoPage : UserControl, IPage
 {
     private readonly AppState _state;
@@ -38,6 +38,11 @@ public partial class InfoPage : UserControl, IPage
     }
 
     private void OpenRepository_Click(object sender, RoutedEventArgs e) => Open(AppInfo.RepositoryUrl);
+
+    private void OpenNotices_Click(object sender, RoutedEventArgs e)
+    {
+        if (ThirdPartyNotices.Open() is { } error) _state.Report(NoticeKind.Warning, error);
+    }
     private void OpenOrigin_Click(object sender, RoutedEventArgs e) => Open(AppInfo.OriginUrl);
 
     private void Open(string url)
