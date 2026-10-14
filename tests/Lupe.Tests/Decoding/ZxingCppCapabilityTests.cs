@@ -11,6 +11,8 @@ namespace Lupe.Tests.Decoding;
 /// schwerer neben leichten), die neuen Formate, GS1 mit Trennzeichen, ECI-Zeichensätze – und dass im Dauerbetrieb
 /// keine nativen Objekte liegen bleiben.
 /// </summary>
+// Misst den Speicher des ganzen Testprozesses – allein ausführen, sonst zählen parallele Tests mit
+[Collection(EchtzeitCollection.Name)]
 public sealed class ZxingCppCapabilityTests
 {
     private static readonly BarcodeDecoder Decoder = new();
