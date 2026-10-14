@@ -48,6 +48,7 @@ public sealed class SettingsStoreTests : IDisposable
         Assert.Equal(ResultActions.Kopieren, settings.Actions);
         Assert.Equal(ResultActions.Kopieren, settings.ScreenActions);
         Assert.Equal("", settings.TypeSuffix);
+        Assert.Equal(20, settings.TypeDelayMs);
         Assert.Equal([new LinkRule(@"^https://\S+$")], settings.LinkRules);
         Assert.Empty(settings.Formats);
         Assert.Equal(Hotkey.Default, settings.ScreenHotkey);
@@ -637,4 +638,12 @@ public sealed class SettingsStoreTests : IDisposable
         Assert.Equal(1000, settings.HistoryLimit);
         Assert.False(settings.Sound);
     }
+
+    [Theory]
+    [InlineData(-5, 0)]
+    [InlineData(0, 0)]
+    [InlineData(20, 20)]
+    [InlineData(100_000, SettingsStore.MaxTypeDelayMs)]
+    public void Zeichenpause_wird_begrenzt(int stored, int expected) =>
+        Assert.Equal(expected, SettingsStore.Normalize(new LupeSettings { TypeDelayMs = stored }).TypeDelayMs);
 }

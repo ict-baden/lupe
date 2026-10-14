@@ -15,6 +15,7 @@ Changes apply and are saved **immediately**; there is no *Save* button. Settings
 | *Bei einem Treffer* | *Kamera, Datei und Zwischenablage* | *Kopieren* | `Actions` |
 | | *Bildschirmausschnitt* | *Kopieren* | `ScreenActions` |
 | | *Nach dem Eintippen* | *Nichts* | `TypeSuffix` |
+| | *Tempo beim Eintippen* | *Normal (20 ms)* | `TypeDelayMs` |
 | *Bildschirm-Scan* | *Tastenkürzel* | *Win+Umschalt+Q* | `ScreenHotkey` |
 | *Link-Regeln* | rule table | one rule: `^https://\S+$`, no prefix | `LinkRules` |
 | *Formate* | *Alle Formate erkennen* | on | `Formats` |
@@ -44,6 +45,8 @@ Changes apply and are saved **immediately**; there is no *Save* button. Settings
 The actions run for **one** code. When a picture contains several, the camera and the page *Datei* run no action, and the screen scan asks which code to take.
 
 ***Nach dem Eintippen*** (after typing) – a key sent after the typed text: *Nichts* (nothing), *Enter* or *Tab*. *Enter* submits a search field or a form, *Tab* moves to the next field.
+
+***Tempo beim Eintippen*** (typing speed) – the pause between two typed characters, like the character delay of a hand scanner: *Sofort* (immediately, 0 ms), *Schnell* (10 ms), *Normal* (20 ms, default) or *Langsam* (40 ms); in the settings file `TypeDelayMs`, 0 to 500. Notepad on Windows 11 loses characters with *Sofort* – it reads a typed character only when it processes it and then sees the last one sent. A 50-character link takes about one second at 20 ms ([details](how-it-works.md#typing)).
 
 ## Screen scan
 
@@ -104,6 +107,7 @@ Path: `%LocalAppData%\Lupe\einstellungen.json` – shown at the bottom of the pa
   "Actions": "Kopieren",
   "ScreenActions": "Kopieren",
   "TypeSuffix": "",
+  "TypeDelayMs": 20,
   "LinkRules": [
     {
       "Pattern": "^https://\\S+$",

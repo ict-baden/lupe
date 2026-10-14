@@ -131,7 +131,7 @@ internal sealed class Hits(AppState state)
             if (typeTarget == 0) problems.Add(source == ScanSource.Kamera
                 ? "Nicht eingetippt: Lupe ist gerade das aktive Fenster – erst das Zielprogramm anklicken, Lupe kann dahinter oder minimiert weiterlaufen."
                 : "Nicht eingetippt: Der Scan kam aus Lupe selbst – Eintippen geht über das Tastenkürzel aus einem anderen Programm.");
-            else if (await Typing.TypeIntoAsync(typeTarget, code.Text, state.Settings.TypeSuffix) is { } error) problems.Add(error);
+            else if (await Typing.TypeIntoAsync(typeTarget, code.Text, state.Settings.TypeSuffix, state.Settings.TypeDelayMs) is { } error) problems.Add(error);
             else done |= ResultActions.Eintippen;
         }
         if (wanted.HasFlag(ResultActions.LinkOeffnen) && state.LinkFor(code.Text) is { } link)

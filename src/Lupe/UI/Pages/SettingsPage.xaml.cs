@@ -75,6 +75,8 @@ public partial class SettingsPage : UserControl, IPage
             ScrLink.IsChecked = s.ScreenActions.HasFlag(ResultActions.LinkOeffnen);
             SuffixBox.SelectedItem = SuffixBox.Items.OfType<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == s.TypeSuffix) ?? SuffixBox.Items[0];
             SuffixBox.IsEnabled = s.ScreenActions.HasFlag(ResultActions.Eintippen) || s.Actions.HasFlag(ResultActions.Eintippen);
+            DelayBox.SelectedItem = DelayBox.Items.OfType<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == s.TypeDelayMs.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            DelayBox.IsEnabled = SuffixBox.IsEnabled;
 
             if (!_recording) HotkeyBox.Text = FormatHotkey(s.ScreenHotkey);
             UpdateHotkeyState();
@@ -132,6 +134,7 @@ public partial class SettingsPage : UserControl, IPage
         var actions = Of(ActCopy, ActType, ActLink);
         var screen = Of(ScrCopy, ScrType, ScrLink);
         SuffixBox.IsEnabled = screen.HasFlag(ResultActions.Eintippen) || actions.HasFlag(ResultActions.Eintippen);
+        DelayBox.IsEnabled = SuffixBox.IsEnabled;
         _state.UpdateSettings(s => s with { Actions = actions, ScreenActions = screen });
     }
 
@@ -139,6 +142,13 @@ public partial class SettingsPage : UserControl, IPage
     {
         if (_loading || SuffixBox.SelectedItem is not ComboBoxItem { Tag: string suffix }) return;
         _state.UpdateSettings(s => s with { TypeSuffix = suffix });
+    }
+
+    private void Delay_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || DelayBox.SelectedItem is not ComboBoxItem { Tag: string tag }) return;
+        int delay = int.Parse(tag, System.Globalization.CultureInfo.InvariantCulture);
+        _state.UpdateSettings(s => s with { TypeDelayMs = delay });
     }
 
     // ================= Tastenkürzel =================

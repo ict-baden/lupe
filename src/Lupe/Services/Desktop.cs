@@ -137,7 +137,7 @@ internal static class Typing
     /// Holt <paramref name="target"/> nach vorn und tippt den Text. Kommt das Fenster nicht in den Vordergrund,
     /// wird nichts getippt – sonst landete der Inhalt in einem fremden Fenster. Fehlermeldung oder null.
     /// </summary>
-    public static async Task<string?> TypeIntoAsync(nint target, string text, string suffix)
+    public static async Task<string?> TypeIntoAsync(nint target, string text, string suffix, int delayMs)
     {
         if (target == 0 || !Native.IsWindow(target)) return "Das Fenster von vorher gibt es nicht mehr.";
         if (Native.IsIconic(target)) Native.ShowWindow(target, Native.SW_RESTORE);
@@ -152,7 +152,7 @@ internal static class Typing
         {
             // Wartet im Core, bis Strg/Alt des Tastenkürzels losgelassen sind – nicht auf dem Oberflächen-Thread. TryType statt
             // Type: Verwirft Windows die Eingabe (Zielfenster als Administrator, gesperrter Desktop), steht der Grund in der Meldung.
-            return await Task.Run(() => KeyboardTyper.TryType(text, suffix, out string? error) ? null : error ?? "Eintippen fehlgeschlagen.");
+            return await Task.Run(() => KeyboardTyper.TryType(text, suffix, delayMs, out string? error) ? null : error ?? "Eintippen fehlgeschlagen.");
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {

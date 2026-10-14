@@ -97,6 +97,13 @@ public sealed record LupeSettings
     public ResultActions ScreenActions { get; init; } = ResultActions.Kopieren;
     /// <summary>Nach dem Eintippen eine Taste senden: "" (nichts), "Enter" oder "Tab".</summary>
     public string TypeSuffix { get; init; } = "";
+    /// <summary>
+    /// Pause zwischen zwei getippten Zeichen in Millisekunden (0 = alles auf einmal). Notepad unter Windows 11 liest das
+    /// Zeichen einer Unicode-Eingabe erst beim Verarbeiten und bekommt bei zu schnellen Zeichen nur noch das zuletzt
+    /// gesendete („Wikipédia,eeeeee…“) – gemessen: bis 8 ms Pause fehlerhaft, ab etwa 16 ms sicher. Echte Handscanner
+    /// haben dafür ebenfalls eine Zeichenverzögerung.
+    /// </summary>
+    public int TypeDelayMs { get; init; } = 20;
     public IReadOnlyList<LinkRule> LinkRules { get; init; } = [new(@"^https://\S+$")];
     /// <summary>Aktive Formate in ZXing-Schreibweise; leer = alle.</summary>
     public IReadOnlyList<string> Formats { get; init; } = [];

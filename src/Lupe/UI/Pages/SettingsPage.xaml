@@ -47,6 +47,15 @@
                     <ComboBoxItem Content="Tab" Tag="Tab"/>
                 </ComboBox>
             </ui:SettingCard>
+            <ui:SettingCard Glyph="&#xE916;" Header="Tempo beim Eintippen"
+                            Description="Pause zwischen den Zeichen, wie bei einem Handscanner. Manche Programme – z. B. Notepad unter Windows 11 – verlieren Zeichen, wenn sie zu schnell kommen.">
+                <ComboBox x:Name="DelayBox" Width="160" SelectionChanged="Delay_SelectionChanged" AutomationProperties.Name="Tempo beim Eintippen">
+                    <ComboBoxItem Content="Sofort" Tag="0"/>
+                    <ComboBoxItem Content="Schnell (10 ms)" Tag="10"/>
+                    <ComboBoxItem Content="Normal (20 ms)" Tag="20"/>
+                    <ComboBoxItem Content="Langsam (40 ms)" Tag="40"/>
+                </ComboBox>
+            </ui:SettingCard>
 
             <!-- ========== Tastenkürzel ========== -->
             <TextBlock Text="Bildschirm-Scan" Style="{StaticResource SectionText}"/>

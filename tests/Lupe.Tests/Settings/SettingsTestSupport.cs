@@ -43,6 +43,7 @@ internal static class SettingsAssert
         Actions = ResultActions.Kopieren | ResultActions.LinkOeffnen,
         ScreenActions = ResultActions.Eintippen,
         TypeSuffix = "Tab",
+        TypeDelayMs = 40,
         LinkRules =
         [
             new(@"^\d{13}$", "https://example.com/artikel?ean="),

@@ -63,13 +63,21 @@ public static class KeyboardTyper
     }
 
     /// <summary>Wie <see cref="Type"/>, meldet aber, ob alles angekommen ist; sonst steht der Grund auf Deutsch in <paramref name="error"/>.</summary>
-    public static bool TryType(string text, string suffix, out string? error, CancellationToken ct = default)
+    public static bool TryType(string text, string suffix, out string? error, CancellationToken ct = default) =>
+        TryType(text, suffix, 0, out error, ct);
+
+    /// <param name="delayMs">
+    /// Pause zwischen zwei Zeichen (0 = alles in Paketen auf einmal). Manche Programme – allen voran Notepad unter
+    /// Windows 11 – verarbeiten Unicode-Eingaben verzögert und lesen das Zeichen erst dann; kommen die Zeichen schneller,
+    /// bekommen sie nur noch das zuletzt gesendete. Mit Pause geht jedes Zeichen einzeln hinaus, wie bei einem Handscanner.
+    /// </param>
+    public static bool TryType(string text, string suffix, int delayMs, out string? error, CancellationToken ct = default)
     {
         // Zwei gleichzeitige Aufrufe würden ihre Pakete ineinander verschränken – nacheinander tippen.
-        lock (TypingGate) return TypeCore(text, suffix, SystemKeyboard.Instance, out error, ct);
+        lock (TypingGate) return TypeCore(text, suffix, SystemKeyboard.Instance, out error, ct, delayMs);
     }
 
-    internal static bool TypeCore(string text, string? suffix, IKeyboard keyboard, out string? error, CancellationToken ct)
+    internal static bool TypeCore(string text, string? suffix, IKeyboard keyboard, out string? error, CancellationToken ct, int delayMs = 0)
     {
         ArgumentNullException.ThrowIfNull(text);
         ct.ThrowIfCancellationRequested();
@@ -89,10 +97,12 @@ public static class KeyboardTyper
         if (release.Length > 0 && !Send(keyboard, release, typedBefore: false, out error)) return false;
 
         bool typed = false;
-        foreach (var (offset, count) in Batches(inputs, MaxInputsPerBatch))
+        // Mit Zeichenpause geht jede Taste (bei Emoji das Surrogatpaar) als eigenes Paket hinaus
+        int perBatch = delayMs > 0 ? 1 : MaxInputsPerBatch, pause = delayMs > 0 ? delayMs : BatchPauseMs;
+        foreach (var (offset, count) in Batches(inputs, perBatch))
         {
             ct.ThrowIfCancellationRequested();
-            if (typed) keyboard.Pause(BatchPauseMs, ct);
+            if (typed) keyboard.Pause(pause, ct);
             ct.ThrowIfCancellationRequested();
             if (!Send(keyboard, inputs.AsSpan(offset, count), typed, out error)) return false;
             typed = true;
@@ -352,7 +362,42 @@ internal sealed unsafe class SystemKeyboard : IKeyboard
 
     public bool IsDown(int virtualKey) => Native.GetAsyncKeyState(virtualKey) < 0;
 
-    public void Pause(int milliseconds, CancellationToken ct) => ct.WaitHandle.WaitOne(milliseconds);
+    /// <summary>
+    /// Wartet genau: Gewöhnliche Wartezeiten teilt Windows in 15,6-ms-Schritte ein (aus 20 ms Zeichenpause wurden 31 ms),
+    /// und einen feineren Takt per timeBeginPeriod gewährt Windows 11 Prozessen mit minimiertem Fenster nicht verlässlich –
+    /// genau dann tippt Lupe aber als Handscanner. Ein hochauflösender Wartezeitgeber hält die Zeit unabhängig davon.
+    /// </summary>
+    public void Pause(int milliseconds, CancellationToken ct)
+    {
+        if (milliseconds <= 0) return;
+        nint timer = Native.CreateWaitableTimerExW(0, null, Native.CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, Native.TIMER_ALL_ACCESS);
+        if (timer == 0)
+        {
+            ct.WaitHandle.WaitOne(milliseconds);
+            return;
+        }
+        try
+        {
+            long due = -10_000L * milliseconds; // negativ = relativ, in 100-ns-Schritten
+            if (!Native.SetWaitableTimer(timer, &due, 0, 0, 0, false))
+            {
+                ct.WaitHandle.WaitOne(milliseconds);
+                return;
+            }
+            using var wait = new BorrowedWaitHandle(timer);
+            WaitHandle.WaitAny([wait, ct.WaitHandle]);
+        }
+        finally
+        {
+            Native.CloseHandle(timer);
+        }
+    }
+
+    /// <summary>Ein fremdes Windows-Handle als WaitHandle (gibt es nicht frei).</summary>
+    private sealed class BorrowedWaitHandle : WaitHandle
+    {
+        public BorrowedWaitHandle(nint handle) => SafeWaitHandle = new Microsoft.Win32.SafeHandles.SafeWaitHandle(handle, ownsHandle: false);
+    }
 
     public string? ForegroundProblem() => Elevation.ForegroundProblem();
 }

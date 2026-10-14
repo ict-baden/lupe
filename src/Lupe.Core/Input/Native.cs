@@ -65,6 +65,18 @@ internal static unsafe partial class Native
     [LibraryImport("user32.dll", SetLastError = true)]
     public static partial uint SendInput(uint cInputs, INPUT* pInputs, int cbSize);
 
+    // ---------- Genaue Wartezeiten (Zeichenpause beim Tippen) ----------
+    public const uint CREATE_WAITABLE_TIMER_HIGH_RESOLUTION = 0x00000002;
+    public const uint TIMER_ALL_ACCESS = 0x001F0003;
+
+    [LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+    public static partial nint CreateWaitableTimerExW(nint lpTimerAttributes, string? lpTimerName, uint dwFlags, uint dwDesiredAccess);
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool SetWaitableTimer(nint hTimer, long* lpDueTime, int lPeriod, nint pfnCompletionRoutine,
+        nint lpArgToCompletionRoutine, [MarshalAs(UnmanagedType.Bool)] bool fResume);
+
     /// <summary>Höchstes Bit gesetzt (Wert &lt; 0) = Taste ist gerade gedrückt.</summary>
     [LibraryImport("user32.dll")]
     public static partial short GetAsyncKeyState(int vKey);

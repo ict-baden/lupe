@@ -467,4 +467,28 @@ public sealed class KeyboardTyperFlowTests
 
         KeyboardTyper.Type("Lupe", "Enter"); // keine Ausnahme
     }
+
+    [Fact]
+    public void Mit_Zeichenpause_geht_jedes_Zeichen_einzeln_hinaus()
+    {
+        // Notepad unter Windows 11 verlor Zeichen, wenn ein ganzer Code in einem SendInput kam
+        var keyboard = new FakeKeyboard();
+
+        Assert.True(KeyboardTyper.TypeCore("Ab\uD83D\uDE00c", "Enter", keyboard, out _, default, delayMs: 20));
+
+        // A, b, Emoji (Surrogatpaar in einem Paket), c, Enter – je Paket genau eine Taste gedrückt und losgelassen
+        Assert.Equal([2, 2, 4, 2, 2], keyboard.Sent.Select(p => p.Length));
+        Assert.Equal([20, 20, 20, 20], keyboard.Pauses);
+    }
+
+    [Fact]
+    public void Ohne_Zeichenpause_bleibt_es_bei_grossen_Paketen()
+    {
+        var keyboard = new FakeKeyboard();
+
+        Assert.True(KeyboardTyper.TypeCore("Hallo Welt", "", keyboard, out _, default, delayMs: 0));
+
+        Assert.Single(keyboard.Sent);
+        Assert.Empty(keyboard.Pauses);
+    }
 }

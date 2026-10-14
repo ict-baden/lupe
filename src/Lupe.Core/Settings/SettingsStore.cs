@@ -25,6 +25,9 @@ public static class SettingsStore
     /// gemessen rund 40 ms, bei 100 000 stünde die Oberfläche bei jedem Treffer spürbar.
     /// </summary>
     public const int MaxHistoryLimit = 10_000;
+    /// <summary>Größter erlaubter Wert für <see cref="LupeSettings.TypeDelayMs"/> (eine halbe Sekunde je Zeichen).</summary>
+    public const int MaxTypeDelayMs = 500;
+
     /// <summary>Größter erlaubter Wert für <see cref="LupeSettings.RepeatSuppressMs"/> (eine Stunde).</summary>
     public const int MaxRepeatSuppressMs = 3_600_000;
 
@@ -178,6 +181,7 @@ public static class SettingsStore
             Actions = settings.Actions & AllActions,
             ScreenActions = settings.ScreenActions & AllActions,
             TypeSuffix = NormalizeSuffix(settings.TypeSuffix),
+            TypeDelayMs = Math.Clamp(settings.TypeDelayMs, 0, MaxTypeDelayMs),
             LinkRules = settings.LinkRules is null ? defaults.LinkRules : NormalizeRules(settings.LinkRules),
             Formats = settings.Formats is null ? defaults.Formats : NormalizeFormats(settings.Formats),
             ScreenHotkey = IsUsableHotkey(settings.ScreenHotkey) ? settings.ScreenHotkey : Hotkey.Default,
@@ -273,6 +277,7 @@ public static class SettingsStore
         [nameof(LupeSettings.Actions)] = "Aktionen (Kamera/Datei)",
         [nameof(LupeSettings.ScreenActions)] = "Aktionen (Bildschirm)",
         [nameof(LupeSettings.TypeSuffix)] = "Taste nach dem Eintippen",
+        [nameof(LupeSettings.TypeDelayMs)] = "Tempo beim Eintippen",
         [nameof(LupeSettings.LinkRules)] = "Link-Regeln",
         [nameof(LupeSettings.Formats)] = "Formate",
         [nameof(LupeSettings.ScreenHotkey)] = "Tastenkürzel",
