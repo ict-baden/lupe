@@ -172,6 +172,25 @@ public static class HotkeyText
         return null;
     }
 
+    /// <summary>
+    /// Hinweis für die Einstellungen bei einem Kürzel mit Strg+Alt (ohne Win), sonst null: Windows meldet AltGr als Strg+Alt,
+    /// auf deutschen Tastaturen kann das Kürzel also ein AltGr-Zeichen abfangen (Strg+Alt+Q = AltGr+Q = „@“). Lupe tippt das
+    /// Zeichen in dem Fall nach (siehe <see cref="GlobalHotkey"/>), sicherer ist trotzdem ein Kürzel mit Win. Kennt das
+    /// Tastaturlayout des aufrufenden Threads ein Zeichen auf der Taste, nennt der Hinweis es.
+    /// </summary>
+    public static string? AltGrWarning(Hotkey hotkey) => AltGrWarning(hotkey, Native.GetKeyboardLayout(0));
+
+    internal static string? AltGrWarning(Hotkey hotkey, nint layout)
+    {
+        ArgumentNullException.ThrowIfNull(hotkey);
+        if (!AltGr.Applies(hotkey)) return null;
+        var text = Format(hotkey);
+        var character = AltGr.Text(hotkey.Key, hotkey.Shift, layout);
+        var detail = character is null ? "" : $" (AltGr+{(hotkey.Shift ? "Umschalt+" : "")}{KeyName(hotkey.Key)} schreibt „{character}“)";
+        return $"{text} kann auf deutschen Tastaturen mit AltGr-Zeichen kollidieren{detail} – Windows meldet AltGr als Strg+Alt. "
+            + "Lupe tippt das Zeichen dann nach; sicherer ist ein Kürzel mit Win, z. B. Win+Umschalt+Q.";
+    }
+
     private static bool StandsAlone(int vk)
         => vk is (>= VK_F1 and <= VK_F24) or VK_SNAPSHOT or VK_PAUSE or VK_SCROLL or (>= 0xA6 and <= 0xB7);
 

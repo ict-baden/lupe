@@ -30,7 +30,7 @@ public partial class FilePage : UserControl, IPage
         {
             // Link-Regeln geändert: Knöpfe „Link öffnen“ neu bewerten
             if (!old.LinkRules.SequenceEqual(now.LinkRules) && _results.Count > 0)
-                ShowCodes([.. _results.Select(r => r.Code)], _results[0].Source, _results[0].Time);
+                ShowCodes([.. _results.Select(r => r.Code)], [.. _results.Select(r => r.Entry)], _results[0].Source, _results[0].Time);
         };
     }
 
@@ -58,10 +58,12 @@ public partial class FilePage : UserControl, IPage
 
     private void Paste_Click(object sender, RoutedEventArgs e) => PasteFromClipboard();
 
+    private const string ClipboardName = "Bild aus der Zwischenablage";
+
     /// <summary>Strg+V: Bild, PNG-Daten oder kopierte Bilddatei aus der Zwischenablage lesen.</summary>
     public void PasteFromClipboard()
     {
-        (PixelImage? Image, string? File) content;
+        ClipboardContent content;
         try { content = ClipboardImage.Read(); }
         catch (Exception ex) when (ex is System.Runtime.InteropServices.ExternalException or InvalidOperationException or NotSupportedException or ArgumentException)
         {
@@ -69,8 +71,38 @@ public partial class FilePage : UserControl, IPage
             return;
         }
         if (content.File is { } file) Ui.Run(_state, () => LoadFileAsync(file, ScanSource.Zwischenablage), "Bild lesen");
-        else if (content.Image is { } image) Ui.Run(_state, () => DecodeAsync(image, ScanSource.Zwischenablage, "Bild aus der Zwischenablage"), "Bild lesen");
+        else if (content.Png is { } png) Ui.Run(_state, () => LoadPngAsync(png), "Bild lesen");
+        else if (content.Bitmap is { } image) Ui.Run(_state, () => DecodeAsync(image, ScanSource.Zwischenablage, ClipboardName), "Bild lesen");
         else _state.Report(NoticeKind.Info, "In der Zwischenablage ist kein Bild. Tipp: Mit Win+Umschalt+S ein Bildschirmfoto machen – oder gleich „Ausschnitt scannen“.");
+    }
+
+    /// <summary>PNG-Daten aus der Zwischenablage – geladen wie eine Datei (Transparenz auf Weiß, Größenschutz); unbrauchbar: die Bitmap.</summary>
+    private async Task LoadPngAsync(byte[] png)
+    {
+        var ct = Restart();
+        PixelImage image;
+        try
+        {
+            using var stream = new MemoryStream(png, writable: false);
+            image = await ImageFile.LoadAsync(stream, ClipboardName, ct);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException && !_state.Strict)
+        {
+            PixelImage? bitmap = null;
+            try { bitmap = ClipboardImage.ReadBitmap(); }
+            catch (Exception clipboard) when (clipboard is System.Runtime.InteropServices.ExternalException or InvalidOperationException or NotSupportedException or ArgumentException) { }
+            if (bitmap is null)
+            {
+                _state.Report(NoticeKind.Error, $"Das Bild aus der Zwischenablage ließ sich nicht lesen: {ex.Message}");
+                return;
+            }
+            image = bitmap;
+        }
+        await DecodeAsync(image, ScanSource.Zwischenablage, ClipboardName, ct);
     }
 
     // ================= Ziehen und Ablegen =================
@@ -159,8 +191,8 @@ public partial class FilePage : UserControl, IPage
         if (ct.IsCancellationRequested) return;
 
         var report = await _state.Hits.ReportAsync(codes, source);
-        ShowCodes(codes, source, report.Time);
-        View.Markers = CameraPage.Markers(codes, numbered: true);
+        ShowCodes(codes, report.Entries, source, report.Time);
+        View.Markers = CameraPage.Markers(codes, numbered: true, image);
         ResultDone.Text = codes.Count switch
         {
             0 => "Tipp: Den Code möglichst groß und scharf aufnehmen; bei Bildschirmfotos besser „Ausschnitt scannen“.",
@@ -170,11 +202,13 @@ public partial class FilePage : UserControl, IPage
         ResultDone.Visibility = ResultDone.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private void ShowCodes(IReadOnlyList<DecodedCode> codes, ScanSource source, DateTimeOffset time)
+    /// <param name="entries">Die Verlaufseinträge der Codes (gleiche Reihenfolge) – Kopieren und Link öffnen aus der Zeile werden darin vermerkt.</param>
+    private void ShowCodes(IReadOnlyList<DecodedCode> codes, IReadOnlyList<HistoryEntry?> entries, ScanSource source, DateTimeOffset time)
     {
         _results.Clear();
         for (int i = 0; i < codes.Count; i++)
-            _results.Add(new CodeItem(codes[i], source, time, _state.LinkFor(codes[i].Text), codes.Count > 1 ? i + 1 : 0));
+            _results.Add(new CodeItem(codes[i], source, time, _state.LinkFor(codes[i].Text), codes.Count > 1 ? i + 1 : 0,
+                i < entries.Count ? entries[i] : null));
         ResultTitle.Text = codes.Count switch
         {
             0 => "Kein Code gefunden",
@@ -202,7 +236,7 @@ public partial class FilePage : UserControl, IPage
 
     private void CopyAll_Click(object sender, RoutedEventArgs e)
     {
-        if (_state.Hits.CopyAll(_results.Select(r => r.Code)) is { } error) _state.Report(NoticeKind.Error, error);
+        if (_state.Hits.CopyAll([.. _results]) is { } error) _state.Report(NoticeKind.Error, error);
         else _state.Report(NoticeKind.Success, $"{_results.Count} Codes zeilenweise kopiert.");
     }
 
@@ -228,9 +262,9 @@ public partial class FilePage : UserControl, IPage
         if (codes.Count < 2) throw new InvalidOperationException($"Im Demo-Lieferschein wurden nur {codes.Count} Codes erkannt (erwartet: 4).");
         SourceText.Text = $"lieferschein-4711.png · {image.Width} × {image.Height} Pixel";
         View.Source = Images.ToBitmap(image);
-        View.Markers = CameraPage.Markers(codes, numbered: true);
+        View.Markers = CameraPage.Markers(codes, numbered: true, image);
         DropHint.Visibility = Visibility.Collapsed;
-        ShowCodes(codes, ScanSource.Datei, DemoData.ScreenshotTime);
+        ShowCodes(codes, [], ScanSource.Datei, DemoData.ScreenshotTime);
         ResultDone.Text = "Alle Codes stehen im Verlauf. Den gewünschten kopieren oder öffnen – oder alle zeilenweise kopieren.";
         ResultDone.Visibility = Visibility.Visible;
         await Ui.IdleAsync();

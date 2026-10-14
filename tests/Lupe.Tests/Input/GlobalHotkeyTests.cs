@@ -14,6 +14,9 @@ public sealed class GlobalHotkeyTests
 {
     private static readonly TimeSpan Wait = TimeSpan.FromSeconds(5);
 
+    /// <summary>Strg+Alt+Q – der frühere Standard, an dem sich der AltGr-Schutz zeigt (AltGr+Q = „@“).</summary>
+    internal static readonly Hotkey CtrlAltQ = new(Ctrl: true, Alt: true, Shift: false, Win: false, Key: 0x51);
+
     private sealed class Recorder
     {
         public ConcurrentQueue<(nint Window, int Id, uint Modifiers, uint Vk, int Thread, ApartmentState Apartment)> Registered { get; } = new();
@@ -42,7 +45,7 @@ public sealed class GlobalHotkeyTests
     public void Meldet_auf_eigenem_STA_Thread_mit_Nachrichtenfenster_und_NOREPEAT_an()
     {
         var recorder = new Recorder();
-        using var hotkey = new GlobalHotkey(Hotkey.Default, recorder.Api);
+        using var hotkey = new GlobalHotkey(CtrlAltQ, recorder.Api);
 
         Assert.True(hotkey.IsRegistered);
         Assert.Null(hotkey.Error);
@@ -205,7 +208,7 @@ public sealed class GlobalHotkeyTests
         using var hotkey = new GlobalHotkey(Hotkey.Default, recorder.Api);
 
         Assert.False(hotkey.IsRegistered);
-        Assert.Equal("Strg+Alt+Q ist schon von einem anderen Programm belegt.", hotkey.Error);
+        Assert.Equal("Win+Umschalt+Q ist schon von einem anderen Programm belegt.", hotkey.Error);
         Assert.True(hotkey.WorkerThread!.Join(Wait));
         Assert.Empty(recorder.Unregistered); // nichts abzumelden
     }
@@ -226,7 +229,7 @@ public sealed class GlobalHotkeyTests
 
     [Fact]
     public void Fehlschlag_ohne_Windows_Grund_hat_keinen_englischen_Zusatz()
-        => Assert.Equal("Das Tastenkürzel Strg+Alt+Q konnte nicht angemeldet werden.", GlobalHotkey.Describe(-1, Hotkey.Default));
+        => Assert.Equal("Das Tastenkürzel Win+Umschalt+Q konnte nicht angemeldet werden.", GlobalHotkey.Describe(-1, Hotkey.Default));
 
     [Fact]
     public void Ungeeignetes_Kuerzel_wird_gar_nicht_erst_angemeldet()
@@ -241,10 +244,38 @@ public sealed class GlobalHotkeyTests
     }
 
     [Fact]
+    public void Standard_Win_Umschalt_Q_meldet_MOD_WIN_und_MOD_SHIFT_an()
+    {
+        var recorder = new Recorder();
+        using var hotkey = new GlobalHotkey(Hotkey.Default, recorder.Api);
+
+        Assert.True(hotkey.IsRegistered);
+        var call = Assert.Single(recorder.Registered);
+        Assert.Equal(Native.MOD_WIN | Native.MOD_SHIFT | Native.MOD_NOREPEAT, call.Modifiers);
+        Assert.Equal(0x51u, call.Vk);
+    }
+
+    [Fact]
+    public void Standard_kollidiert_nicht_mit_AltGr()
+    {
+        // Auch wenn gerade AltGr gedrückt wäre: Win+Umschalt+Q ist nie ein AltGr-Zeichen und löst den Scan aus
+        var recorder = new Recorder { AltGr = "@" };
+        using var hotkey = new GlobalHotkey(Hotkey.Default, recorder.Api);
+        using var pressed = new SemaphoreSlim(0);
+        hotkey.Pressed += (_, _) => pressed.Release();
+
+        PostHotkey(hotkey);
+
+        Assert.True(pressed.Wait(Wait));
+        Assert.Empty(recorder.Retyped);
+        Assert.False(AltGr.Applies(Hotkey.Default));
+    }
+
+    [Fact]
     public void AltGr_Zeichen_wird_nachgetippt_statt_Pressed_auszuloesen()
     {
         var recorder = new Recorder { AltGr = "@" };
-        using var hotkey = new GlobalHotkey(Hotkey.Default, recorder.Api);
+        using var hotkey = new GlobalHotkey(CtrlAltQ, recorder.Api);
         int pressed = 0;
         hotkey.Pressed += (_, _) => Interlocked.Increment(ref pressed);
 
@@ -320,7 +351,8 @@ public sealed class AltGrTests
     [Fact]
     public void Schutz_greift_nur_bei_Strg_und_Alt_ohne_Win()
     {
-        Assert.True(AltGr.Applies(Hotkey.Default));
+        Assert.True(AltGr.Applies(GlobalHotkeyTests.CtrlAltQ));
+        Assert.False(AltGr.Applies(Hotkey.Default)); // Win+Umschalt+Q
         Assert.True(AltGr.Applies(new Hotkey(true, true, true, false, 0x51)));
         Assert.False(AltGr.Applies(new Hotkey(true, true, false, true, 0x51)));
         Assert.False(AltGr.Applies(new Hotkey(true, false, false, false, 0x51)));
@@ -329,7 +361,7 @@ public sealed class AltGrTests
 
     [Fact]
     public void Ohne_gedrueckte_rechte_Alt_Taste_ist_es_ein_echtes_Kuerzel()
-        => Assert.Null(AltGr.TextIfHeld(Hotkey.Default)); // im Test drückt niemand AltGr
+        => Assert.Null(AltGr.TextIfHeld(GlobalHotkeyTests.CtrlAltQ)); // im Test drückt niemand AltGr
 }
 
 /// <summary>Echte Anmeldung bei Windows.</summary>
@@ -370,6 +402,41 @@ public sealed class GlobalHotkeySystemTests
 
         using var third = new GlobalHotkey(Rare);
         Assert.True(third.IsRegistered, third.Error);
+    }
+
+    [NonInteractiveFact]
+    public void Standard_Win_Umschalt_Q_scheitert_in_Sitzung_0_nur_am_fehlenden_Desktop()
+    {
+        // Windows nimmt die Anmeldung an (kein „ungültiges Kürzel“), lehnt sie hier aber wegen der unsichtbaren Fensterstation ab
+        using var hotkey = new GlobalHotkey(Hotkey.Default);
+
+        Assert.False(hotkey.IsRegistered);
+        Assert.Equal(
+            "Das Tastenkürzel Win+Umschalt+Q geht hier nicht – Lupe läuft ohne sichtbaren Desktop (z. B. als Dienst oder in Sitzung 0).",
+            hotkey.Error);
+    }
+
+    [InteractiveFact]
+    public void Standard_Win_Umschalt_Q_laesst_sich_bei_Windows_anmelden()
+    {
+        // Viele Win+Buchstabe-Kürzel gehören Windows selbst (Win+Umschalt+S: Ausschnitt) – Win+Umschalt+Q nicht.
+        using var hotkey = new GlobalHotkey(Hotkey.Default);
+        if (!hotkey.IsRegistered && LupeRunsInThisSession())
+        {
+            // Die echte Lupe des Benutzers hält das Kürzel gerade – dann ist „belegt“ die richtige Antwort
+            Assert.Equal("Win+Umschalt+Q ist schon von einem anderen Programm belegt.", hotkey.Error);
+            return;
+        }
+        Assert.True(hotkey.IsRegistered, hotkey.Error);
+        Assert.Null(hotkey.Error);
+    }
+
+    private static bool LupeRunsInThisSession()
+    {
+        int session = System.Diagnostics.Process.GetCurrentProcess().SessionId;
+        var running = System.Diagnostics.Process.GetProcessesByName("Lupe");
+        try { return running.Any(p => p.SessionId == session); }
+        finally { foreach (var p in running) p.Dispose(); }
     }
 
     [InteractiveFact]

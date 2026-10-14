@@ -62,9 +62,10 @@ internal static class DemoData
     }
 
     /// <summary>Letzte Bildschirm-Treffer für die Seite „Bildschirm“.</summary>
-    public static IEnumerable<CodeItem> ScreenResults(DateTimeOffset now, Func<string, Uri?> linkFor) =>
-        History(now).Where(e => e.Source == ScanSource.Bildschirm).Take(3)
-            .Select(e => new CodeItem(new DecodedCode { Text = e.Text, Format = e.Format }, e.Source, e.Time, linkFor(e.Text)));
+    /// <param name="entries">Der Verlauf der Demo – die Zeilen gehören zu seinen Einträgen (Kopieren wird dort vermerkt).</param>
+    public static IEnumerable<CodeItem> ScreenResults(DateTimeOffset now, Func<string, Uri?> linkFor, IReadOnlyList<HistoryEntry> entries) =>
+        entries.Where(e => e.Source == ScanSource.Bildschirm && e.Time <= now).Take(3)
+            .Select(e => new CodeItem(new DecodedCode { Text = e.Text, Format = e.Format }, e.Source, e.Time, linkFor(e.Text), entry: e));
 
     // ================= Bilder =================
 

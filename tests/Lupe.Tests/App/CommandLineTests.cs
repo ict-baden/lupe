@@ -20,6 +20,7 @@ public sealed class CommandLineTests
         Assert.Contains("FORMAT<Tab>Inhalt", r.Out);
         Assert.Contains("--screenshots", r.Out);
         Assert.Contains("Exitcodes", r.Out);
+        Assert.Contains("Win+Umschalt+Q", r.Out); // Standard-Tastenkürzel für den Bildschirm-Scan
         Assert.Equal("", r.Err);
     }
 

@@ -36,7 +36,7 @@
                                    Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}"/>
                     </Border>
                     <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                        <TextBlock x:Name="StatusTitle" Text="Strg+Alt+Q" Style="{StaticResource BodyStrong}" FontSize="13"
+                        <TextBlock x:Name="StatusTitle" Text="Win+Umschalt+Q" Style="{StaticResource BodyStrong}" FontSize="13"
                                    TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
                         <TextBlock x:Name="StatusDetail" Text="scannt einen Ausschnitt" Style="{StaticResource Caption}"
                                    TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>

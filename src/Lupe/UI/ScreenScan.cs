@@ -130,23 +130,31 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
             var items = codes.Select((c, i) => new CodeItem(c, ScanSource.Bildschirm, report.Time, state.LinkFor(c.Text), i + 1)).ToList();
             var window = new CodeChoiceWindow(items, ActionsText(typeTarget != 0), (centerX, centerY), monitor);
             var (result, code) = await window.ChooseAsync();
-            AddRecent(codes, report.Time);
             if (result == CodeChoiceWindow.Outcome.Cancelled || code is null)
             {
                 if (result == CodeChoiceWindow.Outcome.CopyAll)
                 {
-                    var error = state.Hits.CopyAll(codes);
+                    var error = state.Hits.CopyAll(report);
+                    AddRecent(report);
                     Finish(inWindow, typeTarget, monitor, null, $"{codes.Count} Codes zeilenweise kopiert", error is null ? ResultActions.Kopieren : ResultActions.Keine, error ?? "");
                 }
-                else ReturnFocus(typeTarget);
+                else
+                {
+                    AddRecent(report);
+                    ReturnFocus(typeTarget);
+                }
                 return;
             }
             chosen = code;
             outcome = await state.Hits.ChooseAsync(report, code, ScanSource.Bildschirm, typeTarget);
         }
-        else AddRecent(codes, report.Time);
+        AddRecent(report);
 
-        var item = new CodeItem(chosen, ScanSource.Bildschirm, report.Time, state.LinkFor(chosen.Text));
+        // Dieselbe Zeile wie oben in „Zuletzt vom Bildschirm“: Kopieren im Hinweis und in der Liste landen im selben Verlaufseintrag
+        var index = codes.Select((c, i) => ReferenceEquals(c, chosen) ? i : -1).FirstOrDefault(i => i >= 0, 0);
+        var item = index < state.ScreenResults.Count && ReferenceEquals(state.ScreenResults[index].Code, chosen)
+            ? state.ScreenResults[index]
+            : new CodeItem(chosen, ScanSource.Bildschirm, report.Time, state.LinkFor(chosen.Text), entry: report.EntryAt(index));
         var titleText = codes.Count > 1 ? $"{item.FormatLabel} gewählt ({codes.Count} gefunden)" : $"{item.FormatLabel} erkannt";
         Finish(inWindow, typeTarget, monitor, item, titleText, outcome.Done, string.Join(" ", outcome.Problems));
     }
@@ -183,10 +191,14 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
         };
     }
 
-    private void AddRecent(IReadOnlyList<DecodedCode> codes, DateTimeOffset time)
+    /// <summary>Die Codes des Scans oben in „Zuletzt vom Bildschirm“ – mit ihren Verlaufseinträgen (Kopieren dort wird vermerkt).</summary>
+    private void AddRecent(HitReport report)
     {
-        foreach (var code in codes.Reverse())
-            state.ScreenResults.Insert(0, new CodeItem(code, ScanSource.Bildschirm, time, state.LinkFor(code.Text)));
+        for (int i = report.Codes.Count - 1; i >= 0; i--)
+        {
+            var code = report.Codes[i];
+            state.ScreenResults.Insert(0, new CodeItem(code, ScanSource.Bildschirm, report.Time, state.LinkFor(code.Text), entry: report.EntryAt(i)));
+        }
         while (state.ScreenResults.Count > MaxRecent) state.ScreenResults.RemoveAt(state.ScreenResults.Count - 1);
     }
 

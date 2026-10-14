@@ -13,7 +13,7 @@ public sealed class RedirectionTests
     private static readonly byte[] Bom = [0xEF, 0xBB, 0xBF];
 
     /// <summary>Führt <c>"Lupe.exe" &lt;args&gt; &lt;umleitung&gt;</c> über cmd aus; Exitcode von Lupe.</summary>
-    private static int RunInCmd(string arguments, string redirection)
+    internal static int RunInCmd(string arguments, string redirection)
     {
         var exe = AppExe.Path ?? throw new InvalidOperationException("Lupe.exe nicht gefunden.");
         var info = new ProcessStartInfo("cmd.exe")

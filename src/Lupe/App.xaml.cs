@@ -56,6 +56,7 @@ public partial class App : Application
             _window?.ShowPage(slug);
         };
         state.SettingsChanged += OnSettingsChanged;
+        state.HotkeySuspendChanged += OnHotkeySuspendChanged;
         SessionEnding += (_, _) => Cleanup();
 
         // Infobereich nur für die echte Lupe – die Demo endet mit ihrem Fenster
@@ -66,7 +67,9 @@ public partial class App : Application
             _tray.OpenRequested += ShowMainWindow;
             _tray.ExitRequested += () => _ = ExitAsync();
         }
-        RegisterHotkey(state.Settings.ScreenHotkey);
+        // Die Demo meldet kein globales Kürzel an: Neben einer echten Lupe wäre es sonst „belegt“ (oder nähme es ihr weg).
+        // „Ausschnitt scannen“ geht dort über den Knopf.
+        if (_options.Mode != AppMode.Demo) RegisterHotkey(state.Settings.ScreenHotkey);
         _instance?.Listen(() => Dispatcher.BeginInvoke(ShowMainWindow));
 
         // Autostart: nur im Infobereich – außer es gibt keinen (dann wäre Lupe unsichtbar und unerreichbar)
@@ -97,14 +100,14 @@ public partial class App : Application
     private void OnWindowClosing(object? sender, CancelEventArgs e)
     {
         if (_exiting || _state is null) return;
-        if (_state.Preferences.KeepRunningInTray && _tray?.IsVisible == true)
+        if (_state.Settings.KeepRunningInTray && _tray?.IsVisible == true)
         {
             e.Cancel = true;
             _window?.Hide();
-            if (!_state.Preferences.TrayHintShown)
+            if (!_state.Settings.TrayHintShown)
             {
                 _tray.ShowBalloon("Lupe läuft weiter", $"{HotkeyLabel()} scannt einen Ausschnitt. Beenden über das Lupe-Symbol im Infobereich.");
-                _state.UpdatePreferences(p => p with { TrayHintShown = true });
+                _state.UpdateSettings(s => s with { TrayHintShown = true });
             }
             return;
         }
@@ -177,7 +180,21 @@ public partial class App : Application
 
     private void OnSettingsChanged(LupeSettings old, LupeSettings now)
     {
-        if (old.ScreenHotkey != now.ScreenHotkey) RegisterHotkey(now.ScreenHotkey);
+        // Während der Aufnahme bleibt es abgemeldet – angemeldet wird das neue beim Ende der Aufnahme
+        if (old.ScreenHotkey != now.ScreenHotkey && _options.Mode != AppMode.Demo && _state?.HotkeySuspended != true)
+            RegisterHotkey(now.ScreenHotkey);
+    }
+
+    /// <summary>Die Einstellungen nehmen ein neues Tastenkürzel auf: solange das alte abmelden, sonst startete es einen Scan.</summary>
+    private void OnHotkeySuspendChanged(bool suspend)
+    {
+        if (_state is null || _options.Mode == AppMode.Demo || _exiting) return;
+        if (suspend)
+        {
+            _hotkey?.Dispose();
+            _hotkey = null;
+        }
+        else if (_hotkey is null) RegisterHotkey(_state.Settings.ScreenHotkey);
     }
 
     private string HotkeyLabel() => _state is null ? "" : HotkeyLabel(_state.Settings.ScreenHotkey);

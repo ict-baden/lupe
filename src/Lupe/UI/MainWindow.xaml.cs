@@ -162,7 +162,17 @@ public partial class MainWindow : Window, IThemedWindow
         try { hotkey = HotkeyText.Format(_state.Settings.ScreenHotkey); }
         catch (Exception ex) when (ex is not OutOfMemoryException) { hotkey = "Tastenkürzel"; }
         StatusTitle.Text = hotkey;
-        if (_state.HotkeyError is { } error)
+        if (_state.HotkeyOffInDemo)
+        {
+            // Die Demo meldet kein globales Kürzel an (neben einer echten Lupe wäre es sonst belegt)
+            StatusDetail.Text = "in der Demo aus";
+            StatusCircle.SetResourceReference(Border.BackgroundProperty, "ControlFillColorDefaultBrush");
+            StatusGlyph.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorSecondaryBrush");
+            StatusGlyph.Text = "\uE765";
+            StatusCircle.ToolTip = "In der Demo ist das Tastenkürzel nicht angemeldet – „Ausschnitt scannen“ auf der Seite Bildschirm geht trotzdem.";
+            Nav.SetBadge(NavScreen, null);
+        }
+        else if (_state.HotkeyError is { } error)
         {
             StatusDetail.Text = "belegt – siehe Einstellungen";
             StatusCircle.SetResourceReference(Border.BackgroundProperty, "SystemFillColorCautionBackgroundBrush");

@@ -5,6 +5,22 @@
     <ScrollViewer x:Name="Scroller" Style="{StaticResource PageScroll}">
         <StackPanel MaxWidth="1000" HorizontalAlignment="Stretch">
 
+            <!-- Einstellungsdatei kaputt, gesperrt oder Änderung nicht gespeichert -->
+            <Border x:Name="ProblemNotice" Style="{StaticResource Card}" Visibility="Collapsed" Margin="0,0,0,12"
+                    Background="{DynamicResource SystemFillColorCautionBackgroundBrush}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="&#xE7BA;" Style="{StaticResource Icon}" Foreground="{DynamicResource SystemFillColorCautionBrush}" Margin="0,0,14,0"/>
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Problem mit der Einstellungsdatei" Style="{StaticResource BodyStrong}"/>
+                        <TextBlock x:Name="ProblemText" Style="{StaticResource Caption}" FontSize="13" Margin="0,2,0,0" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
             <!-- ========== Aktionen ========== -->
             <TextBlock Text="Bei einem Treffer" Style="{StaticResource SectionText}" Margin="2,0,0,8"/>
             <ui:SettingCard Glyph="&#xE722;" Header="Kamera, Datei und Zwischenablage"
@@ -38,14 +54,29 @@
                 <StackPanel Orientation="Horizontal">
                     <TextBox x:Name="HotkeyBox" Width="200" IsReadOnly="True" TextAlignment="Center" Cursor="Hand"
                              PreviewKeyDown="HotkeyBox_PreviewKeyDown" GotKeyboardFocus="HotkeyBox_GotFocus" LostKeyboardFocus="HotkeyBox_LostFocus"
+                             PreviewMouseLeftButtonDown="HotkeyBox_MouseDown"
                              AutomationProperties.Name="Tastenkürzel für den Bildschirm-Scan"/>
-                    <Button Content="Standard" Margin="8,0,0,0" Click="HotkeyDefault_Click" ToolTip="Strg+Alt+Q"/>
+                    <Button Content="Standard" Margin="8,0,0,0" Click="HotkeyDefault_Click" ToolTip="Win+Umschalt+Q"/>
                 </StackPanel>
             </ui:SettingCard>
-            <StackPanel x:Name="HotkeyState" Orientation="Horizontal" Margin="18,2,0,4">
-                <TextBlock x:Name="HotkeyStateIcon" Text="&#xE73E;" Style="{StaticResource Icon}" FontSize="12" Margin="0,0,8,0"/>
-                <TextBlock x:Name="HotkeyStateText" Style="{StaticResource Caption}" FontSize="13"/>
-            </StackPanel>
+            <Grid x:Name="HotkeyState" Margin="18,2,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="HotkeyStateIcon" Text="&#xE73E;" Style="{StaticResource Icon}" FontSize="12" Margin="0,3,8,0" VerticalAlignment="Top"/>
+                <TextBlock x:Name="HotkeyStateText" Grid.Column="1" Style="{StaticResource Caption}" FontSize="13" TextWrapping="Wrap"/>
+            </Grid>
+            <!-- Strg+Alt+…: auf deutschen Tastaturen dieselben Tasten wie AltGr -->
+            <Grid x:Name="AltGrHint" Margin="18,2,0,4" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="&#xE7BA;" Style="{StaticResource Icon}" FontSize="12" Margin="0,3,8,0" VerticalAlignment="Top"
+                           Foreground="{DynamicResource SystemFillColorCautionBrush}"/>
+                <TextBlock x:Name="AltGrHintText" Grid.Column="1" Style="{StaticResource Caption}" FontSize="13" TextWrapping="Wrap"/>
+            </Grid>
 
             <!-- ========== Link-Regeln ========== -->
             <TextBlock Text="Link-Regeln" Style="{StaticResource SectionText}"/>
@@ -156,10 +187,10 @@
             <!-- ========== Verlauf ========== -->
             <TextBlock Text="Verlauf" Style="{StaticResource SectionText}"/>
             <ui:SettingCard Glyph="&#xE81C;" Header="Verlauf speichern" x:Name="KeepCard"
-                            Description="Nur für Sie, unter %LocalAppData%\Lupe\verlauf.json. Aus: nur bis zum Beenden – die gespeicherte Datei wird gelöscht.">
+                            Description="Nur für Sie, unter %LocalAppData%\Lupe\verlauf.json. Aus: nur bis zum Beenden – die gespeicherte Datei wird nach einer Rückfrage gelöscht.">
                 <CheckBox x:Name="KeepToggle" Style="{StaticResource ToggleSwitch}" Click="Toggle_Click" AutomationProperties.Name="Verlauf speichern"/>
             </ui:SettingCard>
-            <ui:SettingCard Glyph="&#xE8FD;" Header="Höchstens" Description="Ältere Einträge fallen weg (10 bis 100 000).">
+            <ui:SettingCard Glyph="&#xE8FD;" Header="Höchstens" Description="Ältere Einträge fallen weg (10 bis 10.000).">
                 <StackPanel Orientation="Horizontal">
                     <TextBox x:Name="LimitBox" Width="110" TextAlignment="Right" LostKeyboardFocus="Limit_LostFocus" KeyDown="Limit_KeyDown"
                              AutomationProperties.Name="Höchstzahl der Verlaufseinträge"/>

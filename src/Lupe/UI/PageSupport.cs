@@ -102,24 +102,46 @@ internal sealed class Debouncer
 /// <summary>Kopieren und Link öffnen aus Ergebniszeilen – mit Meldung statt Ausnahme.</summary>
 internal static class CodeActions
 {
-    /// <summary>Bindet <see cref="CodeCommands"/> an ein Element (Seite oder Fenster).</summary>
+    /// <summary>
+    /// Bindet <see cref="CodeCommands"/> an ein Element (Seite oder Fenster). Was aus einer Ergebniszeile kopiert oder
+    /// geöffnet wird, vermerkt der Verlaufseintrag des Treffers (<see cref="Core.Model.HistoryEntry.ActionsDone"/>).
+    /// </summary>
     public static void Bind(UIElement target, AppState state)
     {
         target.CommandBindings.Add(new CommandBinding(CodeCommands.Copy,
-            (_, e) => { if (e.Parameter is CodeItem item) Copy(state, item.Text); }));
+            (_, e) => { if (e.Parameter is CodeItem item) Copy(state, item); }));
         target.CommandBindings.Add(new CommandBinding(CodeCommands.OpenLink,
-            (_, e) => { if (e.Parameter is CodeItem { Link: { } link }) Open(state, link); },
+            (_, e) => { if (e.Parameter is CodeItem { Link: not null } item) Open(state, item); },
             (_, e) => e.CanExecute = e.Parameter is CodeItem { HasLink: true }));
     }
 
-    public static void Copy(AppState state, string text)
+    public static void Copy(AppState state, CodeItem item)
     {
-        if (Shell.Copy(text) is { } error) state.Report(NoticeKind.Error, error);
-        else state.Report(NoticeKind.Success, $"Kopiert: {Labels.OneLine(text, 90)}");
+        if (Copy(state, item.Text)) state.Hits.Record(item, Core.Model.ResultActions.Kopieren);
     }
 
-    public static void Open(AppState state, Uri link)
+    public static void Open(AppState state, CodeItem item)
     {
-        if (Shell.OpenLink(link) is { } error) state.Report(NoticeKind.Warning, error);
+        if (item.Link is { } link && Open(state, link)) state.Hits.Record(item, Core.Model.ResultActions.LinkOeffnen);
+    }
+
+    /// <summary>Kopiert und meldet es; false bei einem Fehler (dann mit Fehlermeldung).</summary>
+    public static bool Copy(AppState state, string text)
+    {
+        if (Shell.Copy(text) is { } error)
+        {
+            state.Report(NoticeKind.Error, error);
+            return false;
+        }
+        state.Report(NoticeKind.Success, $"Kopiert: {Labels.OneLine(text, 90)}");
+        return true;
+    }
+
+    /// <summary>Öffnet den Link im Browser; false bei einem Fehler (dann mit Hinweis).</summary>
+    public static bool Open(AppState state, Uri link)
+    {
+        if (Shell.OpenLink(link) is not { } error) return true;
+        state.Report(NoticeKind.Warning, error);
+        return false;
     }
 }

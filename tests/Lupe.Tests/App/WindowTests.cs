@@ -51,6 +51,32 @@ public sealed class WindowTests
         }
     }
 
+    [AppInteractiveFact]
+    public void Demo_meldet_kein_globales_Tastenkuerzel_an()
+    {
+        // Neben einer echten Lupe wäre das Kürzel sonst „belegt“ – oder die Demo nähme es ihr weg
+        using var process = StartDemo();
+        try
+        {
+            WaitForWindow(process, "Lupe – Demo");
+            using var hotkey = new Core.Input.GlobalHotkey(Core.Model.Hotkey.Default);
+            if (!hotkey.IsRegistered)
+            {
+                // Hält es eine andere Lupe dieser Sitzung (nicht die Demo), lässt sich das hier nicht prüfen
+                int session = process.SessionId;
+                var running = Process.GetProcessesByName("Lupe");
+                bool other;
+                try { other = running.Any(p => p.Id != process.Id && p.SessionId == session); }
+                finally { foreach (var p in running) p.Dispose(); }
+                Assert.True(other, $"Die Demo hält das Tastenkürzel: {hotkey.Error}");
+            }
+        }
+        finally
+        {
+            Kill(process);
+        }
+    }
+
     private static Process StartDemo()
     {
         var exe = AppExe.Path ?? throw new InvalidOperationException("Lupe.exe nicht gefunden.");
@@ -81,5 +107,16 @@ public sealed class WindowTests
         catch (InvalidOperationException)
         {
         }
+    }
+}
+
+/// <summary>Braucht Lupe.exe und einen sichtbaren Desktop (Tastenkürzel anmelden) – in Sitzung 0 übersprungen.</summary>
+public sealed class AppInteractiveFactAttribute : FactAttribute
+{
+    public AppInteractiveFactAttribute()
+    {
+        if (AppExe.Path is null) Skip = "Lupe.exe ist nicht gebaut – vorher dotnet build Lupe.sln.";
+        else if (!AppExe.HasCore) Skip = "Die Core-Bausteine sind in diesem Zweig noch Stubs – erst nach dem Zusammenführen prüfbar.";
+        else if (Input.InteractiveDesktop.SkipReason is { } reason) Skip = reason;
     }
 }
