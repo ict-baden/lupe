@@ -374,10 +374,15 @@ public sealed class BarcodeDecoderTests
     public void Abbruch_waehrend_der_Erkennung_greift_schnell()
     {
         var img = DecodingImages.Busy(3840, 2160, seed: 8);
-        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(40));
+        using var cts = new CancellationTokenSource();
+        // Eigener Thread statt CancelAfter: Dessen Timer läuft über den Threadpool, und den belegen die Erkennung und parallel
+        // laufende Tests auf GitHub-Runnern mit wenigen Kernen – dort kam der Abbruch erst, als die Erkennung schon fertig war.
+        var canceller = new Thread(() => { Thread.Sleep(40); cts.Cancel(); }) { IsBackground = true };
         var sw = Stopwatch.StartNew();
+        canceller.Start();
 
         Assert.ThrowsAny<OperationCanceledException>(() => Decoder.Decode(img, cts.Token));
+        canceller.Join();
 
         Assert.True(sw.ElapsedMilliseconds < 1000, $"Abbruch erst nach {sw.ElapsedMilliseconds} ms");
         // Die Instanz bleibt benutzbar
