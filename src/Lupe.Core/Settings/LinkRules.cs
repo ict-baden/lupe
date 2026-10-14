@@ -91,17 +91,26 @@ public static class LinkRules
     {
         if (!StartsWithHttpScheme(candidate) || HasBadCharacters(candidate)) return null;
         if (!Uri.TryCreate(candidate, UriKind.Absolute, out var uri)) return null;
-        if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) return null;
-        if (uri.IsFile || uri.IsUnc || string.IsNullOrEmpty(uri.Host)) return null;
+        try
+        {
+            if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps) return null;
+            if (uri.IsFile || uri.IsUnc || string.IsNullOrEmpty(uri.Host)) return null;
 
-        var absolute = uri.AbsoluteUri;
-        if (HasUserInfo(absolute)) return null;
-        // Die normalisierte Form ist das, was der Browser bekommt – sie muss für sich wieder genauso gelesen werden
-        if (!Uri.TryCreate(absolute, UriKind.Absolute, out var again)
-            || !string.Equals(again.IdnHost, uri.IdnHost, StringComparison.OrdinalIgnoreCase)
-            || again.Port != uri.Port || again.Scheme != uri.Scheme)
+            var absolute = uri.AbsoluteUri;
+            if (HasUserInfo(absolute)) return null;
+            // Die normalisierte Form ist das, was der Browser bekommt – sie muss für sich wieder genauso gelesen werden.
+            // IdnHost wirft bei Zeichen, die nach IDN-Regeln im Hostnamen verboten sind (z. B. „／“ oder „﹫“) –
+            // solche Links sind ohnehin nicht sicher und werden abgelehnt.
+            if (!Uri.TryCreate(absolute, UriKind.Absolute, out var again)
+                || !string.Equals(again.IdnHost, uri.IdnHost, StringComparison.OrdinalIgnoreCase)
+                || again.Port != uri.Port || again.Scheme != uri.Scheme)
+                return null;
+            return uri;
+        }
+        catch (Exception ex) when (ex is UriFormatException or InvalidOperationException or ArgumentException)
+        {
             return null;
-        return uri;
+        }
     }
 
     private static bool IsMatch(string pattern, string code)

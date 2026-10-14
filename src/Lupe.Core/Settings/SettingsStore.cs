@@ -89,10 +89,15 @@ public static class SettingsStore
 
         try
         {
-            var invalid = new List<string>();
-            var settings = Parse(json, invalid);
-            if (invalid.Count > 0)
-                problem = $"Einige Einstellungen in „{file}“ waren ungültig und wurden durch Standardwerte ersetzt: {string.Join(", ", invalid)}.";
+            var replaced = new List<string>();
+            var filtered = new List<string>();
+            var settings = Parse(json, replaced, filtered);
+            if (replaced.Count > 0 || filtered.Count > 0)
+            {
+                problem = $"Einige Einstellungen in „{file}“ waren ungültig.";
+                if (replaced.Count > 0) problem += $" Standardwert verwendet für: {DisplayNames(replaced)}.";
+                if (filtered.Count > 0) problem += $" Unbrauchbare Einträge entfernt aus: {DisplayNames(filtered)}.";
+            }
             return settings;
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException or NotSupportedException or ArgumentException or FormatException)
@@ -145,7 +150,7 @@ public static class SettingsStore
     /// Bringt alle Werte in gültige Bereiche: unbekannte Aktions-Bits weg, Suffix nur "", "Enter" oder "Tab", Link-Regeln
     /// ohne Muster weg (Präfix getrimmt; Regeln mit ungültigem Regex bleiben, damit man sie in der Tabelle sieht und
     /// korrigiert – angewendet werden sie nicht), Formate in ZXing-Schreibweise (unbekannte und doppelte weg),
-    /// Tastenkürzel ohne gültige Taste → Standard, Zahlen begrenzt, null-Texte → "".
+    /// Tastenkürzel ohne gültige Taste oder Schreibtaste ohne Strg/Alt/Win → Standard, Zahlen begrenzt, null-Texte → "".
     /// </summary>
     public static LupeSettings Normalize(LupeSettings settings)
     {
@@ -184,7 +189,7 @@ public static class SettingsStore
     /// Legt die Datei feldweise über die Standardwerte: Jedes bekannte Feld wird nur übernommen, wenn es sich in
     /// den Zieltyp lesen lässt; bei Listen wird elementweise gefiltert.
     /// </summary>
-    private static LupeSettings Parse(ReadOnlySpan<byte> json, List<string> invalid)
+    private static LupeSettings Parse(ReadOnlySpan<byte> json, List<string> replaced, List<string> filtered)
     {
         var root = JsonNode.Parse(json, NodeOptions, DocumentOptions);
         if (root is not JsonObject file)
@@ -202,7 +207,7 @@ public static class SettingsStore
                 {
                     if (CanRead(item, elementType)) kept.Add(item?.DeepClone());
                 }
-                if (kept.Count != array.Count) invalid.Add(property.Name);
+                if (kept.Count != array.Count) filtered.Add(property.Name);
                 merged[property.Name] = kept;
             }
             else if (CanRead(value, property.PropertyType))
@@ -211,13 +216,33 @@ public static class SettingsStore
             }
             else
             {
-                invalid.Add(property.Name);
+                replaced.Add(property.Name);
             }
         }
 
         var settings = merged.Deserialize<LupeSettings>(Json) ?? new LupeSettings();
         return Normalize(settings);
     }
+
+    /// <summary>Deutsche Bezeichnungen der Felder für Hinweise (wie in den Einstellungen der App).</summary>
+    private static readonly Dictionary<string, string> FieldNames = new(StringComparer.Ordinal)
+    {
+        [nameof(LupeSettings.Actions)] = "Aktionen (Kamera/Datei)",
+        [nameof(LupeSettings.ScreenActions)] = "Aktionen (Bildschirm)",
+        [nameof(LupeSettings.TypeSuffix)] = "Taste nach dem Eintippen",
+        [nameof(LupeSettings.LinkRules)] = "Link-Regeln",
+        [nameof(LupeSettings.Formats)] = "Formate",
+        [nameof(LupeSettings.ScreenHotkey)] = "Tastenkürzel",
+        [nameof(LupeSettings.Sound)] = "Ton",
+        [nameof(LupeSettings.AimHelp)] = "Zielhilfe",
+        [nameof(LupeSettings.RepeatSuppressMs)] = "Wiederholungssperre",
+        [nameof(LupeSettings.Camera)] = "Kamera",
+        [nameof(LupeSettings.KeepHistory)] = "Verlauf speichern",
+        [nameof(LupeSettings.HistoryLimit)] = "Größe des Verlaufs",
+    };
+
+    private static string DisplayNames(IEnumerable<string> properties) =>
+        string.Join(", ", properties.Select(p => FieldNames.GetValueOrDefault(p, p)));
 
     private static bool CanRead(JsonNode? value, Type type)
     {
@@ -280,10 +305,20 @@ public static class SettingsStore
         return result.ToArray();
     }
 
-    /// <summary>Eine echte Taste (keine Maustaste, keine reine Umschalt-/Strg-/Alt-/Windows-Taste) im Bereich der Virtual-Key-Codes.</summary>
-    private static bool IsUsableHotkey(Hotkey? hotkey) => hotkey is not null
-        && hotkey.Key is >= 0x08 and <= 0xFE
-        && hotkey.Key is not (0x10 or 0x11 or 0x12 or 0x5B or 0x5C) and not (>= 0xA0 and <= 0xA5);
+    /// <summary>
+    /// Eine echte Taste (keine Maustaste, keine reine Umschalt-/Strg-/Alt-/Windows-Taste) im Bereich der Virtual-Key-Codes.
+    /// Ohne Strg, Alt oder Win (Umschalt allein zählt nicht) taugen nur F1–F24, Druck und Pause: Ein systemweites Kürzel
+    /// auf „A“, „Umschalt+A“, Enter oder einer Pfeiltaste finge diese Taste in allen Programmen ab – Tippen ginge nicht mehr.
+    /// </summary>
+    private static bool IsUsableHotkey(Hotkey? hotkey)
+    {
+        if (hotkey is null || hotkey.Key is < 0x08 or > 0xFE) return false;
+        if (hotkey.Key is 0x10 or 0x11 or 0x12 or 0x5B or 0x5C or (>= 0xA0 and <= 0xA5)) return false;
+        return hotkey.Ctrl || hotkey.Alt || hotkey.Win || IsStandaloneKey(hotkey.Key);
+    }
+
+    /// <summary>F1–F24 (0x70–0x87), Druck (0x2C) und Pause (0x13) – Tasten, die beim Schreiben nicht gebraucht werden.</summary>
+    private static bool IsStandaloneKey(int key) => key is (>= 0x70 and <= 0x87) or 0x2C or 0x13;
 
     internal static ReadOnlySpan<byte> SkipUtf8Bom(byte[] bytes) =>
         bytes.AsSpan().StartsWith((ReadOnlySpan<byte>)[0xEF, 0xBB, 0xBF]) ? bytes.AsSpan(3) : bytes;

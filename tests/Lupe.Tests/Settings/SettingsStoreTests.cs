@@ -249,9 +249,29 @@ public sealed class SettingsStoreTests : IDisposable
         Assert.Equal("", settings.Camera);
         Assert.False(settings.KeepHistory);
         Assert.NotNull(problem);
-        foreach (var name in new[] { "Sound", "RepeatSuppressMs", "Actions", "ScreenHotkey", "Camera" })
+        foreach (var name in new[] { "Ton", "Wiederholungssperre", "Aktionen (Kamera/Datei)", "Tastenkürzel", "Kamera" })
             Assert.Contains(name, problem);
-        Assert.DoesNotContain("AimHelp", problem);
+        Assert.DoesNotContain("Zielhilfe", problem);
+        Assert.DoesNotContain("Aktionen (Bildschirm)", problem);
+        Assert.StartsWith($"Einige Einstellungen in „{FilePath}“ waren ungültig. Standardwert verwendet für: ", problem);
+    }
+
+    [Fact]
+    public void Hinweis_nennt_jedes_Feld_mit_deutschem_Namen()
+    {
+        // [[]] passt zu keinem Feld: Einzelwerte fallen auf den Standard, in Listen fliegt das Element raus
+        var properties = typeof(LupeSettings).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var json = "{" + string.Join(",", properties.Select(p => $"\"{p.Name}\": [[]]")) + "}";
+
+        var settings = LoadJson(json, out var problem);
+
+        SettingsAssert.Equal(new LupeSettings { LinkRules = [], Formats = [] }, settings);
+        Assert.NotNull(problem);
+        var listed = problem[(problem.IndexOf("ungültig.", StringComparison.Ordinal) + 9)..];
+        foreach (var property in properties)
+            Assert.DoesNotContain(property.Name, listed);
+        Assert.Contains("Standardwert verwendet für: Aktionen (Kamera/Datei), Aktionen (Bildschirm), Taste nach dem Eintippen, ", listed);
+        Assert.EndsWith("Unbrauchbare Einträge entfernt aus: Link-Regeln, Formate.", listed);
     }
 
     [Fact]
@@ -270,7 +290,8 @@ public sealed class SettingsStoreTests : IDisposable
             """, out var problem);
 
         Assert.Equal([new LinkRule("^eins$", "https://example.com/?q="), new LinkRule("^drei$", "", false)], settings.LinkRules);
-        Assert.Contains("LinkRules", problem);
+        Assert.EndsWith(" Unbrauchbare Einträge entfernt aus: Link-Regeln.", problem);
+        Assert.DoesNotContain("Standardwert", problem);
     }
 
     [Fact]
@@ -359,7 +380,7 @@ public sealed class SettingsStoreTests : IDisposable
 
         Assert.Equal(1000, settings.HistoryLimit);
         Assert.False(settings.Sound);
-        Assert.Contains("HistoryLimit", problem);
+        Assert.Contains("Größe des Verlaufs", problem);
     }
 
     [Theory]
@@ -406,9 +427,37 @@ public sealed class SettingsStoreTests : IDisposable
     }
 
     [Theory]
+    [InlineData(0x41, false)]  // A allein
+    [InlineData(0x41, true)]   // Umschalt+A (= großes A)
+    [InlineData(0x35, false)]  // 5
+    [InlineData(0x20, false)]  // Leertaste
+    [InlineData(0x0D, false)]  // Enter
+    [InlineData(0x09, true)]   // Umschalt+Tab
+    [InlineData(0x08, false)]  // Rücktaste
+    [InlineData(0x1B, false)]  // Esc
+    [InlineData(0x25, false)]  // Pfeil links
+    [InlineData(0x2E, false)]  // Entf
+    [InlineData(0x60, false)]  // Ziffernblock 0
+    [InlineData(0xBE, false)]  // Punkt
+    [InlineData(0xE2, true)]   // < > auf deutschen Tastaturen
+    public void Schreibtaste_ohne_Strg_Alt_Win_wird_Standard(int key, bool shift)
+    {
+        // Systemweit angemeldet, würde das Kürzel die Taste in allen Programmen verschlucken
+        var hotkey = new Hotkey(Ctrl: false, Alt: false, Shift: shift, Win: false, Key: key);
+
+        Assert.Equal(Hotkey.Default, SettingsStore.Normalize(new LupeSettings { ScreenHotkey = hotkey }).ScreenHotkey);
+        Assert.Equal(Hotkey.Default, LoadJson($$"""{ "ScreenHotkey": {{JsonSerializer.Serialize(hotkey)}} }""", out _).ScreenHotkey);
+    }
+
+    [Theory]
     [InlineData(0x78, true, false, true, false)]  // Strg+Umschalt+F9
     [InlineData(0x2C, false, false, false, false)] // Druck allein
+    [InlineData(0x13, false, false, false, false)] // Pause allein
+    [InlineData(0x70, false, false, false, false)] // F1 allein
+    [InlineData(0x87, false, false, true, false)]  // Umschalt+F24
     [InlineData(0x53, false, false, true, true)]   // Win+Umschalt+S
+    [InlineData(0x41, false, true, false, false)]  // Alt+A
+    [InlineData(0x20, true, false, false, false)]  // Strg+Leertaste
     public void Brauchbares_Tastenkuerzel_bleibt(int key, bool ctrl, bool alt, bool shift, bool win)
     {
         var hotkey = new Hotkey(ctrl, alt, shift, win, key);

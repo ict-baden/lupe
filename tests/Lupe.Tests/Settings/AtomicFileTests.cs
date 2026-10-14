@@ -126,12 +126,29 @@ public sealed class AtomicFileTests : IDisposable
         Assert.True(FileProblems.IsExpected(ex));
     }
 
-    [Fact]
-    public void Voller_Datentraeger_wird_erkannt()
+    [Theory]
+    [InlineData(0x80070070, "Kein Platz mehr auf dem Datenträger")]
+    [InlineData(0x80070027, "Kein Platz mehr auf dem Datenträger")]
+    [InlineData(0x80070013, "schreibgeschützt")]
+    [InlineData(0x80070015, "nicht bereit")]
+    [InlineData(0x80070035, "Netzwerkpfad")]
+    [InlineData(0x80070043, "Netzwerkpfad")]
+    [InlineData(0x8007007B, "Ungültiger Datei- oder Ordnername")]
+    [InlineData(0x80070020, "anderen Programm")]
+    [InlineData(0x80070021, "anderen Programm")]
+    public void Typische_Systemfehler_werden_deutsch_beschrieben(uint hresult, string expected)
     {
-        var ex = new IOException("disk full", unchecked((int)0x80070070));
+        var ex = new IOException("english system text", unchecked((int)hresult));
 
-        Assert.Equal("Kein Platz mehr auf dem Datenträger", FileProblems.Describe(ex));
+        Assert.Contains(expected, FileProblems.Describe(ex));
+        Assert.True(FileProblems.IsExpected(ex));
+    }
+
+    [Fact]
+    public void Unbekannter_Systemfehler_behaelt_die_Meldung_des_Systems()
+    {
+        Assert.Equal("etwas Seltenes", FileProblems.Describe(new IOException("etwas Seltenes", unchecked((int)0x80070299))));
+        Assert.Contains("kürzer", FileProblems.Describe(new EndOfStreamException()));
     }
 
     [Fact]

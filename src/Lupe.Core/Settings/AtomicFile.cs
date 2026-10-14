@@ -103,6 +103,11 @@ internal static class FileProblems
     private const int ErrorLockViolation = unchecked((int)0x80070021);
     private const int ErrorHandleDiskFull = unchecked((int)0x80070027);
     private const int ErrorDiskFull = unchecked((int)0x80070070);
+    private const int ErrorWriteProtect = unchecked((int)0x80070013);
+    private const int ErrorNotReady = unchecked((int)0x80070015);
+    private const int ErrorBadNetPath = unchecked((int)0x80070035);
+    private const int ErrorBadNetName = unchecked((int)0x80070043);
+    private const int ErrorInvalidName = unchecked((int)0x8007007B);
 
     /// <summary>Fehler, mit denen man beim Lesen/Schreiben von Dateien rechnen muss (keine Programmierfehler).</summary>
     public static bool IsExpected(Exception ex) =>
@@ -121,7 +126,14 @@ internal static class FileProblems
             "Zugriff verweigert – keine Berechtigung, Datei schreibgeschützt oder in einem anderen Programm geöffnet",
         IOException io when IsSharingViolation(io) => "Die Datei ist in einem anderen Programm geöffnet",
         IOException io when io.HResult is ErrorDiskFull or ErrorHandleDiskFull => "Kein Platz mehr auf dem Datenträger",
+        // Typisch beim Export auf USB-Sticks und Netzlaufwerke
+        IOException io when io.HResult is ErrorWriteProtect => "Der Datenträger ist schreibgeschützt",
+        IOException io when io.HResult is ErrorNotReady => "Das Laufwerk ist nicht bereit (z. B. USB-Stick abgezogen)",
+        IOException io when io.HResult is ErrorBadNetPath or ErrorBadNetName => "Netzwerkpfad nicht erreichbar",
+        IOException io when io.HResult is ErrorInvalidName => "Ungültiger Datei- oder Ordnername",
+        EndOfStreamException => "Die Datei wurde beim Lesen kürzer – vermutlich schreibt gerade ein anderes Programm",
         NotSupportedException => "Ungültiger Pfad",
+        // Seltene Fälle: die Meldung des Systems (kann englisch sein) ist besser als gar keine
         _ => ex.Message,
     };
 }

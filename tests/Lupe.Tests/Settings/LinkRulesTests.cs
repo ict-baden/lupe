@@ -188,6 +188,33 @@ public sealed class LinkRulesTests
     }
 
     [Theory]
+    [InlineData("https://good.example\uFF0Fevil.example/")] // Vollbreiten-Schrägstrich ／ im Host
+    [InlineData("https://good.example\uFE6Bevil.example/")] // kleines ﹫ im Host
+    [InlineData("https://evil.example\uFF03.good.example/")] // Vollbreiten-Raute ＃ im Host
+    [InlineData("https://evil.example\uFF1F.good.example/")] // Vollbreiten-Fragezeichen ？ im Host
+    public void Nach_IDN_Regeln_verbotene_Zeichen_im_Host_ergeben_null_statt_Ausnahme(string text)
+    {
+        // Mit der Standardregel passt so ein Code (\S+); .NET wirft beim Umrechnen des Hosts eine UriFormatException
+        Assert.Null(LinkRules.Match(Defaults, text));
+        Assert.Null(LinkRules.Match([new LinkRule(".*")], text));
+        Assert.Null(LinkRules.Match([new LinkRule(".*", "https://")], text["https://".Length..]));
+        Assert.Null(LinkRules.Match([new LinkRule(".*", "http://")], text["https://".Length..]));
+        // Danach geht es mit der nächsten Regel weiter
+        Assert.StartsWith("https://example.com/?q=https%3A%2F%2F", Link(text, new LinkRule(".*"), new LinkRule(".*", "https://example.com/?q=")));
+    }
+
+    [Theory]
+    [InlineData("https://good.example\uFF0Fx/")]
+    [InlineData("https://a\uFE6Bb/?q=")]
+    public void Praefix_mit_verbotenem_Zeichen_im_Host_meldet_sich_statt_zu_werfen(string prefix)
+    {
+        var rule = new LinkRule(".*", prefix);
+
+        Assert.Equal("Das Präfix ist kein gültiger Link-Anfang.", LinkRules.Validate(rule));
+        Assert.Null(LinkRules.Match([rule], "123"));
+    }
+
+    [Theory]
     [InlineData("javascript:")]
     [InlineData("file:///C:/")]
     [InlineData(@"\\server\")]
