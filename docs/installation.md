@@ -21,15 +21,23 @@ Which file to download, what it needs, how to let Lupe use the camera, and how t
 
 ## Downloads
 
-All files are attached to the pre-release [**latest**](https://github.com/ict-baden/lupe/releases/tag/latest), which GitHub Actions rebuilds on every push to `main`. Tagged versions (`v1.2.3`) get their own release with the same files.
+All files are attached to the pre-release [**latest**](https://github.com/ict-baden/lupe/releases/tag/latest), which GitHub Actions updates on every push to `main`. The file names stay the same, so these links always deliver the newest build:
 
 | File | Runtime | Use it for |
 |---|---|---|
-| `Lupe-<version>-x64.msi` | included | Installing for all users of a PC, also through software distribution (Intune, GPO). |
-| `Lupe.exe` | included | Running without installation, e.g. from a user folder or a USB stick. |
-| `Lupe-<version>-win-x64-framework.zip` | .NET 10 Desktop Runtime | A small download where the runtime is already installed. |
+| [`Lupe-x64.msi`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-x64.msi) | included | Installing for all users of a PC, also through software distribution (Intune, GPO). |
+| [`Lupe.exe`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe.exe) | included | Running without installation, e.g. from a user folder or a USB stick. |
+| [`Lupe-win-x64-framework.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-win-x64-framework.zip) | .NET 10 Desktop Runtime | A small download where the runtime is already installed. |
 
-Builds from `main` carry versions like `0.1.0-ci.12` (12 = the number of the build run); releases from a tag carry the tag's version.
+Builds from `main` carry versions like `0.1.0-ci.12` (12 = the number of the build run); the release title names the version of the current files. Tagged versions (`v1.2.3`) get their own release, where the MSI and the ZIP carry the version in their names (e.g. `Lupe-1.2.3-x64.msi`) and `Lupe.exe` keeps its name.
+
+> [!IMPORTANT]
+> **The repository is private.** Downloads need a GitHub login with access to the organisation `ict-baden`; without it, every link ends on a GitHub 404 page. The links only work in a signed-in browser – `curl` or `Invoke-WebRequest` get a 404 even with a token. For scripted downloads, e.g. to package the MSI for Intune, use the [GitHub CLI](https://cli.github.com/):
+>
+> ```powershell
+> gh auth login                                                       # once
+> gh release download latest -R ict-baden/lupe -p Lupe-x64.msi --clobber
+> ```
 
 ## MSI installer
 
@@ -40,10 +48,20 @@ The MSI installs per machine:
 - **no** autostart, no service, no scheduled task. Starting with Windows is a per-user choice inside the app – see [Start with Windows](#start-with-windows).
 
 ```powershell
-# As administrator. The file name contains the version of the build.
-msiexec /i Lupe-0.1.0-ci.12-x64.msi            # interactive
-msiexec /i Lupe-0.1.0-ci.12-x64.msi /qn        # silent, e.g. for software distribution
-msiexec /x Lupe-0.1.0-ci.12-x64.msi /qn        # uninstall
+# As administrator. msiexec returns at once when started directly from PowerShell –
+# Start-Process -Wait waits for it, .ExitCode is 0 on success (3010: restart required).
+Start-Process msiexec.exe '/i Lupe-x64.msi' -Wait                              # interactive
+(Start-Process msiexec.exe '/i Lupe-x64.msi /qn' -Wait -PassThru).ExitCode     # silent, e.g. for software distribution
+```
+
+To uninstall silently, address the installed product rather than an MSI file: every build has its own product code, so `msiexec /x` with a newer download than the installed one fails with error 1605. Lupe's upgrade code stays the same for all builds, and Windows Installer finds the installed product by it – from 32-bit and 64-bit PowerShell alike (Intune runs scripts 32-bit by default):
+
+```powershell
+# As administrator
+$installer = New-Object -ComObject WindowsInstaller.Installer
+foreach ($product in $installer.RelatedProducts('{B5E63BC4-65DB-46E9-B6B1-5A3167B381D1}')) {
+    (Start-Process msiexec.exe "/x $product /qn" -Wait -PassThru).ExitCode    # 0 = removed
+}
 ```
 
 The installer closes a running Lupe before it replaces the files. It installs no settings – they are per user; to pre-configure them, see [Settings › Rolling out settings](settings.md#rolling-out-settings).
@@ -105,10 +123,10 @@ If you regularly type into an elevated program, start Lupe with *Run as administ
 
 ## Updates and uninstalling
 
-- **MSI:** install the newer MSI over the old one. Builds from `main` replace each other (Windows Installer compares only the first three parts of the version, and the package allows same-version upgrades); a release with a higher version replaces them as well. Installing an *older* version over a newer one is refused (*Eine neuere Version von Lupe ist bereits installiert.*).
+- **MSI:** install the newer MSI over the old one. Builds from `main` replace each other – in either direction: Windows Installer compares only the first three parts of the version (`0.1.0`), and the package allows the same version to be installed again, so an older build from `main` also installs over a newer one. A release with a higher version replaces them as well. Only an MSI whose first three parts are *lower* than those of the installed version is refused (*Eine neuere Version von Lupe ist bereits installiert.*).
 - **Exe and ZIP:** replace the files. Keep the path if *Mit Windows starten* is on.
 - **Settings and history** stay where they are and are read by the new version.
-- **Uninstalling** removes the program files and the Start menu entry. It does **not** remove:
+- **Uninstalling** (*Settings › Apps › Installed apps › Lupe* – on Windows 10 *Apps & features* –, or silently as shown under [MSI installer](#msi-installer)) removes the program files and the Start menu entry. It does **not** remove:
   - `%LocalAppData%\Lupe` of each user (settings and history) – delete that folder to remove them;
   - the autostart entry of users who switched on *Mit Windows starten*. Switch it off before uninstalling, or delete the value `Lupe` under `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`.
 

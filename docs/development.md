@@ -31,7 +31,7 @@ dotnet publish @common --self-contained true -p:IncludeNativeLibrariesForSelfExt
                -p:EnableCompressionInSingleFile=true -o out/standalone  # the single Lupe.exe
 ```
 
-The version comes from `<Version>` in `src/Lupe/Lupe.csproj` (currently `0.1.0`); the CI overrides it with `-p:Version=…`.
+The version comes from `<Version>` in `src/Lupe/Lupe.csproj` (currently `0.1.0`); the CI overrides it with `-p:Version=…`. Keep it at or above the newest release tag: set it to the version you are about to tag, and raise it afterwards for the next builds from `main`. If it stays below a released version, MSIs from `main` are refused on PCs that have that release installed, and the app shows the lower version.
 
 ## Tests
 
@@ -119,13 +119,13 @@ dotnet build installer/Lupe.Installer.wixproj -c Release -p:ProductVersion=0.1.0
 
 `.github/workflows/build.yml` runs on `windows-latest` for pushes to `main`, tags `v*`, pull requests and manual starts:
 
-1. **Version:** a tag `v1.2.3` gives `1.2.3`; otherwise the csproj version plus the run number, e.g. `0.1.0-ci.12`. The MSI gets `0.1.0.12` (numbers only).
+1. **Version:** a tag `v1.2.3` gives `1.2.3`; otherwise the csproj version plus the run number, e.g. `0.1.0-ci.12`. The MSI gets `0.1.0.12` (numbers only). The MSI and the ZIP carry the version in their names only for tags (`Lupe-1.2.3-x64.msi`); builds from `main` use fixed names (`Lupe-x64.msi`, `Lupe-win-x64-framework.zip`) so that download links stay valid. `Lupe.exe` is always called that.
 2. **Restore, build, test** (Release) – test results are uploaded as `.trx`. Camera, desktop and timing tests skip themselves on the runner.
 3. **Publish** the three variants, **package** the ZIP (with the README) and the single exe, **build the MSI** from the self-contained output.
 4. **Upload** everything as a workflow artifact.
-5. **Release:** a tag creates a release *Lupe v…* with generated notes. A push to `main` deletes and recreates the pre-release **latest** with the new files – a rolling download of the newest `main`.
+5. **Release:** a tag creates a release *Lupe v…* with generated notes – a tag with a hyphen (`v1.0.0-rc1`) as a pre-release. A push to `main`, or a manual start on `main`, updates the pre-release **latest** in place with `.github/scripts/release-latest.ps1`: all new files are uploaded under temporary names first; only when all of them are there does the tag `latest` move to the new commit and each file replace its old namesake (delete, then rename – retried on errors). Files the new build no longer has are removed, and the title shows the version. If an upload fails, the files under the fixed names stay untouched (temporary `neu-…` files may remain until the next run). Only commits on `main` are published, never one older than what `latest` already shows – a re-run of an older run changes nothing (this applies to runs made with this script; runs up to build 8 still deleted and recreated the release). If `main` has moved on in the meantime with changes to workflow files, the run leaves publishing to the following run, because GitHub does not let the Actions token point a release at a commit whose workflows differ from `main`.
 
-Runs on the same branch are queued, so `latest` releases do not overtake each other.
+Runs on the same branch are queued, so `latest` releases do not overtake each other. GitHub keeps only the newest waiting run of a branch and cancels the ones in between. To publish the current head of `main` again, re-run its newest run or start the workflow manually on `main`.
 
 ## Screenshots and images
 

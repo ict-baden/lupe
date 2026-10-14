@@ -124,15 +124,15 @@
   </tr>
 </table>
 
-**① Download** – from the pre-release [**latest**](https://github.com/ict-baden/lupe/releases/tag/latest), rebuilt on every push to `main`:
+**① Download** – from the pre-release [**latest**](https://github.com/ict-baden/lupe/releases/tag/latest), rebuilt on every push to `main`. The file names stay the same, so these links always deliver the newest build:
 
 | File | What it is |
 |---|---|
-| `Lupe-…-x64.msi` | Installer for all users, Start menu entry, no autostart; .NET included. |
-| `Lupe.exe` | A single file that runs without installation; .NET included. |
-| `Lupe-…-win-x64-framework.zip` | Small variant; needs the .NET 10 Desktop Runtime. |
+| [`Lupe-x64.msi`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-x64.msi) | Installer for all users, Start menu entry, no autostart; .NET included. |
+| [`Lupe.exe`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe.exe) | A single file that runs without installation; .NET included. |
+| [`Lupe-win-x64-framework.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-win-x64-framework.zip) | Small variant; needs the .NET 10 Desktop Runtime. |
 
-Requirements, the Windows camera privacy setting, autostart and uninstalling: **[Installation →](docs/installation.md)**
+The repository is private: sign in to GitHub with an account that has access to `ict-baden`, otherwise GitHub answers with a 404 page. Requirements, downloading from the command line, the Windows camera privacy setting, autostart and uninstalling: **[Installation →](docs/installation.md)**
 
 **② Scan** – the shortcut works in every program as long as Lupe is running, also when its window is closed. The camera, files and the clipboard are on the pages *Kamera* and *Datei*. Walkthrough: **[Using the app →](docs/usage.md)**
 
