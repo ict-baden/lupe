@@ -101,8 +101,7 @@
                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                 <ItemsControl x:Name="ResultList" ItemTemplate="{StaticResource CodeRow}" Margin="0,6,0,0" Focusable="False"/>
                 <TextBlock x:Name="ResultDone" Style="{StaticResource Caption}" Margin="0,6,0,0" Visibility="Collapsed"/>
-                <TextBlock Style="{StaticResource Caption}" Margin="0,8,0,0"
-                           Text="Eintippen gibt es hier nicht: Beim Kamerabild ist Lupe selbst das aktive Fenster. Zum Eintippen in ein anderes Programm dort das Tastenkürzel für den Bildschirm-Scan drücken – oder den Code kopieren."/>
+                <TextBlock x:Name="TypeHint" Style="{StaticResource Caption}" Margin="0,8,0,0" TextWrapping="Wrap"/>
             </StackPanel>
         </Border>
     </Grid>

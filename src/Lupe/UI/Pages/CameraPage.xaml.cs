@@ -8,6 +8,7 @@ using Lupe.Core.Camera;
 using Lupe.Core.Decoding;
 using Lupe.Core.Model;
 using Lupe.Demo;
+using Lupe.Interop;
 using Lupe.Services;
 
 namespace Lupe.UI.Pages;
@@ -64,12 +65,21 @@ public partial class CameraPage : UserControl, IPage
         };
         state.SettingsChanged += OnSettingsChanged;
         ShowHint(Hint.Stopped);
+        UpdateTypeHint();
     }
+
+    /// <summary>„Eintippen“ für die Kamera an: Lupe arbeitet wie ein Handscanner und tippt in das Programm vorn.</summary>
+    private bool ScannerMode => _state.Settings.Actions.HasFlag(ResultActions.Eintippen);
+
+    private void UpdateTypeHint() => TypeHint.Text = ScannerMode
+        ? "Eintippen ist an: Wie ein Handscanner schreibt Lupe erkannte Codes in das Programm, das gerade vorn ist – das Zielprogramm anklicken, Lupe kann dahinter oder minimiert weiterlaufen."
+        : "Eintippen ist aus. Wie ein Handscanner in andere Programme schreiben: Einstellungen › Bei einem Treffer › Eintippen. Oder den Code kopieren.";
 
     // ================= Sichtbarkeit =================
 
     public void OnShown()
     {
+        _keptWhileMinimized = false;
         // Screenshots stellen ihren Zustand selbst her – eine langsame Kamerasuche käme ihnen sonst dazwischen
         if (_state.Strict) return;
         if (!_listed) Ui.Run(_state, ListCamerasAsync, "Kameras suchen");
@@ -83,8 +93,31 @@ public partial class CameraPage : UserControl, IPage
     public void OnHidden()
     {
         if (_loop is null && !_starting) return;
+        // Als Handscanner läuft die Kamera auch bei minimiertem Fenster weiter und tippt in das Programm vorn. Beim
+        // Seitenwechsel und beim Schließen des Fensters (Infobereich) hält sie an – unsichtbar soll sie nicht laufen.
+        if (ScannerMode && Window.GetWindow(this) is { IsVisible: true, WindowState: WindowState.Minimized } window)
+        {
+            WatchWindow(window);
+            _keptWhileMinimized = true;
+            return;
+        }
+        _keptWhileMinimized = false;
         _resumeOnShow = true;
         Ui.Run(_state, StopCameraAsync, "Kamera stoppen");
+    }
+
+    private bool _keptWhileMinimized;
+    private Window? _watchedWindow;
+
+    /// <summary>Minimiert weitergelaufen und dann das Fenster ganz geschlossen: jetzt anhalten.</summary>
+    private void WatchWindow(Window window)
+    {
+        if (_watchedWindow == window) return;
+        _watchedWindow = window;
+        window.IsVisibleChanged += (_, _) =>
+        {
+            if (!window.IsVisible && _keptWhileMinimized) OnHidden();
+        };
     }
 
     // ================= Kameras =================
@@ -293,7 +326,10 @@ public partial class CameraPage : UserControl, IPage
     private async Task OnDetectedAsync(int generation, IReadOnlyList<DecodedCode> codes)
     {
         if (generation != _generation || codes.Count == 0) return;
-        var report = await _state.Hits.ReportAsync(codes, ScanSource.Kamera);
+        // Wie ein Handscanner: „Eintippen“ schreibt in das Programm, das gerade vorn ist – Lupe selbst zählt nicht
+        var foreground = Native.GetForegroundWindow();
+        nint typeTarget = foreground == 0 || Native.IsOwnWindow(foreground) ? 0 : foreground;
+        var report = await _state.Hits.ReportAsync(codes, ScanSource.Kamera, typeTarget);
         ShowResults(report.Codes, report.Entries, report.Time, report.NeedsChoice ? null : report.Outcome);
     }
 
@@ -367,6 +403,7 @@ public partial class CameraPage : UserControl, IPage
     {
         AimToggle.IsChecked = now.AimHelp;
         View.ShowAim = now.AimHelp;
+        if (old.Actions != now.Actions) UpdateTypeHint();
         if (!old.Formats.SequenceEqual(now.Formats) && _loop is not null) _decoder = _state.CreateLiveDecoder();
         // Die Wiederholungssperre gibt der Schleife ihr Konstruktor mit – also neu starten
         if (old.RepeatSuppressMs != now.RepeatSuppressMs && _loop is not null) Ui.Run(_state, StartAsync, "Kamera starten");

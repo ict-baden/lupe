@@ -24,9 +24,10 @@
             <!-- ========== Aktionen ========== -->
             <TextBlock Text="Bei einem Treffer" Style="{StaticResource SectionText}" Margin="2,0,0,8"/>
             <ui:SettingCard Glyph="&#xE722;" Header="Kamera, Datei und Zwischenablage"
-                            Description="Eintippen gibt es hier nicht – Lupe selbst ist dann das aktive Fenster.">
+                            Description="Eintippen (nur Kamera) schreibt den Code wie ein Handscanner in das Programm, das gerade vorn ist, z. B. Notepad. Lupe läuft dafür dahinter oder minimiert weiter.">
                 <StackPanel Orientation="Horizontal">
                     <CheckBox x:Name="ActCopy" Content="Kopieren" Click="Actions_Click" Margin="0,0,20,0" MinWidth="0"/>
+                    <CheckBox x:Name="ActType" Content="Eintippen" Click="Actions_Click" Margin="0,0,20,0" MinWidth="0"/>
                     <CheckBox x:Name="ActLink" Content="Link öffnen" Click="Actions_Click" MinWidth="0"/>
                 </StackPanel>
             </ui:SettingCard>

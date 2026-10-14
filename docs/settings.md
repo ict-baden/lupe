@@ -33,11 +33,11 @@ Changes apply and are saved **immediately**; there is no *Save* button. Settings
 
 | Group | Offers | Default |
 |---|---|---|
-| ***Kamera, Datei und Zwischenablage*** | *Kopieren*, *Link öffnen* | *Kopieren* |
+| ***Kamera, Datei und Zwischenablage*** | *Kopieren*, *Eintippen* (camera only), *Link öffnen* | *Kopieren* |
 | ***Bildschirmausschnitt*** | *Kopieren*, *Eintippen*, *Link öffnen* | *Kopieren* |
 
 - ***Kopieren*** (copy) puts the content on the clipboard.
-- ***Eintippen*** (type) exists only for the screen scan: there, the window that was active before the scan is known, and Lupe types into it. With the camera, a file or the clipboard, Lupe itself is the active window – *Eintippen gibt es hier nicht – Lupe selbst ist dann das aktive Fenster.* Even for the screen scan, typing only happens when the scan was started with the shortcut from another program ([details](usage.md#the-screen-scan)).
+- ***Eintippen*** (type) writes the content as keyboard input. For the **screen scan** it goes into the window that was active before the scan – only when the scan was started with the shortcut from another program ([details](usage.md#the-screen-scan)). For the **camera** Lupe works like a hand scanner and types into the program that is in front when the code is recognised; Lupe can run behind it or minimised ([details](usage.md#kamera--camera)). A file or the clipboard is never typed – there, Lupe itself is in front.
 - ***Link öffnen*** (open link) opens the content in the default browser when a [link rule](link-rules.md) matches. Without a matching rule nothing opens. Independent of this setting, every matching result has a *Link öffnen* button.
 - No action ticked: the result is shown and added to the history, nothing else.
 

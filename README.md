@@ -136,7 +136,7 @@ The repository is private: sign in to GitHub with an account that has access to 
 
 **② Scan** – the shortcut works in every program as long as Lupe is running, also when its window is closed. The camera, files and the clipboard are on the pages *Kamera* and *Datei*. Walkthrough: **[Using the app →](docs/usage.md)**
 
-**③ Use the result** – by default Lupe only copies. What happens with a result is set separately for the screen scan and for camera, file and clipboard: *Kopieren* (copy), *Eintippen* (type, screen scan only) and *Link öffnen* (open link). Every setting with its default: **[Settings →](docs/settings.md)** – and how links are built: **[Link rules →](docs/link-rules.md)**
+**③ Use the result** – by default Lupe only copies. What happens with a result is set separately for the screen scan and for camera, file and clipboard: *Kopieren* (copy), *Eintippen* (type – after a screen scan into the window you came from, from the camera like a hand scanner into the program in front) and *Link öffnen* (open link). Every setting with its default: **[Settings →](docs/settings.md)** – and how links are built: **[Link rules →](docs/link-rules.md)**
 
 ### From the command line
 

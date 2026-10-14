@@ -19,7 +19,7 @@ flowchart LR
     T --> H
     TC --> O["stdout<br>FORMAT⇥content"]
     H --> A["Kopieren"]
-    H --> E["Eintippen<br>screen scan only"]
+    H --> E["Eintippen<br>screen scan, camera"]
     H --> N["Link öffnen<br>if a rule matches"]
 ```
 

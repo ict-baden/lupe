@@ -42,10 +42,18 @@ internal sealed record HitReport(IReadOnlyList<DecodedCode> Codes, ActionOutcome
 /// </summary>
 internal sealed class Hits(AppState state)
 {
-    /// <summary>Aktionen, die für eine Quelle gelten. Eintippen nur beim Bildschirm-Scan: Sonst ist Lupe selbst vorn.</summary>
-    public ResultActions ActionsFor(ScanSource source) => source == ScanSource.Bildschirm
-        ? state.Settings.ScreenActions
-        : state.Settings.Actions & ~ResultActions.Eintippen;
+    /// <summary>
+    /// Aktionen, die für eine Quelle gelten. Eintippen beim Bildschirm-Scan (in das Fenster von vorher) und bei der Kamera
+    /// (wie ein Handscanner in das Programm vorn); bei Datei und Zwischenablage nicht – dort ist Lupe selbst vorn.
+    /// </summary>
+    public ResultActions ActionsFor(ScanSource source) => source switch
+    {
+        ScanSource.Bildschirm => state.Settings.ScreenActions,
+        // Wie ein Handscanner: tippt in das Programm, das gerade vorn ist
+        ScanSource.Kamera => state.Settings.Actions,
+        // Datei und Zwischenablage holt man in Lupe selbst – das Ziel wäre Lupe
+        _ => state.Settings.Actions & ~ResultActions.Eintippen,
+    };
 
     /// <summary>
     /// Neue Treffer: Ton, Verlauf und – bei genau einem Code – die Aktionen. <paramref name="typeTarget"/> ist das
@@ -120,7 +128,9 @@ internal sealed class Hits(AppState state)
         }
         if (wanted.HasFlag(ResultActions.Eintippen))
         {
-            if (typeTarget == 0) problems.Add("Nicht eingetippt: Der Scan kam aus Lupe selbst – Eintippen geht über das Tastenkürzel aus einem anderen Programm.");
+            if (typeTarget == 0) problems.Add(source == ScanSource.Kamera
+                ? "Nicht eingetippt: Lupe ist gerade das aktive Fenster – erst das Zielprogramm anklicken, Lupe kann dahinter oder minimiert weiterlaufen."
+                : "Nicht eingetippt: Der Scan kam aus Lupe selbst – Eintippen geht über das Tastenkürzel aus einem anderen Programm.");
             else if (await Typing.TypeIntoAsync(typeTarget, code.Text, state.Settings.TypeSuffix) is { } error) problems.Add(error);
             else done |= ResultActions.Eintippen;
         }

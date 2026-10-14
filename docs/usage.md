@@ -107,7 +107,7 @@ If the rectangle contains more than one code, a small window asks *N Codes gefun
 
 ***Zuletzt erkannt*** (last recognised) shows the result with *Kopieren* and *Link öffnen*. With several codes in one picture, all go to the history and the actions do **not** run – copy or open the one you need, or use *Alle kopieren*.
 
-**No typing from the camera.** While you use the camera, Lupe itself is the active window, so there is no “previous” window to type into. The page says so: *Eintippen gibt es hier nicht …* Use the screen scan shortcut, or copy.
+**Typing like a hand scanner.** With *Eintippen* ticked under *Einstellungen › Bei einem Treffer › Kamera, Datei und Zwischenablage*, Lupe types every recognised code into the program that is in front at that moment – click into Notepad, Excel or an ERP form and hold the code in front of the camera. *Nach dem Eintippen* (Enter or Tab) applies here too. Lupe can stay behind that program or be minimised; the camera keeps running while minimised and stops when you switch to another page or close the window. When Lupe itself is in front, nothing is typed (*Nicht eingetippt: Lupe ist gerade das aktive Fenster …*). The repeat suppression keeps a code that stays in view from being typed again. Lupe types with Unicode keyboard input, like the screen scan – the clipboard is not touched (see [How it works › Typing](how-it-works.md#typing)).
 
 If something goes wrong, the picture area explains it, e.g. *Keine Kamera gefunden – Bildschirm oder Datei nutzen* or *Kamera nicht verfügbar* with the reason and *Erneut versuchen* (try again). The camera privacy settings of Windows are explained in [Installation › Camera access](installation.md#camera-access-in-windows).
 

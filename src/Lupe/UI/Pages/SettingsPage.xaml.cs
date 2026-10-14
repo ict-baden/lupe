@@ -68,12 +68,13 @@ public partial class SettingsPage : UserControl, IPage
             var s = _state.Settings;
             UpdateProblem();
             ActCopy.IsChecked = s.Actions.HasFlag(ResultActions.Kopieren);
+            ActType.IsChecked = s.Actions.HasFlag(ResultActions.Eintippen);
             ActLink.IsChecked = s.Actions.HasFlag(ResultActions.LinkOeffnen);
             ScrCopy.IsChecked = s.ScreenActions.HasFlag(ResultActions.Kopieren);
             ScrType.IsChecked = s.ScreenActions.HasFlag(ResultActions.Eintippen);
             ScrLink.IsChecked = s.ScreenActions.HasFlag(ResultActions.LinkOeffnen);
             SuffixBox.SelectedItem = SuffixBox.Items.OfType<ComboBoxItem>().FirstOrDefault(i => (string)i.Tag == s.TypeSuffix) ?? SuffixBox.Items[0];
-            SuffixBox.IsEnabled = s.ScreenActions.HasFlag(ResultActions.Eintippen);
+            SuffixBox.IsEnabled = s.ScreenActions.HasFlag(ResultActions.Eintippen) || s.Actions.HasFlag(ResultActions.Eintippen);
 
             if (!_recording) HotkeyBox.Text = FormatHotkey(s.ScreenHotkey);
             UpdateHotkeyState();
@@ -128,9 +129,9 @@ public partial class SettingsPage : UserControl, IPage
             (copy?.IsChecked == true ? ResultActions.Kopieren : 0)
             | (type?.IsChecked == true ? ResultActions.Eintippen : 0)
             | (link?.IsChecked == true ? ResultActions.LinkOeffnen : 0);
-        var actions = Of(ActCopy, null, ActLink);
+        var actions = Of(ActCopy, ActType, ActLink);
         var screen = Of(ScrCopy, ScrType, ScrLink);
-        SuffixBox.IsEnabled = screen.HasFlag(ResultActions.Eintippen);
+        SuffixBox.IsEnabled = screen.HasFlag(ResultActions.Eintippen) || actions.HasFlag(ResultActions.Eintippen);
         _state.UpdateSettings(s => s with { Actions = actions, ScreenActions = screen });
     }
 
