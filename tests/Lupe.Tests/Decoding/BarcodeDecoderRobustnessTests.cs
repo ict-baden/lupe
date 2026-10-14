@@ -262,4 +262,26 @@ public sealed class BarcodeDecoderRobustnessTests
         Assert.Empty(Decoder.Decode(DecodingImages.Busy(1920, 1080, seed: 100 + seed)));
         Assert.Empty(Decoder.Decode(TestCodes.Noise(DecodingImages.Busy(1280, 720, seed: 200 + seed), 60, seed)));
     }
+
+    /// <summary>
+    /// Bilder, in denen ZXings gestapelte DataBar-Expanded-Suche Zeilen aus weit entfernten Bildteilen zu einem
+    /// „gültigen“ Code zusammengesetzt hat – einmal sogar mit leerem Inhalt.
+    /// </summary>
+    public static TheoryData<string, PixelImage, string?> FruehereDataBarPhantome() => new()
+    {
+        { "4K unruhig, Seed 1008", DecodingImages.Busy(3840, 2160, seed: 1008), null },
+        { "4K unruhig, nur DataBar Expanded", DecodingImages.Busy(3840, 2160, seed: 6009), "RSS_EXPANDED" },
+        { "720p verrauscht, Seed 2009", TestCodes.Noise(DecodingImages.Busy(1280, 720, seed: 2009), 67, seed: 9), null },
+        { "720p verrauscht, leerer Text", TestCodes.Noise(DecodingImages.Busy(1280, 720, seed: 2019), 97, seed: 19), null },
+        { "720p verrauscht, nur DataBar Expanded", TestCodes.Noise(DecodingImages.Busy(1280, 720, seed: 5016), 66, seed: 16), "RSS_EXPANDED" },
+    };
+
+    [Theory]
+    [MemberData(nameof(FruehereDataBarPhantome))]
+    public void Keine_zusammengestueckelten_DataBar_Codes(string name, PixelImage img, string? format)
+    {
+        Assert.NotNull(name);
+        var decoder = format == null ? Decoder : new BarcodeDecoder([format]);
+        Assert.Empty(decoder.Decode(img));
+    }
 }

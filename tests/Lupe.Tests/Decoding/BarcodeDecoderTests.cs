@@ -56,7 +56,8 @@ public sealed class BarcodeDecoderTests
     [Fact]
     public void Nicht_schreibbare_Formate_sind_genau_die_erwarteten()
     {
-        // Für diese Formate hat ZXing.Net keinen Schreiber – sie werden nur gelesen und hier nicht im Rundlauf geprüft
+        // Für diese Formate hat ZXing.Net keinen Schreiber – sie werden nur gelesen und hier nicht im Rundlauf geprüft,
+        // sondern mit Bildern aus zxing-cpp (ForeignFormatTests)
         var notWritable = BarcodeDecoder.AllFormats.Where(f => !CanWrite(Enum.Parse<BarcodeFormat>(f)));
         Assert.Equal(["MAXICODE", "RSS_14", "RSS_EXPANDED", "IMB"], notWritable);
     }
@@ -442,5 +443,14 @@ public sealed class LiveBarcodeDecoderTests
         using var cts = new CancellationTokenSource();
         cts.Cancel();
         Assert.Throws<OperationCanceledException>(() => Live.Decode(TestCodes.Render("x"), cts.Token));
+    }
+
+    [Fact]
+    public void Kein_Phantom_im_verrauschten_Kamerabild()
+    {
+        // Hier setzte ZXings gestapelte DataBar-Suche früher ein RSS_EXPANDED mit leerem Inhalt zusammen – im
+        // Dauerbetrieb mit 10 Bildern je Sekunde wäre das etwa alle paar Sekunden ein falscher Treffer gewesen
+        var frame = TestCodes.Noise(DecodingImages.Busy(1280, 720, seed: 3046), 66, seed: 46);
+        Assert.Empty(Live.Decode(frame));
     }
 }

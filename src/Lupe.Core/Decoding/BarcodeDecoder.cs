@@ -90,6 +90,9 @@ public sealed class BarcodeDecoder
     /// </summary>
     internal bool Live { get; init; }
 
+    /// <summary>Höchstzahl gleichzeitig laufender Aufgaben (-1 = so viele, wie der Thread-Pool hergibt).</summary>
+    internal int MaxParallelism { get; init; } = -1;
+
     /// <summary>Alle unterstützten Formate in ZXing-Schreibweise.</summary>
     public static IReadOnlyList<string> AllFormats => FormatCatalog.AllNames;
 
@@ -101,6 +104,8 @@ public sealed class BarcodeDecoder
     /// links vor rechts); leer, wenn keiner gefunden wurde. Punkte in Pixeln des übergebenen Bildes.
     /// Wirft nur bei <c>null</c> und beim Abbruch über <paramref name="ct"/> (<see cref="OperationCanceledException"/>);
     /// interne Fehler einzelner ZXing-Leser kosten nur deren Teilergebnis.
+    /// Rechnet auf mehreren Kernen und blockiert den aufrufenden Thread bis zum Ergebnis (Full HD typisch 50–200 ms) –
+    /// aus der Oberfläche also über <c>Task.Run</c> aufrufen.
     /// </summary>
     public IReadOnlyList<DecodedCode> Decode(PixelImage image, CancellationToken ct = default)
     {
@@ -126,7 +131,7 @@ public sealed class BarcodeDecoder
         {
             // Ein schwacher 1D-Treffer (vielleicht nur ein Bruchstück) hält die gründlichere Stufe nicht auf
             if (stage.OnlyIfNothingFound && codes.Exists(c => !IsWeak(c.Format))) break;
-            foreach (var (found, map) in RunStage(stage.Tasks, ct))
+            foreach (var (found, map) in RunStage(stage.Tasks, MaxParallelism, ct))
                 foreach (var f in found)
                 {
                     var code = ToCode(f, map, gray.Width, gray.Height);
@@ -150,9 +155,14 @@ public sealed class BarcodeDecoder
     /// </summary>
     internal static void RemoveFragments(List<DecodedCode> codes)
     {
-        codes.RemoveAll(c => IsWeak(c.Format) && codes.Exists(o =>
-            !ReferenceEquals(o, c) && IsOneD(o.Format) && o.Text.Length > c.Text.Length
-            && o.Text.Contains(c.Text, StringComparison.Ordinal) && Overlaps(c, o)));
+        // Erst alle Bruchstücke bestimmen, dann entfernen – während RemoveAll ist die Liste halb umgeräumt
+        var fragments = new HashSet<DecodedCode>(ReferenceEqualityComparer.Instance);
+        foreach (var c in codes)
+            if (IsWeak(c.Format) && codes.Exists(o =>
+                    !ReferenceEquals(o, c) && IsOneD(o.Format) && o.Text.Length > c.Text.Length
+                    && o.Text.Contains(c.Text, StringComparison.Ordinal) && Overlaps(c, o)))
+                fragments.Add(c);
+        if (fragments.Count > 0) codes.RemoveAll(fragments.Contains);
 
         static bool Overlaps(DecodedCode fragment, DecodedCode whole)
         {
@@ -342,14 +352,15 @@ public sealed class BarcodeDecoder
         }
     }
 
-    private static (List<Found> Found, PointMap Map)[] RunStage(IReadOnlyList<ScanTask> tasks, CancellationToken ct)
+    private static (List<Found> Found, PointMap Map)[] RunStage(IReadOnlyList<ScanTask> tasks, int maxParallelism, CancellationToken ct)
     {
         var results = new (List<Found>, PointMap)[tasks.Count];
         try
         {
             // Einzeln verteilen (keine Blöcke), damit ungleich lange Aufgaben die Kerne gleichmäßig auslasten
             var partitioner = Partitioner.Create(Enumerable.Range(0, tasks.Count), EnumerablePartitionerOptions.NoBuffering);
-            Parallel.ForEach(partitioner, new ParallelOptions { CancellationToken = ct }, i => results[i] = RunTask(tasks[i], ct));
+            var options = new ParallelOptions { CancellationToken = ct, MaxDegreeOfParallelism = maxParallelism };
+            Parallel.ForEach(partitioner, options, i => results[i] = RunTask(tasks[i], ct));
         }
         catch (AggregateException ex) when (IsCancellation(ex, ct))
         {
@@ -401,7 +412,8 @@ public sealed class BarcodeDecoder
     /// <summary>
     /// Punkte für die Markierung: bei QR die vier Außenecken (aus den Suchmustern errechnet, ZXing liefert nur deren
     /// Mitten), bei PDF417 die vier Außenecken, sonst die Punkte von ZXing; ab drei Punkten im Uhrzeigersinn,
-    /// beginnend oben links, damit sie ein Vieleck ergeben.
+    /// beginnend oben links, damit sie ein Vieleck ergeben. Strichcodes haben immer höchstens zwei Punkte (die
+    /// DataBar-Leser liefern vier auf einer Lesezeile – Anfang und Ende ihrer Suchmuster; davon bleiben die äußersten).
     /// </summary>
     internal static List<(double X, double Y)> MarkerPoints(Result r)
     {
@@ -412,7 +424,22 @@ public sealed class BarcodeDecoder
 
         IEnumerable<ResultPoint?> source = r.BarcodeFormat == BarcodeFormat.PDF_417 ? raw.Take(4) : raw;
         var list = source.Where(p => p != null).Select(p => ((double)p!.X, (double)p.Y)).ToList();
+        if (list.Count > 2 && (r.BarcodeFormat & (FormatCatalog.OneDMask | BarcodeFormat.IMB)) != 0) return Farthest(list);
         return list.Count >= 3 ? Clockwise(list) : list;
+    }
+
+    /// <summary>Die beiden am weitesten auseinanderliegenden Punkte, der linke (bei gleicher Lage der obere) zuerst.</summary>
+    private static List<(double X, double Y)> Farthest(List<(double X, double Y)> points)
+    {
+        var best = (A: points[0], B: points[1]);
+        double bestDistance = -1;
+        for (int i = 0; i < points.Count; i++)
+            for (int j = i + 1; j < points.Count; j++)
+            {
+                double dx = points[i].X - points[j].X, dy = points[i].Y - points[j].Y, d = dx * dx + dy * dy;
+                if (d > bestDistance) (bestDistance, best) = (d, (points[i], points[j]));
+            }
+        return best.A.X < best.B.X || (best.A.X == best.B.X && best.A.Y <= best.B.Y) ? [best.A, best.B] : [best.B, best.A];
     }
 
     /// <summary>Außenecken eines QR-Codes: jedes Suchmuster liegt 3,5 Module von seiner Ecke entfernt.</summary>

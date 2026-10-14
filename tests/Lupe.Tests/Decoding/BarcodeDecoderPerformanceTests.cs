@@ -23,23 +23,30 @@ public sealed class BarcodeDecoderPerformanceTests(ITestOutputHelper output)
 {
     private static readonly BarcodeDecoder Decoder = new();
 
-    private long MedianMs(string name, PixelImage img, int expectedCodes, int runs = 7, Func<PixelImage, IReadOnlyList<DecodedCode>>? decode = null)
+    private long MedianMs(string name, PixelImage img, int expectedCodes, int runs = 7, Func<PixelImage, IReadOnlyList<DecodedCode>>? decode = null) =>
+        Measure(name, img, expectedCodes, runs, decode).Median;
+
+    /// <summary>Median der Wandzeit und mittlere Last in Kernen (Rechenzeit ÷ Wandzeit) über alle Läufe.</summary>
+    private (long Median, double Cores) Measure(string name, PixelImage img, int expectedCodes, int runs = 7, Func<PixelImage, IReadOnlyList<DecodedCode>>? decode = null)
     {
         decode ??= i => Decoder.Decode(i);
         Assert.Equal(expectedCodes, decode(img).Count); // Aufwärmen und Ergebnis prüfen
         var times = new List<long>();
         var cpuBefore = Process.GetCurrentProcess().TotalProcessorTime;
+        var total = Stopwatch.StartNew();
         for (int i = 0; i < runs; i++)
         {
             var sw = Stopwatch.StartNew();
             decode(img);
             times.Add(sw.ElapsedMilliseconds);
         }
-        var cpu = (Process.GetCurrentProcess().TotalProcessorTime - cpuBefore).TotalMilliseconds / runs;
+        var cpuMs = (Process.GetCurrentProcess().TotalProcessorTime - cpuBefore).TotalMilliseconds;
+        double cores = cpuMs / Math.Max(1, total.ElapsedMilliseconds);
         times.Sort();
         long median = times[runs / 2];
-        output.WriteLine($"{name} ({img.Width}×{img.Height}): Median {median} ms, min {times[0]} ms, max {times[^1]} ms, Rechenzeit ≈ {cpu:0} ms je Aufruf");
-        return median;
+        output.WriteLine($"{name} ({img.Width}×{img.Height}): Median {median} ms, min {times[0]} ms, max {times[^1]} ms, " +
+            $"Rechenzeit ≈ {cpuMs / runs:0} ms je Aufruf, Last ≈ {cores:0.0} Kerne");
+        return (median, cores);
     }
 
     [Fact]
@@ -69,9 +76,14 @@ public sealed class BarcodeDecoderPerformanceTests(ITestOutputHelper output)
     {
         var live = new LiveBarcodeDecoder();
         var frame = DecodingImages.Paste(DecodingImages.Busy(1280, 720, seed: 42), TestCodes.Render("Kamera", width: 240, height: 240), 520, 240);
-        Assert.InRange(MedianMs("Live 720p mit QR-Code", frame, 1, decode: i => live.Decode(i)), 0, 100);
-        Assert.InRange(MedianMs("Live 720p ohne Code", DecodingImages.Busy(1280, 720, seed: 43), 0, decode: i => live.Decode(i)), 0, 100);
-        Assert.InRange(MedianMs("Live 1080p ohne Code", DecodingImages.Busy(1920, 1080, seed: 45), 0, decode: i => live.Decode(i)), 0, 150);
+        // Erkennung direkt nach der anderen wie im ScanLoop: genug Bilder je Sekunde, aber höchstens ~2 Kerne Dauerlast
+        var (withCode, coresWithCode) = Measure("Live 720p mit QR-Code", frame, 1, runs: 15, decode: i => live.Decode(i));
+        var (empty, coresEmpty) = Measure("Live 720p ohne Code", DecodingImages.Busy(1280, 720, seed: 43), 0, runs: 15, decode: i => live.Decode(i));
+        Assert.InRange(withCode, 0, 150);
+        Assert.InRange(empty, 0, 150);
+        Assert.InRange(coresWithCode, 0, LiveBarcodeDecoder.DefaultParallelism + 0.7);
+        Assert.InRange(coresEmpty, 0, LiveBarcodeDecoder.DefaultParallelism + 0.7);
+        Assert.InRange(MedianMs("Live 1080p ohne Code", DecodingImages.Busy(1920, 1080, seed: 45), 0, decode: i => live.Decode(i)), 0, 300);
     }
 
     [Fact]

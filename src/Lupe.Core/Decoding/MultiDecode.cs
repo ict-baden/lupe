@@ -31,7 +31,7 @@ internal static class MultiDecode
             var qr = DecoderSupport.Safe(() => new QRCodeMultiReader().decodeMultiple(bitmap, hints));
             if (qr != null)
                 foreach (var r in qr)
-                    if (r is { Text: not null }) Add(found, new Found(r, 0, 0));
+                    if (DecoderSupport.HasText(r)) Add(found, new Found(r, 0, 0));
         }
 
         var reader = new FormatReader(mask, hints);

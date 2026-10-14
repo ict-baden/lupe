@@ -18,7 +18,7 @@ namespace Lupe.Core.Decoding;
 /// <para>
 /// Bewusst nicht dabei: MSI und Pharmacode – deren Leser „erkennen“ in fast jedem Bildschirmfoto, Kamerabild und
 /// Rauschen Phantomcodes (z. B. „000“) und machen die Suche bis zu 30-mal langsamer; Plessey kann ZXing.Net nur
-/// schreiben, nicht lesen.
+/// schreiben, nicht lesen. GS1 DataBar Expanded nur einzeilig, nicht gestapelt (siehe <see cref="OneDFormatsReader"/>).
 /// </para>
 /// </summary>
 internal static class FormatCatalog
@@ -99,7 +99,7 @@ internal sealed class FormatReader : Reader
         {
             reader.reset();
             var result = DecoderSupport.Safe(() => reader.decode(image, hints));
-            if (result is { Text: not null }) return result;
+            if (DecoderSupport.HasText(result)) return result;
         }
         return null;
     }
@@ -116,6 +116,12 @@ internal sealed class FormatReader : Reader
 /// Anders als bei ZXing zählt ein Treffer erst, wenn derselbe Inhalt auf mindestens <see cref="MinLineCount"/> Zeilen
 /// gelesen wurde (wie „MinLineCount“ in zxing-cpp). Schräg angeschnittene Zeilen ergeben sonst gelegentlich
 /// Phantom-Codes mit zufällig passender Prüfziffer (typisch: EAN-8 oder UPC-E mitten in einem anderen Strichcode).
+/// </para>
+/// <para>
+/// GS1 DataBar Expanded (RSS_EXPANDED) wird nur einzeilig gelesen, nicht gestapelt: ZXings Leser merkt sich sonst
+/// jede Zeile mit codeähnlichen Mustern und setzt Zeilen aus weit auseinanderliegenden Bildteilen so lange zu einem
+/// „gestapelten“ Code zusammen, bis die Prüfsumme zufällig passt – gemessen in etwa jedem hundertsten unruhigen
+/// Bildschirmfoto und jedem zehnten verrauschten Kamerabild ein Phantom-Code, teils mit leerem Inhalt.
 /// </para>
 /// </summary>
 internal sealed class OneDFormatsReader : OneDReader
@@ -155,8 +161,10 @@ internal sealed class OneDFormatsReader : OneDReader
     {
         try
         {
+            // Ohne gemerkte Zeilen kein Zusammensetzen über das ganze Bild (siehe Klassenbeschreibung)
+            if (reader is RSSExpandedReader) reader.reset();
             var result = reader.decodeRow(rowNumber, row, hints);
-            return result is { Text: not null } ? result : null;
+            return DecoderSupport.HasText(result) ? result : null;
         }
         catch (Exception ex) when (DecoderSupport.IsZxingFault(ex))
         {
@@ -172,6 +180,9 @@ internal sealed class OneDFormatsReader : OneDReader
     /// </summary>
     protected override Result? doDecode(BinaryBitmap image, IDictionary<DecodeHintType, object> hints)
     {
+        // Jeder Durchgang (ungedreht, dann um 90° gedreht) für sich: Der RSS-14-Leser zählt sonst Paare aus beiden
+        // Lagen zusammen – deren Koordinaten passen nicht zueinander
+        reset();
         int width = image.Width, height = image.Height;
         var row = new BitArray(width);
         bool tryHarder = hints != null && hints.ContainsKey(DecodeHintType.TRY_HARDER);
@@ -213,8 +224,8 @@ internal sealed class OneDFormatsReader : OneDReader
                         seen[key] = (entry.First, entry.Row, entry.Count + 1);
                         continue;
                     }
-                    // RSS-Leser sammeln Paare über Zeilen hinweg – dort nicht nachtasten
-                    if (reader is RSS14Reader or RSSExpandedReader) return entry.First;
+                    // Der RSS-14-Leser sammelt Paare über Zeilen hinweg (gestapelte Variante) – dort nicht nachtasten
+                    if (reader is RSS14Reader) return entry.First;
                     return Centered(image, reader, key, entry.First, entry.Row, result, rowNumber, hints);
                 }
             }
@@ -222,16 +233,17 @@ internal sealed class OneDFormatsReader : OneDReader
         return null;
     }
 
-    /// <summary>Rückwärts gelesene Zeile: Punkte spiegeln wie in <see cref="OneDReader"/>.</summary>
-    private static void Mirror(Result result, int width)
+    /// <summary>
+    /// Rückwärts gelesene Zeile: Punkte spiegeln wie in <see cref="OneDReader"/> – aber alle, nicht nur die ersten zwei
+    /// (DataBar liefert vier; ZXing ließ zwei davon ungespiegelt, die Markierung reichte dann quer durchs Bild).
+    /// </summary>
+    internal static void Mirror(Result result, int width)
     {
         result.putMetadata(ResultMetadataType.ORIENTATION, 180);
         var p = result.ResultPoints;
-        if (p is { Length: >= 2 } && p[0] != null && p[1] != null)
-        {
-            p[0] = new ResultPoint(width - p[0].X - 1, p[0].Y);
-            p[1] = new ResultPoint(width - p[1].X - 1, p[1].Y);
-        }
+        if (p == null) return;
+        for (int i = 0; i < p.Length; i++)
+            if (p[i] != null) p[i] = new ResultPoint(width - p[i].X - 1, p[i].Y);
     }
 
     /// <summary>
@@ -342,4 +354,7 @@ internal static class DecoderSupport
 
     /// <summary>Fehler aus dem Inneren von ZXing (Abbruch und Speichermangel zählen nicht dazu).</summary>
     public static bool IsZxingFault(Exception ex) => ex is not (OperationCanceledException or OutOfMemoryException);
+
+    /// <summary>Ein Treffer zählt nur mit Inhalt – ein leerer Text ist ein Phantom und für niemanden brauchbar.</summary>
+    public static bool HasText([System.Diagnostics.CodeAnalysis.NotNullWhen(true)] Result? result) => result is { Text.Length: > 0 };
 }

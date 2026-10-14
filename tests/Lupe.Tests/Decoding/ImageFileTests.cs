@@ -348,6 +348,30 @@ public sealed class ImageFileTests : IDisposable
     }
 
     [Fact]
+    public async Task Exklusiv_geoeffnete_Datei_meldet_deutsch()
+    {
+        var path = await _files.PngAsync("gesperrt.png", TestCodes.Render("gesperrt"));
+        // Ein anderes Programm schreibt gerade und lässt niemanden mitlesen
+        await using var locked = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+
+        var ex = await Assert.ThrowsAsync<IOException>(() => ImageFile.LoadAsync(path));
+
+        Assert.Equal("„gesperrt.png“ wird gerade von einem anderen Programm benutzt und kann nicht gelesen werden.", ex.Message);
+    }
+
+    [Fact]
+    public async Task Pipe_ist_keine_Bilddatei()
+    {
+        var name = "lupe-test-" + Guid.NewGuid().ToString("N")[..8];
+        await using var server = new System.IO.Pipes.NamedPipeServerStream(name, System.IO.Pipes.PipeDirection.Out, 1,
+            System.IO.Pipes.PipeTransmissionMode.Byte, System.IO.Pipes.PipeOptions.Asynchronous);
+
+        var ex = await Assert.ThrowsAsync<InvalidDataException>(() => ImageFile.LoadAsync(@"\\.\pipe\" + name));
+
+        Assert.Equal($"„{name}“ ist keine Bilddatei.", ex.Message);
+    }
+
+    [Fact]
     public async Task Leerer_Pfad_ist_ein_Argumentfehler()
     {
         await Assert.ThrowsAsync<ArgumentException>(() => ImageFile.LoadAsync(" "));

@@ -344,6 +344,53 @@ public sealed class ResultHandlingTests
     }
 
     [Fact]
+    public void Bruchstueck_eines_Bruchstuecks_faellt_auch_weg()
+    {
+        var codes = new List<DecodedCode>
+        {
+            Code("ITF", "15400141288763", (10, 300), (300, 300)),
+            Code("ITF", "1540014128", (20, 305), (200, 305)),
+            Code("ITF", "54001412", (30, 302), (150, 302)),
+            Code("EAN_8", "96385074", (600, 600), (700, 600)),
+        };
+
+        BarcodeDecoder.RemoveFragments(codes);
+
+        Assert.Equal(["ITF:15400141288763", "EAN_8:96385074"], codes.Select(c => c.Format + ":" + c.Text));
+    }
+
+    [Fact]
+    public void DataBar_Punkte_werden_zu_zwei_aeusseren()
+    {
+        // DataBar liefert Anfang und Ende des ersten und letzten Suchmusters, alle auf der Lesezeile
+        var r = new Result("x", null, [new ResultPoint(332, 33), new ResultPoint(362, 33), new ResultPoint(38, 33), new ResultPoint(68, 33)], BarcodeFormat.RSS_EXPANDED);
+        Assert.Equal([(38.0, 33.0), (362.0, 33.0)], BarcodeDecoder.MarkerPoints(r));
+
+        var upright = new Result("x", null, [new ResultPoint(34, 362), new ResultPoint(34, 332), new ResultPoint(34, 68), new ResultPoint(34, 38)], BarcodeFormat.RSS_14);
+        Assert.Equal([(34.0, 38.0), (34.0, 362.0)], BarcodeDecoder.MarkerPoints(upright));
+    }
+
+    [Fact]
+    public void Rueckwaerts_gelesene_Zeile_spiegelt_alle_Punkte()
+    {
+        var r = new Result("x", null, [new ResultPoint(10, 5), new ResultPoint(40, 5), new ResultPoint(300, 5), null!, new ResultPoint(330, 5)], BarcodeFormat.RSS_EXPANDED);
+
+        OneDFormatsReader.Mirror(r, 400);
+
+        Assert.Equal([389f, 359f, 99f, 69f], r.ResultPoints.Where(p => p != null).Select(p => p.X));
+        Assert.Null(r.ResultPoints[3]);
+        Assert.Equal(180, r.ResultMetadata[ResultMetadataType.ORIENTATION]);
+    }
+
+    [Fact]
+    public void Leerer_Inhalt_ist_kein_Treffer()
+    {
+        Assert.False(DecoderSupport.HasText(null));
+        Assert.False(DecoderSupport.HasText(new Result("", null, [], BarcodeFormat.RSS_EXPANDED)));
+        Assert.True(DecoderSupport.HasText(new Result("0", null, [], BarcodeFormat.QR_CODE)));
+    }
+
+    [Fact]
     public void Gleicher_Teiltext_an_anderer_Stelle_bleibt()
     {
         var codes = new List<DecodedCode>

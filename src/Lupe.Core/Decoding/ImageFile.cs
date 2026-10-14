@@ -68,6 +68,10 @@ public static class ImageFile
         {
             throw new FileNotFoundException($"„{path}“ ist kein gültiger Dateipfad.", path, ex);
         }
+        catch (IOException ex) when (ex.HResult is ErrorSharingViolation or ErrorLockViolation)
+        {
+            throw new IOException($"„{name}“ wird gerade von einem anderen Programm benutzt und kann nicht gelesen werden.", ex);
+        }
         catch (IOException ex)
         {
             throw new IOException($"„{name}“ konnte nicht geöffnet werden: {ex.Message}", ex);
@@ -75,10 +79,15 @@ public static class ImageFile
 
         await using (stream)
         {
+            // Geräte und Pipes (CON, \\.\pipe\…) sind keine Bilddateien – und Length würde dort scheitern
+            if (!stream.CanSeek) throw new InvalidDataException($"„{name}“ ist keine Bilddatei.");
             if (stream.Length == 0) throw new InvalidDataException($"Die Datei „{name}“ ist leer.");
             return await LoadAsync(stream, name, maxPixels, ct).ConfigureAwait(false);
         }
     }
+
+    private const int ErrorSharingViolation = unchecked((int)0x80070020);
+    private const int ErrorLockViolation = unchecked((int)0x80070021);
 
     /// <summary>Lädt ein Bild aus einem Datenstrom (z. B. PNG aus der Zwischenablage); <paramref name="name"/> nur für Meldungen.</summary>
     internal static async Task<PixelImage> LoadAsync(Stream stream, string name, int maxPixels, CancellationToken ct)
@@ -91,7 +100,7 @@ public static class ImageFile
             using IRandomAccessStream ras = stream.AsRandomAccessStream();
             var decoder = await BitmapDecoder.CreateAsync(ras).AsTask(ct).ConfigureAwait(false);
             var frame = await PickFrameAsync(decoder, ct).ConfigureAwait(false);
-            return await ReadPixelsAsync(frame, maxPixels, ct).ConfigureAwait(false);
+            return await ReadPixelsAsync(frame, name, maxPixels, ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -117,10 +126,10 @@ public static class ImageFile
         return best;
     }
 
-    private static async Task<PixelImage> ReadPixelsAsync(BitmapFrame frame, int maxPixels, CancellationToken ct)
+    private static async Task<PixelImage> ReadPixelsAsync(BitmapFrame frame, string name, int maxPixels, CancellationToken ct)
     {
         uint pw = frame.PixelWidth, ph = frame.PixelHeight;
-        if (pw == 0 || ph == 0) throw new InvalidDataException("Das Bild hat keine Pixel.");
+        if (pw == 0 || ph == 0) throw new InvalidDataException($"„{name}“ enthält kein Bild (0 Pixel).");
         // Drehung um 90°/270° (EXIF) vertauscht Breite und Höhe
         bool swapped = frame.OrientedPixelWidth != pw || frame.OrientedPixelHeight != ph;
 
@@ -152,12 +161,9 @@ public static class ImageFile
 
         var pixels = data.DetachPixelData();
         int width = (int)(swapped ? h : w), height = (int)(swapped ? w : h);
+        // Sicherheitsnetz, falls der Decoder anders skaliert hat als verlangt (eine vertauschte Lage verriete die Länge nicht)
         if (pixels.Length != (long)width * height * 4)
-        {
-            // Sicherheitsnetz, falls der Decoder anders gedreht/skaliert hat als erwartet
-            if (pixels.Length == (long)height * width * 4 && width != height) (width, height) = (height, width);
-            else throw new InvalidDataException("Der Decoder hat unerwartet viele Pixel geliefert.");
-        }
+            throw new InvalidDataException($"„{name}“ konnte nicht gelesen werden: Der Bilddecoder hat eine unerwartete Pixelzahl geliefert.");
         FlattenOnWhite(pixels);
         return new PixelImage(width, height, pixels);
     }

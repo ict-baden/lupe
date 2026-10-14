@@ -36,8 +36,8 @@ internal static class WindowSearch
             var window = new BinaryBitmap(new MatrixBinarizer(CropBits(matrix, x, y, w, h)));
             Result? result = null;
             if (dm) result = DecoderSupport.Safe(() => new DataMatrixReader().decode(window, hints));
-            if (result == null && aztec) result = DecoderSupport.Safe(() => new AztecReader().decode(window, hints));
-            if (result is { Text: not null }) MultiDecode.Add(found, new Found(result, x, y));
+            if (!DecoderSupport.HasText(result) && aztec) result = DecoderSupport.Safe(() => new AztecReader().decode(window, hints));
+            if (DecoderSupport.HasText(result)) MultiDecode.Add(found, new Found(result, x, y));
         }
     }
 
