@@ -12,10 +12,14 @@ public sealed class CodecFactAttribute : FactAttribute
 {
     /// <param name="extension">Dateiendung, für die ein Decoder da sein muss, z. B. ".webp".</param>
     /// <param name="needsEncoder">Der Test schreibt die Datei selbst – dann muss Kodieren und Dekodieren klappen.</param>
-    public CodecFactAttribute(string extension, bool needsEncoder = false)
+    /// <param name="sampleBase64">Beispieldatei des Tests: Sie muss sich wirklich lesen lassen. Auf manchen Systemen
+    /// (z. B. GitHub-Runnern) ist ein Decoder registriert, scheitert aber beim Lesen.</param>
+    public CodecFactAttribute(string extension, bool needsEncoder = false, string? sampleBase64 = null)
     {
         if (!CodecProbe.CanDecode(extension))
             Skip = $"Kein Windows-Decoder für {extension} installiert.";
+        else if (sampleBase64 is not null && !CodecProbe.CanDecodeSample(extension, sampleBase64))
+            Skip = $"Der Windows-Decoder für {extension} ist registriert, liest aber keine Dateien (Codec-Erweiterung unvollständig).";
         else if (needsEncoder && !CodecProbe.CanRoundTrip(extension))
             Skip = $"{extension} lässt sich auf diesem Rechner nicht schreiben und wieder lesen (Codec-Erweiterung fehlt).";
     }
@@ -31,6 +35,22 @@ internal static class CodecProbe
         {
             return BitmapDecoder.GetDecoderInformationEnumerator()
                 .Any(c => c.FileExtensions.Contains(extension, StringComparer.OrdinalIgnoreCase));
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    /// <summary>Liest eine mitgelieferte Beispieldatei – der zuverlässigste Beweis, dass der Decoder wirklich arbeitet.</summary>
+    public static bool CanDecodeSample(string extension, string sampleBase64)
+    {
+        try
+        {
+            using var files = new TestImageFiles();
+            var path = files.PathFor("probe" + extension);
+            File.WriteAllBytes(path, Convert.FromBase64String(sampleBase64));
+            return Lupe.Core.Decoding.ImageFile.LoadAsync(path).GetAwaiter().GetResult().Width > 0;
         }
         catch (Exception)
         {

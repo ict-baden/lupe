@@ -248,7 +248,7 @@ public sealed class ImageFileTests : IDisposable
     private const string WebpQr =
         "UklGRoIAAABXRUJQVlA4THYAAAAvMUAMAA8w//M///MfeGCbUIgd4VrBVTLAJVn91wquErA9eJWSESL6HwAwfpr4JVcN1reiuTTV2+g9W+a1opq4y1WBF6p9KuYVsWtcTczMt5qMHNmk6vlWiNSoJlNeajCxr7mmb6vzlGx9rgadZ1QTn7EqAPwF";
 
-    [CodecFact(".webp")]
+    [CodecFact(".webp", sampleBase64: WebpQr)]
     public async Task WebP_wird_gelesen()
     {
         var path = _files.PathFor("code.webp");
