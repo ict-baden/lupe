@@ -4,13 +4,13 @@ namespace Lupe.Core.Decoding;
 
 /// <summary>
 /// Erkennung für den Kamerastrom (z. B. als Erkennungsfunktion für <c>ScanLoop</c>): derselbe Leser wie
-/// <see cref="BarcodeDecoder"/>, aber nur dessen erste Stufe ohne Schräglage (das ganze Bild, dazu invertiert für helle
-/// Strichcodes auf dunklem Grund) und auf wenigen Kernen.
+/// <see cref="BarcodeDecoder"/>, aber nur das ganze Bild (2D-Codes und Strichcodes als zwei Lesevorgänge, invertiert nur
+/// PDF417 und MaxiCode – helle QR-, Data-Matrix- und Aztec-Codes kehrt zxing-cpp selbst um) und auf wenigen Kernen.
 /// <para>
-/// Die gedrehten und vergrößerten Varianten kosten je Bild ein Vielfaches – bei Dauerbetrieb mehrere Kerne Last, obwohl
-/// das nächste Bild ohnehin eine neue Chance ist und der Benutzer den Code von selbst gerader hält. Deshalb laufen hier
-/// höchstens <see cref="DefaultParallelism"/> Aufgaben gleichzeitig. Für Bildschirmausschnitte und Dateien bleibt
-/// <see cref="BarcodeDecoder"/> die richtige Wahl.
+/// Die gedrehten, invertierten und vergrößerten Varianten kosten je Bild ein Vielfaches – bei Dauerbetrieb mehrere Kerne
+/// Last, obwohl das nächste Bild ohnehin eine neue Chance ist und der Benutzer den Code von selbst gerader hält. Deshalb
+/// laufen hier höchstens <see cref="DefaultParallelism"/> Aufgaben gleichzeitig (gemessen: 720p-Kamerabild rund 20 ms,
+/// ein sehr unruhiges 35 ms). Für Bildschirmausschnitte und Dateien bleibt <see cref="BarcodeDecoder"/> die richtige Wahl.
 /// </para>
 /// <para>Threadsicher.</para>
 /// </summary>

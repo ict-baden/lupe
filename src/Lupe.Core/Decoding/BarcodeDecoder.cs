@@ -8,8 +8,9 @@ namespace Lupe.Core.Decoding;
 /// Findet alle QR- und Barcodes in einem Bild (zxing-cpp), auch kleine, gedrehte, schräge und invertierte.
 /// <para>
 /// zxing-cpp findet von sich aus mehrere Codes je Bild, Codes in jeder 90°-Lage, helle QR-/Data-Matrix-/Aztec-Codes
-/// auf dunklem Grund und große Codes in verkleinerten Fassungen. Lupe ergänzt nur, was die Messungen (Tests und
-/// Benchmark mit über 1 300 Bildern) als Gewinn zeigen; die Aufgaben einer Stufe laufen parallel:
+/// auf dunklem Grund und große Codes in verkleinerten Fassungen. Lupe ergänzt nur, was die Messungen (Tests und ein
+/// Benchmark mit 1 345 Bildern und 1 357 Codes) als Gewinn zeigen. Jede Bildvariante wird je Lesegruppe
+/// (<see cref="CodeFormat.Group"/>) einmal gelesen; alle Aufgaben einer Stufe laufen parallel:
 /// </para>
 /// <list type="number">
 /// <item>Das ganze Bild in voller Auflösung, alle Formate.</item>
@@ -22,13 +23,15 @@ namespace Lupe.Core.Decoding;
 /// <item>Sehr große Bilder (über <see cref="LargeImagePixels"/>, etwa Fotos mit 12 bis 40 Megapixeln) statt am Stück als
 /// verkleinerte Übersicht plus überlappende Kacheln in voller Auflösung – so bleibt jeder einzelne Lesevorgang kurz und
 /// der Abbruch schnell.</item>
-/// <item>Nur wenn bis dahin nichts gefunden wurde: kleine Bilder (bis <see cref="UpscaleMaxSide"/> Pixel Kantenlänge,
-/// typisch ein Bildschirmausschnitt) doppelt vergrößert – für Codes mit 1–2 Pixeln je Modul.</item>
+/// <item>Nur wenn bis dahin nichts Sicheres gefunden wurde (<see cref="Hit.Solid"/>): kleine Bilder (bis
+/// <see cref="UpscaleMaxSide"/> Pixel Kantenlänge, typisch ein Bildschirmausschnitt) doppelt vergrößert – für Codes mit
+/// 1–2 Pixeln je Modul.</item>
 /// </list>
 /// <para>
-/// Danach: Doppelte (gleiches Format, gleicher Text) zusammengeführt, Bruchstücke schwacher Strichcodes entfernt,
+/// Danach: Doppelte (gleiches Format, gleicher Text) zusammengeführt, widersprüchliche Treffer an derselben Stelle
+/// entschieden (<see cref="Add"/>), Bruchstücke von Strichcodes entfernt (<see cref="RemoveFragments"/>),
 /// Lesereihenfolge (oben vor unten, links vor rechts). Für den Kamerastrom gibt es <see cref="LiveBarcodeDecoder"/>
-/// (nur Stufe 1 ohne Schräglage).
+/// (nur das ganze Bild).
 /// </para>
 /// <para>Threadsicher; eine Instanz kann von mehreren Threads gleichzeitig benutzt werden.</para>
 /// </summary>
@@ -61,8 +64,9 @@ public sealed class BarcodeDecoder
     public BarcodeDecoder(IReadOnlyList<string>? formats = null) => _formats = FormatCatalog.Parse(formats);
 
     /// <summary>
-    /// Nur die schnelle erste Stufe ohne Schräglage – für den Kamerastrom (<see cref="LiveBarcodeDecoder"/>),
-    /// wo das nächste Bild gleich wieder eine Chance ist und Dauerlast auf allen Kernen nicht sein soll.
+    /// Nur das ganze Bild (2D-Codes und Strichcodes, invertiert nur PDF417 und MaxiCode) – für den Kamerastrom
+    /// (<see cref="LiveBarcodeDecoder"/>), wo das nächste Bild gleich wieder eine Chance ist und Dauerlast auf allen Kernen
+    /// nicht sein soll.
     /// </summary>
     internal bool Live { get; init; }
 
@@ -354,9 +358,10 @@ public sealed class BarcodeDecoder
     /// einer anderen Aufgabe an derselben Stelle. Das passiert, wenn eine gedrehte oder verkleinerte Fassung denselben
     /// Code anders liest: PDF417 schräg angeschnitten mit vertauschten Zeilen, die die Fehlerkorrektur gerade noch
     /// durchgehen lässt (gemessen: ein zweites, verwürfeltes PDF417 neben dem richtigen), oder ein Strichcode, aus dessen
-    /// Teil eine andere Fassung einen EAN-8 oder UPC-E macht. Dann gilt der sicherere Treffer: mehr ungenutzte
-    /// Fehlerkorrektur, sonst der aus der vorrangigen Aufgabe (zuerst das ganze Bild). Treffer derselben Aufgabe
-    /// widersprechen sich nicht – das hat zxing-cpp schon entschieden (z. B. ein QR-Code in einem QR-Code).
+    /// Teil eine andere Fassung einen EAN-8 oder UPC-E macht. Dann gilt der sicherere Treffer: bei 2D-Codes der mit mehr
+    /// ungenutzter Fehlerkorrektur, bei Strichcodes der auf mehr Zeilen gelesene, sonst der aus der vorrangigen Aufgabe
+    /// (zuerst das ganze Bild). Treffer derselben Aufgabe widersprechen sich nicht – das hat zxing-cpp schon entschieden
+    /// (z. B. ein QR-Code in einem QR-Code).
     /// </summary>
     internal static void Add(List<Hit> hits, Hit hit)
     {
