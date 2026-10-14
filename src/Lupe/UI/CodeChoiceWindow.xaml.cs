@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using Lupe.Core.Model;
+using Lupe.Core.Screen;
 using Lupe.Interop;
 using Lupe.Services;
 using Lupe.UI.Theme;
@@ -16,15 +17,21 @@ public partial class CodeChoiceWindow : Window, IThemedWindow
 {
     public enum Outcome { Cancelled, Chosen, CopyAll }
 
+    // Geschätzte Höhe in Punkten, bevor das Layout feststeht (drei Codes und Knöpfe)
+    private const double EstimatedHeight = 420;
+
     private readonly TaskCompletionSource<(Outcome, DecodedCode?)> _result = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly (int X, int Y)? _anchor;
+    private readonly MonitorArea? _monitor;
 
     /// <param name="anchor">Mitte der Auswahl in physischen Bildschirmpixeln – dort erscheint das Fenster.</param>
+    /// <param name="monitor">Monitor der Auswahl: Das Fenster bleibt ganz auf seiner Arbeitsfläche.</param>
     /// <param name="actions">Was nach der Wahl passiert, für die Erklärung („kopieren und eintippen“).</param>
-    internal CodeChoiceWindow(IReadOnlyList<CodeItem> items, string actions, (int X, int Y)? anchor)
+    internal CodeChoiceWindow(IReadOnlyList<CodeItem> items, string actions, (int X, int Y)? anchor, MonitorArea? monitor = null)
     {
         InitializeComponent();
         _anchor = anchor;
+        _monitor = monitor;
         List.ItemsSource = items;
         List.SelectedIndex = 0;
         TitleText.Text = $"{items.Count} Codes gefunden – welcher?";
@@ -32,9 +39,11 @@ public partial class CodeChoiceWindow : Window, IThemedWindow
             ? "Der gewählte kommt ins Ergebnis; alle stehen schon im Verlauf."
             : $"Der gewählte wird {actions}. Alle stehen schon im Verlauf.";
         PreviewKeyDown += OnKey;
-        SourceInitialized += (_, _) => Place();
+        SourceInitialized += (_, _) => Place(EstimatedHeight);
         Loaded += (_, _) =>
         {
+            // Jetzt mit der wirklichen Höhe (SizeToContent) nachsetzen
+            Place(ActualHeight > 0 ? ActualHeight : EstimatedHeight);
             Activate();
             List.Focus();
             (List.ItemContainerGenerator.ContainerFromIndex(0) as UIElement)?.Focus();
@@ -51,14 +60,19 @@ public partial class CodeChoiceWindow : Window, IThemedWindow
         return _result.Task;
     }
 
-    private void Place()
+    /// <summary>
+    /// Mittig auf die Auswahl, ganz auf der Arbeitsfläche ihres Monitors. Größe in Pixeln = Punkte × Skalierung des
+    /// Ziel-Monitors (dort landet das Fenster; WPF rechnet es danach selbst auf dessen DPI um).
+    /// </summary>
+    private void Place(double heightDip)
     {
         if (_anchor is not { } a) return;
         var hwnd = new WindowInteropHelper(this).Handle;
-        // Größe in Pixeln schätzen (DIP × DPI des Fensters), dann mittig auf die Auswahl
-        var dpi = System.Windows.Media.VisualTreeHelper.GetDpi(this);
-        int w = (int)(Width * dpi.DpiScaleX), h = (int)(420 * dpi.DpiScaleY);
-        Native.SetWindowPos(hwnd, Native.HWND_TOPMOST, a.X - w / 2, Math.Max(0, a.Y - h / 2), 0, 0, Native.SWP_NOSIZE | Native.SWP_NOACTIVATE);
+        if (hwnd == 0) return;
+        double scale = _monitor?.Scale is > 0 ? _monitor.Scale : System.Windows.Media.VisualTreeHelper.GetDpi(this).DpiScaleX;
+        int w = (int)Math.Ceiling(Width * scale), h = (int)Math.Ceiling(heightDip * scale);
+        var (x, y) = _monitor is { } m ? Placement.CenterOn(a.X, a.Y, w, h, m.WorkArea) : (a.X - w / 2, a.Y - h / 2);
+        Native.SetWindowPos(hwnd, Native.HWND_TOPMOST, x, y, 0, 0, Native.SWP_NOSIZE | Native.SWP_NOACTIVATE);
     }
 
     private void OnKey(object sender, KeyEventArgs e)

@@ -8,10 +8,14 @@ namespace Lupe.Services;
 /// <summary>Umwandlung zwischen <see cref="PixelImage"/> (Core) und WPF-Bildern.</summary>
 internal static class Images
 {
-    /// <summary>Als WPF-Bild (eingefroren, also von jedem Thread aus nutzbar).</summary>
+    /// <summary>
+    /// Als WPF-Bild (eingefroren, also von jedem Thread aus nutzbar). Als Bgr32 – das vierte Byte zählt nicht: Ein
+    /// <see cref="PixelImage"/> ist undurchsichtig gemeint, und wo eine Quelle den Alphakanal doch auf 0 lässt (GDI,
+    /// manche Kameratreiber), bliebe das Bild sonst unsichtbar.
+    /// </summary>
     public static BitmapSource ToBitmap(PixelImage image)
     {
-        var bitmap = BitmapSource.Create(image.Width, image.Height, 96, 96, PixelFormats.Bgra32, null, image.Bgra, image.Stride);
+        var bitmap = BitmapSource.Create(image.Width, image.Height, 96, 96, PixelFormats.Bgr32, null, image.Bgra, image.Stride);
         bitmap.Freeze();
         return bitmap;
     }

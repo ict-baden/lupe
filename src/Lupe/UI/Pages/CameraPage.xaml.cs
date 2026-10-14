@@ -141,6 +141,8 @@ public partial class CameraPage : UserControl, IPage
             ShowHint(Hint.Starting);
             UpdateButtons(starting: true);
 
+            // Erkennung vor der Kamera anlegen: Scheitert sie, ist noch keine Kamera geöffnet, die freizugeben wäre
+            var decoder = _state.CreateDecoder();
             IFrameSource source;
             try { source = info.Id == DemoData.CameraId ? DemoData.CreateCamera() : Cameras.Open(info); }
             catch (Exception ex) when (ex is not OutOfMemoryException)
@@ -149,8 +151,15 @@ public partial class CameraPage : UserControl, IPage
                 return;
             }
 
-            _decoder = _state.CreateDecoder();
-            var loop = new ScanLoop(source, image => Decode(generation, image), Math.Max(0, _state.Settings.RepeatSuppressMs));
+            ScanLoop loop;
+            try { loop = new ScanLoop(source, image => Decode(generation, image), Math.Max(0, _state.Settings.RepeatSuppressMs)); }
+            catch
+            {
+                // Die Kamera ist schon offen – nicht bis zum Programmende blockiert lassen
+                await source.DisposeAsync();
+                throw;
+            }
+            _decoder = decoder;
             loop.Frame += (_, image) => OnFrame(generation, image);
             loop.Detected += (_, hit) => Dispatcher.BeginInvoke(() => Ui.Run(_state, () => OnDetectedAsync(generation, hit.Codes), "Treffer verarbeiten"));
             loop.Failed += (_, message) => Dispatcher.BeginInvoke(() => OnFailed(generation, message));
@@ -256,7 +265,8 @@ public partial class CameraPage : UserControl, IPage
     {
         if (_bitmap is null || _bitmap.PixelWidth != image.Width || _bitmap.PixelHeight != image.Height)
         {
-            _bitmap = new WriteableBitmap(image.Width, image.Height, 96, 96, PixelFormats.Bgra32, null);
+            // Bgr32: Alpha egal (siehe Images.ToBitmap) – ein Treiber mit Alpha 0 ergäbe sonst einen leeren Sucher
+            _bitmap = new WriteableBitmap(image.Width, image.Height, 96, 96, PixelFormats.Bgr32, null);
             View.Source = _bitmap;
         }
         _bitmap.WritePixels(new Int32Rect(0, 0, image.Width, image.Height), image.Bgra, image.Stride, 0);
@@ -388,6 +398,8 @@ public partial class CameraPage : UserControl, IPage
         ShowHint(Hint.None);
         LiveText.Text = DemoData.Camera.Name;
         LiveTag.Visibility = Visibility.Visible;
+        // Wie bei laufender Kamera: Knopf bedienbar (StopCameraAsync hat ihn ohne gewählte Kamera ausgegraut)
+        UpdateButtons();
         StartText.Text = "Stoppen";
         StartGlyph.Text = "\uE71A";
         ShowResults(codes, DemoData.ScreenshotTime, new ActionOutcome(ResultActions.Kopieren, []));

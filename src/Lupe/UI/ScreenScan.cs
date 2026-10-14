@@ -33,18 +33,38 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
         var foreground = Native.GetForegroundWindow();
         bool fromLupe = Native.IsOwnWindow(foreground);
         nint typeTarget = fromLupe ? 0 : foreground;
-
         bool hidden = false;
-        if (main is { IsVisible: true } && main.WindowState != WindowState.Minimized)
+        try
         {
-            main.Hide();
-            hidden = true;
-            // Ausblenden ohne Animation (MainWindow), trotzdem ein Bild abwarten, bis DWM es wirklich entfernt hat
-            await Task.Delay(40);
-            Native.DwmFlush();
-            await Task.Delay(40);
+            // Ein Hinweis vom letzten Scan (immer oben) gehört nicht ins Standbild
+            bool toastClosed = ResultToast.CloseOpen();
+            if (main is { IsVisible: true } && main.WindowState != WindowState.Minimized)
+            {
+                main.Hide();
+                hidden = true;
+            }
+            if (hidden || toastClosed)
+            {
+                // Ausblenden ohne Animation (MainWindow), trotzdem ein Bild abwarten, bis DWM es wirklich entfernt hat
+                await Task.Delay(40);
+                Native.DwmFlush();
+                await Task.Delay(40);
+            }
+            await ScanAsync(main, hidden, fromLupe, typeTarget);
         }
+        catch (Exception ex) when (ex is not OutOfMemoryException && !state.Strict)
+        {
+            // Was auch schiefgeht: Das ausgeblendete Lupe-Fenster kommt wieder, und die Meldung erscheint dort, wo man
+            // sie sieht – im Fenster nur, wenn der Scan von dort kam
+            Restore(main, hidden, activate: fromLupe);
+            var message = $"Der Bildschirm-Scan ist fehlgeschlagen: {ex.Message}";
+            if (fromLupe && main is { IsVisible: true }) state.Report(NoticeKind.Error, message);
+            else new ResultToast(state, null, "Bildschirm-Scan nicht möglich", "", message, null).Present();
+        }
+    }
 
+    private async Task ScanAsync(MainWindow? main, bool hidden, bool fromLupe, nint typeTarget)
+    {
         PixelRect area;
         IReadOnlyList<MonitorArea> monitors;
         PixelImage desktop;
@@ -71,7 +91,8 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
             return;
         }
 
-        var monitor = MonitorAt(monitors, chosenArea.X + chosenArea.Width / 2, chosenArea.Y + chosenArea.Height / 2);
+        int centerX = chosenArea.X + chosenArea.Width / 2, centerY = chosenArea.Y + chosenArea.Height / 2;
+        var monitor = MonitorAt(monitors, centerX, centerY);
         var crop = Images.Crop(desktop, chosenArea.X - area.X, chosenArea.Y - area.Y, chosenArea.Width, chosenArea.Height);
         IReadOnlyList<DecodedCode> codes = [];
         string? failure = null;
@@ -107,7 +128,7 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
         if (report.NeedsChoice)
         {
             var items = codes.Select((c, i) => new CodeItem(c, ScanSource.Bildschirm, report.Time, state.LinkFor(c.Text), i + 1)).ToList();
-            var window = new CodeChoiceWindow(items, ActionsText(typeTarget != 0), (chosenArea.X + chosenArea.Width / 2, chosenArea.Y + chosenArea.Height / 2));
+            var window = new CodeChoiceWindow(items, ActionsText(typeTarget != 0), (centerX, centerY), monitor);
             var (result, code) = await window.ChooseAsync();
             AddRecent(codes, report.Time);
             if (result == CodeChoiceWindow.Outcome.Cancelled || code is null)
@@ -121,7 +142,7 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
                 return;
             }
             chosen = code;
-            outcome = await state.Hits.ChooseAsync(code, ScanSource.Bildschirm, typeTarget);
+            outcome = await state.Hits.ChooseAsync(report, code, ScanSource.Bildschirm, typeTarget);
         }
         else AddRecent(codes, report.Time);
 
@@ -169,9 +190,10 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
         while (state.ScreenResults.Count > MaxRecent) state.ScreenResults.RemoveAt(state.ScreenResults.Count - 1);
     }
 
+    /// <summary>Das für den Scan ausgeblendete Fenster wieder zeigen (mehrfach aufrufbar).</summary>
     private static void Restore(Window? main, bool hidden, bool activate)
     {
-        if (main is null || !hidden) return;
+        if (main is null || !hidden || main.IsVisible) return;
         main.ShowActivated = activate;
         main.Show();
         main.ShowActivated = true;

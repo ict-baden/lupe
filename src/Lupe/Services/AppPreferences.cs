@@ -85,7 +85,9 @@ internal static class Autostart
             if (enabled)
             {
                 var exe = Environment.ProcessPath;
-                if (string.IsNullOrEmpty(exe) || !exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
+                // Über „dotnet Lupe.dll“ gestartet, wäre der Prozess dotnet.exe – das startete beim Anmelden nicht Lupe
+                if (string.IsNullOrEmpty(exe) || !exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+                    || Path.GetFileNameWithoutExtension(exe).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
                     return "Der Pfad von Lupe.exe ist nicht bekannt – Autostart nicht eingerichtet.";
                 key.SetValue(ValueName, $"\"{exe}\" --hintergrund");
             }

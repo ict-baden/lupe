@@ -184,7 +184,7 @@ internal sealed class AppState : IDisposable
     // ================= Erkennung und Links =================
 
     /// <summary>Neuer Decoder mit den erlaubten Formaten (je Aufgabe einer – Kamera, Datei und Bildschirm laufen nebeneinander).</summary>
-    public BarcodeDecoder CreateDecoder() => new(Settings.Formats.Count == 0 ? null : Settings.Formats);
+    public BarcodeDecoder CreateDecoder() => new(FormatFilter.Usable(Settings.Formats, FormatFilter.Known()));
 
     /// <summary>Link zum Code laut Link-Regeln (nur http/https), sonst null.</summary>
     public Uri? LinkFor(string text)

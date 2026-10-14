@@ -108,8 +108,12 @@ public partial class App : Application
             }
             return;
         }
+        // Erst die Kamera anhalten, dann schließen und beenden – aber nach diesem Ereignis: Während „Closing“ lässt WPF
+        // kein weiteres Close() zu (InvalidOperationException), und ExitAsync liefe ohne Kamera bis dahin synchron durch.
+        // Die Ausnahme ginge im verworfenen Task unter: Fenster bliebe offen, beim nächsten Schließen liefe Lupe
+        // unsichtbar weiter und hielte die Einzelinstanz fest.
         e.Cancel = true;
-        _ = ExitAsync();
+        Dispatcher.BeginInvoke(() => _ = ExitAsync());
     }
 
     private async Task ExitAsync()
@@ -124,7 +128,11 @@ public partial class App : Application
         {
             // Beim Beenden nichts mehr melden – die Kamera gibt Windows ohnehin frei
         }
-        _window?.Close();
+        try { _window?.Close(); }
+        catch (InvalidOperationException)
+        {
+            // Das Fenster schließt gerade schon – beendet wird trotzdem
+        }
         Cleanup();
         Shutdown(0);
     }

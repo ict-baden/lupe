@@ -24,6 +24,12 @@ internal sealed record HitReport(IReadOnlyList<DecodedCode> Codes, ActionOutcome
 {
     /// <summary>Mehrere Codes: Die Aktionen warten auf die Auswahl des Benutzers.</summary>
     public bool NeedsChoice => Codes.Count > 1;
+
+    /// <summary>
+    /// Die Verlaufseinträge zu <see cref="Codes"/> (gleiche Reihenfolge). Sie gehören zu dieser Meldung – ein Treffer
+    /// der Kamera, während die Auswahl eines Bildschirm-Scans offen ist, kommt ihnen so nicht in die Quere.
+    /// </summary>
+    public IReadOnlyList<HistoryEntry> Entries { get; init; } = [];
 }
 
 /// <summary>
@@ -32,9 +38,6 @@ internal sealed record HitReport(IReadOnlyList<DecodedCode> Codes, ActionOutcome
 /// </summary>
 internal sealed class Hits(AppState state)
 {
-    // Verlaufseinträge mehrerer Codes, deren Aktionen noch ausstehen – nach der Auswahl wird der Eintrag ersetzt
-    private readonly Dictionary<DecodedCode, HistoryEntry> _pending = [];
-
     /// <summary>Aktionen, die für eine Quelle gelten. Eintippen nur beim Bildschirm-Scan: Sonst ist Lupe selbst vorn.</summary>
     public ResultActions ActionsFor(ScanSource source) => source == ScanSource.Bildschirm
         ? state.Settings.ScreenActions
@@ -53,21 +56,24 @@ internal sealed class Hits(AppState state)
         if (codes.Count == 1)
         {
             var outcome = await RunActionsAsync(codes[0], source, typeTarget);
-            AddHistory(codes[0], source, time, outcome.Done);
-            return new HitReport(codes, outcome, time);
+            var single = AddHistory(codes[0], source, time, outcome.Done);
+            return new HitReport(codes, outcome, time) { Entries = [single] };
         }
 
-        _pending.Clear();
-        foreach (var code in codes) _pending[code] = AddHistory(code, source, time, ResultActions.Keine);
-        return new HitReport(codes, ActionOutcome.None, time);
+        var entries = codes.Select(code => AddHistory(code, source, time, ResultActions.Keine)).ToList();
+        return new HitReport(codes, ActionOutcome.None, time) { Entries = entries };
     }
 
-    /// <summary>Aus mehreren Codes gewählt: Aktionen ausführen und den Verlaufseintrag ergänzen.</summary>
-    public async Task<ActionOutcome> ChooseAsync(DecodedCode code, ScanSource source, nint typeTarget = 0)
+    /// <summary>Aus den Codes einer Meldung gewählt: Aktionen ausführen und den Verlaufseintrag des gewählten ergänzen.</summary>
+    public async Task<ActionOutcome> ChooseAsync(HitReport report, DecodedCode code, ScanSource source, nint typeTarget = 0)
     {
         var outcome = await RunActionsAsync(code, source, typeTarget);
-        if (outcome.Done != ResultActions.Keine && _pending.Remove(code, out var entry))
+        // Dieselbe Instanz wie in der Meldung (Auswahlfenster) – wertgleich nur als Notbehelf
+        int index = report.Codes.Select((c, i) => ReferenceEquals(c, code) ? i : -1).FirstOrDefault(i => i >= 0, -1);
+        if (index < 0) index = report.Codes.Select((c, i) => c == code ? i : -1).FirstOrDefault(i => i >= 0, -1);
+        if (outcome.Done != ResultActions.Keine && index >= 0 && index < report.Entries.Count)
         {
+            var entry = report.Entries[index];
             try
             {
                 state.History.Remove(entry);

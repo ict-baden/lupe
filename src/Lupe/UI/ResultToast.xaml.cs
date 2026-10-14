@@ -72,10 +72,18 @@ public partial class ResultToast : Window
     /// <summary>Zeigt den Hinweis; ein noch offener früherer verschwindet.</summary>
     internal void Present()
     {
-        _open?.Close();
+        CloseOpen();
         _open = this;
         Show();
         _timer.Start();
+    }
+
+    /// <summary>Schließt einen noch offenen Hinweis (vor dem nächsten Bildschirmfoto: er liegt immer oben). true, wenn einer offen war.</summary>
+    internal static bool CloseOpen()
+    {
+        if (_open is not { } open) return false;
+        open.Close();
+        return true;
     }
 
     private void Place()

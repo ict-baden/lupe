@@ -103,14 +103,14 @@ internal static class CommandLine
                         failed = true;
                         continue;
                     }
+                    IReadOnlyList<DecodedCode> codes;
                     try
                     {
-                        var image = ImageFile.LoadAsync(path, cts.Token).GetAwaiter().GetResult();
+                        // Laden auf einem Pool-Thread: Main ist (für WPF) ein STA-Thread, und WinRT-Aufrufe sollen nicht
+                        // auf einen blockierten STA-Thread zurückmüssen
+                        var image = Task.Run(() => ImageFile.LoadAsync(path, cts.Token), cts.Token).GetAwaiter().GetResult();
                         decoder ??= new BarcodeDecoder(formats);
-                        var codes = decoder.Decode(image, cts.Token);
-                        foreach (var code in codes) Console.Out.WriteLine(CodeLine.Format(code));
-                        if (codes.Count == 0) Console.Error.WriteLine($"Kein Code gefunden: {(IsPattern(input) ? Path.GetFileName(path) : input)}");
-                        found += codes.Count;
+                        codes = decoder.Decode(image, cts.Token);
                     }
                     catch (OperationCanceledException)
                     {
@@ -120,7 +120,12 @@ internal static class CommandLine
                     {
                         Console.Error.WriteLine($"„{path}“ ließ sich nicht lesen: {ex.Message}");
                         failed = true;
+                        continue;
                     }
+                    // Ausgabe außerhalb: Bricht die Pipe ab (… | Select-Object -First 1), ist das kein Fehler dieses Bildes
+                    foreach (var code in codes) Console.Out.WriteLine(CodeLine.Format(code));
+                    if (codes.Count == 0) Console.Error.WriteLine($"Kein Code gefunden: {(IsPattern(input) ? Path.GetFileName(path) : input)}");
+                    found += codes.Count;
                 }
             }
             Console.Out.Flush();
