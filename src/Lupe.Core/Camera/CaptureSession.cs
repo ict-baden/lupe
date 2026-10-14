@@ -84,7 +84,14 @@ internal sealed class CaptureSession : IAsyncDisposable
     /// während des Starts, der dann nicht zusätzlich über das Ereignis kommt. So meldet der Aufrufer ihn erst, wenn er
     /// seine eigenen Sperren freigegeben hat. Wirft nur bei Abbruch.
     /// </summary>
-    public async Task<string?> OpenAsync(CancellationToken ct)
+    /// <remarks>
+    /// Läuft immer auf dem Threadpool, wie auch die Freigabe: Rief die App das vom WPF-Thread (STA) auf, entstanden
+    /// MediaCapture und die Anmeldungen der Ereignisse in verschiedenen Apartments, und das Abmelden beim Stoppen brach in
+    /// WinRT mit 0xC0000005 ab (Absturz beim Wechsel auf „Verlauf“ bei laufender Kamera).
+    /// </remarks>
+    public Task<string?> OpenAsync(CancellationToken ct) => Task.Run(() => OpenOnPoolAsync(ct), CancellationToken.None);
+
+    private async Task<string?> OpenOnPoolAsync(CancellationToken ct)
     {
         lock (_openLock)
         {
@@ -454,7 +461,8 @@ internal sealed class CaptureSession : IAsyncDisposable
     private ValueTask Release(bool waitForFrame)
     {
         Task task;
-        lock (_disposeLock) task = _disposeTask ??= DisposeCoreAsync(waitForFrame);
+        // Auf dem Threadpool – Abmelden der WinRT-Ereignisse vom WPF-Thread aus stürzte ab (siehe OpenAsync)
+        lock (_disposeLock) task = _disposeTask ??= Task.Run(() => DisposeCoreAsync(waitForFrame));
         return new ValueTask(task);
     }
 

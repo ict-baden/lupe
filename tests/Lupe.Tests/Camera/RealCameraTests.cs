@@ -201,4 +201,24 @@ public sealed class RealCameraTests(ITestOutputHelper output)
         Assert.True(Volatile.Read(ref decodes) <= Volatile.Read(ref frames));
         output.WriteLine($"{frames} Bilder, {decodes} Erkennungen");
     }
+
+    [CameraFact]
+    public async Task Start_und_Stopp_vom_Oberflaechen_Thread_wie_in_der_App()
+    {
+        // Die App startet und stoppt die Kamera vom WPF-Thread (STA) aus, z. B. beim Wechsel auf „Verlauf“. Dabei stürzte
+        // Lupe mit 0xC0000005 in WinRT ab (MediaCapture.remove_Failed). Die übrigen Tests starten von Hintergrund-Threads.
+        var camera = await FirstCamera();
+        using var ui = new Screen.UiThread(perMonitorDpi: false);
+        for (int round = 0; round < 3; round++)
+        {
+            var source = ui.Invoke(() => Cameras.Open(camera));
+            int frames = 0;
+            source.FrameArrived += (_, _) => Interlocked.Increment(ref frames);
+            await WithTimeout(ui.Invoke(() => source.StartAsync()), 20_000, "Start");
+            Assert.True(await WaitUntil(() => Volatile.Read(ref frames) >= 3, FrameTimeoutMs), "keine Bilder von der Kamera");
+            await WithTimeout(ui.Invoke(() => source.StopAsync()), 20_000, "Stopp");
+            await WithTimeout(ui.Invoke(() => source.DisposeAsync().AsTask()), 20_000, "Freigabe");
+            output.WriteLine($"Runde {round + 1}: {frames} Bilder");
+        }
+    }
 }
