@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using Lupe.Core.Model;
+using Windows.Media.Capture.Frames;
 
 namespace Lupe.Core.Camera;
 
@@ -17,39 +19,73 @@ public interface IFrameSource : IAsyncDisposable
 }
 
 /// <summary>Webcams über Windows.Media.Capture (MediaFrameReader).</summary>
+/// <remarks>
+/// <para><see cref="CameraInfo.Id"/> ist die Kennung der <see cref="MediaFrameSourceGroup"/>; eine Geräte-Kennung
+/// (z. B. aus <c>DeviceInformation</c>) funktioniert beim Öffnen ebenfalls. Leere Kennung = erste Kamera.</para>
+/// <para>Die geöffnete Quelle startet erst mit <see cref="IFrameSource.StartAsync"/>. Erwartbare Probleme (keine Kamera,
+/// belegt, Datenschutz, abgezogen) werfen keine Ausnahme, sondern melden sich über <see cref="IFrameSource.Failed"/> –
+/// auch schon während <c>StartAsync</c>. Nur ein Abbruch über das Token wirft <see cref="OperationCanceledException"/>.</para>
+/// </remarks>
 public static class Cameras
 {
-    public static Task<IReadOnlyList<CameraInfo>> ListAsync(CancellationToken ct = default) => throw new NotImplementedException();
-    public static IFrameSource Open(CameraInfo camera) => throw new NotImplementedException();
-}
+    /// <summary>
+    /// Alle Kameras mit Farbbild (Vorschau- oder Aufnahme-Datenstrom), Namen eindeutig (gleiche Modelle mit „(1)“, „(2)“).
+    /// Keine Kamera oder Windows ohne Medienfunktionen → leere Liste, kein Fehler.
+    /// </summary>
+    public static async Task<IReadOnlyList<CameraInfo>> ListAsync(CancellationToken ct = default)
+    {
+        ct.ThrowIfCancellationRequested();
+        try
+        {
+            var groups = await MediaFrameSourceGroup.FindAllAsync().AsTask(ct).ConfigureAwait(false);
+            var candidates = new List<CameraCandidate>(groups.Count);
+            foreach (var group in groups)
+            {
+                var candidate = Describe(group);
+                if (candidate is not null) candidates.Add(candidate);
+            }
+            return CameraList.Build(candidates);
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // z. B. Windows N ohne Media Feature Pack oder ein hängender Kameradienst: dann eben keine Kamera
+            Trace.TraceWarning($"Lupe: Kameras ließen sich nicht auflisten: {ex.GetType().Name} 0x{ex.HResult:X8} {ex.Message}");
+            return [];
+        }
+    }
 
-/// <summary>Attrappe für Tests, Demo und Screenshots: spielt vorgegebene Bilder in einer Schleife ab.</summary>
-public sealed class FakeFrameSource : IFrameSource
-{
-    public FakeFrameSource(IReadOnlyList<PixelImage> frames, double framesPerSecond = 15, string name = "Demo-Kamera") => throw new NotImplementedException();
-    public string Name => throw new NotImplementedException();
-    public event EventHandler<PixelImage>? FrameArrived;
-    public event EventHandler<string>? Failed;
-    public Task StartAsync(CancellationToken ct = default) => throw new NotImplementedException();
-    public Task StopAsync() => throw new NotImplementedException();
-    public ValueTask DisposeAsync() => throw new NotImplementedException();
-}
+    /// <summary>Öffnet die Kamera als Bildquelle (ohne sie schon zu starten). Bevorzugt ~1280×720.</summary>
+    public static IFrameSource Open(CameraInfo camera)
+    {
+        ArgumentNullException.ThrowIfNull(camera);
+        return new MediaCaptureFrameSource(camera);
+    }
 
-/// <summary>
-/// Verbindet Bildquelle und Erkennung: drosselt (Bilder, die während einer laufenden Erkennung kommen, werden
-/// verworfen), meldet Treffer mit Wiederholungssperre und reicht jedes Bild für die Vorschau weiter.
-/// </summary>
-public sealed class ScanLoop : IAsyncDisposable
-{
-    public ScanLoop(IFrameSource source, Func<PixelImage, IReadOnlyList<DecodedCode>> decode, int repeatSuppressMs = 3000) => throw new NotImplementedException();
-
-    /// <summary>Jedes Bild der Quelle, für die Vorschau.</summary>
-    public event EventHandler<PixelImage>? Frame;
-    /// <summary>Neue Treffer (ohne die gerade gesperrten Wiederholungen) samt dem Bild, in dem sie gefunden wurden.</summary>
-    public event EventHandler<(IReadOnlyList<DecodedCode> Codes, PixelImage Frame)>? Detected;
-    public event EventHandler<string>? Failed;
-
-    public Task StartAsync(CancellationToken ct = default) => throw new NotImplementedException();
-    public Task StopAsync() => throw new NotImplementedException();
-    public ValueTask DisposeAsync() => throw new NotImplementedException();
+    private static CameraCandidate? Describe(MediaFrameSourceGroup group)
+    {
+        try
+        {
+            var sources = new List<CameraSourceCandidate>();
+            foreach (var info in group.SourceInfos)
+            {
+                string? deviceId = null;
+                try { deviceId = info.DeviceInformation?.Id; }
+                catch (Exception) { /* manche Treiber liefern keine Geräteinfo – egal */ }
+                sources.Add(new CameraSourceCandidate(
+                    info.SourceKind == MediaFrameSourceKind.Color,
+                    info.MediaStreamType is Windows.Media.Capture.MediaStreamType.VideoPreview or Windows.Media.Capture.MediaStreamType.VideoRecord,
+                    deviceId));
+            }
+            return new CameraCandidate(group.Id, group.DisplayName, sources);
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceWarning($"Lupe: Kameragruppe übersprungen: {ex.GetType().Name} 0x{ex.HResult:X8} {ex.Message}");
+            return null;
+        }
+    }
 }
