@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MSI für Lupe: Programmdateien nach %ProgramFiles%\Lupe und ein Startmenü-Eintrag.
+  Den Autostart richtet die App selbst pro Benutzer ein (Einstellung „Mit Windows starten“), nicht das MSI.
+  Verlauf und Einstellungen liegen pro Benutzer unter %LocalAppData%\Lupe.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+  <Package Name="Lupe"
+           Manufacturer="ICT-Baden"
+           Version="$(ProductVersion)"
+           UpgradeCode="B5E63BC4-65DB-46E9-B6B1-5A3167B381D1"
+           Scope="perMachine"
+           Compressed="yes">
+
+    <!-- AllowSameVersionUpgrades: CI-Builds unterscheiden sich nur in der 4. Stelle, die Windows Installer beim Vergleich
+         ignoriert. Ohne die Option würden sie nebeneinander statt übereinander installiert. -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="Eine neuere Version von Lupe ist bereits installiert." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="LupeIcon" SourceFile="$(AssetsDir)\lupe.ico" />
+    <Property Id="ARPPRODUCTICON" Value="LupeIcon" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/ict-baden/lupe" />
+
+    <!-- Laufende Instanzen beenden, sonst sind die Dateien gesperrt -->
+    <util:CloseApplication Id="CloseLupe" Target="Lupe.exe" CloseMessage="yes" TerminateProcess="1" RebootPrompt="no" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="Lupe" />
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder" />
+
+    <Feature Id="Main" Title="Lupe" Level="1">
+      <!-- Alles aus dem Publish-Ordner (Lupe.exe, WPF-DLLs …) -->
+      <Files Include="$(PublishDir)\**" Directory="INSTALLFOLDER">
+        <Exclude Files="$(PublishDir)\*.pdb" />
+      </Files>
+
+      <Component Id="StartMenu" Directory="ProgramMenuFolder" Guid="2E307A7E-CEA0-4E85-B1F8-832B537E0491">
+        <Shortcut Id="LupeShortcut" Name="Lupe" Description="QR- und Barcodes lesen"
+                  Target="[INSTALLFOLDER]Lupe.exe" WorkingDirectory="INSTALLFOLDER" Icon="LupeIcon" />
+        <RegistryValue Root="HKLM" Key="SOFTWARE\ICT-Baden\Lupe" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </Feature>
+  </Package>
+</Wix>
