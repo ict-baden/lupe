@@ -1,0 +1,187 @@
+<UserControl x:Class="Lupe.UI.Pages.SettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:Lupe.UI">
+    <ScrollViewer x:Name="Scroller" Style="{StaticResource PageScroll}">
+        <StackPanel MaxWidth="1000" HorizontalAlignment="Stretch">
+
+            <!-- ========== Aktionen ========== -->
+            <TextBlock Text="Bei einem Treffer" Style="{StaticResource SectionText}" Margin="2,0,0,8"/>
+            <ui:SettingCard Glyph="&#xE722;" Header="Kamera, Datei und Zwischenablage"
+                            Description="Eintippen gibt es hier nicht – Lupe selbst ist dann das aktive Fenster.">
+                <StackPanel Orientation="Horizontal">
+                    <CheckBox x:Name="ActCopy" Content="Kopieren" Click="Actions_Click" Margin="0,0,20,0" MinWidth="0"/>
+                    <CheckBox x:Name="ActLink" Content="Link öffnen" Click="Actions_Click" MinWidth="0"/>
+                </StackPanel>
+            </ui:SettingCard>
+            <ui:SettingCard Glyph="&#xE7F4;" Header="Bildschirmausschnitt"
+                            Description="Eintippen schreibt den Inhalt wie eine Tastatur in das Fenster, das vor dem Scan vorn war (Scan per Tastenkürzel).">
+                <StackPanel Orientation="Horizontal">
+                    <CheckBox x:Name="ScrCopy" Content="Kopieren" Click="Actions_Click" Margin="0,0,20,0" MinWidth="0"/>
+                    <CheckBox x:Name="ScrType" Content="Eintippen" Click="Actions_Click" Margin="0,0,20,0" MinWidth="0"/>
+                    <CheckBox x:Name="ScrLink" Content="Link öffnen" Click="Actions_Click" MinWidth="0"/>
+                </StackPanel>
+            </ui:SettingCard>
+            <ui:SettingCard Glyph="&#xE751;" Header="Nach dem Eintippen"
+                            Description="Eine Taste hinterher – z. B. Enter, um ein Suchfeld oder Formular gleich abzuschicken.">
+                <ComboBox x:Name="SuffixBox" Width="160" SelectionChanged="Suffix_SelectionChanged" AutomationProperties.Name="Taste nach dem Eintippen">
+                    <ComboBoxItem Content="Nichts" Tag=""/>
+                    <ComboBoxItem Content="Enter" Tag="Enter"/>
+                    <ComboBoxItem Content="Tab" Tag="Tab"/>
+                </ComboBox>
+            </ui:SettingCard>
+
+            <!-- ========== Tastenkürzel ========== -->
+            <TextBlock Text="Bildschirm-Scan" Style="{StaticResource SectionText}"/>
+            <ui:SettingCard Glyph="&#xE765;" Header="Tastenkürzel"
+                            Description="Ins Feld klicken und die Kombination drücken (mit Strg, Alt oder Win; F-Tasten auch allein).">
+                <StackPanel Orientation="Horizontal">
+                    <TextBox x:Name="HotkeyBox" Width="200" IsReadOnly="True" TextAlignment="Center" Cursor="Hand"
+                             PreviewKeyDown="HotkeyBox_PreviewKeyDown" GotKeyboardFocus="HotkeyBox_GotFocus" LostKeyboardFocus="HotkeyBox_LostFocus"
+                             AutomationProperties.Name="Tastenkürzel für den Bildschirm-Scan"/>
+                    <Button Content="Standard" Margin="8,0,0,0" Click="HotkeyDefault_Click" ToolTip="Strg+Alt+Q"/>
+                </StackPanel>
+            </ui:SettingCard>
+            <StackPanel x:Name="HotkeyState" Orientation="Horizontal" Margin="18,2,0,4">
+                <TextBlock x:Name="HotkeyStateIcon" Text="&#xE73E;" Style="{StaticResource Icon}" FontSize="12" Margin="0,0,8,0"/>
+                <TextBlock x:Name="HotkeyStateText" Style="{StaticResource Caption}" FontSize="13"/>
+            </StackPanel>
+
+            <!-- ========== Link-Regeln ========== -->
+            <TextBlock Text="Link-Regeln" Style="{StaticResource SectionText}"/>
+            <Border Style="{StaticResource Card}" Padding="16,14">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource Caption}" FontSize="13" Margin="0,0,0,12"
+                               Text="Passt ein Code auf den regulären Ausdruck, öffnet „Link öffnen“ Präfix + Code im Browser (Präfix leer: Der Code ist selbst der Link). Die erste passende aktive Regel gilt. Geöffnet werden nur http- und https-Links."/>
+                    <Grid Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="56"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="120"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Aktiv" Style="{StaticResource Caption}"/>
+                        <TextBlock Grid.Column="1" Text="Regulärer Ausdruck" Style="{StaticResource Caption}"/>
+                        <TextBlock Grid.Column="2" Text="Präfix (leer = Code ist der Link)" Style="{StaticResource Caption}" Margin="8,0,0,0"/>
+                    </Grid>
+                    <ItemsControl x:Name="RulesList" Focusable="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type ui:RuleRow}">
+                                <StackPanel Margin="0,3">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="56"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="120"/>
+                                        </Grid.ColumnDefinitions>
+                                        <CheckBox IsChecked="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"
+                                                  AutomationProperties.Name="Regel aktiv" MinWidth="0"/>
+                                        <TextBox Grid.Column="1" Text="{Binding Pattern, UpdateSourceTrigger=PropertyChanged}" FontFamily="{StaticResource MonoFont}"
+                                                 FontSize="13" AutomationProperties.Name="Regulärer Ausdruck"/>
+                                        <TextBox Grid.Column="2" Text="{Binding Prefix, UpdateSourceTrigger=PropertyChanged}" FontFamily="{StaticResource MonoFont}"
+                                                 FontSize="13" Margin="8,0,0,0" AutomationProperties.Name="Präfix"/>
+                                        <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right">
+                                            <Button Style="{DynamicResource GhostButton}" Click="RuleUp_Click" ToolTip="Nach oben (wird früher geprüft)" AutomationProperties.Name="Nach oben">
+                                                <TextBlock Text="&#xE74A;" Style="{StaticResource Icon}" FontSize="12"/>
+                                            </Button>
+                                            <Button Style="{DynamicResource GhostButton}" Click="RuleDown_Click" ToolTip="Nach unten" AutomationProperties.Name="Nach unten">
+                                                <TextBlock Text="&#xE74B;" Style="{StaticResource Icon}" FontSize="12"/>
+                                            </Button>
+                                            <Button Style="{DynamicResource GhostButton}" Click="RuleDelete_Click" ToolTip="Regel löschen" AutomationProperties.Name="Regel löschen">
+                                                <TextBlock Text="&#xE74D;" Style="{StaticResource Icon}" FontSize="12"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                    <TextBlock Text="{Binding Error}" Foreground="{DynamicResource SystemFillColorCriticalBrush}" FontSize="12" Margin="56,3,0,0"
+                                               TextWrapping="Wrap" Visibility="{Binding Error, Converter={StaticResource EmptyToVisible}, ConverterParameter=invert}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Grid Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Button Click="RuleAdd_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE710;" FontFamily="{StaticResource IconFont}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock Text="Regel hinzufügen" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Grid Grid.Column="1" Width="260" Margin="16,0,0,0" VerticalAlignment="Center">
+                            <TextBox x:Name="RuleTestBox" TextChanged="RuleTest_TextChanged" FontFamily="{StaticResource MonoFont}" FontSize="13"
+                                     AutomationProperties.Name="Code zum Ausprobieren"/>
+                            <TextBlock Style="{StaticResource Placeholder}" Text="Code zum Ausprobieren"
+                                       Visibility="{Binding Text, ElementName=RuleTestBox, Converter={StaticResource EmptyToVisible}}"/>
+                        </Grid>
+                        <TextBlock x:Name="RuleTestResult" Grid.Column="2" Style="{StaticResource Caption}" FontSize="13" Margin="12,0,0,0"
+                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ========== Formate ========== -->
+            <TextBlock Text="Formate" Style="{StaticResource SectionText}"/>
+            <ui:SettingCard Glyph="&#xED14;" Header="Alle Formate erkennen"
+                            Description="Nur bestimmte Formate: schneller und weniger Fehlerkennungen bei Bildern mit viel Text.">
+                <CheckBox x:Name="AllFormatsToggle" Style="{StaticResource ToggleSwitch}" Click="AllFormats_Click"
+                          AutomationProperties.Name="Alle Formate erkennen"/>
+            </ui:SettingCard>
+            <Border x:Name="FormatsCard" Style="{StaticResource Card}" Padding="16,12">
+                <WrapPanel x:Name="FormatsPanel"/>
+            </Border>
+
+            <!-- ========== Kamera ========== -->
+            <TextBlock Text="Kamera" Style="{StaticResource SectionText}"/>
+            <ui:SettingCard Glyph="&#xE767;" Header="Ton bei Treffer" Description="Ein kurzer Piep, sobald Lupe einen Code erkannt hat.">
+                <StackPanel Orientation="Horizontal">
+                    <Button Style="{DynamicResource GhostButton}" Click="SoundTest_Click" ToolTip="Ton anhören" Margin="0,0,12,0" AutomationProperties.Name="Ton anhören">
+                        <TextBlock Text="&#xE768;" Style="{StaticResource Icon}" FontSize="12"/>
+                    </Button>
+                    <CheckBox x:Name="SoundToggle" Style="{StaticResource ToggleSwitch}" Click="Toggle_Click" AutomationProperties.Name="Ton bei Treffer"/>
+                </StackPanel>
+            </ui:SettingCard>
+            <ui:SettingCard Glyph="&#xE71E;" Header="Zielhilfe" Description="Winkel in der Bildmitte zeigen, wohin der Code gehört.">
+                <CheckBox x:Name="AimToggle" Style="{StaticResource ToggleSwitch}" Click="Toggle_Click" AutomationProperties.Name="Zielhilfe"/>
+            </ui:SettingCard>
+            <ui:SettingCard Glyph="&#xE916;" Header="Wiederholungssperre"
+                            Description="So lange meldet die Kamera denselben Code nicht noch einmal – gezählt ab dem letzten Sehen.">
+                <ComboBox x:Name="RepeatBox" Width="160" DisplayMemberPath="Label" SelectionChanged="Repeat_SelectionChanged"
+                          AutomationProperties.Name="Wiederholungssperre"/>
+            </ui:SettingCard>
+
+            <!-- ========== Verlauf ========== -->
+            <TextBlock Text="Verlauf" Style="{StaticResource SectionText}"/>
+            <ui:SettingCard Glyph="&#xE81C;" Header="Verlauf speichern" x:Name="KeepCard"
+                            Description="Nur für Sie, unter %LocalAppData%\Lupe\verlauf.json. Aus: nur bis zum Beenden – die gespeicherte Datei wird gelöscht.">
+                <CheckBox x:Name="KeepToggle" Style="{StaticResource ToggleSwitch}" Click="Toggle_Click" AutomationProperties.Name="Verlauf speichern"/>
+            </ui:SettingCard>
+            <ui:SettingCard Glyph="&#xE8FD;" Header="Höchstens" Description="Ältere Einträge fallen weg (10 bis 100 000).">
+                <StackPanel Orientation="Horizontal">
+                    <TextBox x:Name="LimitBox" Width="110" TextAlignment="Right" LostKeyboardFocus="Limit_LostFocus" KeyDown="Limit_KeyDown"
+                             AutomationProperties.Name="Höchstzahl der Verlaufseinträge"/>
+                    <TextBlock Text="Einträge" Style="{StaticResource Body}" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                </StackPanel>
+            </ui:SettingCard>
+
+            <!-- ========== Start ========== -->
+            <TextBlock Text="Start und Infobereich" Style="{StaticResource SectionText}"/>
+            <ui:SettingCard Glyph="&#xE7E8;" Header="Mit Windows starten" x:Name="AutostartCard"
+                            Description="Lupe startet bei der Anmeldung unsichtbar im Infobereich – das Tastenkürzel ist sofort bereit.">
+                <CheckBox x:Name="AutostartToggle" Style="{StaticResource ToggleSwitch}" Click="Autostart_Click" AutomationProperties.Name="Mit Windows starten"/>
+            </ui:SettingCard>
+            <ui:SettingCard Glyph="&#xE73F;" Header="Beim Schließen im Infobereich weiterlaufen"
+                            Description="Das Fenster schließt sich, Lupe bleibt für das Tastenkürzel da. Beenden über das Symbol im Infobereich.">
+                <CheckBox x:Name="TrayToggle" Style="{StaticResource ToggleSwitch}" Click="Tray_Click" AutomationProperties.Name="Im Infobereich weiterlaufen"/>
+            </ui:SettingCard>
+
+            <StackPanel Orientation="Horizontal" Margin="2,18,0,0">
+                <TextBlock x:Name="StoreText" Style="{StaticResource Caption}" FontSize="13" VerticalAlignment="Center"/>
+                <Button Style="{StaticResource LinkButton}" Content="Ordner öffnen" Margin="10,0,0,0" VerticalAlignment="Center" Click="OpenFolder_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
