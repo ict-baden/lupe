@@ -1,0 +1,67 @@
+using System.Collections.Specialized;
+using System.Windows;
+using System.Windows.Controls;
+using Lupe.Core.Input;
+using Lupe.Core.Model;
+using Lupe.Services;
+
+namespace Lupe.UI.Pages;
+
+/// <summary>Bildschirm: großer Knopf „Ausschnitt scannen“, Tastenkürzel, Aktionen beim Treffer, letzte Ergebnisse.</summary>
+public partial class ScreenPage : UserControl, IPage
+{
+    private readonly AppState _state;
+
+    internal ScreenPage(AppState state)
+    {
+        InitializeComponent();
+        _state = state;
+        ResultList.ItemsSource = state.ScreenResults;
+        CodeActions.Bind(this, state);
+        state.ScreenResults.CollectionChanged += OnResultsChanged;
+        state.HotkeyChanged += Update;
+        state.SettingsChanged += (_, _) => Update();
+        Update();
+        OnResultsChanged(null, null);
+    }
+
+    public void OnShown() => Update();
+    public void OnHidden() { }
+
+    private void Update()
+    {
+        var settings = _state.Settings;
+        string hotkey;
+        try { hotkey = HotkeyText.Format(settings.ScreenHotkey); }
+        catch (Exception ex) when (ex is not OutOfMemoryException) { hotkey = ""; }
+        HotkeyKeys.ItemsSource = hotkey.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        HotkeyWarning.Visibility = _state.HotkeyError is null ? Visibility.Collapsed : Visibility.Visible;
+        HotkeyWarningText.Text = _state.HotkeyError ?? "";
+        HotkeyNote.Text = _state.HotkeyError is null ? "aus jedem Programm" : "gerade nicht verfügbar";
+
+        var actions = settings.ScreenActions;
+        var parts = new List<string>();
+        if (actions.HasFlag(ResultActions.Kopieren)) parts.Add("in die Zwischenablage kopieren");
+        if (actions.HasFlag(ResultActions.Eintippen))
+            parts.Add(settings.TypeSuffix is "Enter" or "Tab" ? $"in das vorherige Fenster tippen (danach {settings.TypeSuffix})" : "in das vorherige Fenster tippen");
+        if (actions.HasFlag(ResultActions.LinkOeffnen)) parts.Add("Link öffnen, wenn eine Regel passt");
+        var sentence = string.Join(", ", parts);
+        ActionsCard.Description = parts.Count == 0
+            ? "Nur anzeigen und in den Verlauf – keine Aktion eingestellt."
+            : char.ToUpper(sentence[0], Labels.German) + sentence[1..] + "."
+              + (actions.HasFlag(ResultActions.Eintippen) ? " Eintippen nur, wenn der Scan per Tastenkürzel aus einem anderen Programm kommt." : "");
+    }
+
+    private void OnResultsChanged(object? sender, NotifyCollectionChangedEventArgs? e) =>
+        ResultsEmpty.Visibility = _state.ScreenResults.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+    private void Scan_Click(object sender, RoutedEventArgs e) => _state.RequestScreenScan();
+    private void GoSettings_Click(object sender, RoutedEventArgs e) => _state.RequestPage("einstellungen");
+
+    public Task PrepareScreenshotAsync()
+    {
+        Update();
+        return Ui.IdleAsync();
+    }
+}
