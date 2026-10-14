@@ -37,6 +37,10 @@ internal sealed class CaptureSession : IAsyncDisposable
     private readonly Action<CaptureSession, string> _onFailure;
     private readonly SemaphoreSlim _frameGate = new(1, 1);
     private readonly object _disposeLock = new();
+    private readonly object _openLock = new();
+    // unter _openLock: Während OpenAsync läuft, meldet OpenAsync Laufzeitfehler selbst (als Ergebnis) statt über das Ereignis
+    private bool _opening;
+    private string? _openFailure;
     private string _name;
     private string _deviceId;
     private MediaCapture? _capture;
@@ -75,10 +79,38 @@ internal sealed class CaptureSession : IAsyncDisposable
     }
 
     /// <summary>
-    /// Öffnet und startet die Kamera. Ergebnis: null = läuft (oder ist dabei schon ausgefallen und hat das selbst
-    /// gemeldet, dann ist <see cref="IsActive"/> false), sonst die deutsche Fehlermeldung. Wirft nur bei Abbruch.
+    /// Öffnet und startet die Kamera. Ergebnis: null = läuft (oder wurde währenddessen mit <see cref="Deactivate"/>
+    /// angehalten, dann ist <see cref="IsActive"/> false), sonst die deutsche Fehlermeldung – auch für einen Ausfall
+    /// während des Starts, der dann nicht zusätzlich über das Ereignis kommt. So meldet der Aufrufer ihn erst, wenn er
+    /// seine eigenen Sperren freigegeben hat. Wirft nur bei Abbruch.
     /// </summary>
     public async Task<string?> OpenAsync(CancellationToken ct)
+    {
+        lock (_openLock)
+        {
+            _opening = true;
+            _openFailure = null;
+        }
+        string? result, deferred;
+        try
+        {
+            result = await OpenCoreAsync(ct).ConfigureAwait(false);
+        }
+        finally
+        {
+            lock (_openLock)
+            {
+                _opening = false;
+                deferred = _openFailure;
+                _openFailure = null;
+            }
+            // Während des Öffnens freigegeben (aus einem Bild-Ereignis heraus)? Dann auch das gerade Geöffnete freigeben
+            if (Volatile.Read(ref _disposeTask) is not null) await DetachAndReleaseAsync(waitForFrame: false).ConfigureAwait(false);
+        }
+        return result ?? deferred;
+    }
+
+    private async Task<string?> OpenCoreAsync(CancellationToken ct)
     {
         try
         {
@@ -91,7 +123,7 @@ internal sealed class CaptureSession : IAsyncDisposable
                 ct.ThrowIfCancellationRequested();
                 last = await TryStartAsync(group, mode, ct).ConfigureAwait(false);
                 if (last is null) return null;
-                // Schon gemeldet (Laufzeitfehler während des Starts) oder aus einem Ereignis heraus angehalten
+                // Laufzeitfehler während des Starts (die Meldung liefert OpenAsync) oder aus einem Ereignis heraus angehalten
                 if (Volatile.Read(ref _failureClaimed) != 0) return null;
                 first ??= last;
                 if (!last.RetryShared) break;
@@ -111,7 +143,7 @@ internal sealed class CaptureSession : IAsyncDisposable
 
     private string? Describe(CameraProblem problem)
     {
-        // Ist während des Starts schon ein Laufzeitfehler gemeldet worden, nicht ein zweites Mal melden
+        // Ist während des Starts schon ein Laufzeitfehler aufgetreten, gilt dessen Meldung (OpenAsync liefert sie)
         if (Interlocked.Exchange(ref _failureClaimed, 1) != 0) return null;
         _active = false;
         return CameraProblems.Describe(problem, _name);
@@ -173,8 +205,8 @@ internal sealed class CaptureSession : IAsyncDisposable
 
             var current = source.CurrentFormat;
             int width = (int)(current?.VideoFormat?.Width ?? 0), height = (int)(current?.VideoFormat?.Height ?? 0);
-            var output = FormatChooser.OutputSize(width, height);
-            reader = await CreateReaderAsync(capture, source, (width, height), output, ct).ConfigureAwait(false);
+            (reader, var output) = await CreateReaderAsync(capture, source, (width, height), FormatChooser.OutputSize(width, height), ct)
+                .ConfigureAwait(false);
             reader.AcquisitionMode = MediaFrameReaderAcquisitionMode.Realtime;
 
             Format = new CaptureFormat(width, height, current?.Subtype ?? "", Fps(current), output.Width, output.Height, shared);
@@ -241,17 +273,32 @@ internal sealed class CaptureSession : IAsyncDisposable
         }
     }
 
-    private static async Task<MediaFrameReader> CreateReaderAsync(MediaCapture capture, MediaFrameSource source,
-        (int Width, int Height) current, (int Width, int Height) output, CancellationToken ct)
+    /// <summary>
+    /// Frame-Reader, der möglichst schon herunterskaliertes BGRA8 liefert; sonst BGRA8 in Originalgröße, zuletzt das
+    /// Rohformat (FrameConverter wandelt dann je Bild um). Liefert auch die tatsächliche Bildgröße.
+    /// </summary>
+    private static async Task<(MediaFrameReader Reader, (int Width, int Height) Output)> CreateReaderAsync(MediaCapture capture,
+        MediaFrameSource source, (int Width, int Height) current, (int Width, int Height) output, CancellationToken ct)
     {
-        try
+        if (output.Width > 0 && output != current)
         {
-            if (output.Width > 0 && output != current)
+            try
             {
                 var size = new BitmapSize { Width = (uint)output.Width, Height = (uint)output.Height };
-                return await capture.CreateFrameReaderAsync(source, MediaEncodingSubtypes.Bgra8, size).AsTask(ct).ConfigureAwait(false);
+                return (await capture.CreateFrameReaderAsync(source, MediaEncodingSubtypes.Bgra8, size).AsTask(ct).ConfigureAwait(false), output);
             }
-            return await capture.CreateFrameReaderAsync(source, MediaEncodingSubtypes.Bgra8).AsTask(ct).ConfigureAwait(false);
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceWarning($"Lupe: Kamerabild lässt sich nicht herunterskalieren (0x{ex.HResult:X8}), nehme die volle Größe.");
+            }
+        }
+        try
+        {
+            return (await capture.CreateFrameReaderAsync(source, MediaEncodingSubtypes.Bgra8).AsTask(ct).ConfigureAwait(false), current);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -261,7 +308,7 @@ internal sealed class CaptureSession : IAsyncDisposable
         {
             // Ohne Umwandlung durch Media Foundation: Rohformat, FrameConverter wandelt je Bild um
             Trace.TraceWarning($"Lupe: BGRA-Frame-Reader nicht verfügbar (0x{ex.HResult:X8}), nehme das Rohformat.");
-            return await capture.CreateFrameReaderAsync(source).AsTask(ct).ConfigureAwait(false);
+            return (await capture.CreateFrameReaderAsync(source).AsTask(ct).ConfigureAwait(false), current);
         }
     }
 
@@ -376,24 +423,47 @@ internal sealed class CaptureSession : IAsyncDisposable
         string message;
         try { message = CameraProblems.Describe(problem, _name); }
         catch (Exception) { message = $"Die Kamera „{_name}“ ist ausgefallen. Starten Sie sie erneut."; }
+        lock (_openLock)
+        {
+            // Während des Starts gibt OpenAsync die Meldung zurück (der Aufrufer hält gerade seine Sperre)
+            if (_opening)
+            {
+                _openFailure = message;
+                return;
+            }
+        }
         _onFailure(this, message);
     }
 
     // ---------- Freigabe ----------
 
-    /// <summary>Gibt Reader und MediaCapture frei; mehrfach und nebenläufig aufrufbar, nie aus einem eigenen Ereignis.</summary>
-    public ValueTask DisposeAsync()
+    /// <summary>
+    /// Gibt Reader und MediaCapture frei und wartet dabei ein gerade laufendes Bild-Ereignis ab (höchstens
+    /// <see cref="FrameDrainTimeout"/>): Danach kommt sicher kein Bild mehr. Mehrfach und nebenläufig aufrufbar, nie aus
+    /// einem eigenen Ereignis.
+    /// </summary>
+    public ValueTask DisposeAsync() => Release(waitForFrame: true);
+
+    /// <summary>
+    /// Wie <see cref="DisposeAsync"/>, wartet aber nicht auf ein laufendes Bild-Ereignis (es liefert nach dem Abschalten
+    /// nichts mehr weiter). Für Freigaben, die aus einem Ereignis heraus angestoßen wurden – dieses Ereignis wartet womöglich
+    /// selbst auf etwas, das erst nach der Freigabe drankommt.
+    /// </summary>
+    public ValueTask ReleaseNowAsync() => Release(waitForFrame: false);
+
+    private ValueTask Release(bool waitForFrame)
     {
-        lock (_disposeLock) _disposeTask ??= DisposeCoreAsync();
-        return new ValueTask(_disposeTask);
+        Task task;
+        lock (_disposeLock) task = _disposeTask ??= DisposeCoreAsync(waitForFrame);
+        return new ValueTask(task);
     }
 
-    private async Task DisposeCoreAsync()
+    private async Task DisposeCoreAsync(bool waitForFrame)
     {
         Deactivate();
         try
         {
-            await DetachAndReleaseAsync().ConfigureAwait(false);
+            await DetachAndReleaseAsync(waitForFrame).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -401,8 +471,8 @@ internal sealed class CaptureSession : IAsyncDisposable
         }
     }
 
-    /// <summary>Ereignisse abmelden, laufendes Bild abwarten, dann Reader und MediaCapture freigeben.</summary>
-    private async Task DetachAndReleaseAsync()
+    /// <summary>Ereignisse abmelden, laufendes Bild (auf Wunsch) abwarten, dann Reader und MediaCapture freigeben.</summary>
+    private async Task DetachAndReleaseAsync(bool waitForFrame = true)
     {
         var capture = Interlocked.Exchange(ref _capture, null);
         var reader = Interlocked.Exchange(ref _reader, null);
@@ -422,8 +492,12 @@ internal sealed class CaptureSession : IAsyncDisposable
             catch (Exception ex) { Trace.TraceWarning($"Lupe: Bild-Ereignis abmelden: 0x{ex.HResult:X8} {ex.Message}"); }
         }
 
-        bool drained = await _frameGate.WaitAsync(FrameDrainTimeout).ConfigureAwait(false);
-        if (!drained) Trace.TraceWarning("Lupe: Ein Empfänger von Kamerabildern hängt – gebe die Kamera trotzdem frei.");
+        bool drained = false;
+        if (waitForFrame)
+        {
+            drained = await _frameGate.WaitAsync(FrameDrainTimeout).ConfigureAwait(false);
+            if (!drained) Trace.TraceWarning("Lupe: Ein Empfänger von Kamerabildern hängt – gebe die Kamera trotzdem frei.");
+        }
         try
         {
             await ReleaseAsync(capture, reader).ConfigureAwait(false);

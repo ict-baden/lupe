@@ -14,11 +14,13 @@ namespace Lupe.Core.Camera;
 /// <para>Die Wiederholungssperre gilt je Text + Format ab der <b>letzten</b> Sichtung und beginnt bei jedem Start neu.</para>
 /// <para>Fällt die Quelle aus oder wirft die Erkennung (außer <see cref="OperationCanceledException"/>), kommt
 /// <see cref="Failed"/> mit deutscher Meldung und die Schleife hält an (die Quelle wird angehalten); ein erneutes
-/// <see cref="StartAsync"/> startet beides wieder.</para>
-/// <para>Start, Stopp und Freigabe sind beliebig wiederholbar und threadsicher, auch aus den eigenen Ereignissen heraus.
-/// Nach Rückkehr von <see cref="StopAsync"/> kommen keine Ereignisse mehr (aus einem eigenen Ereignis heraus aufgerufen
-/// wirkt der Stopp sofort, das Aufräumen läuft im Hintergrund). Die Quelle gehört dem Aufrufer: Stopp und Freigabe halten
-/// sie nur an, geben sie aber nicht frei.</para>
+/// <see cref="StartAsync"/> startet beides wieder. Ein Ausfall schon während <see cref="StartAsync"/> wird gemeldet,
+/// nachdem die Schleife wieder aufgeräumt ist – noch bevor <see cref="StartAsync"/> zurückkehrt.</para>
+/// <para>Start, Stopp und Freigabe sind beliebig wiederholbar und threadsicher, auch aus den eigenen Ereignissen heraus
+/// (selbst synchron mit <c>.Wait()</c>, solange nicht zugleich ein anderer Thread startet oder anhält, der auf genau
+/// dieses Ereignis wartet). Nach Rückkehr von <see cref="StopAsync"/> kommen keine Ereignisse mehr (aus einem eigenen
+/// Ereignis heraus aufgerufen wirkt der Stopp sofort, das Aufräumen läuft im Hintergrund). Die Quelle gehört dem
+/// Aufrufer: Stopp und Freigabe halten sie nur an, geben sie aber nicht frei.</para>
 /// </remarks>
 public sealed class ScanLoop : IAsyncDisposable
 {
@@ -32,7 +34,12 @@ public sealed class ScanLoop : IAsyncDisposable
     // unter _sync
     private int _generation;
     private bool _accepting;
-    // nur unter _lifecycle
+    /// <summary>StartAsync wartet gerade auf die Quelle; Ausfälle meldet dann StartAsync (nach dem Aufräumen).</summary>
+    private bool _starting;
+    private string? _startFailure;
+    /// <summary>Generation, für die die Quelle schon aus ihrem eigenen Ereignis heraus angehalten wurde.</summary>
+    private int _sourceStoppedFor = -1;
+    // geschrieben nur unter _lifecycle und _sync, gelesen unter einem von beiden
     private bool _attached;
     private volatile bool _disposed;
     // 1, solange eine Erkennung läuft
@@ -41,6 +48,8 @@ public sealed class ScanLoop : IAsyncDisposable
 
     /// <summary>Gesetzt, während dieser Thread gerade ein Ereignis dieser Schleife ausliefert (gegen Selbst-Verklemmung).</summary>
     [ThreadStatic] private static ScanLoop? t_callbackOwner;
+    /// <summary>Gesetzt, während dieser Thread gerade ein Ereignis der Quelle an diese Schleife abarbeitet.</summary>
+    [ThreadStatic] private static ScanLoop? t_sourceCallback;
 
     public ScanLoop(IFrameSource source, Func<PixelImage, IReadOnlyList<DecodedCode>> decode, int repeatSuppressMs = 3000)
         : this(source, decode, repeatSuppressMs, TimeProvider.System)
@@ -100,33 +109,54 @@ public sealed class ScanLoop : IAsyncDisposable
             {
                 _generation++;
                 _accepting = true;
+                _starting = true;
+                _startFailure = null;
                 _filter.Clear();
             }
             _source.FrameArrived += OnSourceFrame;
             _source.Failed += OnSourceFailed;
-            _attached = true;
+            lock (_sync) _attached = true;
+
+            Exception? startError = null;
             try
             {
                 await _source.StartAsync(ct).ConfigureAwait(false);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
+                lock (_sync)
+                {
+                    _starting = false;
+                    _startFailure = null;
+                }
                 await DetachAsync(waitForDecode: !inCallback).ConfigureAwait(false);
                 throw;
             }
             catch (Exception ex)
             {
-                // Hat die Quelle ihren Ausfall schon selbst gemeldet, nicht ein zweites Mal melden
-                bool reported;
-                lock (_sync) reported = !_accepting;
-                await DetachAsync(waitForDecode: !inCallback).ConfigureAwait(false);
-                if (!reported) failure = $"Die Kamera „{CameraList.CleanName(SafeName())}“ lässt sich nicht starten: {ex.Message}";
+                startError = ex;
             }
+
+            bool running;
+            lock (_sync)
+            {
+                _starting = false;
+                // Hat die Quelle ihren Ausfall schon selbst gemeldet, nur diese Meldung weitergeben
+                failure = _startFailure;
+                _startFailure = null;
+                if (startError is not null && _accepting)
+                    failure = $"Die Kamera „{CameraList.CleanName(SafeName())}“ lässt sich nicht starten: {startError.Message}";
+                if (startError is not null) _accepting = false;
+                running = _accepting;
+            }
+            // Ausgefallen oder aus einem Ereignis heraus angehalten: gleich hier aufräumen
+            if (!running) await DetachAsync(waitForDecode: !inCallback).ConfigureAwait(false);
         }
         finally
         {
             _lifecycle.Release();
         }
+        // Erst nach dem Freigeben der Sperre melden: Ein Empfänger darf dann sogar synchron neu starten
         if (failure is not null) RaiseFailed(failure);
     }
 
@@ -164,9 +194,33 @@ public sealed class ScanLoop : IAsyncDisposable
         {
             _accepting = false;
             generation = _generation;
+            StopSourceFromItsCallbackLocked(generation);
         }
         _ = Task.Run(() => DetachInBackgroundAsync(generation));
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Läuft dieser Thread gerade in einem Ereignis der Quelle (Bild oder Ausfall), wird die Quelle gleich hier angehalten:
+    /// Die eingebauten Quellen erkennen den Aufruf aus ihrem eigenen Ereignis und warten nicht auf sich selbst. Hielte
+    /// erst der Aufräumer im Hintergrund die Quelle an, wartete er auf das Ende genau dieses Ereignisses – und das wartet
+    /// womöglich synchron auf einen Neustart der Schleife, der wiederum auf den Aufräumer wartet. Nur unter <see cref="_sync"/>.
+    /// </summary>
+    private void StopSourceFromItsCallbackLocked(int generation)
+    {
+        if (t_sourceCallback != this || !_attached || _sourceStoppedFor == generation) return;
+        _sourceStoppedFor = generation;
+        try
+        {
+            var stop = _source.StopAsync();
+            _ = stop.ContinueWith(static t => Trace.TraceWarning($"Lupe: Anhalten der Bildquelle fehlgeschlagen: {t.Exception}"),
+                CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceWarning($"Lupe: Anhalten der Bildquelle fehlgeschlagen: {ex}");
+        }
     }
 
     /// <summary>
@@ -179,8 +233,8 @@ public sealed class ScanLoop : IAsyncDisposable
         try
         {
             bool same;
-            lock (_sync) same = generation == _generation;
-            if (same && _attached) await DetachAsync(waitForDecode: false).ConfigureAwait(false);
+            lock (_sync) same = generation == _generation && _attached;
+            if (same) await DetachAsync(waitForDecode: false).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -193,23 +247,32 @@ public sealed class ScanLoop : IAsyncDisposable
     }
 
     /// <summary>
-    /// Abmelden, Quelle anhalten, laufende Erkennung abwarten. Nur unter <see cref="_lifecycle"/>. Aus einem eigenen
-    /// Ereignis heraus (<paramref name="waitForDecode"/> = false) wäre das Warten eine Verklemmung – dann genügt, dass
-    /// nichts mehr angenommen wird: das Ergebnis der laufenden Erkennung wird verworfen.
+    /// Abmelden, Quelle anhalten (falls nicht schon aus ihrem eigenen Ereignis heraus geschehen), laufende Erkennung
+    /// abwarten. Nur unter <see cref="_lifecycle"/>. Aus einem eigenen Ereignis heraus (<paramref name="waitForDecode"/> =
+    /// false) wäre das Warten eine Verklemmung – dann genügt, dass nichts mehr angenommen wird: das Ergebnis der
+    /// laufenden Erkennung wird verworfen.
     /// </summary>
     private async Task DetachAsync(bool waitForDecode)
     {
-        lock (_sync) _accepting = false;
+        bool stopSource;
+        lock (_sync)
+        {
+            _accepting = false;
+            _attached = false;
+            stopSource = _sourceStoppedFor != _generation;
+        }
         _source.FrameArrived -= OnSourceFrame;
         _source.Failed -= OnSourceFailed;
-        _attached = false;
-        try
+        if (stopSource)
         {
-            await _source.StopAsync().ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Trace.TraceWarning($"Lupe: Anhalten der Bildquelle fehlgeschlagen: {ex}");
+            try
+            {
+                await _source.StopAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceWarning($"Lupe: Anhalten der Bildquelle fehlgeschlagen: {ex}");
+            }
         }
         if (waitForDecode && t_callbackOwner != this)
         {
@@ -227,6 +290,20 @@ public sealed class ScanLoop : IAsyncDisposable
     private void OnSourceFrame(object? sender, PixelImage image)
     {
         if (image is null) return;
+        var previous = t_sourceCallback;
+        t_sourceCallback = this;
+        try
+        {
+            HandleFrame(image);
+        }
+        finally
+        {
+            t_sourceCallback = previous;
+        }
+    }
+
+    private void HandleFrame(PixelImage image)
+    {
         int generation;
         lock (_sync)
         {
@@ -292,20 +369,36 @@ public sealed class ScanLoop : IAsyncDisposable
 
     private void OnSourceFailed(object? sender, string message)
     {
-        int generation;
-        lock (_sync) generation = _generation;
-        Fail(generation, string.IsNullOrWhiteSpace(message)
-            ? $"Die Kamera „{CameraList.CleanName(SafeName())}“ ist ausgefallen. Starten Sie sie erneut."
-            : message);
+        var previous = t_sourceCallback;
+        t_sourceCallback = this;
+        try
+        {
+            int generation;
+            lock (_sync) generation = _generation;
+            Fail(generation, string.IsNullOrWhiteSpace(message)
+                ? $"Die Kamera „{CameraList.CleanName(SafeName())}“ ist ausgefallen. Starten Sie sie erneut."
+                : message);
+        }
+        finally
+        {
+            t_sourceCallback = previous;
+        }
     }
 
-    /// <summary>Einmal melden, nichts mehr annehmen, im Hintergrund anhalten.</summary>
+    /// <summary>Einmal melden, nichts mehr annehmen, anhalten (die Quelle wenn möglich sofort, den Rest im Hintergrund).</summary>
     private void Fail(int generation, string message)
     {
         lock (_sync)
         {
             if (!_accepting || generation != _generation) return;
             _accepting = false;
+            if (_starting)
+            {
+                // StartAsync räumt auf und meldet, sobald die Quelle zurück ist und die Sperre frei
+                _startFailure = message;
+                return;
+            }
+            StopSourceFromItsCallbackLocked(generation);
         }
         RaiseFailed(message);
         _ = Task.Run(() => DetachInBackgroundAsync(generation));

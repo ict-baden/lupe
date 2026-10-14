@@ -110,6 +110,25 @@ public sealed class CamerasTests
     }
 
     [Fact]
+    public async Task ScanLoop_mit_unbekannter_Kamera_synchroner_Neustart_aus_Failed_verklemmt_nicht()
+    {
+        await using var source = Cameras.Open(new CameraInfo("gibt-es-nicht", "Phantom-Kamera"));
+        await using var loop = new ScanLoop(source, _ => []);
+        var failures = new ConcurrentQueue<string>();
+        loop.Failed += (_, msg) =>
+        {
+            failures.Enqueue(msg);
+            if (failures.Count == 1) loop.StartAsync().Wait(); // „gleich noch einmal versuchen“ – synchron
+        };
+
+        await WithTimeout(Task.Run(() => loop.StartAsync()), 30_000, "Start mit synchronem Neustart im Failed-Ereignis");
+
+        Assert.Equal(2, failures.Count);
+        Assert.All(failures, msg => Assert.Contains("nicht gefunden", msg));
+        Assert.False(loop.IsRunning);
+    }
+
+    [Fact]
     public async Task Abbruch_beim_Start_wirft_OperationCanceledException()
     {
         await using var source = Cameras.Open(new CameraInfo("gibt-es-nicht", "Phantom"));

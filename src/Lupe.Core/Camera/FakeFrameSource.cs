@@ -8,7 +8,8 @@ namespace Lupe.Core.Camera;
 /// Das erste Bild kommt sofort nach <see cref="StartAsync"/>, danach eines je Takt (1/<c>framesPerSecond</c>) auf einem
 /// Hintergrund-Thread; braucht ein Empfänger länger als einen Takt, fallen Takte aus (wie bei einer echten Kamera, keine
 /// Warteschlange). Jedes gelieferte Bild ist eine eigene Kopie. Nach Rückkehr von <see cref="StopAsync"/> kommen keine
-/// Bilder mehr. Nach einem Neustart beginnt die Schleife wieder beim ersten Bild.
+/// Bilder mehr (aus dem eigenen Ereignis heraus aufgerufen: nach dem laufenden keines mehr). Nach einem Neustart beginnt
+/// die Schleife wieder beim ersten Bild.
 /// </remarks>
 public sealed class FakeFrameSource : IFrameSource
 {
@@ -52,7 +53,6 @@ public sealed class FakeFrameSource : IFrameSource
     public async Task StartAsync(CancellationToken ct = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        bool inCallback = t_callbackOwner == this;
         await _lifecycle.WaitAsync(ct).ConfigureAwait(false);
         try
         {
@@ -60,11 +60,13 @@ public sealed class FakeFrameSource : IFrameSource
             ct.ThrowIfCancellationRequested();
             lock (_sync)
             {
-                if (_cts is { IsCancellationRequested: false }) return;
+                // Eine ausgefallene Schleife (beendet, aber nicht abgebrochen) zählt nicht als laufend
+                if (_cts is { IsCancellationRequested: false } && !_loop.IsCompleted) return;
             }
-            // Reste eines Laufs, der aus einem Ereignis heraus angehalten wurde oder ausgefallen ist; aus einem eigenen
-            // Ereignis heraus nicht auf die eigene Schleife warten (sie endet nach dem Ereignis von selbst)
-            await FinishLoopAsync(waitForLoop: !inCallback).ConfigureAwait(false);
+            // Reste eines Laufs, der aus einem Ereignis heraus angehalten wurde oder ausgefallen ist: nicht auf ihn
+            // warten. Er liefert nach seinem laufenden Ereignis nichts mehr – und genau dieses Ereignis wartet womöglich
+            // (synchron, auch über einen anderen Thread wie den Aufräumer der Scan-Schleife) auf diesen Start.
+            await FinishLoopAsync(waitForLoop: false).ConfigureAwait(false);
 
             var cts = new CancellationTokenSource();
             lock (_sync)

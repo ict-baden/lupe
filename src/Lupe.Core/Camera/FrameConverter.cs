@@ -31,20 +31,29 @@ internal static class FrameConverter
         if (width <= 0 || height <= 0) throw new InvalidOperationException("Das Kamerabild ist leer.");
 
         using var reference = buffer.CreateReference();
-        reference.As<Native.IMemoryBufferByteAccess>().GetBuffer(out byte* data, out uint capacity);
-        if (data == null) throw new InvalidOperationException("Der Speicher des Kamerabilds ist nicht lesbar.");
-
-        int rowBytes = width * 4;
-        var pixels = GC.AllocateUninitializedArray<byte>(rowBytes * height);
-        for (int y = 0; y < height; y++)
+        var access = reference.As<Native.IMemoryBufferByteAccess>();
+        try
         {
-            long offset = plane.StartIndex + (long)y * plane.Stride;
-            if (offset < 0 || offset + rowBytes > capacity)
-                throw new InvalidOperationException("Das Kamerabild hat ein unerwartetes Speicherlayout.");
-            new ReadOnlySpan<byte>(data + offset, rowBytes).CopyTo(pixels.AsSpan(y * rowBytes, rowBytes));
+            access.GetBuffer(out byte* data, out uint capacity);
+            if (data == null) throw new InvalidOperationException("Der Speicher des Kamerabilds ist nicht lesbar.");
+
+            int rowBytes = width * 4;
+            var pixels = GC.AllocateUninitializedArray<byte>(rowBytes * height);
+            for (int y = 0; y < height; y++)
+            {
+                long offset = plane.StartIndex + (long)y * plane.Stride;
+                if (offset < 0 || offset + rowBytes > capacity)
+                    throw new InvalidOperationException("Das Kamerabild hat ein unerwartetes Speicherlayout.");
+                new ReadOnlySpan<byte>(data + offset, rowBytes).CopyTo(pixels.AsSpan(y * rowBytes, rowBytes));
+            }
+            MakeOpaque(pixels);
+            return new PixelImage(width, height, pixels);
         }
-        MakeOpaque(pixels);
-        return new PixelImage(width, height, pixels);
+        finally
+        {
+            // Der COM-Wrapper hielte die Puffer-Referenz sonst bis zur nächsten Garbage Collection – bei 30 Bildern/s viele
+            if (Marshal.IsComObject(access)) Marshal.ReleaseComObject(access);
+        }
     }
 
     /// <summary>Setzt den Alphakanal jedes BGRA-Pixels auf 255 (vektorisiert).</summary>

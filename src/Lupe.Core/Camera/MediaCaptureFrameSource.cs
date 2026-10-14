@@ -8,12 +8,22 @@ namespace Lupe.Core.Camera;
 /// (MediaCapture + MediaFrameReader), jeder Stopp gibt sie vollständig frei – die Kamera-LED geht dann aus und andere
 /// Programme bekommen die Kamera wieder.
 /// </summary>
+/// <remarks>
+/// Sitzungen, die ausgefallen sind oder aus einem eigenen Ereignis heraus angehalten wurden, werden im Hintergrund
+/// freigegeben, ohne auf ihr letztes Bild-Ereignis zu warten: Dieses Ereignis wartet womöglich (synchron, auch über
+/// andere Threads wie die Scan-Schleife) auf einen Neustart. Ein Start wartet auf solche Freigaben nur kurz.
+/// </remarks>
 internal sealed class MediaCaptureFrameSource : IFrameSource
 {
+    /// <summary>So lange wartet ein Start oder Stopp höchstens, bis im Hintergrund freigegebene Sitzungen die Kamera loslassen.</summary>
+    private static readonly TimeSpan ReleaseWaitTimeout = TimeSpan.FromSeconds(3);
+
     private readonly CameraInfo _camera;
     private readonly SemaphoreSlim _lifecycle = new(1, 1);
     private readonly object _sync = new();
+    // unter _sync
     private CaptureSession? _session;
+    private Task _releasing = Task.CompletedTask;
     private volatile bool _disposed;
 
     /// <summary>Gesetzt, während dieser Thread gerade ein Ereignis dieser Quelle ausliefert (gegen Selbst-Verklemmung).</summary>
@@ -42,7 +52,6 @@ internal sealed class MediaCaptureFrameSource : IFrameSource
     public async Task StartAsync(CancellationToken ct = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        bool inCallback = t_callbackOwner == this;
         string? failure = null;
         await _lifecycle.WaitAsync(ct).ConfigureAwait(false);
         try
@@ -51,19 +60,9 @@ internal sealed class MediaCaptureFrameSource : IFrameSource
             CaptureSession? old;
             lock (_sync) old = _session;
             if (old is { IsActive: true }) return;
-            if (old is not null)
-            {
-                if (inCallback)
-                {
-                    // Aus einem eigenen Bild-Ereignis heraus würde die Freigabe auf genau dieses Ereignis warten
-                    lock (_sync) _session = null;
-                    _ = Task.Run(() => old.DisposeAsync().AsTask());
-                }
-                else
-                {
-                    await CloseAsync(old).ConfigureAwait(false);
-                }
-            }
+            // Ausgefallen oder aus einem Ereignis heraus angehalten: freigeben, ohne auf ihr letztes Bild zu warten
+            if (old is not null) ReleaseInBackground(old);
+            await WaitForReleasesAsync().ConfigureAwait(false);
 
             var session = new CaptureSession(_camera, OnSessionFrame, OnSessionFailure);
             lock (_sync) _session = session;
@@ -73,9 +72,10 @@ internal sealed class MediaCaptureFrameSource : IFrameSource
                 // Media Foundation im MTA des Thread-Pools öffnen, nicht im STA des Aufrufers (WPF)
                 error = await Task.Run(() => session.OpenAsync(ct), ct).ConfigureAwait(false);
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
-                await CloseAsync(session).ConfigureAwait(false);
+                ReleaseInBackground(session);
+                await WaitForReleasesAsync().ConfigureAwait(false);
                 throw;
             }
             catch (Exception ex)
@@ -84,21 +84,19 @@ internal sealed class MediaCaptureFrameSource : IFrameSource
                 error = CameraProblems.Describe(CameraProblems.FromException(ex), Name);
             }
 
-            if (error is not null)
+            if (error is not null || !session.IsActive)
             {
-                await CloseAsync(session).ConfigureAwait(false);
+                // Nicht gestartet, beim Start ausgefallen oder aus einem Bild-Ereignis heraus schon wieder angehalten
+                ReleaseInBackground(session);
+                await WaitForReleasesAsync().ConfigureAwait(false);
                 failure = error;
-            }
-            else if (!session.IsActive)
-            {
-                // Schon beim Start ausgefallen (bereits gemeldet) oder aus einem Ereignis heraus angehalten
-                await CloseAsync(session).ConfigureAwait(false);
             }
         }
         finally
         {
             _lifecycle.Release();
         }
+        // Erst nach dem Freigeben der Sperre melden: Ein Empfänger darf dann sogar synchron neu starten
         if (failure is not null) Raise(Failed, failure, nameof(Failed));
     }
 
@@ -109,11 +107,7 @@ internal sealed class MediaCaptureFrameSource : IFrameSource
             // Aus einem eigenen Ereignis heraus: sofort keine Bilder mehr, Freigabe im Hintergrund
             CaptureSession? session;
             lock (_sync) session = _session;
-            if (session is not null)
-            {
-                session.Deactivate();
-                _ = Task.Run(() => CloseInBackgroundAsync(session));
-            }
+            if (session is not null) ReleaseInBackground(session);
             return Task.CompletedTask;
         }
         return StopCoreAsync();
@@ -131,8 +125,14 @@ internal sealed class MediaCaptureFrameSource : IFrameSource
         try
         {
             CaptureSession? session;
-            lock (_sync) session = _session;
-            if (session is not null) await CloseAsync(session).ConfigureAwait(false);
+            lock (_sync)
+            {
+                session = _session;
+                _session = null;
+            }
+            // Wartet ein laufendes Bild-Ereignis ab: Nach dem Stopp kommt sicher kein Bild mehr
+            if (session is not null) await session.DisposeAsync().ConfigureAwait(false);
+            await WaitForReleasesAsync().ConfigureAwait(false);
         }
         finally
         {
@@ -140,39 +140,34 @@ internal sealed class MediaCaptureFrameSource : IFrameSource
         }
     }
 
-    /// <summary>Gibt die Sitzung frei. Nur unter <see cref="_lifecycle"/>.</summary>
-    private async Task CloseAsync(CaptureSession session)
+    /// <summary>Schaltet die Sitzung sofort ab und gibt sie im Hintergrund frei (ohne auf ihr laufendes Bild-Ereignis zu warten).</summary>
+    private void ReleaseInBackground(CaptureSession session)
     {
+        session.Deactivate();
         lock (_sync)
         {
             if (_session == session) _session = null;
+            var release = Task.Run(() => session.ReleaseNowAsync().AsTask());
+            _releasing = _releasing.IsCompleted ? release : Task.WhenAll(_releasing, release);
         }
-        await session.DisposeAsync().ConfigureAwait(false);
     }
 
-    private async Task CloseInBackgroundAsync(CaptureSession session)
+    /// <summary>Wartet (kurz) auf Freigaben im Hintergrund, damit ein neuer Start die Kamera nicht mit der alten Sitzung teilen muss.</summary>
+    private async Task WaitForReleasesAsync()
     {
-        await _lifecycle.WaitAsync().ConfigureAwait(false);
-        try
-        {
-            await CloseAsync(session).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            Trace.TraceWarning($"Lupe: Freigeben der Kamera fehlgeschlagen: {ex}");
-        }
-        finally
-        {
-            _lifecycle.Release();
-        }
+        Task releasing;
+        lock (_sync) releasing = _releasing;
+        if (releasing.IsCompleted) return;
+        var done = await Task.WhenAny(releasing, Task.Delay(ReleaseWaitTimeout)).ConfigureAwait(false);
+        if (done != releasing) Trace.TraceWarning($"Lupe: Die vorige Sitzung der Kamera „{Name}“ ist noch nicht freigegeben – mache trotzdem weiter.");
     }
 
     private void OnSessionFrame(CaptureSession session, PixelImage image) => Raise(FrameArrived, image, nameof(FrameArrived));
 
     private void OnSessionFailure(CaptureSession session, string message)
     {
+        ReleaseInBackground(session);
         Raise(Failed, message, nameof(Failed));
-        _ = Task.Run(() => CloseInBackgroundAsync(session));
     }
 
     private void Raise<T>(EventHandler<T>? handler, T args, string eventName)
