@@ -145,12 +145,14 @@ public sealed class BarcodeDecoder
         // Live nur PDF417 und MaxiCode invertiert (wie bisher); helle Strichcodes auf dunklem Grund sind vor der Kamera selten,
         // und ein Lesevorgang mehr kostet je Bild spürbar Zeit
         var invertible = formats.Where(f => f.NeedsInvertedPass && (!live || !f.Linear)).ToList();
-        var matrix = formats.Where(f => !f.Linear).ToList();
-        var linear = formats.Where(f => f.Linear).ToList();
 
-        void Add(List<ScanTask> tasks, ScanVariant v, IReadOnlyList<CodeFormat> fs, bool tryInvert = true)
+        // Je Lesegruppe (siehe CodeFormat.Group) ein Lesevorgang. Live nur 2D-Codes und Strichcodes getrennt: Bei
+        // Kamerabildern ist jeder Lesevorgang kurz, und auf zwei Kernen kostete jede weitere Binarisierung mehr, als die
+        // Aufteilung bringt (unruhiges 720p-Bild: 32 statt 40 ms)
+        void Add(List<ScanTask> tasks, ScanVariant v, IReadOnlyList<CodeFormat> fs, bool tryInvert = true, bool tryDownscale = true)
         {
-            if (fs.Count > 0) tasks.Add(new ScanTask(v, new ReadSettings(fs, tryInvert)));
+            foreach (var group in fs.GroupBy(f => live ? (f.Linear ? 1 : 0) : f.Group).OrderBy(g => g.Key))
+                tasks.Add(new ScanTask(v, new ReadSettings([.. group], tryInvert, tryDownscale)));
         }
 
         // Stufe 1: ganzes Bild bzw. Übersicht und Kacheln, dazu invertiert für die Formate, die zxing-cpp nicht selbst umkehrt.
@@ -178,17 +180,16 @@ public sealed class BarcodeDecoder
         }
         if (primary != null)
         {
-            // 2D-Codes und Strichcodes als zwei Lesevorgänge: Sie laufen parallel (unruhiges 720p-Bild: 27 und 22 ms statt
-            // 49 ms am Stück) und liefern dasselbe – zxing-cpp lässt seine Leser ohnehin nacheinander über dasselbe Bild laufen
-            Add(first, primary, matrix);
-            Add(first, primary, linear);
+            // Je Lesegruppe ein Lesevorgang: Sie laufen parallel und liefern dasselbe wie einer am Stück – zxing-cpp lässt
+            // seine Leser ohnehin nacheinander über dasselbe Bild laufen (unruhiges 720p-Bild: 2D 27 ms und Strichcodes
+            // 22 ms parallel statt 49 ms am Stück)
+            Add(first, primary, formats);
             var source = primary;
             Add(first, new ScanVariant(primary.Name + " invertiert", () => source.Image.Invert(), primary.ToOriginal), invertible, tryInvert: false);
         }
         // In den Kacheln die kleinen Codes – die großen findet die Übersicht, deshalb ohne zxing-cpps Verkleinerung
         foreach (var tile in tiles)
-            foreach (var group in new[] { matrix, linear })
-                if (group.Count > 0) first.Add(new ScanTask(tile, new ReadSettings(group, TryInvert: true, TryDownscale: false)));
+            Add(first, tile, formats, tryDownscale: false);
         if (!live) AddSkew(first, gray, formats);
         stages.Add(new Stage(first, OnlyIfNothingFound: false));
         if (live) return stages;

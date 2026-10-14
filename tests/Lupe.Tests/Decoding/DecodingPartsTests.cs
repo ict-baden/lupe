@@ -496,35 +496,39 @@ public sealed class StagePlanTests
     private static IReadOnlyList<BarcodeDecoder.Stage> Plan(int width, int height, string[]? formats = null, bool live = false) =>
         BarcodeDecoder.Stages(new GrayImage(width, height, new byte[width * height]), FormatCatalog.Parse(formats), live);
 
+    private static IEnumerable<string> Names(BarcodeDecoder.ScanTask t) => t.Settings.Formats.Select(f => f.Name);
+
     [Fact]
     public void Full_HD_ganzes_Bild_invertiert_und_schraeg()
     {
         var stages = Plan(1920, 1080);
         var first = Assert.Single(stages);
         Assert.False(first.OnlyIfNothingFound);
-        // Das ganze Bild als zwei Lesevorgänge (2D-Codes, Strichcodes), die zusammen alle Formate abdecken
-        Assert.Equal("Original", first.Tasks[0].Variant.Name);
-        Assert.Equal("Original", first.Tasks[1].Variant.Name);
-        Assert.All(first.Tasks[0].Settings.Formats, f => Assert.False(f.Linear));
-        Assert.All(first.Tasks[1].Settings.Formats, f => Assert.True(f.Linear));
-        Assert.Equal(FormatCatalog.All.Length, first.Tasks[0].Settings.Formats.Count + first.Tasks[1].Settings.Formats.Count);
-        // Invertiert nur, was zxing-cpp nicht selbst umkehrt
-        var inverted = Assert.Single(first.Tasks, t => t.Variant.Name == "Original invertiert");
-        Assert.DoesNotContain(inverted.Settings.Formats, f => f.Name is "QR_CODE" or "DATA_MATRIX" or "AZTEC" or "MICRO_QR_CODE");
-        Assert.Contains(inverted.Settings.Formats, f => f.Name is "CODE_128");
-        Assert.Contains(inverted.Settings.Formats, f => f.Name is "PDF_417");
+        // Das ganze Bild in fünf Lesegruppen, die zusammen jedes Format genau einmal lesen
+        var whole = first.Tasks.Where(t => t.Variant.Name == "Original").ToList();
+        Assert.Equal(5, whole.Count);
+        Assert.Equal(FormatCatalog.All.Select(f => f.Name).Order(), whole.SelectMany(Names).Order());
+        Assert.Equal(["QR_CODE", "MICRO_QR_CODE", "RMQR_CODE"], Names(whole[0]));
+        Assert.All(whole[4].Settings.Formats, f => Assert.True(f.Linear));
+        // Invertiert nur, was zxing-cpp nicht selbst umkehrt: Strichcodes, PDF417 und MaxiCode
+        var inverted = first.Tasks.Where(t => t.Variant.Name == "Original invertiert").ToList();
+        Assert.Equal(2, inverted.Count);
+        Assert.Equal(["PDF_417", "MAXICODE", "MICRO_PDF_417"], Names(inverted[0]));
+        Assert.All(inverted[1].Settings.Formats, f => Assert.True(f.Linear));
+        Assert.All(inverted, t => Assert.False(t.Settings.TryInvert));
         // Schräglage: ±20/±40 für Strichcodes und PDF417, ±10/±30 nur PDF417
         var skew = first.Tasks.Where(t => t.Variant.Name.StartsWith("Gedreht", StringComparison.Ordinal)).ToList();
         Assert.Equal(8, skew.Count);
         Assert.All(skew, t => Assert.DoesNotContain(t.Settings.Formats, f => f.Name is "QR_CODE" or "DATA_MATRIX"));
-        Assert.Equal(["PDF_417"], Assert.Single(skew, t => t.Variant.Name == "Gedreht +10°").Settings.Formats.Select(f => f.Name));
-        Assert.Equal(11, first.Tasks.Count);
+        Assert.Equal(["PDF_417"], Names(Assert.Single(skew, t => t.Variant.Name == "Gedreht +10°")));
+        Assert.Contains("CODE_128", Names(Assert.Single(skew, t => t.Variant.Name == "Gedreht -40°")));
+        Assert.Equal(15, first.Tasks.Count);
     }
 
     [Fact]
     public void Viertel_K_am_Stueck()
     {
-        // 4K liest zxing-cpp in rund 0,2 s – ohne Kacheln, damit kein Code an einer Kachelgrenze zerfällt
+        // 4K liest zxing-cpp je Lesegruppe in höchstens rund 0,3 s – ohne Kacheln, damit kein Code an einer Grenze zerfällt
         var first = Plan(3840, 2160)[0].Tasks;
         Assert.DoesNotContain(first, t => t.Variant.Name.StartsWith("Kachel", StringComparison.Ordinal));
         Assert.Equal("Original", first[0].Variant.Name);
@@ -534,10 +538,12 @@ public sealed class StagePlanTests
     public void Grosses_Foto_Uebersicht_und_Kacheln()
     {
         var first = Plan(6000, 4000)[0].Tasks;
-        // 12 Kacheln, je ein Lesevorgang für 2D-Codes und für Strichcodes
-        Assert.Equal(24, first.Count(t => t.Variant.Name.StartsWith("Kachel", StringComparison.Ordinal)));
-        Assert.Equal(12, first.Where(t => t.Variant.Name.StartsWith("Kachel", StringComparison.Ordinal)).Select(t => t.Variant).Distinct().Count());
-        Assert.Contains(first, t => t.Variant.Name == "Übersicht 1:3");
+        var tiles = first.Where(t => t.Variant.Name.StartsWith("Kachel", StringComparison.Ordinal)).ToList();
+        // 12 Kacheln mit je fünf Lesegruppen, ohne zxing-cpps eigene Verkleinerung (große Codes liest die Übersicht)
+        Assert.Equal(12, tiles.Select(t => t.Variant).Distinct().Count());
+        Assert.Equal(60, tiles.Count);
+        Assert.All(tiles, t => Assert.False(t.Settings.TryDownscale));
+        Assert.Equal("Übersicht 1:3", first[0].Variant.Name);
         Assert.Contains(first, t => t.Variant.Name == "Übersicht 1:3 invertiert");
     }
 
@@ -547,17 +553,21 @@ public sealed class StagePlanTests
         var stages = Plan(300, 200);
         Assert.Equal(2, stages.Count);
         Assert.True(stages[1].OnlyIfNothingFound);
-        Assert.Equal("Vergrößert ×2", Assert.Single(stages[1].Tasks).Variant.Name);
+        Assert.All(stages[1].Tasks, t => Assert.Equal("Vergrößert ×2", t.Variant.Name));
+        Assert.Equal(FormatCatalog.All.Select(f => f.Name).Order(), stages[1].Tasks.SelectMany(Names).Order());
     }
 
     [Fact]
     public void Live_nur_ganzes_Bild_und_invertiert()
     {
-        var stages = Plan(1280, 720, live: true);
-        var tasks = Assert.Single(stages).Tasks;
+        var tasks = Assert.Single(Plan(1280, 720, live: true)).Tasks;
+        // Live nur zwei Lesevorgänge fürs ganze Bild: alle 2D-Codes, alle Strichcodes
         Assert.Equal(["Original", "Original", "Original invertiert"], tasks.Select(t => t.Variant.Name));
+        Assert.All(tasks[0].Settings.Formats, f => Assert.False(f.Linear));
+        Assert.All(tasks[1].Settings.Formats, f => Assert.True(f.Linear));
+        Assert.Equal(FormatCatalog.All.Length, tasks[0].Settings.Formats.Count + tasks[1].Settings.Formats.Count);
         // Invertiert live wie bisher nur PDF417 und MaxiCode (QR, Data Matrix und Aztec kehrt zxing-cpp selbst um)
-        Assert.Equal(["PDF_417", "MAXICODE", "MICRO_PDF_417"], tasks[2].Settings.Formats.Select(f => f.Name));
+        Assert.Equal(["PDF_417", "MAXICODE", "MICRO_PDF_417"], Names(tasks[2]));
     }
 
     [Fact]
@@ -566,7 +576,7 @@ public sealed class StagePlanTests
         // QR: ein Lesevorgang – zxing-cpp kehrt QR-Codes selbst um und liest sie in jeder Lage
         var stages = Plan(1280, 720, ["QR_CODE"]);
         Assert.Equal(["Original"], Assert.Single(stages).Tasks.Select(t => t.Variant.Name));
-        Assert.All(stages.SelectMany(s => s.Tasks), t => Assert.Equal(["QR_CODE"], t.Settings.Formats.Select(f => f.Name)));
+        Assert.All(stages.SelectMany(s => s.Tasks), t => Assert.Equal(["QR_CODE"], Names(t)));
         // Nur Strichcodes: ganzes Bild, invertiert und schräg, aber ohne die Winkel nur für PDF417
         Assert.Equal(6, Plan(1280, 720, ["EAN_13"])[0].Tasks.Count);
     }

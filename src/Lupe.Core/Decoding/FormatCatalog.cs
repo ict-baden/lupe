@@ -13,6 +13,20 @@ internal sealed record CodeFormat(string Name, bool Linear, params Zx[] Read)
     /// zxing-cpp probiert die Umkehrung nur für QR, Data Matrix und Aztec (Familien wie Micro QR eingeschlossen).
     /// </summary>
     public bool NeedsInvertedPass => Linear || Name is "PDF_417" or "MICRO_PDF_417" or "MAXICODE";
+
+    /// <summary>
+    /// Lesegruppe: Formate einer Gruppe liest ein gemeinsamer Lesevorgang, die Gruppen laufen parallel. So aufgeteilt,
+    /// dass kein Lesevorgang lange dauert – auch ein Abbruch wartet höchstens auf den längsten (verrauschtes 4K-Bild:
+    /// alle 2D-Formate am Stück 680 ms, Data Matrix allein 330 ms). 0 = QR-Familie, 1 = Data Matrix, 2 = Aztec,
+    /// 3 = PDF417-Familie und MaxiCode (nicht drehungsfest, invertiert nur über die invertierte Fassung), 4 = Strichcodes.
+    /// </summary>
+    public int Group => Linear ? 4 : Name switch
+    {
+        "QR_CODE" or "MICRO_QR_CODE" or "RMQR_CODE" => 0,
+        "DATA_MATRIX" => 1,
+        "AZTEC" => 2,
+        _ => 3,
+    };
 }
 
 /// <summary>
