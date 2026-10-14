@@ -1,0 +1,335 @@
+using System.Diagnostics;
+using Lupe.Core.Model;
+
+namespace Lupe.Core.Camera;
+
+/// <summary>
+/// Verbindet Bildquelle und Erkennung: drosselt (Bilder, die während einer laufenden Erkennung kommen, werden
+/// verworfen), meldet Treffer mit Wiederholungssperre und reicht jedes Bild für die Vorschau weiter.
+/// </summary>
+/// <remarks>
+/// <para>Ablauf je Bild der Quelle: Läuft gerade keine Erkennung, bekommt eine neue Erkennung (Thread-Pool) eine eigene
+/// Kopie des Bildes; danach geht das Bild unverändert an <see cref="Frame"/> – immer, auch während einer Erkennung.
+/// Es gibt nie mehr als eine Erkennung gleichzeitig und keine Warteschlange.</para>
+/// <para>Die Wiederholungssperre gilt je Text + Format ab der <b>letzten</b> Sichtung und beginnt bei jedem Start neu.</para>
+/// <para>Fällt die Quelle aus oder wirft die Erkennung (außer <see cref="OperationCanceledException"/>), kommt
+/// <see cref="Failed"/> mit deutscher Meldung und die Schleife hält an (die Quelle wird angehalten); ein erneutes
+/// <see cref="StartAsync"/> startet beides wieder.</para>
+/// <para>Start, Stopp und Freigabe sind beliebig wiederholbar und threadsicher, auch aus den eigenen Ereignissen heraus.
+/// Nach Rückkehr von <see cref="StopAsync"/> kommen keine Ereignisse mehr (aus einem eigenen Ereignis heraus aufgerufen
+/// wirkt der Stopp sofort, das Aufräumen läuft im Hintergrund). Die Quelle gehört dem Aufrufer: Stopp und Freigabe halten
+/// sie nur an, geben sie aber nicht frei.</para>
+/// </remarks>
+public sealed class ScanLoop : IAsyncDisposable
+{
+    private readonly IFrameSource _source;
+    private readonly Func<PixelImage, IReadOnlyList<DecodedCode>> _decode;
+    private readonly TimeProvider _time;
+    private readonly RepeatFilter _filter;
+    private readonly SemaphoreSlim _lifecycle = new(1, 1);
+    private readonly object _sync = new();
+
+    // unter _sync
+    private int _generation;
+    private bool _accepting;
+    // nur unter _lifecycle
+    private bool _attached;
+    private volatile bool _disposed;
+    // 1, solange eine Erkennung läuft
+    private int _decoding;
+    private Task _decodeTask = Task.CompletedTask;
+
+    /// <summary>Gesetzt, während dieser Thread gerade ein Ereignis dieser Schleife ausliefert (gegen Selbst-Verklemmung).</summary>
+    [ThreadStatic] private static ScanLoop? t_callbackOwner;
+
+    public ScanLoop(IFrameSource source, Func<PixelImage, IReadOnlyList<DecodedCode>> decode, int repeatSuppressMs = 3000)
+        : this(source, decode, repeatSuppressMs, TimeProvider.System)
+    {
+    }
+
+    /// <summary>Mit eigener Zeitquelle (Tests).</summary>
+    internal ScanLoop(IFrameSource source, Func<PixelImage, IReadOnlyList<DecodedCode>> decode, int repeatSuppressMs, TimeProvider time)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(decode);
+        ArgumentNullException.ThrowIfNull(time);
+        ArgumentOutOfRangeException.ThrowIfNegative(repeatSuppressMs);
+        _source = source;
+        _decode = decode;
+        _time = time;
+        _filter = new RepeatFilter(TimeSpan.FromMilliseconds(repeatSuppressMs), time);
+    }
+
+    /// <summary>Jedes Bild der Quelle, für die Vorschau.</summary>
+    public event EventHandler<PixelImage>? Frame;
+    /// <summary>Neue Treffer (ohne die gerade gesperrten Wiederholungen) samt dem Bild, in dem sie gefunden wurden.</summary>
+    public event EventHandler<(IReadOnlyList<DecodedCode> Codes, PixelImage Frame)>? Detected;
+    public event EventHandler<string>? Failed;
+
+    /// <summary>Läuft die Schleife gerade (gestartet und nicht ausgefallen)?</summary>
+    internal bool IsRunning
+    {
+        get { lock (_sync) return _accepting; }
+    }
+
+    /// <summary>Die zuletzt gestartete Erkennung (Tests warten darauf).</summary>
+    internal Task CurrentDecode => Volatile.Read(ref _decodeTask);
+
+    /// <summary>
+    /// Startet Quelle und Erkennung; läuft sie schon, passiert nichts. Startprobleme der Quelle kommen über
+    /// <see cref="Failed"/>; nur ein Abbruch über <paramref name="ct"/> wirft.
+    /// </summary>
+    public async Task StartAsync(CancellationToken ct = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        // Vor dem ersten await festhalten: aus einem eigenen Ereignis heraus nicht auf die eigene Erkennung warten
+        bool inCallback = t_callbackOwner == this;
+        string? failure = null;
+        await _lifecycle.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            lock (_sync)
+            {
+                if (_attached && _accepting) return;
+            }
+            // Reste nach einem Ausfall (Abmelden und Anhalten läuft sonst im Hintergrund)
+            if (_attached) await DetachAsync(waitForDecode: !inCallback).ConfigureAwait(false);
+
+            lock (_sync)
+            {
+                _generation++;
+                _accepting = true;
+                _filter.Clear();
+            }
+            _source.FrameArrived += OnSourceFrame;
+            _source.Failed += OnSourceFailed;
+            _attached = true;
+            try
+            {
+                await _source.StartAsync(ct).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                await DetachAsync(waitForDecode: !inCallback).ConfigureAwait(false);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // Hat die Quelle ihren Ausfall schon selbst gemeldet, nicht ein zweites Mal melden
+                bool reported;
+                lock (_sync) reported = !_accepting;
+                await DetachAsync(waitForDecode: !inCallback).ConfigureAwait(false);
+                if (!reported) failure = $"Die Kamera „{CameraList.CleanName(SafeName())}“ lässt sich nicht starten: {ex.Message}";
+            }
+        }
+        finally
+        {
+            _lifecycle.Release();
+        }
+        if (failure is not null) RaiseFailed(failure);
+    }
+
+    /// <summary>Hält Quelle und Erkennung an und wartet eine laufende Erkennung ab. Mehrfach aufrufbar.</summary>
+    public Task StopAsync()
+    {
+        if (t_callbackOwner == this) return StopFromCallback();
+        return StopCoreAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _disposed = true;
+        await StopAsync().ConfigureAwait(false);
+    }
+
+    private async Task StopCoreAsync()
+    {
+        await _lifecycle.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (_attached) await DetachAsync(waitForDecode: true).ConfigureAwait(false);
+        }
+        finally
+        {
+            _lifecycle.Release();
+        }
+    }
+
+    /// <summary>Aus einem eigenen Ereignis heraus: sofort nichts mehr melden, das Aufräumen im Hintergrund.</summary>
+    private Task StopFromCallback()
+    {
+        int generation;
+        lock (_sync)
+        {
+            _accepting = false;
+            generation = _generation;
+        }
+        _ = Task.Run(() => DetachInBackgroundAsync(generation));
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Hält an, falls seit <paramref name="generation"/> kein neuer Start dazwischengekommen ist. Wartet nicht auf die
+    /// laufende Erkennung: Ausgelöst wurde das aus einem Ereignis heraus, das womöglich noch (synchron) auf uns wartet.
+    /// </summary>
+    private async Task DetachInBackgroundAsync(int generation)
+    {
+        await _lifecycle.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            bool same;
+            lock (_sync) same = generation == _generation;
+            if (same && _attached) await DetachAsync(waitForDecode: false).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceWarning($"Lupe: Anhalten der Kamera-Schleife fehlgeschlagen: {ex}");
+        }
+        finally
+        {
+            _lifecycle.Release();
+        }
+    }
+
+    /// <summary>
+    /// Abmelden, Quelle anhalten, laufende Erkennung abwarten. Nur unter <see cref="_lifecycle"/>. Aus einem eigenen
+    /// Ereignis heraus (<paramref name="waitForDecode"/> = false) wäre das Warten eine Verklemmung – dann genügt, dass
+    /// nichts mehr angenommen wird: das Ergebnis der laufenden Erkennung wird verworfen.
+    /// </summary>
+    private async Task DetachAsync(bool waitForDecode)
+    {
+        lock (_sync) _accepting = false;
+        _source.FrameArrived -= OnSourceFrame;
+        _source.Failed -= OnSourceFailed;
+        _attached = false;
+        try
+        {
+            await _source.StopAsync().ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceWarning($"Lupe: Anhalten der Bildquelle fehlgeschlagen: {ex}");
+        }
+        if (waitForDecode && t_callbackOwner != this)
+        {
+            try
+            {
+                await Volatile.Read(ref _decodeTask).ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+                // Fehler der Erkennung sind schon gemeldet
+            }
+        }
+    }
+
+    private void OnSourceFrame(object? sender, PixelImage image)
+    {
+        if (image is null) return;
+        int generation;
+        lock (_sync)
+        {
+            if (!_accepting) return;
+            generation = _generation;
+        }
+        long seen = _time.GetTimestamp();
+
+        // Höchstens eine Erkennung; während sie läuft, werden Bilder nur angezeigt, nicht gesammelt
+        if (Interlocked.CompareExchange(ref _decoding, 1, 0) == 0)
+        {
+            try
+            {
+                var copy = PixelImages.Copy(image);
+                var task = new Task(() => DecodeAndReport(copy, generation, seen));
+                Volatile.Write(ref _decodeTask, task);
+                task.Start(TaskScheduler.Default);
+            }
+            catch
+            {
+                Volatile.Write(ref _decoding, 0);
+                throw;
+            }
+        }
+
+        Raise(Frame, image, nameof(Frame));
+    }
+
+    private void DecodeAndReport(PixelImage frame, int generation, long seen)
+    {
+        try
+        {
+            IReadOnlyList<DecodedCode>? codes;
+            try
+            {
+                codes = _decode(frame);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                Fail(generation, $"Die Erkennung im Kamerabild ist fehlgeschlagen ({ex.GetType().Name}: {ex.Message}). " +
+                    "Starten Sie die Kamera neu; wiederholt sich der Fehler, melden Sie ihn bitte.");
+                return;
+            }
+            if (codes is null || codes.Count == 0) return;
+
+            IReadOnlyList<DecodedCode> fresh;
+            lock (_sync)
+            {
+                if (!_accepting || generation != _generation) return;
+                fresh = _filter.Filter(codes, seen);
+            }
+            if (fresh.Count > 0) Raise(Detected, (fresh, frame), nameof(Detected));
+        }
+        finally
+        {
+            Volatile.Write(ref _decoding, 0);
+        }
+    }
+
+    private void OnSourceFailed(object? sender, string message)
+    {
+        int generation;
+        lock (_sync) generation = _generation;
+        Fail(generation, string.IsNullOrWhiteSpace(message)
+            ? $"Die Kamera „{CameraList.CleanName(SafeName())}“ ist ausgefallen. Starten Sie sie erneut."
+            : message);
+    }
+
+    /// <summary>Einmal melden, nichts mehr annehmen, im Hintergrund anhalten.</summary>
+    private void Fail(int generation, string message)
+    {
+        lock (_sync)
+        {
+            if (!_accepting || generation != _generation) return;
+            _accepting = false;
+        }
+        RaiseFailed(message);
+        _ = Task.Run(() => DetachInBackgroundAsync(generation));
+    }
+
+    private void RaiseFailed(string message) => Raise(Failed, message, nameof(Failed));
+
+    private void Raise<T>(EventHandler<T>? handler, T args, string eventName)
+    {
+        var previous = t_callbackOwner;
+        t_callbackOwner = this;
+        try
+        {
+            SafeEvents.Raise(handler, this, args, eventName);
+        }
+        finally
+        {
+            t_callbackOwner = previous;
+        }
+    }
+
+    private string? SafeName()
+    {
+        try { return _source.Name; }
+        catch (Exception) { return null; }
+    }
+}
