@@ -57,5 +57,7 @@ internal static class SettingsAssert
         Camera = @"\\?\USB#VID_046D&PID_0825#Grüße",
         KeepHistory = false,
         HistoryLimit = 250,
+        KeepRunningInTray = false,
+        TrayHintShown = true,
     };
 }

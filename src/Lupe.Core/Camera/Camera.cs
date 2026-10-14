@@ -58,6 +58,22 @@ public static class Cameras
         }
     }
 
+    /// <summary>
+    /// Die Kamera zur gespeicherten Kennung (<see cref="LupeSettings.Camera"/>): erst nach <see cref="CameraInfo.Id"/>, dann
+    /// nach <see cref="CameraInfo.Name"/> (Groß/klein und Leerzeichen am Rand egal). Leere Kennung oder die Kamera ist gerade
+    /// nicht angeschlossen → die erste der Liste; leere Liste → null.
+    /// </summary>
+    public static CameraInfo? Find(IReadOnlyList<CameraInfo> cameras, string? key)
+    {
+        ArgumentNullException.ThrowIfNull(cameras);
+        if (cameras.Count == 0) return null;
+        var wanted = key?.Trim();
+        if (string.IsNullOrEmpty(wanted)) return cameras[0];
+        return cameras.FirstOrDefault(c => string.Equals(c.Id, wanted, StringComparison.OrdinalIgnoreCase))
+            ?? cameras.FirstOrDefault(c => string.Equals(c.Name?.Trim(), wanted, StringComparison.OrdinalIgnoreCase))
+            ?? cameras[0];
+    }
+
     /// <summary>Öffnet die Kamera als Bildquelle (ohne sie schon zu starten). Bevorzugt ~1280×720.</summary>
     public static IFrameSource Open(CameraInfo camera)
     {

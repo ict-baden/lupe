@@ -19,8 +19,12 @@ public static class SettingsStore
 {
     /// <summary>Kleinster erlaubter Wert für <see cref="LupeSettings.HistoryLimit"/>.</summary>
     public const int MinHistoryLimit = 1;
-    /// <summary>Größter erlaubter Wert für <see cref="LupeSettings.HistoryLimit"/>.</summary>
-    public const int MaxHistoryLimit = 100_000;
+    /// <summary>
+    /// Größter erlaubter Wert für <see cref="LupeSettings.HistoryLimit"/>. Der Verlauf wird nach jedem Treffer ganz neu
+    /// geschrieben (atomar, siehe <see cref="History.HistoryStore"/>) – bei 10 000 Einträgen sind das rund 2 MB und
+    /// gemessen rund 40 ms, bei 100 000 stünde die Oberfläche bei jedem Treffer spürbar.
+    /// </summary>
+    public const int MaxHistoryLimit = 10_000;
     /// <summary>Größter erlaubter Wert für <see cref="LupeSettings.RepeatSuppressMs"/> (eine Stunde).</summary>
     public const int MaxRepeatSuppressMs = 3_600_000;
 
@@ -58,15 +62,24 @@ public static class SettingsStore
         "Lupe", "einstellungen.json");
 
     /// <summary>Fehlt die Datei oder ist sie kaputt: Standardwerte (eine kaputte Datei wird nicht überschrieben, bis gespeichert wird).</summary>
-    public static LupeSettings Load(string? path = null) => Load(path, out _);
+    public static LupeSettings Load(string? path = null) => Load(path, out _, out _);
 
     /// <summary>
     /// Wie <see cref="Load(string?)"/>; <paramref name="problem"/> beschreibt auf Deutsch, was nicht stimmte (Datei kaputt,
     /// nicht lesbar, einzelne Werte ersetzt), sonst null. Wirft nie wegen der Datei.
     /// </summary>
-    public static LupeSettings Load(string? path, out string? problem)
+    public static LupeSettings Load(string? path, out string? problem) => Load(path, out problem, out _);
+
+    /// <summary>
+    /// Wie <see cref="Load(string?, out string?)"/>; <paramref name="state"/> sagt zusätzlich, wie die Datei vorgefunden
+    /// wurde – wichtig, bevor gespeichert wird: Eine kaputte (<see cref="SettingsFileState.Broken"/>) oder nicht lesbare
+    /// (<see cref="SettingsFileState.Unreadable"/>) Datei darf nicht einfach mit Standardwerten überschrieben werden. Das
+    /// übernimmt <see cref="SettingsFile"/>.
+    /// </summary>
+    public static LupeSettings Load(string? path, out string? problem, out SettingsFileState state)
     {
         problem = null;
+        state = SettingsFileState.Missing;
         var file = ResolvePath(path);
 
         byte[] bytes;
@@ -80,6 +93,7 @@ public static class SettingsStore
         }
         catch (Exception ex) when (FileProblems.IsExpected(ex))
         {
+            state = SettingsFileState.Unreadable;
             problem = $"Die Einstellungen in „{file}“ konnten nicht gelesen werden ({FileProblems.Describe(ex)}). Es gelten die Standardwerte.";
             return new LupeSettings();
         }
@@ -92,8 +106,10 @@ public static class SettingsStore
             var replaced = new List<string>();
             var filtered = new List<string>();
             var settings = Parse(json, replaced, filtered);
+            state = SettingsFileState.Loaded;
             if (replaced.Count > 0 || filtered.Count > 0)
             {
+                state = SettingsFileState.Repaired;
                 problem = $"Einige Einstellungen in „{file}“ waren ungültig.";
                 if (replaced.Count > 0) problem += $" Standardwert verwendet für: {DisplayNames(replaced)}.";
                 if (filtered.Count > 0) problem += $" Unbrauchbare Einträge entfernt aus: {DisplayNames(filtered)}.";
@@ -103,6 +119,7 @@ public static class SettingsStore
         catch (Exception ex) when (ex is JsonException or InvalidOperationException or NotSupportedException or ArgumentException or FormatException)
         {
             var where = ex is JsonException { LineNumber: { } line } ? $" (Fehler in Zeile {line + 1})" : "";
+            state = SettingsFileState.Broken;
             problem = $"Die Einstellungsdatei „{file}“ ist beschädigt{where} und wurde nicht geladen. "
                 + "Es gelten die Standardwerte; die Datei wird erst beim nächsten Speichern ersetzt.";
             return new LupeSettings();
@@ -170,7 +187,33 @@ public static class SettingsStore
         };
     }
 
-    private static string ResolvePath(string? path) => Path.GetFullPath(string.IsNullOrWhiteSpace(path) ? DefaultPath : path);
+    internal static string ResolvePath(string? path) => Path.GetFullPath(string.IsNullOrWhiteSpace(path) ? DefaultPath : path);
+
+    /// <summary>Gleiche Werte nach dem Bereinigen (Listen nach Inhalt – die Record-Gleichheit vergleicht sie nur als Verweis).</summary>
+    public static bool SameValues(LupeSettings a, LupeSettings b)
+    {
+        ArgumentNullException.ThrowIfNull(a);
+        ArgumentNullException.ThrowIfNull(b);
+        return ReferenceEquals(a, b) || JsonNode.DeepEquals(ToNode(a), ToNode(b));
+    }
+
+    /// <summary>
+    /// Legt die Änderungen von <paramref name="from"/> nach <paramref name="to"/> feldweise auf <paramref name="target"/>:
+    /// Jedes Feld, das sich geändert hat, kommt aus <paramref name="to"/>, alle übrigen bleiben wie in <paramref name="target"/>.
+    /// </summary>
+    internal static LupeSettings ApplyChanges(LupeSettings target, LupeSettings from, LupeSettings to)
+    {
+        JsonObject result = ToNode(target), before = ToNode(from), after = ToNode(to);
+        foreach (var property in SettingsProperties)
+        {
+            var old = before[property.Name];
+            var now = after[property.Name];
+            if (!JsonNode.DeepEquals(old, now)) result[property.Name] = now?.DeepClone();
+        }
+        return Normalize(result.Deserialize<LupeSettings>(Json) ?? new LupeSettings());
+    }
+
+    private static JsonObject ToNode(LupeSettings settings) => JsonSerializer.SerializeToNode(Normalize(settings), Json)!.AsObject();
 
     private static void SaveCore(LupeSettings settings, string file)
     {
@@ -239,6 +282,8 @@ public static class SettingsStore
         [nameof(LupeSettings.Camera)] = "Kamera",
         [nameof(LupeSettings.KeepHistory)] = "Verlauf speichern",
         [nameof(LupeSettings.HistoryLimit)] = "Größe des Verlaufs",
+        [nameof(LupeSettings.KeepRunningInTray)] = "Im Infobereich weiterlaufen",
+        [nameof(LupeSettings.TrayHintShown)] = "Hinweis zum Infobereich",
     };
 
     private static string DisplayNames(IEnumerable<string> properties) =>

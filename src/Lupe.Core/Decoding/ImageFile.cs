@@ -12,6 +12,7 @@ namespace Lupe.Core.Decoding;
 /// <item>Transparenz wird auf weißem Grund verrechnet (schwarzer Code auf transparentem PNG bleibt lesbar); das
 /// Ergebnis ist immer undurchsichtig.</item>
 /// <item>GIF und TIFF: das erste Bild; ICO: das größte.</item>
+/// <item>Abgeschnittene Dateien (PNG, JPEG, GIF – Windows füllte den Rest sonst stillschweigend auf) gelten als beschädigt.</item>
 /// <item>Sehr große Bilder werden auf höchstens 40 Megapixel verkleinert (Schutz vor Speicherüberlauf).</item>
 /// </list>
 /// Fehler kommen als Ausnahme mit deutscher, anzeigbarer Meldung: <see cref="FileNotFoundException"/>,
@@ -40,6 +41,42 @@ public static class ImageFile
     private static readonly Lazy<IReadOnlyList<string>> s_extensions = new(DetectExtensions);
 
     public static Task<PixelImage> LoadAsync(string path, CancellationToken ct = default) => LoadAsync(path, MaxPixels, ct);
+
+    /// <summary>
+    /// Lädt ein Bild aus einem Datenstrom – z. B. die PNG-Daten, die Browser und Snipping Tool in die Zwischenablage legen.
+    /// Gleiche Behandlung und Fehler wie beim Laden einer Datei (Drehung, Transparenz auf Weiß, Größenschutz, deutsche
+    /// Meldungen). Gelesen wird ab der aktuellen Position; der Datenstrom bleibt offen und gehört weiter dem Aufrufer.
+    /// Nicht durchsuchbare Ströme (Netz, Pipe) werden erst in den Speicher gelesen.
+    /// </summary>
+    public static Task<PixelImage> LoadAsync(Stream stream, CancellationToken ct = default) => LoadAsync(stream, null, ct);
+
+    /// <summary>Wie <see cref="LoadAsync(Stream, CancellationToken)"/>; <paramref name="name"/> erscheint in Fehlermeldungen (null = „Bild“).</summary>
+    public static async Task<PixelImage> LoadAsync(Stream stream, string? name, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(stream);
+        if (!stream.CanRead) throw new ArgumentException("Der Datenstrom ist nicht lesbar.", nameof(stream));
+        string display = string.IsNullOrWhiteSpace(name) ? "Bild" : name;
+        if (stream.CanSeek)
+        {
+            if (stream.Length - stream.Position <= 0) throw new InvalidDataException($"„{display}“ ist leer.");
+            return await LoadAsync(new KeepOpen(stream, stream.Position), display, MaxPixels, ct).ConfigureAwait(false);
+        }
+
+        using var copy = new MemoryStream();
+        var buffer = new byte[1 << 16];
+        int read;
+        while ((read = await stream.ReadAsync(buffer, ct).ConfigureAwait(false)) > 0)
+        {
+            if (copy.Length + read > MaxStreamBytes) throw new InvalidDataException($"„{display}“ ist zu groß, um geladen zu werden.");
+            copy.Write(buffer, 0, read);
+        }
+        if (copy.Length == 0) throw new InvalidDataException($"„{display}“ ist leer.");
+        copy.Position = 0;
+        return await LoadAsync(copy, display, MaxPixels, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>Obergrenze für nicht durchsuchbare Datenströme, die erst in den Speicher gelesen werden.</summary>
+    internal const long MaxStreamBytes = 512L * 1024 * 1024;
 
     /// <summary>Dateiendungen, die im Öffnen-Dialog angeboten werden (z. B. ".png"), kleingeschrieben.</summary>
     public static IReadOnlyList<string> Extensions => s_extensions.Value;
@@ -97,6 +134,9 @@ public static class ImageFile
         ct.ThrowIfCancellationRequested();
         try
         {
+            // Abgeschnittene PNG/JPEG/GIF lesen die Windows-Decoder klaglos (Rest grau oder weiß) – vorher selbst prüfen
+            if (await Task.Run(() => ImageIntegrity.Truncation(stream), ct).ConfigureAwait(false) is { } reason)
+                throw new InvalidDataException($"„{name}“ ist unvollständig – {reason} (abgebrochener Download oder Kopiervorgang?).");
             using IRandomAccessStream ras = stream.AsRandomAccessStream();
             var decoder = await BitmapDecoder.CreateAsync(ras).AsTask(ct).ConfigureAwait(false);
             var frame = await PickFrameAsync(decoder, ct).ConfigureAwait(false);
@@ -189,6 +229,33 @@ public static class ImageFile
             }
             bgra[i + 3] = 255;
         }
+    }
+
+    /// <summary>
+    /// Zeigt den Datenstrom des Aufrufers ab <paramref name="origin"/> (seine Position beim Aufruf) – und schließt ihn nie:
+    /// Der Adapter für Windows.Graphics.Imaging schließt beim Freigeben sonst auch den darunterliegenden Strom.
+    /// </summary>
+    private sealed class KeepOpen(Stream inner, long origin) : Stream
+    {
+        public override bool CanRead => inner.CanRead;
+        public override bool CanSeek => true;
+        public override bool CanWrite => false;
+        public override long Length => inner.Length - origin;
+        public override long Position { get => inner.Position - origin; set => inner.Position = origin + value; }
+        public override void Flush() { }
+        public override int Read(byte[] buffer, int offset, int count) => inner.Read(buffer, offset, count);
+        public override int Read(Span<byte> buffer) => inner.Read(buffer);
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
+            inner.ReadAsync(buffer, offset, count, cancellationToken);
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default) =>
+            inner.ReadAsync(buffer, cancellationToken);
+        public override long Seek(long offset, SeekOrigin seekOrigin) => seekOrigin switch
+        {
+            SeekOrigin.Begin => inner.Seek(origin + offset, SeekOrigin.Begin) - origin,
+            _ => inner.Seek(offset, seekOrigin) - origin,
+        };
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 
     // ---------- Fehler ----------

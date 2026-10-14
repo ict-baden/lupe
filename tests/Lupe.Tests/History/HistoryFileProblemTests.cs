@@ -301,6 +301,7 @@ public sealed class HistoryFileProblemTests : IDisposable
         store.Add(Make("start", 0));
         var longText = new string('ä', 4000) + "\r\n;\"" + new string('x', 4000);
         using var stop = new CancellationTokenSource();
+        using var firstRead = new ManualResetEventSlim();
         var reads = 0;
         var lastCount = 0;
 
@@ -330,10 +331,13 @@ public sealed class HistoryFileProblemTests : IDisposable
                 Assert.True(count >= lastCount, $"{count} Einträge nach {lastCount}");
                 lastCount = count;
                 reads++;
+                firstRead.Set();
                 Thread.Sleep(1);
             }
         });
 
+        // Erst schreiben, wenn der Leser läuft – im parallelen Gesamtlauf kommt ein Pool-Thread sonst womöglich erst danach dran
+        Assert.True(firstRead.Wait(TimeSpan.FromSeconds(30)), "Der Leser kam nicht zum Zug.");
         for (var i = 1; i <= 150; i++) store.Add(Make(longText + i, i));
         stop.Cancel();
         await reader;

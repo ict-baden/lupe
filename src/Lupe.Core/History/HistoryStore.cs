@@ -7,8 +7,9 @@ namespace Lupe.Core.History;
 /// <remarks>
 /// <para>
 /// Threadsicher: Ändern geht über eine Sperre, <see cref="Entries"/> liefert ohne Sperre eine unveränderliche Momentaufnahme.
-/// Nach jeder Änderung wird die ganze Datei atomar neu geschrieben (Temp-Datei + Ersetzen) – bei höchstens einigen tausend
-/// Einträgen sind das Millisekunden, und es geht nie etwas verloren, wenn die App hart beendet wird.
+/// Nach jeder Änderung wird die ganze Datei atomar neu geschrieben (Temp-Datei + Ersetzen) – bei höchstens
+/// <see cref="MaxLimit"/> Einträgen (rund 2 MB) sind das gemessen rund 40 ms, und es geht nie etwas verloren, wenn die App
+/// hart beendet wird.
 /// </para>
 /// <para>
 /// Erwartbare Dateiprobleme werfen keine Ausnahme: Eine kaputte Datei ergibt einen leeren Verlauf und einen Hinweis in
@@ -27,13 +28,16 @@ public sealed class HistoryStore
     /// <summary>Die Datei war beim Start nicht lesbar; vor dem nächsten Schreiben erneut lesen statt überschreiben.</summary>
     private bool _reloadPending;
 
+    /// <summary>Größte erlaubte <see cref="Limit"/> (wie <see cref="SettingsStore.MaxHistoryLimit"/>).</summary>
+    public const int MaxLimit = SettingsStore.MaxHistoryLimit;
+
     /// <param name="path">Datei; null = <see cref="DefaultPath"/>.</param>
-    /// <param name="limit">Höchstzahl der Einträge (mindestens 1); ältere fallen weg.</param>
+    /// <param name="limit">Höchstzahl der Einträge (1 bis <see cref="MaxLimit"/>, wird in diesen Bereich gebracht); ältere fallen weg.</param>
     /// <param name="persist">false = nur im Speicher, nichts auf der Platte (und eine vorhandene Datei wird nicht gelesen).</param>
     public HistoryStore(string? path = null, int limit = 1000, bool persist = true)
     {
         FilePath = Path.GetFullPath(string.IsNullOrWhiteSpace(path) ? DefaultPath : path);
-        Limit = Math.Max(1, limit);
+        Limit = Math.Clamp(limit, 1, MaxLimit);
         Persist = persist;
         if (!persist) return;
 
@@ -107,6 +111,86 @@ public sealed class HistoryStore
             if (changed) Commit();
         }
         if (changed) OnChanged();
+    }
+
+    /// <summary>
+    /// Ersetzt einen Eintrag (dieselbe Instanz, sonst den ersten wertgleichen) an seiner Stelle und speichert – z. B. um
+    /// nachzutragen, dass der Code später noch kopiert wurde (<see cref="HistoryEntry.ActionsDone"/>). Hat der neue Eintrag eine
+    /// andere Zeit, wird er neu einsortiert. false, wenn der Eintrag nicht (mehr) im Verlauf steht – dann ändert sich nichts.
+    /// </summary>
+    public bool Replace(HistoryEntry entry, HistoryEntry replacement)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        ArgumentNullException.ThrowIfNull(replacement);
+        lock (_gate)
+        {
+            RetryPendingLoad();
+            var index = _entries.FindIndex(e => ReferenceEquals(e, entry));
+            if (index < 0) index = _entries.IndexOf(entry);
+            if (index < 0) return false;
+            if (replacement.Time == entry.Time)
+            {
+                _entries[index] = replacement;
+            }
+            else
+            {
+                _entries.RemoveAt(index);
+                var at = 0;
+                while (at < _entries.Count && _entries[at].Time > replacement.Time) at++;
+                _entries.Insert(at, replacement);
+            }
+            Commit();
+        }
+        OnChanged();
+        return true;
+    }
+
+    /// <summary>
+    /// Löscht die gespeicherte Verlaufsdatei (und liegen gebliebene Temp-Dateien daneben), z. B. wenn „Verlauf speichern“
+    /// ausgeschaltet wird – vertrauliche Inhalte sollen nicht auf der Platte bleiben. Ein laufender
+    /// <see cref="HistoryStore"/> mit <see cref="Persist"/> würde sie beim nächsten Eintrag neu anlegen.
+    /// </summary>
+    /// <param name="path">Datei; null = <see cref="DefaultPath"/>.</param>
+    /// <param name="deleted">true, wenn es eine Datei gab und sie gelöscht wurde.</param>
+    /// <param name="error">Deutsche Meldung, wenn sie sich nicht löschen ließ (gesperrt, keine Berechtigung), sonst null.</param>
+    /// <returns>true, wenn danach keine Verlaufsdatei mehr da ist.</returns>
+    public static bool TryDeleteFile(string? path, out bool deleted, out string? error)
+    {
+        var file = Path.GetFullPath(string.IsNullOrWhiteSpace(path) ? DefaultPath : path);
+        deleted = false;
+        error = null;
+        try
+        {
+            if (File.Exists(file))
+            {
+                File.Delete(file);
+                deleted = true;
+            }
+        }
+        catch (Exception ex) when (FileProblems.IsExpected(ex))
+        {
+            error = $"Die Verlaufsdatei „{file}“ ließ sich nicht löschen ({FileProblems.Describe(ex)}).";
+            return false;
+        }
+
+        // Reste eines abgebrochenen Speicherns (verlauf.json.<guid>.tmp) enthalten dieselben Inhalte
+        try
+        {
+            var folder = Path.GetDirectoryName(file);
+            if (folder is not null && Directory.Exists(folder))
+            {
+                foreach (var temp in Directory.EnumerateFiles(folder, Path.GetFileName(file) + ".*.tmp"))
+                {
+                    try { File.Delete(temp); }
+                    catch (Exception ex) when (FileProblems.IsExpected(ex)) { /* gerade in Benutzung – beim nächsten Mal */ }
+                }
+            }
+        }
+        catch (Exception ex) when (FileProblems.IsExpected(ex))
+        {
+            // Ordner nicht lesbar – die Datei selbst ist weg, das zählt
+        }
+        return true;
     }
 
     /// <summary>Löscht alles – auch eine kaputte oder gerade nicht lesbare Datei wird durch einen leeren Verlauf ersetzt.</summary>

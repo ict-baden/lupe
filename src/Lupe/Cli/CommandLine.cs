@@ -1,5 +1,6 @@
 using System.Text;
 using Lupe.Core.Decoding;
+using Lupe.Core.Input;
 using Lupe.Core.Model;
 
 namespace Lupe.Cli;
@@ -189,6 +190,7 @@ internal static class CommandLine
         string formats;
         try { formats = string.Join(", ", BarcodeDecoder.AllFormats); }
         catch (Exception) { formats = "QR_CODE, DATA_MATRIX, AZTEC, PDF_417, EAN_13, CODE_128 und weitere"; }
+        var hotkey = HotkeyText.Format(Hotkey.Default);
 
         Console.WriteLine($$"""
             Lupe {{AppInfo.Version}} – QR- und Barcodes lesen
@@ -198,8 +200,12 @@ internal static class CommandLine
               Lupe.exe lesen <bild> [<bild> …] [--format <format>]
               Lupe.exe --hintergrund                nur im Infobereich starten (für den Autostart)
               Lupe.exe --demo                       Oberfläche mit Demo-Kamera und Beispielverlauf
+                                                    (speichert nichts, ohne globales Tastenkürzel)
               Lupe.exe --screenshots <ordner> [--theme hell|dunkel|beide]
               Lupe.exe --hilfe
+
+            Bildschirm-Scan: {{hotkey}} (Standard, in den Einstellungen änderbar) liest einen
+            Ausschnitt des Bildschirms – aus jedem Programm, solange Lupe läuft.
 
             „lesen“ sucht in jedem Bild alle Codes und schreibt je Code eine Zeile:
               FORMAT<Tab>Inhalt                     z. B. QR_CODE<Tab>https://example.org
@@ -227,8 +233,10 @@ internal static class CommandLine
               Lupe.exe lesen C:\Scans\*.jpg --format QR_CODE > codes.txt     (cmd: UTF-8 mit BOM)
 
             Lupe.exe ist ein Fensterprogramm; damit die Eingabeaufforderung auf das Ende wartet:
-              start /wait Lupe.exe lesen …        (cmd)
+              start /wait Lupe.exe lesen …        (cmd, Ausgabe in der Konsole)
               Lupe.exe lesen … | Out-Default      (PowerShell)
+            Mit Umleitung (> codes.txt) ohne „start“ aufrufen – „start“ gibt die Umleitung nicht
+            an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.
             """);
     }
 

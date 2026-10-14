@@ -36,9 +36,10 @@ public partial class ScreenPage : UserControl, IPage
         catch (Exception ex) when (ex is not OutOfMemoryException) { hotkey = ""; }
         HotkeyKeys.ItemsSource = hotkey.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-        HotkeyWarning.Visibility = _state.HotkeyError is null ? Visibility.Collapsed : Visibility.Visible;
-        HotkeyWarningText.Text = _state.HotkeyError ?? "";
-        HotkeyNote.Text = _state.HotkeyError is null ? "aus jedem Programm" : "gerade nicht verfügbar";
+        bool problem = _state.HotkeyError is not null && !_state.HotkeyOffInDemo;
+        HotkeyWarning.Visibility = problem ? Visibility.Visible : Visibility.Collapsed;
+        HotkeyWarningText.Text = problem ? _state.HotkeyError : "";
+        HotkeyNote.Text = _state.HotkeyOffInDemo ? "in der Demo aus – hier den Knopf nehmen" : problem ? "gerade nicht verfügbar" : "aus jedem Programm";
 
         var actions = settings.ScreenActions;
         var parts = new List<string>();

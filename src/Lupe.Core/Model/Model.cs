@@ -78,10 +78,14 @@ public sealed record HistoryEntry
     public ResultActions ActionsDone { get; init; }
 }
 
-/// <summary>Tastenkürzel, z. B. Strg+Alt+Q. <see cref="Key"/> ist ein Windows-Virtual-Key-Code.</summary>
+/// <summary>Tastenkürzel, z. B. Win+Umschalt+Q. <see cref="Key"/> ist ein Windows-Virtual-Key-Code.</summary>
 public sealed record Hotkey(bool Ctrl, bool Alt, bool Shift, bool Win, int Key)
 {
-    public static Hotkey Default { get; } = new(Ctrl: true, Alt: true, Shift: false, Win: false, Key: 0x51); // Strg+Alt+Q
+    /// <summary>
+    /// Win+Umschalt+Q – gebaut wie Win+Umschalt+S (Bildschirmausschnitt von Windows). Bewusst nicht Strg+Alt+Q: Windows
+    /// meldet AltGr als Strg+Alt, ein systemweit angemeldetes Strg+Alt+Q finge auf deutschen Tastaturen AltGr+Q = „@“ ab.
+    /// </summary>
+    public static Hotkey Default { get; } = new(Ctrl: false, Alt: false, Shift: true, Win: true, Key: 0x51); // Win+Umschalt+Q
 }
 
 /// <summary>Einstellungen – als JSON unter %LocalAppData%\Lupe\einstellungen.json gespeichert.</summary>
@@ -106,6 +110,10 @@ public sealed record LupeSettings
     public string Camera { get; init; } = "";
     /// <summary>Verlauf speichern (aus = nur im Speicher, nichts auf der Platte).</summary>
     public bool KeepHistory { get; init; } = true;
-    /// <summary>Höchstzahl der Verlaufseinträge; ältere fallen weg.</summary>
+    /// <summary>Höchstzahl der Verlaufseinträge (1 bis 10 000); ältere fallen weg.</summary>
     public int HistoryLimit { get; init; } = 1000;
+    /// <summary>Beim Schließen des Fensters im Infobereich weiterlaufen – das Tastenkürzel bleibt dann aktiv.</summary>
+    public bool KeepRunningInTray { get; init; } = true;
+    /// <summary>Merker der Oberfläche: Der Hinweis „Lupe läuft im Infobereich weiter“ wurde schon einmal gezeigt.</summary>
+    public bool TrayHintShown { get; init; }
 }

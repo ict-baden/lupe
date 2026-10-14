@@ -81,6 +81,10 @@ public partial class HistoryPage : UserControl, IPage
         EmptyText.Text = all.Count == 0 ? "Alles, was Lupe per Kamera, Bildschirm oder Datei liest, steht hier." : $"Kein Eintrag enthält „{search}“.";
         ExportButton.IsEnabled = ClearButton.IsEnabled = all.Count > 0;
         OffNotice.Visibility = _state.Settings.KeepHistory ? Visibility.Collapsed : Visibility.Visible;
+        // Kaputte, gesperrte oder nicht speicherbare Datei: Hinweis bleibt stehen, bis es sich erledigt hat
+        var problem = _state.History.Problem;
+        ProblemNotice.Visibility = problem is null ? Visibility.Collapsed : Visibility.Visible;
+        ProblemText.Text = problem ?? "";
         UpdateDetail();
     }
 

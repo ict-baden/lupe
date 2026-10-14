@@ -11,9 +11,51 @@ public sealed class HotkeyTextTests
     [Fact]
     public void Beispiele_aus_der_Beschreibung()
     {
-        Assert.Equal("Strg+Alt+Q", HotkeyText.Format(Hotkey.Default));
+        Assert.Equal("Strg+Alt+Q", HotkeyText.Format(Key(0x51, ctrl: true, alt: true)));
         Assert.Equal("Strg+Umschalt+F9", HotkeyText.Format(Key(0x78, ctrl: true, shift: true)));
         Assert.Equal("Win+Alt+S", HotkeyText.Format(Key(0x53, alt: true, win: true)));
+    }
+
+    [Fact]
+    public void Standard_ist_Win_Umschalt_Q_wie_Win_Umschalt_S()
+    {
+        Assert.Equal("Win+Umschalt+Q", HotkeyText.Format(Hotkey.Default));
+        Assert.True(HotkeyText.TryParse("Win+Umschalt+Q", out var parsed));
+        Assert.Equal(Hotkey.Default, parsed);
+        Assert.Null(HotkeyText.Problem(Hotkey.Default));
+    }
+
+    // ---------- Hinweis: Strg+Alt und AltGr ----------
+
+    [Fact]
+    public void Standard_und_Kuerzel_mit_Win_brauchen_keinen_AltGr_Hinweis()
+    {
+        Assert.Null(HotkeyText.AltGrWarning(Hotkey.Default));
+        Assert.Null(HotkeyText.AltGrWarning(Key(0x51, ctrl: true, alt: true, win: true)));
+        Assert.Null(HotkeyText.AltGrWarning(Key(0x78, ctrl: true, shift: true)));
+        Assert.Null(HotkeyText.AltGrWarning(Key(0x51, alt: true)));
+    }
+
+    [Fact]
+    public void Strg_Alt_bekommt_den_AltGr_Hinweis()
+    {
+        var hint = HotkeyText.AltGrWarning(Key(0x51, ctrl: true, alt: true));
+
+        Assert.NotNull(hint);
+        Assert.StartsWith("Strg+Alt+Q kann auf deutschen Tastaturen mit AltGr-Zeichen kollidieren", hint);
+        Assert.Contains("Win+Umschalt+Q", hint);
+        Assert.NotNull(HotkeyText.AltGrWarning(Key(0x45, ctrl: true, alt: true, shift: true))); // Strg+Umschalt+Alt+E
+    }
+
+    [GermanKeyboardFact]
+    public void AltGr_Hinweis_nennt_das_Zeichen_des_deutschen_Layouts()
+    {
+        var layout = InteractiveDesktop.ThreadLayout;
+
+        Assert.Contains("(AltGr+Q schreibt „@“)", HotkeyText.AltGrWarning(Key(0x51, ctrl: true, alt: true), layout));
+        Assert.Contains("(AltGr+E schreibt „€“)", HotkeyText.AltGrWarning(Key(0x45, ctrl: true, alt: true), layout));
+        // F9 hat kein AltGr-Zeichen: Hinweis ja, aber ohne Zeichen
+        Assert.DoesNotContain("schreibt", HotkeyText.AltGrWarning(Key(0x78, ctrl: true, alt: true), layout));
     }
 
     [Fact]

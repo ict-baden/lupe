@@ -1,3 +1,7 @@
+using System.Collections.Immutable;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
+using Lupe.Core.Model;
 using Lupe.Core.Screen;
 
 namespace Lupe.Tests.App;
@@ -88,6 +92,107 @@ public sealed class AppLogicTests
         Assert.Equal("https://example.org/a?b=1", Escape("https://example.org/a?b=1"));
         Assert.Equal(@"WIFI:T:WPA;S:Netz\;1;P:geheim;;", Escape(@"WIFI:T:WPA;S:Netz\;1;P:geheim;;"));
         Assert.Equal("Grüße 😀", Escape("Grüße 😀"));
+    }
+
+    // ================= Umzug aus oberflaeche.json =================
+
+    private static LupeSettings Migrate(LupeSettings settings, string path) =>
+        (LupeSettings)AppInternals.Call("Lupe.Services.LegacyPreferences", "Migrate", settings, path)!;
+
+    [AppFact]
+    public void Alte_oberflaeche_json_wird_in_die_Einstellungen_uebernommen()
+    {
+        using var temp = new TempFolder();
+        var path = temp.File("oberflaeche.json");
+        File.WriteAllText(path, """
+            {
+              "KeepRunningInTray": false,
+              "TrayHintShown": true
+            }
+            """);
+
+        var migrated = Migrate(new LupeSettings { Sound = false }, path);
+
+        Assert.False(migrated.KeepRunningInTray);
+        Assert.True(migrated.TrayHintShown);
+        Assert.False(migrated.Sound); // der Rest bleibt
+    }
+
+    [AppFact]
+    public void Ohne_oder_mit_kaputter_alter_Datei_bleibt_alles_wie_es_ist()
+    {
+        using var temp = new TempFolder();
+        var settings = new LupeSettings();
+        Assert.Same(settings, Migrate(settings, temp.File("gibt-es-nicht.json")));
+
+        var broken = temp.File("oberflaeche.json");
+        File.WriteAllText(broken, "{ kaputt");
+        Assert.Same(settings, Migrate(settings, broken));
+    }
+
+    [AppFact]
+    public void Umzug_ueberschreibt_keine_neueren_Werte()
+    {
+        using var temp = new TempFolder();
+        var path = temp.File("oberflaeche.json");
+        File.WriteAllText(path, """{ "KeepRunningInTray": true, "TrayHintShown": false }""");
+
+        var migrated = Migrate(new LupeSettings { KeepRunningInTray = false, TrayHintShown = true }, path);
+
+        Assert.False(migrated.KeepRunningInTray);
+        Assert.True(migrated.TrayHintShown);
+    }
+
+    // ================= Kamera: Live-Decoder =================
+
+    [AppFact]
+    public void Kamera_Seite_erkennt_mit_dem_schonenden_Live_Decoder()
+    {
+        // Die Seite selbst braucht WPF (nicht im Testprozess) – deshalb die Metadaten der gebauten Lupe.dll lesen
+        var fields = FieldTypes("Lupe.UI.Pages", "CameraPage");
+
+        Assert.Contains("Lupe.Core.Decoding.LiveBarcodeDecoder", fields);
+        Assert.DoesNotContain("Lupe.Core.Decoding.BarcodeDecoder", fields);
+    }
+
+    /// <summary>Die Typen aller Felder eines Typs der App, als „Namensraum.Name“.</summary>
+    private static List<string> FieldTypes(string ns, string name)
+    {
+        var dll = Path.Combine(Path.GetDirectoryName(AppExe.Path)!, "Lupe.dll");
+        using var stream = File.OpenRead(dll);
+        using var pe = new PEReader(stream);
+        var md = pe.GetMetadataReader();
+        var type = md.TypeDefinitions.Select(md.GetTypeDefinition)
+            .Single(t => md.GetString(t.Namespace) == ns && md.GetString(t.Name) == name);
+        var names = new TypeNames(md);
+        return type.GetFields().Select(h => md.GetFieldDefinition(h).DecodeSignature(names, null)).ToList();
+    }
+
+    /// <summary>Gibt Typen in Signaturen als Namen zurück (Generika, Arrays usw. nur grob – hier geht es um einfache Felder).</summary>
+    private sealed class TypeNames(MetadataReader md) : ISignatureTypeProvider<string, object?>
+    {
+        public string GetPrimitiveType(PrimitiveTypeCode typeCode) => typeCode.ToString();
+        public string GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
+        {
+            var t = md.GetTypeDefinition(handle);
+            return $"{md.GetString(t.Namespace)}.{md.GetString(t.Name)}";
+        }
+        public string GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
+        {
+            var t = md.GetTypeReference(handle);
+            return $"{md.GetString(t.Namespace)}.{md.GetString(t.Name)}";
+        }
+        public string GetTypeFromSpecification(MetadataReader reader, object? context, TypeSpecificationHandle handle, byte rawTypeKind) => "spec";
+        public string GetSZArrayType(string elementType) => elementType + "[]";
+        public string GetArrayType(string elementType, ArrayShape shape) => elementType + "[,]";
+        public string GetByReferenceType(string elementType) => elementType + "&";
+        public string GetPointerType(string elementType) => elementType + "*";
+        public string GetPinnedType(string elementType) => elementType;
+        public string GetModifiedType(string modifier, string unmodifiedType, bool isRequired) => unmodifiedType;
+        public string GetGenericInstantiation(string genericType, ImmutableArray<string> typeArguments) => $"{genericType}<{string.Join(",", typeArguments)}>";
+        public string GetGenericMethodParameter(object? context, int index) => $"!!{index}";
+        public string GetGenericTypeParameter(object? context, int index) => $"!{index}";
+        public string GetFunctionPointerType(MethodSignature<string> signature) => "fnptr";
     }
 
     // ================= Einzeilige Anzeige in Listen =================

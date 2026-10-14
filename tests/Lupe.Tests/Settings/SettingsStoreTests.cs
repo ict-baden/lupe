@@ -355,8 +355,10 @@ public sealed class SettingsStoreTests : IDisposable
     [InlineData(0, 1)]
     [InlineData(1, 1)]
     [InlineData(5000, 5000)]
-    [InlineData(100_000, 100_000)]
-    [InlineData(10_000_000, 100_000)]
+    [InlineData(10_000, 10_000)]
+    [InlineData(10_001, 10_000)]
+    [InlineData(100_000, 10_000)]
+    [InlineData(10_000_000, 10_000)]
     [InlineData(int.MinValue, 1)]
     public void Verlaufslimit_wird_begrenzt(int value, int expected)
     {

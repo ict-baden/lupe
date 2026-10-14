@@ -161,39 +161,38 @@ internal static class Typing
     }
 }
 
+/// <summary>Was die Zwischenablage an Bild hergibt – genau eins davon ist gesetzt, oder nichts.</summary>
+/// <param name="File">Pfad einer im Explorer kopierten Bilddatei.</param>
+/// <param name="Png">PNG-Daten (legen Browser, Office und Snipping Tool zusätzlich ab – verlustfrei und mit Alpha).</param>
+/// <param name="Bitmap">Sonst die Bitmap der Zwischenablage.</param>
+internal sealed record ClipboardContent(string? File = null, byte[]? Png = null, PixelImage? Bitmap = null)
+{
+    public bool IsEmpty => File is null && Png is null && Bitmap is null;
+}
+
 /// <summary>Bild aus der Zwischenablage: PNG-Daten, Bitmap oder eine im Explorer kopierte Bilddatei.</summary>
 internal static class ClipboardImage
 {
-    /// <summary>Bild oder Pfad einer kopierten Bilddatei; (null, null), wenn nichts Passendes darin ist.</summary>
-    public static (PixelImage? Image, string? File) Read()
+    /// <summary>Liest die Zwischenablage (Oberflächen-Thread). Die PNG-Daten lädt danach <see cref="ImageFile"/> wie eine Datei.</summary>
+    public static ClipboardContent Read()
     {
         var data = Clipboard.GetDataObject();
-        if (data is null) return (null, null);
+        if (data is null) return new();
 
         if (data.GetDataPresent(DataFormats.FileDrop) && data.GetData(DataFormats.FileDrop) is string[] files)
         {
             var image = files.FirstOrDefault(IsImageFile);
-            if (image is not null) return (null, image);
+            if (image is not null) return new(File: image);
         }
 
-        // Viele Programme (Browser, Office, Snipping Tool) legen zusätzlich PNG ab – verlustfrei und mit Alpha
-        if (data.GetDataPresent("PNG") && data.GetData("PNG") is MemoryStream png)
-        {
-            try
-            {
-                var decoder = new PngBitmapDecoder(png, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.OnLoad);
-                return (Images.FromBitmap(decoder.Frames[0]), null);
-            }
-            catch (Exception ex) when (ex is NotSupportedException or FileFormatException or IOException or ArgumentException)
-            {
-                // dann eben die Bitmap
-            }
-        }
+        if (data.GetDataPresent("PNG") && data.GetData("PNG") is MemoryStream { Length: > 0 } png) return new(Png: png.ToArray());
 
-        if (data.GetDataPresent(DataFormats.Bitmap) && Clipboard.GetImage() is { } bitmap)
-            return (Images.FromBitmap(bitmap), null);
-        return (null, null);
+        return ReadBitmap() is { } bitmap ? new(Bitmap: bitmap) : new();
     }
+
+    /// <summary>Die Bitmap der Zwischenablage (auch als Ersatz, wenn die PNG-Daten unbrauchbar sind), sonst null.</summary>
+    public static PixelImage? ReadBitmap() =>
+        Clipboard.ContainsData(DataFormats.Bitmap) && Clipboard.GetImage() is { } bitmap ? Images.FromBitmap(bitmap) : null;
 
     public static bool IsImageFile(string path)
     {

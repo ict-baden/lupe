@@ -13,7 +13,7 @@ public sealed class RedirectionTests
     private static readonly byte[] Bom = [0xEF, 0xBB, 0xBF];
 
     /// <summary>Führt <c>"Lupe.exe" &lt;args&gt; &lt;umleitung&gt;</c> über cmd aus; Exitcode von Lupe.</summary>
-    private static int RunInCmd(string arguments, string redirection)
+    internal static int RunInCmd(string arguments, string redirection)
     {
         var exe = AppExe.Path ?? throw new InvalidOperationException("Lupe.exe nicht gefunden.");
         var info = new ProcessStartInfo("cmd.exe")
@@ -92,6 +92,29 @@ public sealed class RedirectionTests
         var text = Encoding.UTF8.GetString(bytes, 3, bytes.Length - 3);
         Assert.Contains("a.png", text);
         Assert.Contains("b.png", text);
+    }
+
+    [AppFact]
+    public void In_einer_cmd_Datei_wartet_cmd_und_ERRORLEVEL_ist_der_Exitcode()
+    {
+        // So steht es in der Hilfe: Mit Umleitung ohne „start“ aufrufen – in .cmd-Dateien wartet cmd von selbst
+        using var temp = new TempFolder();
+        var exe = AppExe.Path ?? throw new InvalidOperationException("Lupe.exe nicht gefunden.");
+        string script = temp.File("skript.cmd"), errors = temp.File("fehler.txt"), level = temp.File("level.txt");
+        File.WriteAllLines(script,
+        [
+            "@echo off",
+            "chcp 65001 >nul", // das Skript ist UTF-8 (falls der Temp-Pfad Umlaute hat)
+            $"\"{exe}\" lesen \"{temp.File("gibt-es-nicht.png")}\" > \"{temp.File("codes.txt")}\" 2> \"{errors}\"",
+            $">\"{level}\" echo %ERRORLEVEL%", // Umleitung vorn: „echo 3> …“ hieße Kanal 3 umleiten
+        ], Encoding.Default);
+
+        var info = new ProcessStartInfo("cmd.exe") { Arguments = $"/d /s /c \"\"{script}\"\"", UseShellExecute = false, CreateNoWindow = true };
+        using (var process = Process.Start(info)!)
+            Assert.True(process.WaitForExit(TimeSpan.FromSeconds(60)), "Das Skript lief länger als 60 s.");
+
+        Assert.Equal("3", File.ReadAllText(level).Trim());
+        Assert.Contains("Datei nicht gefunden", File.ReadAllText(errors, Encoding.UTF8));
     }
 
     private static bool ContainsBom(byte[] bytes)

@@ -26,10 +26,14 @@ internal sealed record HitReport(IReadOnlyList<DecodedCode> Codes, ActionOutcome
     public bool NeedsChoice => Codes.Count > 1;
 
     /// <summary>
-    /// Die Verlaufseinträge zu <see cref="Codes"/> (gleiche Reihenfolge). Sie gehören zu dieser Meldung – ein Treffer
-    /// der Kamera, während die Auswahl eines Bildschirm-Scans offen ist, kommt ihnen so nicht in die Quere.
+    /// Die Verlaufseinträge zu <see cref="Codes"/> (gleiche Reihenfolge, null = keiner). Sie gehören zu dieser Meldung – ein
+    /// Treffer der Kamera, während die Auswahl eines Bildschirm-Scans offen ist, kommt ihnen so nicht in die Quere. Ein Array,
+    /// weil <see cref="Hits.ChooseAsync"/> den Eintrag des gewählten Codes durch den ergänzten ersetzt.
     /// </summary>
-    public IReadOnlyList<HistoryEntry> Entries { get; init; } = [];
+    public HistoryEntry?[] Entries { get; init; } = [];
+
+    /// <summary>Der Verlaufseintrag zum Code an Stelle <paramref name="index"/>, sonst null.</summary>
+    public HistoryEntry? EntryAt(int index) => index >= 0 && index < Entries.Length ? Entries[index] : null;
 }
 
 /// <summary>
@@ -60,7 +64,7 @@ internal sealed class Hits(AppState state)
             return new HitReport(codes, outcome, time) { Entries = [single] };
         }
 
-        var entries = codes.Select(code => AddHistory(code, source, time, ResultActions.Keine)).ToList();
+        var entries = codes.Select(code => AddHistory(code, source, time, ResultActions.Keine)).ToArray();
         return new HitReport(codes, ActionOutcome.None, time) { Entries = entries };
     }
 
@@ -71,20 +75,34 @@ internal sealed class Hits(AppState state)
         // Dieselbe Instanz wie in der Meldung (Auswahlfenster) – wertgleich nur als Notbehelf
         int index = report.Codes.Select((c, i) => ReferenceEquals(c, code) ? i : -1).FirstOrDefault(i => i >= 0, -1);
         if (index < 0) index = report.Codes.Select((c, i) => c == code ? i : -1).FirstOrDefault(i => i >= 0, -1);
-        if (outcome.Done != ResultActions.Keine && index >= 0 && index < report.Entries.Count)
-        {
-            var entry = report.Entries[index];
-            try
-            {
-                state.History.Remove(entry);
-                state.History.Add(entry with { ActionsDone = outcome.Done });
-            }
-            catch (Exception ex) when (ex is not OutOfMemoryException)
-            {
-                state.Report(NoticeKind.Warning, $"Verlauf: {ex.Message}");
-            }
-        }
+        if (report.EntryAt(index) is { } entry && Record(entry, outcome.Done) is { } updated) report.Entries[index] = updated;
         return outcome;
+    }
+
+    /// <summary>
+    /// Eine Aktion aus einer Ergebniszeile (Knopf „Kopieren“ oder „Link öffnen“ auf den Seiten Kamera, Bildschirm und
+    /// Datei, im Hinweis nach dem Bildschirm-Scan) im Verlaufseintrag des Codes vermerken.
+    /// </summary>
+    public void Record(CodeItem item, ResultActions done)
+    {
+        if (item.Entry is { } entry && Record(entry, done) is { } updated) item.Entry = updated;
+    }
+
+    /// <summary>Ergänzt <see cref="HistoryEntry.ActionsDone"/> an Ort und Stelle; der neue Eintrag, oder null, wenn nichts zu tun war.</summary>
+    private HistoryEntry? Record(HistoryEntry entry, ResultActions done)
+    {
+        if (done == ResultActions.Keine || (entry.ActionsDone & done) == done) return null;
+        var updated = entry with { ActionsDone = entry.ActionsDone | done };
+        try
+        {
+            // Nicht mehr im Verlauf (gelöscht, über das Limit gefallen): dann gibt es nichts nachzutragen
+            return state.History.Replace(entry, updated) ? updated : null;
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            state.Report(NoticeKind.Warning, $"Verlauf: {ex.Message}");
+            return null;
+        }
     }
 
     /// <summary>Die Aktionen laut Einstellungen für einen Code. Reihenfolge: kopieren, tippen, zuletzt der Browser (er nimmt den Fokus).</summary>
@@ -117,13 +135,32 @@ internal sealed class Hits(AppState state)
     /// <summary>Alle Codes zeilenweise kopieren. Fehlermeldung oder null.</summary>
     public string? CopyAll(IEnumerable<DecodedCode> codes) => Shell.Copy(string.Join(Environment.NewLine, codes.Select(c => c.Text)));
 
-    private HistoryEntry AddHistory(DecodedCode code, ScanSource source, DateTimeOffset time, ResultActions done)
+    /// <summary>Alle Codes einer Ergebnisliste zeilenweise kopieren und das in ihren Verlaufseinträgen vermerken. Fehlermeldung oder null.</summary>
+    public string? CopyAll(IReadOnlyList<CodeItem> items)
+    {
+        var error = CopyAll(items.Select(i => i.Code));
+        if (error is null) foreach (var item in items) Record(item, ResultActions.Kopieren);
+        return error;
+    }
+
+    /// <summary>Alle Codes einer Meldung zeilenweise kopieren (Auswahlfenster) und das im Verlauf vermerken. Fehlermeldung oder null.</summary>
+    public string? CopyAll(HitReport report)
+    {
+        var error = CopyAll(report.Codes);
+        if (error is null)
+            for (int i = 0; i < report.Entries.Length; i++)
+                if (report.Entries[i] is { } entry && Record(entry, ResultActions.Kopieren) is { } updated) report.Entries[i] = updated;
+        return error;
+    }
+
+    private HistoryEntry? AddHistory(DecodedCode code, ScanSource source, DateTimeOffset time, ResultActions done)
     {
         var entry = new HistoryEntry { Time = time, Text = code.Text, Format = code.Format, Source = source, ActionsDone = done };
         try { state.History.Add(entry); }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             state.Report(NoticeKind.Warning, $"Verlauf: {ex.Message}");
+            return null;
         }
         return entry;
     }
@@ -132,16 +169,23 @@ internal sealed class Hits(AppState state)
 /// <summary>Ein Code für Listen und Ergebnisleisten (Kamera, Bildschirm, Datei, Auswahl).</summary>
 public sealed class CodeItem
 {
-    public CodeItem(DecodedCode code, ScanSource source, DateTimeOffset time, Uri? link, int number = 0)
+    internal CodeItem(DecodedCode code, ScanSource source, DateTimeOffset time, Uri? link, int number = 0, HistoryEntry? entry = null)
     {
         Code = code;
         Source = source;
         Time = time;
         Link = link;
         Number = number;
+        Entry = entry;
     }
 
     public DecodedCode Code { get; }
+
+    /// <summary>
+    /// Der Verlaufseintrag dieses Treffers (null: keiner, z. B. weil er sich nicht anlegen ließ). Kopieren oder Link öffnen aus
+    /// der Zeile wird darin vermerkt; danach zeigt die Eigenschaft auf den ergänzten Eintrag.
+    /// </summary>
+    internal HistoryEntry? Entry { get; set; }
     public ScanSource Source { get; }
     public DateTimeOffset Time { get; }
     public Uri? Link { get; }

@@ -21,7 +21,7 @@ public partial class CameraPage : UserControl, IPage
 {
     private enum Hint { None, Stopped, Starting, NoCamera, Error }
 
-    private sealed record MarkerUpdate(IReadOnlyList<DecodedCode> Codes, int Generation);
+    private sealed record MarkerUpdate(IReadOnlyList<CodeMarker> Markers, int Generation);
 
     private readonly AppState _state;
     private readonly ObservableCollection<CodeItem> _results = [];
@@ -36,7 +36,7 @@ public partial class CameraPage : UserControl, IPage
     // Laufende Kamera; _generation trennt Ereignisse einer gestoppten Schleife von denen der neuen
     private IFrameSource? _source;
     private ScanLoop? _loop;
-    private volatile BarcodeDecoder? _decoder;
+    private volatile LiveBarcodeDecoder? _decoder;
     private int _generation;
 
     // Vorschau: immer nur das neueste Bild zeichnen, ältere verwerfen (keine Warteschlange auf dem UI-Thread)
@@ -102,7 +102,7 @@ public partial class CameraPage : UserControl, IPage
         _cameras = list;
         _suppressSelection = true;
         CameraBox.ItemsSource = list;
-        CameraBox.SelectedItem = list.FirstOrDefault(c => c.Id == _state.Settings.Camera || c.Name == _state.Settings.Camera) ?? list.FirstOrDefault();
+        CameraBox.SelectedItem = Cameras.Find(list, _state.Settings.Camera);
         _suppressSelection = false;
         CameraBox.IsEnabled = list.Count > 0;
 
@@ -141,8 +141,9 @@ public partial class CameraPage : UserControl, IPage
             ShowHint(Hint.Starting);
             UpdateButtons(starting: true);
 
-            // Erkennung vor der Kamera anlegen: Scheitert sie, ist noch keine Kamera geöffnet, die freizugeben wäre
-            var decoder = _state.CreateDecoder();
+            // Erkennung vor der Kamera anlegen: Scheitert sie, ist noch keine Kamera geöffnet, die freizugeben wäre.
+            // Der Live-Decoder nimmt nur die schnelle Stufe und wenige Kerne – das nächste Bild ist ohnehin eine neue Chance.
+            var decoder = _state.CreateLiveDecoder();
             IFrameSource source;
             try { source = info.Id == DemoData.CameraId ? DemoData.CreateCamera() : Cameras.Open(info); }
             catch (Exception ex) when (ex is not OutOfMemoryException)
@@ -239,8 +240,9 @@ public partial class CameraPage : UserControl, IPage
         var decoder = _decoder;
         if (decoder is null || generation != Volatile.Read(ref _generation)) return [];
         var codes = decoder.Decode(image);
-        // Jede Erkennung (auch Wiederholungen, die die Sperre nicht meldet) zeigt die Markierung – so folgt sie dem Code
-        Interlocked.Exchange(ref _pendingMarkers, new MarkerUpdate(codes, generation));
+        // Jede Erkennung (auch Wiederholungen, die die Sperre nicht meldet) zeigt die Markierung – so folgt sie dem Code.
+        // Den Umriss gleich hier berechnen: Hier ist das Bild noch da (1D-Codes: Band so hoch wie die Striche).
+        Interlocked.Exchange(ref _pendingMarkers, new MarkerUpdate(Markers(codes, numbered: false, image), generation));
         if (Interlocked.Exchange(ref _markersQueued, 1) == 0) Dispatcher.BeginInvoke(ApplyMarkers, DispatcherPriority.Render);
         return codes;
     }
@@ -276,29 +278,32 @@ public partial class CameraPage : UserControl, IPage
     {
         Interlocked.Exchange(ref _markersQueued, 0);
         if (Interlocked.Exchange(ref _pendingMarkers, null) is not { } pending || pending.Generation != _generation) return;
-        if (pending.Codes.Count > 0)
+        if (pending.Markers.Count > 0)
         {
-            View.Markers = Markers(pending.Codes, numbered: false);
+            View.Markers = pending.Markers;
             _markersUntil = DateTime.UtcNow.AddMilliseconds(700);
         }
     }
 
-    internal static IReadOnlyList<CodeMarker> Markers(IReadOnlyList<DecodedCode> codes, bool numbered) =>
-        codes.Select((c, i) => CodeMarker.From(c, numbered && codes.Count > 1 ? $"{i + 1}  {Labels.Format(c.Format)}" : Labels.Format(c.Format)))
+    /// <param name="image">Das Bild, in dem die Codes gefunden wurden – für Umrisse, die sich an die Striche halten.</param>
+    internal static IReadOnlyList<CodeMarker> Markers(IReadOnlyList<DecodedCode> codes, bool numbered, PixelImage? image = null) =>
+        codes.Select((c, i) => CodeMarker.From(c, numbered && codes.Count > 1 ? $"{i + 1}  {Labels.Format(c.Format)}" : Labels.Format(c.Format), image))
              .OfType<CodeMarker>().ToList();
 
     private async Task OnDetectedAsync(int generation, IReadOnlyList<DecodedCode> codes)
     {
         if (generation != _generation || codes.Count == 0) return;
         var report = await _state.Hits.ReportAsync(codes, ScanSource.Kamera);
-        ShowResults(report.Codes, report.Time, report.NeedsChoice ? null : report.Outcome);
+        ShowResults(report.Codes, report.Entries, report.Time, report.NeedsChoice ? null : report.Outcome);
     }
 
-    private void ShowResults(IReadOnlyList<DecodedCode> codes, DateTimeOffset time, ActionOutcome? outcome)
+    /// <param name="entries">Die Verlaufseinträge der Codes (gleiche Reihenfolge) – Kopieren und Link öffnen aus der Zeile werden darin vermerkt.</param>
+    private void ShowResults(IReadOnlyList<DecodedCode> codes, IReadOnlyList<HistoryEntry?> entries, DateTimeOffset time, ActionOutcome? outcome)
     {
         _results.Clear();
         for (int i = 0; i < codes.Count; i++)
-            _results.Add(new CodeItem(codes[i], ScanSource.Kamera, time, _state.LinkFor(codes[i].Text), codes.Count > 1 ? i + 1 : 0));
+            _results.Add(new CodeItem(codes[i], ScanSource.Kamera, time, _state.LinkFor(codes[i].Text), codes.Count > 1 ? i + 1 : 0,
+                i < entries.Count ? entries[i] : null));
         ResultEmpty.Visibility = _results.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         CopyAllButton.Visibility = _results.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
         ResultTitle.Text = codes.Count > 1 ? $"{codes.Count} Codes erkannt · {Labels.ShortTime(time, DateTimeOffset.Now)}" : $"Zuletzt erkannt · {Labels.ShortTime(time, DateTimeOffset.Now)}";
@@ -362,12 +367,12 @@ public partial class CameraPage : UserControl, IPage
     {
         AimToggle.IsChecked = now.AimHelp;
         View.ShowAim = now.AimHelp;
-        if (!old.Formats.SequenceEqual(now.Formats) && _loop is not null) _decoder = _state.CreateDecoder();
+        if (!old.Formats.SequenceEqual(now.Formats) && _loop is not null) _decoder = _state.CreateLiveDecoder();
         // Die Wiederholungssperre gibt der Schleife ihr Konstruktor mit – also neu starten
         if (old.RepeatSuppressMs != now.RepeatSuppressMs && _loop is not null) Ui.Run(_state, StartAsync, "Kamera starten");
         // Link-Regeln geändert: Knöpfe der Ergebnisleiste neu bewerten
         if (!old.LinkRules.SequenceEqual(now.LinkRules) && _results.Count > 0)
-            ShowResults([.. _results.Select(r => r.Code)], _results[0].Time, null);
+            ShowResults([.. _results.Select(r => r.Code)], [.. _results.Select(r => r.Entry)], _results[0].Time, null);
     }
 
     private void GoScreen_Click(object sender, RoutedEventArgs e) => _state.RequestPage("bildschirm");
@@ -375,7 +380,7 @@ public partial class CameraPage : UserControl, IPage
 
     private void CopyAll_Click(object sender, RoutedEventArgs e)
     {
-        if (_state.Hits.CopyAll(_results.Select(r => r.Code)) is { } error) _state.Report(NoticeKind.Error, error);
+        if (_state.Hits.CopyAll([.. _results]) is { } error) _state.Report(NoticeKind.Error, error);
         else _state.Report(NoticeKind.Success, $"{_results.Count} Codes zeilenweise kopiert.");
     }
 
@@ -391,10 +396,11 @@ public partial class CameraPage : UserControl, IPage
         _suppressSelection = false;
 
         var frame = DemoData.CameraFrame();
-        var codes = _state.CreateDecoder().Decode(frame);
+        // Derselbe Decoder wie bei laufender Kamera – erkennt er den Demo-Code nicht, scheitert der Screenshot sichtbar
+        var codes = _state.CreateLiveDecoder().Decode(frame);
         if (codes.Count == 0) throw new InvalidOperationException("Im Demo-Kamerabild wurde kein Code erkannt.");
         ShowImage(frame);
-        View.Markers = Markers(codes, numbered: false);
+        View.Markers = Markers(codes, numbered: false, frame);
         ShowHint(Hint.None);
         LiveText.Text = DemoData.Camera.Name;
         LiveTag.Visibility = Visibility.Visible;
@@ -402,7 +408,7 @@ public partial class CameraPage : UserControl, IPage
         UpdateButtons();
         StartText.Text = "Stoppen";
         StartGlyph.Text = "\uE71A";
-        ShowResults(codes, DemoData.ScreenshotTime, new ActionOutcome(ResultActions.Kopieren, []));
+        ShowResults(codes, [], DemoData.ScreenshotTime, new ActionOutcome(ResultActions.Kopieren, []));
         ResultTitle.Text = "Zuletzt erkannt · 10:42:07";
         await Ui.IdleAsync();
     }

@@ -100,6 +100,83 @@ public sealed class ImageFileTests : IDisposable
         Assert.Equal("aus dem Speicher", DecodeSingle(img));
     }
 
+    // ---------- Datenstrom (öffentlich, z. B. PNG aus der Zwischenablage) ----------
+
+    [Fact]
+    public async Task Oeffentlich_aus_einem_Datenstrom_der_danach_offen_bleibt()
+    {
+        var path = await _files.PngAsync("strom-offen.png", TestCodes.Render("Zwischenablage-PNG"));
+        using var stream = new MemoryStream(await File.ReadAllBytesAsync(path));
+
+        var img = await ImageFile.LoadAsync(stream);
+
+        Assert.Equal("Zwischenablage-PNG", DecodeSingle(img));
+        // Der Strom gehört weiter dem Aufrufer
+        Assert.True(stream.CanRead);
+        stream.Position = 0;
+        Assert.Equal(0x89, stream.ReadByte());
+    }
+
+    [Fact]
+    public async Task Datenstrom_wird_ab_seiner_aktuellen_Position_gelesen()
+    {
+        var path = await _files.PngAsync("strom-versatz.png", TestCodes.Render("mit Vorspann"));
+        var png = await File.ReadAllBytesAsync(path);
+        using var stream = new MemoryStream();
+        stream.Write("VORSPANN-"u8);
+        stream.Write(png);
+        stream.Position = 9;
+
+        Assert.Equal("mit Vorspann", DecodeSingle(await ImageFile.LoadAsync(stream)));
+    }
+
+    [Fact]
+    public async Task Nicht_durchsuchbarer_Datenstrom_wird_erst_gelesen()
+    {
+        var path = await _files.PngAsync("strom-pipe.png", TestCodes.Render("aus der Pipe"));
+        using var stream = new ForwardOnly(await File.ReadAllBytesAsync(path));
+
+        Assert.Equal("aus der Pipe", DecodeSingle(await ImageFile.LoadAsync(stream, "Pipe")));
+    }
+
+    [Theory]
+    [InlineData(new byte[0], "„Bild“ ist leer.")]
+    [InlineData(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }, "„Bild“ ist kein unterstütztes Bildformat")]
+    public async Task Leerer_oder_kaputter_Datenstrom_ergibt_deutsche_Meldung(byte[] content, string expected)
+    {
+        using var stream = new MemoryStream(content);
+
+        var ex = await Assert.ThrowsAsync<InvalidDataException>(() => ImageFile.LoadAsync(stream));
+
+        Assert.StartsWith(expected, ex.Message);
+    }
+
+    [Fact]
+    public async Task Name_des_Datenstroms_steht_in_der_Meldung()
+    {
+        using var stream = new MemoryStream("kein Bild"u8.ToArray());
+
+        var ex = await Assert.ThrowsAsync<InvalidDataException>(() => ImageFile.LoadAsync(stream, "Bild aus der Zwischenablage"));
+
+        Assert.Contains("„Bild aus der Zwischenablage“", ex.Message);
+    }
+
+    /// <summary>Wie eine Pipe: nur vorwärts lesbar, keine Länge.</summary>
+    private sealed class ForwardOnly(byte[] data) : Stream
+    {
+        private readonly MemoryStream _inner = new(data);
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+        public override void Flush() { }
+        public override int Read(byte[] buffer, int offset, int count) => _inner.Read(buffer, offset, Math.Min(count, 1000));
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
     // ---------- Transparenz ----------
 
     [Fact]
@@ -316,7 +393,7 @@ public sealed class ImageFileTests : IDisposable
     [InlineData(40)] // Kopf vollständig, aber keine Bilddaten
     public async Task Abgeschnittenes_PNG_ist_beschaedigt(int length)
     {
-        // (Ein erst in den Bilddaten abgeschnittenes PNG lädt Windows nachsichtig – der Rest bleibt dann leer.)
+        // Auch ein erst in den Bilddaten abgeschnittenes PNG (Windows lädt es nachsichtig) – siehe ImageIntegrityTests
         var full = await File.ReadAllBytesAsync(await _files.PngAsync("ganz.png", TestCodes.Render("abgeschnitten", width: 300, height: 300)));
         var path = _files.PathFor("kaputt.png");
         await File.WriteAllBytesAsync(path, full[..length]);
@@ -324,7 +401,7 @@ public sealed class ImageFileTests : IDisposable
         var ex = await Assert.ThrowsAsync<InvalidDataException>(() => ImageFile.LoadAsync(path));
 
         Assert.Contains("„kaputt.png“", ex.Message);
-        Assert.Matches("beschädigt|kein unterstütztes Bildformat|nicht als Bild gelesen", ex.Message);
+        Assert.Matches("unvollständig|beschädigt|kein unterstütztes Bildformat|nicht als Bild gelesen", ex.Message);
     }
 
     [Fact]
@@ -375,7 +452,8 @@ public sealed class ImageFileTests : IDisposable
     public async Task Leerer_Pfad_ist_ein_Argumentfehler()
     {
         await Assert.ThrowsAsync<ArgumentException>(() => ImageFile.LoadAsync(" "));
-        await Assert.ThrowsAsync<ArgumentNullException>(() => ImageFile.LoadAsync(null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => ImageFile.LoadAsync((string)null!));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => ImageFile.LoadAsync((Stream)null!));
     }
 
     [Fact]

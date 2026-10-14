@@ -11,9 +11,10 @@ public sealed record CodeMarker(IReadOnlyList<Point> Outline, string Label)
     /// <summary>
     /// Umriss aus den Punkten, die die Erkennung liefert: QR-Codes melden die Mitten der drei Suchmuster (plus
     /// manchmal das Ausrichtungsmuster) – daraus wird das Viereck ergänzt und auf die Codegröße erweitert;
-    /// 1D-Codes melden zwei Punkte auf der Leselinie – daraus wird ein Band.
+    /// 1D-Codes melden zwei Punkte auf der Leselinie – daraus wird ein Band. Mit <paramref name="image"/> reicht das Band
+    /// so weit, wie die Striche im Bild wirklich gehen (die Leselinie liegt oft am oberen oder unteren Rand der Striche).
     /// </summary>
-    public static CodeMarker? From(DecodedCode code, string label)
+    public static CodeMarker? From(DecodedCode code, string label, PixelImage? image = null)
     {
         var p = code.Points.Select(t => new Point(t.X, t.Y)).Where(pt => double.IsFinite(pt.X) && double.IsFinite(pt.Y)).ToList();
         if (p.Count == 0) return null;
@@ -22,7 +23,7 @@ public sealed record CodeMarker(IReadOnlyList<Point> Outline, string Label)
             const double r = 14;
             return new CodeMarker([new(p[0].X - r, p[0].Y - r), new(p[0].X + r, p[0].Y - r), new(p[0].X + r, p[0].Y + r), new(p[0].X - r, p[0].Y + r)], label);
         }
-        if (p.Count == 2) return new CodeMarker(Band(p[0], p[1]), label);
+        if (p.Count == 2) return new CodeMarker(image is null ? Band(p[0], p[1]) : BarBand(p[0], p[1], image) ?? Band(p[0], p[1]), label);
 
         if (code.Format.Equals("QR_CODE", StringComparison.OrdinalIgnoreCase))
         {
@@ -44,6 +45,78 @@ public sealed record CodeMarker(IReadOnlyList<Point> Outline, string Label)
         double half = Math.Max(12, length * 0.22);
         var ext = d * Math.Max(4, length * 0.04);
         return [a - ext - n * half, b + ext - n * half, b + ext + n * half, a - ext + n * half];
+    }
+
+    /// <summary>
+    /// Band um die Striche eines 1D-Codes: Von der Leselinie aus wird quer dazu Zeile für Zeile verglichen, ob das
+    /// Hell-Dunkel-Muster noch dasselbe ist – so weit reichen die Striche. null, wenn das Bild dafür nichts hergibt.
+    /// </summary>
+    internal static List<Point>? BarBand(Point a, Point b, PixelImage image)
+    {
+        var d = b - a;
+        double length = d.Length;
+        if (length < 8) return null;
+        d /= length;
+        var n = new Vector(-d.Y, d.X);
+        int samples = (int)Math.Clamp(length, 24, 400);
+
+        // Muster auf der Leselinie (ohne die äußersten Prozent – dort beginnt die Ruhezone)
+        var reference = new bool[samples];
+        var luma = new double[samples];
+        double min = 255, max = 0;
+        for (int i = 0; i < samples; i++)
+        {
+            var at = a + d * (length * (0.02 + 0.96 * i / (samples - 1)));
+            if (Luma(image, at) is not { } value) return null;
+            luma[i] = value;
+            min = Math.Min(min, value);
+            max = Math.Max(max, value);
+        }
+        if (max - min < 40) return null; // kein Kontrast – kein Strichcode zu sehen
+        double threshold = (min + max) / 2;
+        for (int i = 0; i < samples; i++) reference[i] = luma[i] < threshold;
+
+        int maxReach = (int)Math.Min(length * 1.5, 2000);
+        double up = Reach(-1), down = Reach(+1);
+        // Etwas Luft um die Striche; mindestens so hoch wie das einfache Band, damit der Rahmen sichtbar bleibt
+        double margin = Math.Max(4, length * 0.03);
+        up = Math.Max(up + margin, 8);
+        down = Math.Max(down + margin, 8);
+        var ext = d * Math.Max(4, length * 0.04);
+        return [a - ext - n * up, b + ext - n * up, b + ext + n * down, a - ext + n * down];
+
+        int Reach(int sign)
+        {
+            int last = 0, misses = 0;
+            for (int t = 1; t <= maxReach; t++)
+            {
+                var shift = n * (sign * t);
+                int same = 0, seen = 0;
+                for (int i = 0; i < samples; i++)
+                {
+                    var at = a + shift + d * (length * (0.02 + 0.96 * i / (samples - 1)));
+                    if (Luma(image, at) is not { } value) return last;
+                    seen++;
+                    if ((value < threshold) == reference[i]) same++;
+                }
+                if (same >= seen * 0.85)
+                {
+                    last = t;
+                    misses = 0;
+                }
+                else if (++misses > 2) break; // einzelne gestörte Zeilen (Kratzer, Text am Rand) überspringen
+            }
+            return last;
+        }
+    }
+
+    /// <summary>Helligkeit (0–255) am Punkt, null außerhalb des Bildes.</summary>
+    private static double? Luma(PixelImage image, Point at)
+    {
+        int x = (int)Math.Round(at.X), y = (int)Math.Round(at.Y);
+        if (x < 0 || y < 0 || x >= image.Width || y >= image.Height) return null;
+        int i = y * image.Stride + x * 4;
+        return 0.114 * image.Bgra[i] + 0.587 * image.Bgra[i + 1] + 0.299 * image.Bgra[i + 2];
     }
 
     private static List<Point> Expand(IReadOnlyList<Point> points, double factor)

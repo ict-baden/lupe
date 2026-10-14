@@ -107,14 +107,20 @@ public partial class ResultToast : Window
     {
         if (_item is null) return;
         if (Shell.Copy(_item.Text) is { } error) ProblemText.Text = error;
-        else DoneText.Text = Labels.Actions(ResultActions.Kopieren);
+        else
+        {
+            DoneText.Text = Labels.Actions(ResultActions.Kopieren);
+            _state.Hits.Record(_item, ResultActions.Kopieren);
+        }
         DoneRow.Visibility = Visibility.Visible;
         ProblemText.Visibility = ProblemText.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void Link_Click(object sender, RoutedEventArgs e)
     {
-        if (_item?.Link is { } link && Shell.OpenLink(link) is { } error) ProblemText.Text = error;
+        if (_item?.Link is not { } link) return;
+        if (Shell.OpenLink(link) is { } error) ProblemText.Text = error;
+        else _state.Hits.Record(_item, ResultActions.LinkOeffnen);
         ProblemText.Visibility = ProblemText.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 

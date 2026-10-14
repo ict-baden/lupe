@@ -20,7 +20,20 @@ public sealed class CommandLineTests
         Assert.Contains("FORMAT<Tab>Inhalt", r.Out);
         Assert.Contains("--screenshots", r.Out);
         Assert.Contains("Exitcodes", r.Out);
+        Assert.Contains("Win+Umschalt+Q", r.Out); // Standard-Tastenkürzel für den Bildschirm-Scan
         Assert.Equal("", r.Err);
+    }
+
+    [AppFact]
+    public void Hilfe_warnt_vor_start_mit_Umleitung()
+    {
+        // „start /wait Lupe.exe lesen … > codes.txt“ ergäbe eine leere Datei: start reicht die Umleitung nicht an ein
+        // Fensterprogramm weiter (ausprobiert; auch „start /b“ verliert stderr)
+        var r = AppExe.Run("--hilfe");
+        Assert.Contains("start /wait Lupe.exe lesen", r.Out);
+        // Ohne die typografischen Anführungszeichen – die Pipe kommt in der Codepage der Konsole an
+        Assert.Contains("Mit Umleitung (> codes.txt) ohne", r.Out);
+        Assert.Contains("die Datei bliebe leer", r.Out);
     }
 
     [AppFact]
