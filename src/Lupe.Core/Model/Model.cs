@@ -93,7 +93,7 @@ public sealed record LupeSettings
 {
     /// <summary>Aktionen für Ergebnisse aus Kamera, Datei und Zwischenablage.</summary>
     public ResultActions Actions { get; init; } = ResultActions.Kopieren;
-    /// <summary>Aktionen für den Bildschirmausschnitt (Standard: tippen, dort wo man vorher war).</summary>
+    /// <summary>Aktionen für den Bildschirmausschnitt (Standard: kopieren; „Eintippen“ tippt in das Fenster, das vor dem Scan vorn war).</summary>
     public ResultActions ScreenActions { get; init; } = ResultActions.Kopieren;
     /// <summary>Nach dem Eintippen eine Taste senden: "" (nichts), "Enter" oder "Tab".</summary>
     public string TypeSuffix { get; init; } = "";

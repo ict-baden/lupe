@@ -150,9 +150,9 @@ internal static class Typing
         if (Native.GetForegroundWindow() != target) return "Das Fenster von vorher ließ sich nicht aktivieren – nichts eingetippt.";
         try
         {
-            // Wartet im Core, bis Strg/Alt des Tastenkürzels losgelassen sind – nicht auf dem Oberflächen-Thread
-            await Task.Run(() => KeyboardTyper.Type(text, suffix));
-            return null;
+            // Wartet im Core, bis Strg/Alt des Tastenkürzels losgelassen sind – nicht auf dem Oberflächen-Thread. TryType statt
+            // Type: Verwirft Windows die Eingabe (Zielfenster als Administrator, gesperrter Desktop), steht der Grund in der Meldung.
+            return await Task.Run(() => KeyboardTyper.TryType(text, suffix, out string? error) ? null : error ?? "Eintippen fehlgeschlagen.");
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {

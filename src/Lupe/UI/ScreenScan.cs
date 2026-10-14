@@ -67,20 +67,31 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
     {
         PixelRect area;
         IReadOnlyList<MonitorArea> monitors;
-        PixelImage desktop;
+        PixelImage? desktop;
+        string? refused = null;
         try
         {
             area = ScreenCapture.VirtualScreen;
             monitors = ScreenCapture.Monitors();
-            desktop = await Task.Run(() => ScreenCapture.Capture(area));
+            // TryCapture statt Capture: Lässt Windows kein Bildschirmfoto zu, wird das gemeldet – kein schwarzes Standbild
+            desktop = await Task.Run(() => ScreenCapture.TryCapture(area, out var image, out refused) ? image : null);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
+            CaptureFailed($"Das Bildschirmfoto ist fehlgeschlagen: {ex.Message}");
+            return;
+        }
+        if (desktop is null)
+        {
+            CaptureFailed(refused ?? "Bildschirmfoto nicht möglich.");
+            return;
+        }
+
+        void CaptureFailed(string message)
+        {
             Restore(main, hidden, activate: true);
-            var message = $"Das Bildschirmfoto ist fehlgeschlagen: {ex.Message}";
             if (main is { IsVisible: true }) state.Report(NoticeKind.Error, message);
             else new ResultToast(state, null, "Bildschirm-Scan nicht möglich", "", message, null).Present();
-            return;
         }
 
         var selection = await new SelectionOverlay(desktop, area, monitors).SelectAsync();
