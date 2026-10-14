@@ -233,8 +233,10 @@ internal static class CommandLine
               Lupe.exe lesen C:\Scans\*.jpg --format QR_CODE > codes.txt     (cmd: UTF-8 mit BOM)
 
             Lupe.exe ist ein Fensterprogramm; damit die Eingabeaufforderung auf das Ende wartet:
-              start /wait Lupe.exe lesen …        (cmd)
+              start /wait Lupe.exe lesen …        (cmd, Ausgabe in der Konsole)
               Lupe.exe lesen … | Out-Default      (PowerShell)
+            Mit Umleitung (> codes.txt) ohne „start“ aufrufen – „start“ gibt die Umleitung nicht
+            an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.
             """);
     }
 

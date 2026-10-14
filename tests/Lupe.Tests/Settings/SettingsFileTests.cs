@@ -297,6 +297,25 @@ public sealed class SettingsFileTests : IDisposable
     }
 
     [Fact]
+    public void Reload_gesperrt_dann_kaputt_ohne_Aenderung_schreibt_nichts_nennt_aber_den_Zustand()
+    {
+        // Darauf verlässt sich der Wiederholungs-Zeitgeber der App: kein Ergebnis, aber nicht mehr gesperrt → anhalten und
+        // den Hinweis zur kaputten Datei zeigen
+        File.WriteAllText(FilePath, "{ kaputt");
+        SettingsFile file;
+        using (Lock()) file = Open();
+        Assert.Equal(SettingsFileState.Unreadable, file.State);
+
+        Assert.Null(file.Reload());
+
+        Assert.Equal(SettingsFileState.Broken, file.State);
+        Assert.Contains("beschädigt", file.Problem);
+        Assert.Contains(".defekt-", file.Problem);
+        Assert.Equal("{ kaputt", File.ReadAllText(FilePath));
+        Assert.Equal(["einstellungen.json"], _temp.FileNames());
+    }
+
+    [Fact]
     public void Gesperrt_und_danach_geloescht_speichert_einfach()
     {
         SettingsStore.Save(new LupeSettings { HistoryLimit = 77 }, FilePath);

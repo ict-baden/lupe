@@ -24,6 +24,11 @@ internal sealed class AppState : IDisposable
     private HistoryStore _history;
     private string? _reportedHistoryProblem;
     private DispatcherTimer? _settingsRetry;
+    /// <summary>
+    /// Die Einstellungsdatei war beim Start nicht lesbar: Der Verlauf steht nur im Speicher, bis feststeht, ob er gespeichert
+    /// werden darf (<see cref="SettleHistory"/>).
+    /// </summary>
+    private bool _historyWaitsForSettings;
 
     private AppState(LupeSettings settings, SettingsFile? settingsFile, HistoryStore history, bool isDemo, bool strict)
     {
@@ -141,10 +146,23 @@ internal sealed class AppState : IDisposable
             problems.Add($"Die Einstellungen ließen sich nicht lesen ({ex.Message}). Es gelten die Standardwerte; gespeichert wird in dieser Sitzung nicht.");
         }
 
+        // Ob der Verlauf auf die Platte darf, steht in den Einstellungen. Sind sie nicht lesbar, ist das unbekannt – dann
+        // bleibt er im Speicher, bis sie gelesen werden konnten (SettleHistory). Sonst legte Lupe womöglich eine verlauf.json
+        // mit gescannten Inhalten an, obwohl das Speichern ausgeschaltet ist. Liegt schon eine da, war es eingeschaltet
+        // (beim Ausschalten wird sie gelöscht) – dann geht es mit ihr weiter.
+        bool settingsUnknown = file is null or { State: SettingsFileState.Unreadable };
+        bool historyWaits = settingsUnknown && settings.KeepHistory && !File.Exists(HistoryStore.DefaultPath);
+        if (historyWaits) problems.Add(file is null ? "Der Verlauf bleibt in dieser Sitzung nur im Speicher." : "Der Verlauf bleibt bis dahin nur im Speicher.");
+
+        // „Verlauf speichern“ ist aus, aber die Datei liegt noch da (beim Ausschalten gesperrt): Löschen jetzt nachholen
+        if (file is { State: SettingsFileState.Loaded or SettingsFileState.Repaired } && !settings.KeepHistory
+            && !HistoryStore.TryDeleteFile(null, out _, out var deleteError))
+            problems.Add($"{deleteError} „Verlauf speichern“ ist aus – bitte die Datei von Hand löschen, sie kann vertrauliche Inhalte enthalten.");
+
         HistoryStore history;
         try
         {
-            history = new HistoryStore(null, settings.HistoryLimit, settings.KeepHistory);
+            history = new HistoryStore(null, settings.HistoryLimit, settings.KeepHistory && !historyWaits);
             if (history.Problem is { } historyProblem) problems.Add(historyProblem);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
@@ -157,6 +175,7 @@ internal sealed class AppState : IDisposable
         {
             StartupProblem = problems.Count == 0 ? null : string.Join(" ", problems),
             SettingsProblem = file is null ? problems.FirstOrDefault() : file.Problem,
+            _historyWaitsForSettings = historyWaits && file is not null,
         };
         state.MoveLegacyPreferences();
         if (file?.State == SettingsFileState.Unreadable) state.StartSettingsRetry();
@@ -223,7 +242,9 @@ internal sealed class AppState : IDisposable
                     SettingsSaveStatus.Deferred => NoticeKind.Warning,
                     _ => NoticeKind.Info,
                 }, message);
+            // Noch immer gesperrt: weiter im Hintergrund versuchen, damit die Änderung nicht erst mit der nächsten gespeichert wird
             if (result.Status != SettingsSaveStatus.Deferred) StopSettingsRetry();
+            else if (_settingsRetry is null) StartSettingsRetry();
         }
         Apply(old, next);
     }
@@ -232,7 +253,19 @@ internal sealed class AppState : IDisposable
     {
         Settings = next;
         if (old.KeepHistory != next.KeepHistory || old.HistoryLimit != next.HistoryLimit) ReplaceHistory(old, next);
+        SettleHistory();
         SettingsChanged?.Invoke(old, next);
+    }
+
+    /// <summary>
+    /// Die beim Start nicht lesbare Einstellungsdatei ist jetzt gelesen bzw. geschrieben: Ist „Verlauf speichern“ an, kommt
+    /// der Verlauf, der bis dahin nur im Speicher stand, jetzt in die Datei.
+    /// </summary>
+    private void SettleHistory()
+    {
+        if (!_historyWaitsForSettings || _settingsFile is null or { State: SettingsFileState.Unreadable }) return;
+        _historyWaitsForSettings = false;
+        if (Settings.KeepHistory && !_history.Persist) ReplaceHistory(Settings, Settings);
     }
 
     /// <summary>Beim Start gesperrte Einstellungsdatei: eine Weile im Hintergrund erneut lesen, statt die ganze Sitzung mit Standardwerten zu laufen.</summary>
@@ -247,11 +280,14 @@ internal sealed class AppState : IDisposable
             SettingsSaveResult? result;
             try { result = _settingsFile.Reload(); }
             catch (Exception ex) when (ex is not OutOfMemoryException) { return; }
-            if (result is null) return;
+            if (_settingsFile.State == SettingsFileState.Unreadable) return; // noch gesperrt
             StopSettingsRetry();
             SettingsProblem = _settingsFile.Problem;
-            if (result.Message is { } message) Report(result.IsProblem ? NoticeKind.Warning : NoticeKind.Info, message);
-            if (!SettingsStore.SameValues(result.Settings, Settings)) Apply(Settings, result.Settings);
+            // Ohne Ergebnis: jetzt lesbar, aber kaputt und nichts zu speichern – dann den Hinweis dazu zeigen
+            if ((result is null ? _settingsFile.Problem : result.Message) is { } message)
+                Report(result is null || result.IsProblem ? NoticeKind.Warning : NoticeKind.Info, message);
+            if (result is not null && !SettingsStore.SameValues(result.Settings, Settings)) Apply(Settings, result.Settings);
+            else SettleHistory();
         }, dispatcher);
         _settingsRetry.Start();
     }
@@ -269,7 +305,10 @@ internal sealed class AppState : IDisposable
     /// </summary>
     private void ReplaceHistory(LupeSettings old, LupeSettings next)
     {
-        bool oldPersist = old.KeepHistory && !IsDemo, newPersist = next.KeepHistory && !IsDemo;
+        // Ob bisher wirklich gespeichert wurde, sagt der Verlauf selbst (eingeschaltet, aber nur im Speicher: Datei war nicht
+        // zu öffnen oder die Einstellungen beim Start nicht lesbar) – dann kommen seine Einträge mit in die Datei
+        bool wasPersisting = _history.Persist;
+        bool oldPersist = (old.KeepHistory && !IsDemo) || wasPersisting, newPersist = next.KeepHistory && !IsDemo;
         var entries = _history.Entries.ToList();
         HistoryStore created;
         try { created = new HistoryStore(null, next.HistoryLimit, newPersist); }
@@ -288,7 +327,7 @@ internal sealed class AppState : IDisposable
                 Report(NoticeKind.Success, "Der Verlauf wird nicht mehr gespeichert – die Datei verlauf.json ist gelöscht. Die Einträge hier bleiben bis zum Beenden.");
         }
         // Was nur im Speicher stand, übernehmen (älteste zuerst, damit die Reihenfolge bleibt)
-        if (!newPersist || !oldPersist)
+        if (!newPersist || !wasPersisting)
             foreach (var entry in Enumerable.Reverse(entries)) created.Add(entry);
 
         _history.Changed -= OnHistoryChanged;
@@ -347,6 +386,13 @@ internal sealed class AppState : IDisposable
     public void Dispose()
     {
         StopSettingsRetry();
+        // Einstellungsdatei war die ganze Zeit gesperrt: Änderungen dieser Sitzung ein letztes Mal zu speichern versuchen
+        // (zusammengeführt mit dem Inhalt der Datei, siehe SettingsFile.Reload)
+        if (_settingsFile is { State: SettingsFileState.Unreadable })
+        {
+            try { _settingsFile.Reload(); }
+            catch (Exception ex) when (ex is not OutOfMemoryException) { /* beim Beenden nichts mehr melden */ }
+        }
         _history.Changed -= OnHistoryChanged;
     }
 }

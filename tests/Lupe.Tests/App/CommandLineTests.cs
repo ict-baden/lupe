@@ -25,6 +25,18 @@ public sealed class CommandLineTests
     }
 
     [AppFact]
+    public void Hilfe_warnt_vor_start_mit_Umleitung()
+    {
+        // „start /wait Lupe.exe lesen … > codes.txt“ ergäbe eine leere Datei: start reicht die Umleitung nicht an ein
+        // Fensterprogramm weiter (ausprobiert; auch „start /b“ verliert stderr)
+        var r = AppExe.Run("--hilfe");
+        Assert.Contains("start /wait Lupe.exe lesen", r.Out);
+        // Ohne die typografischen Anführungszeichen – die Pipe kommt in der Codepage der Konsole an
+        Assert.Contains("Mit Umleitung (> codes.txt) ohne", r.Out);
+        Assert.Contains("die Datei bliebe leer", r.Out);
+    }
+
+    [AppFact]
     public void Hilfe_auch_mit_Fragezeichen() => Assert.Equal(0, AppExe.Run("/?").ExitCode);
 
     [AppFact]
