@@ -33,4 +33,11 @@
     <Resource Include="Assets\lupe.ico" />
     <Resource Include="Assets\lupe.png" />
   </ItemGroup>
+
+  <!-- Lizenztexte der mitgelieferten Bibliotheken: neben Lupe.exe (ZIP, MSI) und eingebettet für die Info-Seite
+       (die einzelne Lupe.exe zum Herunterladen hat keine Dateien daneben) -->
+  <ItemGroup>
+    <None Include="..\..\THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <EmbeddedResource Include="..\..\THIRD-PARTY-NOTICES.txt" LogicalName="THIRD-PARTY-NOTICES.txt" />
+  </ItemGroup>
 </Project>

@@ -39,7 +39,7 @@ The version comes from `<Version>` in `src/Lupe/Lupe.csproj` (currently `0.1.0`)
 dotnet test Lupe.sln
 ```
 
-The xUnit project `tests/Lupe.Tests` has about 1,200 test cases. Tests that need something the machine may not have **skip themselves** with a reason instead of failing – check the skipped count before you trust a green run:
+The xUnit project `tests/Lupe.Tests` has about 1,300 test cases. Tests that need something the machine may not have **skip themselves** with a reason instead of failing – check the skipped count before you trust a green run:
 
 | Attribute | Runs only … | Skipped … |
 |---|---|---|
@@ -57,7 +57,7 @@ The camera tests that run in real time (`Camera/ScanLoopRealtimeTests` and `Came
 
 | Tests | Check |
 |---|---|
-| `Decoding/*` | Round trip of every format ZXing.Net can write; small, rotated, slanted, inverted, noisy and blurred codes, several per picture, small codes in 4K screenshots; DataBar and MaxiCode from images made with zxing-cpp; phantom codes in busy pictures; Latin-1 repair; image files in every format, truncated files, size limit |
+| `Decoding/*` | Round trip of all 22 formats (codes written with zxing-cpp); small, rotated, slanted, inverted, noisy and blurred codes, several per picture, hard codes next to easy ones, small codes in 4K screenshots; the new formats; GS1 group separator, ECI, Shift_JIS, binary content; contradicting reads and barcode fragments; phantom codes in busy pictures; native objects in long runs; image files in every format, truncated files, size limit |
 | `Camera/*` | Scan loop with a simulated frame source – throttling, repeat suppression, start/stop from its own events, real-time behaviour; format choice, frame conversion, error classification, camera list |
 | `Screen/*` | Monitors and virtual desktop in physical pixels, copying from an in-memory drawing surface, real screenshots of a test window (desktop only) |
 | `Input/*` | Typing sequence against a simulated keyboard (batches, held keys, partial input), real typing into a Win32 text box (desktop only), shortcut registration against a simulated Windows API, AltGr protection, shortcut text in German and English, elevation check |
@@ -101,12 +101,12 @@ flowchart TB
 | `src/Lupe.Core/Input` | `KeyboardTyper`, `Elevation` (integrity check), `GlobalHotkey`, `HotkeyText` (display and parsing), `AltGr` |
 | `src/Lupe.Core/History` | `HistoryStore`, `HistoryFile` (JSON), `HistoryCsv` |
 | `src/Lupe.Core/Settings` | `SettingsStore` (tolerant loading, normalising), `SettingsFile` (backup, merge of a locked file), `LinkRules`, `AtomicFile` |
-| `src/Lupe` | `Program.cs` (entry point: command line without WPF, or the window), `App.xaml.cs` (window, tray, shortcut), `AppState` (shared state), `Cli/` (`CommandLine`, `ConsoleSession`), `UI/` (pages, `SelectionOverlay`, `ResultToast`, `CodeChoiceWindow`, `TrayIcon`, Fluent theme shared in style with Zutritt and Vitrine), `Services/` (`Hits` – the hit pipeline, `Desktop` – beep, clipboard, browser, typing, `Autostart`, `SingleInstance`), `Demo/` (demo data, all codes generated with ZXing) |
+| `src/Lupe` | `Program.cs` (entry point: command line without WPF, or the window), `App.xaml.cs` (window, tray, shortcut), `AppState` (shared state), `Cli/` (`CommandLine`, `ConsoleSession`), `UI/` (pages, `SelectionOverlay`, `ResultToast`, `CodeChoiceWindow`, `TrayIcon`, Fluent theme shared in style with Zutritt and Vitrine), `Services/` (`Hits` – the hit pipeline, `Desktop` – beep, clipboard, browser, typing, `Autostart`, `SingleInstance`), `Demo/` (demo data, all codes generated with zxing-cpp) |
 | `installer/` | WiX 5 MSI |
 | `tests/Lupe.Tests` | xUnit tests |
 | `tools/screenshots` | Generator for the documentation images |
 
-The only NuGet dependency of the core is `ZXing.Net` 0.16.11 (Apache-2.0). Code comments, some identifiers and all user-facing text are in German.
+The only NuGet dependency of the core is `ZXingCpp` 0.5.3 (Apache-2.0): the .NET wrapper of zxing-cpp 3.1.1 with the native `ZXing.dll` (x64 and arm64, here `runtimes/win-x64/native`), which also contains libzint and libzueci (BSD-3-Clause). A publish for `win-x64` puts `ZXing.dll` next to `Lupe.exe`; the single-file `Lupe.exe` carries it inside and extracts it on first start (`IncludeNativeLibrariesForSelfExtract`). Licence texts of all third-party components: [`THIRD-PARTY-NOTICES.txt`](../THIRD-PARTY-NOTICES.txt) – copied next to `Lupe.exe` and embedded for the *Info* page; update it together with the package. Code comments, some identifiers and all user-facing text are in German.
 
 ## MSI
 
@@ -144,7 +144,7 @@ The script
 1. builds Lupe (Release) and runs `Lupe.exe --screenshots <temp>`: every page of the demo, light and dark, with the window at 1100 × 740 and 1.5× scale (1650 × 1110 pixels), plus the selection overlay over a demo desktop (1600 × 900) and the result notification – off-screen and never activated, so no visible desktop is needed. The German file names are mapped to the English ones used here (`kamera` → `camera`, `bildschirm` → `screen`, `auswahl` → `selection`, `treffer` → `result`, `datei` → `file`, `verlauf` → `history`, `einstellungen` → `settings`, `info` → `about`);
 2. renders `banner.html` to `banner.png` (2560 × 840) with the installed Google Chrome through playwright-core (`CHROME_PATH` for another browser). The banner uses `file-light.png` from step 1.
 
-The screenshots use fixed data: a fixed time (14 October 2026, 10:42; `--demo` uses the current time), links only to reserved example domains (`example.org`, `example.com`, `.example`), and codes generated by ZXing – the codes in the screenshots are real and readable.
+The screenshots use fixed data: a fixed time (14 October 2026, 10:42; `--demo` uses the current time), links only to reserved example domains (`example.org`, `example.com`, `.example`), and codes generated by zxing-cpp – the codes in the screenshots are real and readable.
 
 ## Demo and screenshot switches
 

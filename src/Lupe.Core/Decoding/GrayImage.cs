@@ -3,12 +3,13 @@ using Lupe.Core.Model;
 namespace Lupe.Core.Decoding;
 
 /// <summary>
-/// Graustufenbild mit einem Byte je Pixel (0 = schwarz, 255 = weiß), Zeilen ohne Lücke. Arbeitsform der Erkennung:
-/// einmal aus BGRA umgerechnet, danach nur noch zugeschnitten, skaliert, gerahmt oder invertiert.
+/// Graustufenbild mit einem Byte je Pixel (0 = schwarz, 255 = weiß), Zeilen ohne Lücke – so liest zxing-cpp es direkt
+/// (Format „Lum“). Arbeitsform der Erkennung: einmal aus BGRA umgerechnet, danach nur noch zugeschnitten, skaliert,
+/// gedreht oder invertiert.
 /// </summary>
 internal sealed class GrayImage
 {
-    // Gewichte wie in ZXing (ITU-R BT.601, Summe 65536)
+    // Gewichte nach ITU-R BT.601 (Summe 65536), wie zxing-cpp sie für Farbbilder selbst nähme
     private const int WeightR = 19562;
     private const int WeightG = 38550;
     private const int WeightB = 7424;
@@ -100,19 +101,6 @@ internal sealed class GrayImage
         for (int y = 0; y < height; y++)
             Buffer.BlockCopy(Pixels, (top + y) * Width + left, dst, y * width, width);
         return new GrayImage(width, height, dst);
-    }
-
-    /// <summary>Rahmen rundherum – gibt Codes, die bis an den Rand reichen, eine Ruhezone.</summary>
-    public GrayImage Pad(int border, byte value = 255)
-    {
-        ArgumentOutOfRangeException.ThrowIfNegative(border);
-        if (border == 0) return this;
-        int w = Width + 2 * border, h = Height + 2 * border;
-        var dst = new byte[w * h];
-        if (value != 0) Array.Fill(dst, value);
-        for (int y = 0; y < Height; y++)
-            Buffer.BlockCopy(Pixels, y * Width, dst, (y + border) * w + border, Width);
-        return new GrayImage(w, h, dst);
     }
 
     /// <summary>Hell und dunkel vertauscht (für helle Codes auf dunklem Grund).</summary>
@@ -264,7 +252,7 @@ internal sealed class GrayImage
 
 /// <summary>
 /// Abbildung von Punkten eines abgeleiteten Bildes (Ausschnitt, skaliert, gerahmt, gedreht) zurück ins Original.
-/// Koordinaten wie bei ZXing: Pixel i reicht von i bis i + 1.
+/// Koordinaten wie bei zxing-cpp: Pixel i reicht von i bis i + 1.
 /// </summary>
 internal readonly record struct PointMap(double A, double B, double C, double D, double E, double F)
 {

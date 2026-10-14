@@ -9,10 +9,9 @@ namespace Lupe.UI;
 public sealed record CodeMarker(IReadOnlyList<Point> Outline, string Label)
 {
     /// <summary>
-    /// Umriss aus den Punkten, die die Erkennung liefert: QR-Codes melden die Mitten der drei Suchmuster (plus
-    /// manchmal das Ausrichtungsmuster) – daraus wird das Viereck ergänzt und auf die Codegröße erweitert;
-    /// 1D-Codes melden zwei Punkte auf der Leselinie – daraus wird ein Band. Mit <paramref name="image"/> reicht das Band
-    /// so weit, wie die Striche im Bild wirklich gehen (die Leselinie liegt oft am oberen oder unteren Rand der Striche).
+    /// Umriss aus den Punkten, die die Erkennung liefert: 2D-Codes melden ihre vier Ecken – daraus wird das Viereck,
+    /// knapp erweitert; 1D-Codes melden zwei Punkte auf der Leselinie – daraus wird ein Band. Mit <paramref name="image"/>
+    /// reicht das Band so weit, wie die Striche im Bild wirklich gehen.
     /// </summary>
     public static CodeMarker? From(DecodedCode code, string label, PixelImage? image = null)
     {
@@ -24,14 +23,8 @@ public sealed record CodeMarker(IReadOnlyList<Point> Outline, string Label)
             return new CodeMarker([new(p[0].X - r, p[0].Y - r), new(p[0].X + r, p[0].Y - r), new(p[0].X + r, p[0].Y + r), new(p[0].X - r, p[0].Y + r)], label);
         }
         if (p.Count == 2) return new CodeMarker(image is null ? Band(p[0], p[1]) : BarBand(p[0], p[1], image) ?? Band(p[0], p[1]), label);
-
-        if (code.Format.Equals("QR_CODE", StringComparison.OrdinalIgnoreCase))
-        {
-            // unten links, oben links, oben rechts → vierte Ecke als Parallelogramm, dann von den Suchmuster-Mitten
-            // auf den Rand erweitern (bei kleinen Versionen 1,5×, bei großen weniger – 1,25 passt meist gut)
-            var fourth = new Point(p[0].X + p[2].X - p[1].X, p[0].Y + p[2].Y - p[1].Y);
-            return new CodeMarker(Expand([p[1], p[2], fourth, p[0]], 1.25), label);
-        }
+        // Auch QR-Codes kommen mit ihren Außenecken (früher rechnete Lupe sie aus den Suchmustern selbst aus) – ein
+        // Aufschlag wie für Suchmuster-Mitten machte den Rahmen ein Achtel zu groß
         return new CodeMarker(Expand(ConvexHull(p), 1.04), label);
     }
 

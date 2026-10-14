@@ -4,9 +4,10 @@ using Lupe.Core.Model;
 namespace Lupe.Tests.Decoding;
 
 /// <summary>
-/// Codes in Formaten, für die ZXing.Net keinen Schreiber hat (GS1 DataBar alias RSS, MaxiCode) – erzeugt mit zxing-cpp 3.1.1
-/// (Python: <c>zxingcpp.write_barcode_to_image(zxingcpp.create_barcode(text, format), scale)</c>), als PNG eingebettet
-/// und zur Gegenprobe von zxing-cpp wieder gelesen.
+/// Fertige Bilder von Codes, für die ZXing.Net keinen Schreiber hatte (GS1 DataBar alias RSS, MaxiCode) – erzeugt mit
+/// zxing-cpp 3.1.1 (Python: <c>zxingcpp.write_barcode_to_image(zxingcpp.create_barcode(text, format), scale)</c>), als PNG
+/// eingebettet. Seit Lupe selbst mit zxing-cpp schreibt, laufen diese Formate auch durch die Rundlauftests; die Bilder
+/// bleiben als feste, geladene Dateien (PNG über <see cref="ImageFile"/>) und für die gestapelten Varianten.
 /// <list type="bullet">
 /// <item>Rss14, Rss14Gestapelt: DataBar bzw. DataBar Stacked mit GTIN „0950110153001“, Maßstab 3.</item>
 /// <item>RssExpanded, RssExpandedGestapelt: „(01)98898765432106(3202)012345(15)991231“, einzeilig bzw. gestapelt, Maßstab 2.</item>

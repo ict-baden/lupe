@@ -10,7 +10,7 @@ What happens between a picture and a result: how Lupe gets images from the camer
 
 ```mermaid
 flowchart LR
-    K["Kamera<br>webcam frames"] --> L["Live search<br>first stage only"]
+    K["Kamera<br>webcam frames"] --> L["Live search<br>whole picture only"]
     B["Bildschirm<br>still image, rectangle"] --> T["Thorough search<br>two stages"]
     D["Datei / Zwischenablage<br>image file, PNG, bitmap"] --> T
     C["Befehlszeile<br>lesen"] --> TC["Thorough search<br>two stages"]
@@ -23,56 +23,57 @@ flowchart LR
     H --> N["Link öffnen<br>if a rule matches"]
 ```
 
-Every source ends up as the same thing – a picture of 32-bit pixels – and goes through the same decoder ([ZXing.Net](https://github.com/micjahn/ZXing.Net) 0.16.11 with Lupe's own search around it). The camera uses a lighter variant of it. For a hit in the app, Lupe beeps (*Ton bei Treffer*), adds every code to the history and runs the actions for one code – the only one, or the one you choose after a screen scan – in a fixed order: copy, type, open the link last, because the browser takes the focus. The command line only prints.
+Every source ends up as the same thing – a picture of 32-bit pixels – and goes through the same decoder ([zxing-cpp](https://github.com/zxing-cpp/zxing-cpp) 3.1.1 with Lupe's own search around it). The camera uses a lighter variant of it. For a hit in the app, Lupe beeps (*Ton bei Treffer*), adds every code to the history and runs the actions for one code – the only one, or the one you choose after a screen scan – in a fixed order: copy, type, open the link last, because the browser takes the focus. The command line only prints.
 
 ## Decoding
 
-The picture is converted to grey once and then searched in **stages**. Each stage consists of tasks – a version of the picture × normal or inverted × a group of readers – that run in parallel on all cores. Every reader group binarises the picture itself, so that one group's difficulties do not cost the others their result.
+The picture is converted to grey once and then handed to zxing-cpp, a native library (`ZXing.dll`). zxing-cpp by itself finds several codes per picture, codes in every 90° position, light QR, Data Matrix and Aztec codes on dark backgrounds, and large codes in reduced versions of the picture. Lupe only adds what measurements during the switch to zxing-cpp showed to help – the unit tests and a benchmark of 1,345 pictures with 1,357 known codes (zxing-cpp's own sample photos and generated screenshots, camera frames and documents).
 
-| Reader groups | Formats |
-|---|---|
-| 2D | QR Code, Data Matrix, Aztec, MaxiCode · PDF417 (own group) |
-| 1D | EAN/UPC · Code 128 and ITF · Code 39 · Code 93 and Codabar · GS1 DataBar and DataBar Expanded · Intelligent Mail |
+Each version of the picture is read in five **reading groups** in parallel – QR family (QR, Micro QR, rMQR) · Data Matrix · Aztec · PDF417 family and MaxiCode · barcodes – so that no single read takes long: a cancelled search waits at most for the longest one (about 0.3 s for a noisy 4K picture).
 
 **Stage 1 – always:**
 
-- **The whole picture**, with a white border of about 5 % of the longer side (8 to 48 pixels), so that codes reaching the edge still have their quiet zone.
-- **Large pictures** – above 4.2 megapixels, for example a 4K screenshot – are searched instead as an **overview** reduced to about 2.1 megapixels **plus overlapping tiles** of 1024 pixels in full resolution, overlapping by 320 pixels so that a code up to that size lies completely in one tile. Pictures above 12 megapixels are reduced before tiling, and there are at most 48 tiles. This is how small codes in big screenshots are found.
-- **Inverted** – light codes on dark backgrounds, common in dark mode and on displays – for the 2D formats.
-- **Several codes:** after a hit, the search continues left, right, above and below it. QR codes additionally go through ZXing's multi-QR reader, which separates codes that sit close together.
-- **Data Matrix and Aztec away from the centre:** ZXing's detectors for these two start in the middle of the picture and miss a code elsewhere in a busy picture. Lupe looks for areas with dense structure in both directions – many light/dark transitions horizontally and vertically – and reads a window around each candidate, at most 48 per picture.
+- **The whole picture** in full resolution.
+- **Inverted** for the formats zxing-cpp does not invert itself: barcodes, PDF417 and MaxiCode – a light barcode on a dark background, common in dark mode.
+- **Slanted barcodes and PDF417.** zxing-cpp reads QR, Data Matrix and Aztec at any angle, but a long barcode only up to about ±14° and PDF417 only up to about ±6°. Lupe therefore also reads the picture rotated by ±20° and ±40° (barcodes and PDF417) and ±10° and ±30° (PDF417 only); rotated versions are reduced to about 2.4 megapixels first. Together with zxing-cpp's own 90° check this covers every angle.
+- **Very large pictures** – above 9 megapixels, for example a 24-megapixel photo – are read as an **overview** reduced to about 4 megapixels **plus overlapping tiles** of 2048 pixels in full resolution, overlapping by 512 pixels, at most 32 tiles. A 4K screenshot (8.3 megapixels) is read in one piece.
 
-**Stage 2 – only if stage 1 found nothing** (or only a weak barcode fragment, see below):
+**Stage 2 – only if stage 1 found nothing reliable:** small pictures (longer side up to 1000 pixels, typically a screen region) **enlarged** ×2 – for codes with only one or two pixels per module. “Reliable” means any 2D code, or a barcode read on a band of at least 3 % of its length; a barcode read on only two or three rows of a blurry photo is often misread, and the enlarged version reads it correctly.
 
-- 1D formats **inverted**.
-- Small pictures **enlarged** ×2 (longer side up to 1000 pixels) and ×3 (up to 400 pixels) – for codes with only one or two pixels per module.
-- Medium pictures **halved** – smooths noise and blur.
-- **Rotated** in 10° steps up to ±40° for Aztec, PDF417 and Data Matrix; barcodes only at exactly ±30° (their own 90° check covers the rest). ZXing's Aztec and PDF417 detectors tolerate only a few degrees, and barcodes whose bars no image row crosses completely are otherwise not read. QR codes need no rotation. Rotated versions are reduced to about 2.4 megapixels first.
+All of this runs every time – a hard code next to an easy one is no longer missed because the easy one was found first. With the earlier library, Lupe searched slanted, inverted and enlarged versions only when nothing at all had been found.
 
-**The result** contains each content once per format, in reading order: codes whose heights overlap form a row, read left to right, rows top to bottom. Each code keeps its corner points for the outline – the four outer corners for QR codes and PDF417, the two ends of the reading line for barcodes.
+| Benchmark (1,357 codes) | Found |
+|---|---|
+| Earlier version (ZXing.Net) | 929 (68 %) |
+| zxing-cpp, whole picture only | 1,220 (90 %) |
+| + inverted | 1,223 |
+| + slanted | 1,229 |
+| + enlarged small pictures (stage 2) | 1,250 (92 %) |
 
-**Text encoding repair.** For byte content without a character-set marker, ZXing.Net under .NET sometimes takes ISO-8859-1 text for Shift_JIS and turns umlauts into `�` – “Groß” becomes “Gro�”. Lupe re-reads such a segment as ISO-8859-1, the default for QR codes without a marker. Real Shift_JIS content is not helped by this – see [Limitations](limitations.md#decoding).
+**The result** contains each content once per format, in reading order: codes whose heights overlap form a row, read left to right, rows top to bottom (for barcodes the band of rows zxing-cpp read counts, not just the reading line). Each code keeps its points for the outline – the four corners for 2D codes, the two ends of the reading line for barcodes.
+
+**Text.** zxing-cpp decodes byte content by its ECI marker or, without one, by recognising UTF-8, ISO-8859-1 and Shift_JIS. The group separator of GS1 codes (`\x1D`) stays in the text. Lupe keeps the text of its earlier versions where zxing-cpp would show it differently: UPC-A with 12 digits and UPC-E with 8 (zxing-cpp normalises both to the 13-digit GTIN), Codabar without its start and stop characters, GS1 DataBar as the 14-digit GTIN without `01`, GS1 DataBar Expanded in brackets (`(01)…(3103)…`).
 
 ## Live vs. thorough
 
 | | Camera | Screen scan, file, clipboard, command line |
 |---|---|---|
-| Stages | stage 1 only | stage 1 and, if needed, stage 2 |
+| What | the whole picture: 2D codes and barcodes as two reads, inverted only PDF417 and MaxiCode | everything above, including slanted and enlarged versions |
 | Parallel tasks | a quarter of the cores, at least 1, at most 2 | all cores |
+| Time (this PC) | about 20 ms for a 720p camera frame, 35 ms for a busy one | Full HD screenshot about 50 ms, 4K about 0.15 s |
 | Why | the next frame is a new chance anyway, and the PC should not run under permanent full load | one picture, as thorough as possible |
 
 On the camera, Lupe never runs more than one search at a time and keeps no queue: frames that arrive while a search runs are shown in the preview but not searched.
 
 ## Phantom-code protection
 
-Barcode readers sometimes “find” a valid-looking code in noise, text or a slanted view of another code. Lupe works against that in several places:
+Barcode readers sometimes “find” a valid-looking code in noise, text or a slanted view of another code. The benchmark's 58 pictures without any code and the unit tests' busy screenshots and noisy camera pictures produce no phantom codes. Lupe works against them in several places:
 
-- **Excluded formats.** MSI and Pharmacode are not read at all: their readers produce phantom codes (e.g. “000”) in almost every screenshot, camera picture and noise, and slowed the search down by up to 30 times. Plessey cannot be read by ZXing.Net.
-- **Two lines for barcodes.** A 1D code only counts once the same content has been read on at least two image rows. A single slanted row otherwise produces an occasional code with a matching check digit – typically an EAN-8 or UPC-E in the middle of another barcode.
-- **Fragments are removed.** ITF has no check digit, EAN-8 and UPC-E only one. A code of these “weak” formats is dropped if its content is part of a longer barcode at the same place – e.g. a phantom EAN-8 `60002914` from a UPC-A `036000291452`. A weak hit alone also does not stop stage 2.
-- **GS1 DataBar Expanded only in one row.** ZXing's stacked mode combines rows from anywhere in the picture until a checksum happens to fit – measured during development in about one in a hundred busy screenshots and one in ten noisy camera pictures, sometimes with empty content.
-- **Empty contents are discarded.** A hit without text is a phantom and useless to anyone.
-- **Faults in a reader cost only that reader's result.** ZXing occasionally throws on broken data; that counts as “nothing found” for this task, not as an error of the scan.
+- **Excluded formats.** MSI and Pharmacode are not read: their readers produced phantom codes in almost every screenshot. Code 39 Full ASCII and Code 32 are not interpreted – they would silently change ordinary Code 39 content (`S/N1` would become `S.1`).
+- **Two lines for barcodes.** zxing-cpp only accepts a barcode once the same content has been read on at least two rows.
+- **Contradictions at the same place.** When a rotated or reduced version reads a code differently than another version at the same place – a PDF417 cut at an angle whose rows end up shuffled but just pass the error correction, or an EAN-8 made from part of a UPC-A – the more reliable read wins: the one with more unused error correction (2D codes), the one read on more rows (barcodes), otherwise the one from the whole picture.
+- **Fragments are removed.** ITF has no check digit, EAN-8 and UPC-E only one. A code of these “weak” formats is dropped if it lies inside another barcode, or if its content is part of a longer barcode right next to it – e.g. a short ITF from the lower rows of a slanted long one. A barcode read on only a few rows at the edge of the same kind of code, with different content, is dropped as well.
+- **Faults in a read cost only that read's result.** If zxing-cpp reports an error, that counts as “nothing found” for this task, not as an error of the scan.
 
 ## Image files
 

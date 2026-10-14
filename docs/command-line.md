@@ -40,10 +40,10 @@ Lupe.exe lesen C:\Scans\*.png --format QR_CODE,EAN_13
 - **Environment variables** such as `%USERPROFILE%\Scans\*.png` are expanded by Lupe itself, so they also work in PowerShell.
 - **A folder** is not accepted – give a pattern instead: *„C:\Scans“ ist ein Ordner – bitte Bilder angeben, z. B. C:\Scans\\\*.png*.
 
-**`--format <format>`** – search only these formats. Several can be given with commas, semicolons or by repeating the option; `--format=QR_CODE` works as well. Upper/lower case, hyphens and underscores do not matter (`qr-code`, `EAN13`), and `qr` stands for `QR_CODE`. The names are the ones in the [format table](../README.md#supported-formats). An unknown name stops the call before any image is read:
+**`--format <format>`** – search only these formats. Several can be given with commas, semicolons or by repeating the option; `--format=QR_CODE` works as well. Upper/lower case, hyphens and underscores do not matter (`qr-code`, `EAN13`); `qr`, `microqr` and `rmqr` stand for `QR_CODE`, `MICRO_QR_CODE` and `RMQR_CODE`. The names are the ones in the [format table](../README.md#supported-formats). An unknown name stops the call before any image is read:
 
 ```text
-Fehler: Unbekanntes Format „foo“. Möglich: QR_CODE, DATA_MATRIX, AZTEC, PDF_417, … RSS_EXPANDED, IMB.
+Fehler: Unbekanntes Format „foo“. Möglich: QR_CODE, DATA_MATRIX, AZTEC, PDF_417, … TELEPEN, DX_FILM_EDGE.
 Hilfe: Lupe.exe --hilfe
 ```
 

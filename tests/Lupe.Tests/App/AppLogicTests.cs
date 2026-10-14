@@ -206,4 +206,30 @@ public sealed class AppLogicTests
         Assert.Equal("a b·c", OneLine("a\tb\u001Dc", 400));
         Assert.Equal("abcde …", OneLine("abcdefgh", 5));
     }
+
+    // ================= Lizenztexte und Formatnamen =================
+
+    [AppFact]
+    public void Lizenztexte_eingebettet_und_neben_der_Exe()
+    {
+        var text = (string?)AppInternals.Call("Lupe.Services.ThirdPartyNotices", "Text");
+        Assert.NotNull(text);
+        foreach (var part in new[] { "zxing-cpp 3.1.1", "Apache License", "libzint", "libzueci", "BSD 3-Clause", "Hoehrmann", "MIT" })
+            Assert.Contains(part, text);
+        // Dieselbe Fassung liegt neben Lupe.exe (ZIP und MSI liefern sie so aus)
+        var file = Path.Combine(Path.GetDirectoryName(AppExe.Path!)!, "THIRD-PARTY-NOTICES.txt");
+        Assert.Equal(text.ReplaceLineEndings(), File.ReadAllText(file).ReplaceLineEndings());
+    }
+
+    private static string FormatLabel(string name) => (string)AppInternals.Call("Lupe.Labels", "Format", name)!;
+
+    [AppFact]
+    public void Jedes_Format_hat_einen_Anzeigenamen()
+    {
+        // Ohne Eintrag stünde in Liste und Einstellungen „MICRO QR CODE“ statt „Micro-QR-Code“
+        foreach (var name in Lupe.Core.Decoding.BarcodeDecoder.AllFormats.Where(n => n != "ITF"))
+            Assert.NotEqual(name.Replace('_', ' '), FormatLabel(name));
+        // Frühere Formate im Verlauf bleiben lesbar
+        Assert.Equal("Intelligent Mail", FormatLabel("IMB"));
+    }
 }

@@ -163,29 +163,34 @@ Wildcards, `--format`, encoding and why a command prompt needs `start /wait`: **
 
 ## Supported formats
 
-Lupe reads 17 formats with [ZXing.Net](https://github.com/micjahn/ZXing.Net) 0.16.11. All are active by default; *Einstellungen › Formate* can limit them. The column *Name* is what the option `--format` and the settings file expect.
+Lupe reads 22 formats with [zxing-cpp](https://github.com/zxing-cpp/zxing-cpp) 3.1.1 (NuGet package `ZXingCpp` 0.5.3). All are active by default; *Einstellungen › Formate* can limit them. The column *Name* is what the option `--format` and the settings file expect – the names of the earlier versions are unchanged.
 
 | Format | Name | Kind | Notes |
 |---|---|---|---|
-| QR Code | `QR_CODE` | 2D | several codes close together are separated |
-| Data Matrix | `DATA_MATRIX` | 2D | also searched away from the centre of busy images |
-| Aztec | `AZTEC` | 2D | also searched away from the centre of busy images |
-| PDF417 | `PDF_417` | 2D (stacked) |  |
-| MaxiCode | `MAXICODE` | 2D | only from clean images – see [Limitations](docs/limitations.md#decoding) |
-| Code 128 | `CODE_128` | 1D |  |
+| QR Code | `QR_CODE` | 2D | Model 1 and 2; several codes close together are separated |
+| Data Matrix | `DATA_MATRIX` | 2D | square and rectangular |
+| Aztec | `AZTEC` | 2D | Aztec runes are not read |
+| PDF417 | `PDF_417` | 2D (stacked) | also Compact PDF417 |
+| MaxiCode | `MAXICODE` | 2D | only from clean, upright images – see [Limitations](docs/limitations.md#decoding) |
+| Micro QR Code | `MICRO_QR_CODE` | 2D | new in this version |
+| rMQR Code | `RMQR_CODE` | 2D | rectangular Micro QR, new |
+| MicroPDF417 | `MICRO_PDF_417` | 2D (stacked) | new |
+| Code 128 | `CODE_128` | 1D | GS1-128 with the group separator (`\x1D`) after variable-length fields |
 | Code 39 | `CODE_39` | 1D | read as printed: a check digit is not verified, Full ASCII is not expanded |
 | Code 93 | `CODE_93` | 1D |  |
-| Codabar | `CODABAR` | 1D |  |
-| ITF (Interleaved 2 of 5) | `ITF` | 1D |  |
+| Codabar | `CODABAR` | 1D | without the start and stop characters |
+| ITF (Interleaved 2 of 5) | `ITF` | 1D | also ITF-14 |
 | EAN-13, EAN-8 | `EAN_13`, `EAN_8` | 1D | without the 2- or 5-digit add-on |
-| UPC-A, UPC-E | `UPC_A`, `UPC_E` | 1D | without the 2- or 5-digit add-on |
-| GS1 DataBar | `RSS_14` | 1D | also the stacked variant |
-| GS1 DataBar Expanded | `RSS_EXPANDED` | 1D | single row only, not stacked |
-| Intelligent Mail (USPS) | `IMB` | 4-state | enabled, but not covered by a test image |
+| UPC-A, UPC-E | `UPC_A`, `UPC_E` | 1D | 12 and 8 digits, without the add-on |
+| GS1 DataBar | `RSS_14` | 1D | also the stacked variants; the 14-digit GTIN |
+| GS1 DataBar Expanded | `RSS_EXPANDED` | 1D | single row and stacked; text in brackets, `(01)…(3103)…` |
+| GS1 DataBar Limited | `RSS_LIMITED` | 1D | new; the 14-digit GTIN |
+| Telepen | `TELEPEN` | 1D | new |
+| DX film edge | `DX_FILM_EDGE` | 1D | new; the code on the edge of 35 mm film |
 
-Light codes on dark backgrounds – dark mode, displays – are read in every format by the screen scan, files, the clipboard and the command line; light barcodes (1D) only when no other code was found first. The camera reads light-on-dark 2D codes only.
+Light codes on dark backgrounds – dark mode, displays – are read in every format by the screen scan, files, the clipboard and the command line, also next to dark-on-light codes. The camera reads light 2D codes (QR, Data Matrix, Aztec, PDF417, MaxiCode), not light barcodes.
 
-**Not supported, on purpose:** MSI and Pharmacode – their readers “find” phantom codes in almost every screenshot and camera image and slow the search down considerably; Plessey – ZXing.Net can write it but not read it. Why and how the search works: **[How it works →](docs/how-it-works.md)**
+**Not supported:** Intelligent Mail (`IMB`) – the earlier library read it, zxing-cpp does not; MSI, Pharmacode and Plessey. Why and how the search works: **[How it works →](docs/how-it-works.md)**
 
 ## Compared with Barcode-Reader
 
@@ -227,7 +232,7 @@ Lupe is a rewrite of Till's [Barcode-Reader](https://github.com/pieewiee/Barcode
     <td valign="top"><a href="docs/limitations.md"><b>Limitations</b></a><br><sub>What was not tested on real hardware, elevated windows, control characters, encodings and other honest limits</sub></td>
   </tr>
   <tr>
-    <td colspan="2" valign="top"><a href="docs/development.md"><b>Development</b></a><br><sub>Building with .NET 10, about 1,200 tests and which ones skip themselves, architecture, CI and releases, MSI, regenerating the screenshots</sub></td>
+    <td colspan="2" valign="top"><a href="docs/development.md"><b>Development</b></a><br><sub>Building with .NET 10, about 1,300 tests and which ones skip themselves, architecture, CI and releases, MSI, regenerating the screenshots</sub></td>
   </tr>
 </table>
 
@@ -236,10 +241,10 @@ Lupe is a rewrite of Till's [Barcode-Reader](https://github.com/pieewiee/Barcode
 - **No real webcam during development.** The camera path is tested against a simulated frame source only. Screen capture, the global shortcut and typing have tests that need a visible desktop; they skip themselves in the build environment and on CI.
 - **Windows protects elevated windows.** Lupe cannot type into a program that runs as administrator unless Lupe runs as administrator too. It detects this, types nothing and says so in the result notification.
 - **Control characters are not typed.** The group separator in GS1 codes, for example, is dropped when typing; the command line shows it as `\x1D`.
-- **Some contents and formats:** QR codes with Shift_JIS (Japanese Kanji) text may be decoded wrongly – a ZXing.Net limitation. MaxiCode is only found in clean images.
+- **MaxiCode** is only found in clean, upright images.
 - **Command line into a pipe** uses the console's code page; characters outside it are replaced. Redirect into a file for lossless UTF-8.
 - **Pre-release 0.1.0, not code-signed.** SmartScreen may warn.
-- **No licence yet.** The licence has not been decided; the repository contains no licence file.
+- **No licence yet.** The licence has not been decided; the repository contains no licence file. The licences of the bundled third-party components (zxing-cpp with libzint and libzueci, C#/WinRT, .NET) are in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which ships next to `Lupe.exe` and opens from *Info › Erkennung › Lizenztexte*.
 
 Everything else: **[Limitations →](docs/limitations.md)**
 
