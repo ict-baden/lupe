@@ -12,6 +12,7 @@ namespace Lupe.Tests.Camera;
 /// Demo-Kamera mit echten Codes (<see cref="TestCodes"/>) + echte Erkennung in Echtzeit: so, wie die Kamera-Seite
 /// der App die Bausteine zusammensteckt.
 /// </summary>
+[Collection(EchtzeitCollection.Name)]
 public sealed class ScanLoopRealtimeTests
 {
     /// <summary>Kamerabild 480×360 mit grauem Hintergrund, mit einem QR-Code oder (null) ganz ohne.</summary>
@@ -68,8 +69,9 @@ public sealed class ScanLoopRealtimeTests
     [Fact]
     public async Task Verschwindet_der_Code_länger_als_die_Sperre_wird_er_erneut_gemeldet()
     {
-        // Je Durchgang: 6 Bilder mit Code (~150 ms), dann 16 ohne (~400 ms) – Sperre 200 ms
-        var frames = Enumerable.Repeat(Scene("Wiederkehr"), 6).Concat(Enumerable.Repeat(Scene(null), 16)).ToList();
+        // Je Durchgang: 12 Bilder mit Code (~300 ms), dann 16 ohne (~400 ms) – Sperre 200 ms. Der Code bleibt lange genug
+        // sichtbar, dass auch eine verzögerte Erkennung ihn trifft (auf GitHub-Runnern fielen 150 ms schon durch).
+        var frames = Enumerable.Repeat(Scene("Wiederkehr"), 12).Concat(Enumerable.Repeat(Scene(null), 16)).ToList();
         await using var source = new FakeFrameSource(frames, framesPerSecond: 40);
         await using var loop = new ScanLoop(source, ZxingDecode, repeatSuppressMs: 200);
         var rec = new Recorder();

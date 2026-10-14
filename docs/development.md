@@ -53,6 +53,8 @@ The xUnit project `tests/Lupe.Tests` has about 1,200 test cases. Tests that need
 
 Counterparts such as `[NoDesktopFact]` and `[NonInteractiveFact]` check the behaviour **without** a desktop – that the core (`ScreenCapture.TryCapture`, `KeyboardTyper.TryType`, `GlobalHotkey`) reports a refused screenshot, refused input or a refused shortcut with the reason instead of failing silently. The app passes that reason on to the user.
 
+The camera tests that run in real time (`Camera/ScanLoopRealtimeTests`: frame rate, repeat suppression) belong to the xUnit collection `Echtzeit`, which xUnit runs on its own after all parallel tests have finished. On runners with few cores, the other tests otherwise slowed recognition down so much that time windows were missed.
+
 | Tests | Check |
 |---|---|
 | `Decoding/*` | Round trip of every format ZXing.Net can write; small, rotated, slanted, inverted, noisy and blurred codes, several per picture, small codes in 4K screenshots; DataBar and MaxiCode from images made with zxing-cpp; phantom codes in busy pictures; Latin-1 repair; image files in every format, truncated files, size limit |
