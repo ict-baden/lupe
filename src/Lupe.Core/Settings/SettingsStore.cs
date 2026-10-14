@@ -1,22 +1,334 @@
+using System.Numerics;
+using System.Reflection;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using Lupe.Core.Model;
 
 namespace Lupe.Core.Settings;
 
 /// <summary>Einstellungen als JSON unter %LocalAppData%\Lupe\einstellungen.json.</summary>
+/// <remarks>
+/// Laden ist tolerant: fehlende Felder bekommen den Standardwert, unbekannte werden ignoriert, ein einzelnes
+/// unbrauchbares Feld (falscher Typ) fällt auf seinen Standard zurück, ohne die übrigen zu verlieren; in Listen
+/// (Link-Regeln, Formate) werden nur die unbrauchbaren Elemente verworfen. Danach werden alle Werte in gültige
+/// Bereiche gebracht (<see cref="Normalize"/>). Gespeichert wird atomar (Temp-Datei + Ersetzen).
+/// </remarks>
 public static class SettingsStore
 {
-    public static string DefaultPath => throw new NotImplementedException();
+    /// <summary>Kleinster erlaubter Wert für <see cref="LupeSettings.HistoryLimit"/>.</summary>
+    public const int MinHistoryLimit = 1;
+    /// <summary>Größter erlaubter Wert für <see cref="LupeSettings.HistoryLimit"/>.</summary>
+    public const int MaxHistoryLimit = 100_000;
+    /// <summary>Größter erlaubter Wert für <see cref="LupeSettings.RepeatSuppressMs"/> (eine Stunde).</summary>
+    public const int MaxRepeatSuppressMs = 3_600_000;
+
+    private const ResultActions AllActions = ResultActions.Kopieren | ResultActions.Eintippen | ResultActions.LinkOeffnen;
+
+    internal static readonly JsonSerializerOptions Json = new()
+    {
+        WriteIndented = true,
+        PropertyNameCaseInsensitive = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true,
+        NumberHandling = JsonNumberHandling.AllowReadingFromString,
+        // Regex-Muster lesbar halten (sonst würde z. B. „+“ als + geschrieben); die Datei landet nie in HTML
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        Converters = { new JsonStringEnumConverter() },
+    };
+
+    private static readonly JsonNodeOptions NodeOptions = new() { PropertyNameCaseInsensitive = true };
+    private static readonly JsonDocumentOptions DocumentOptions = new()
+    {
+        CommentHandling = JsonCommentHandling.Skip,
+        AllowTrailingCommas = true,
+    };
+
+    /// <summary>Alle Einstellungen, die aus der Datei übernommen werden (öffentlich, mit init/set).</summary>
+    private static readonly PropertyInfo[] SettingsProperties = typeof(LupeSettings)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Where(p => p.CanRead && p.CanWrite && p.GetIndexParameters().Length == 0)
+        .ToArray();
+
+    private static readonly Lock SaveGate = new();
+
+    public static string DefaultPath => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
+        "Lupe", "einstellungen.json");
+
     /// <summary>Fehlt die Datei oder ist sie kaputt: Standardwerte (eine kaputte Datei wird nicht überschrieben, bis gespeichert wird).</summary>
-    public static LupeSettings Load(string? path = null) => throw new NotImplementedException();
-    public static void Save(LupeSettings settings, string? path = null) => throw new NotImplementedException();
-}
+    public static LupeSettings Load(string? path = null) => Load(path, out _);
 
-/// <summary>Link-Regeln anwenden – sicher: nur http(s), Regex mit Zeitlimit, ungültige Regeln werden übersprungen.</summary>
-public static class LinkRules
-{
-    /// <summary>Der zu öffnende Link für <paramref name="text"/>, null wenn keine Regel passt oder das Ergebnis kein sicherer Link ist.</summary>
-    public static Uri? Match(IEnumerable<LinkRule> rules, string text) => throw new NotImplementedException();
+    /// <summary>
+    /// Wie <see cref="Load(string?)"/>; <paramref name="problem"/> beschreibt auf Deutsch, was nicht stimmte (Datei kaputt,
+    /// nicht lesbar, einzelne Werte ersetzt), sonst null. Wirft nie wegen der Datei.
+    /// </summary>
+    public static LupeSettings Load(string? path, out string? problem)
+    {
+        problem = null;
+        var file = ResolvePath(path);
 
-    /// <summary>Prüft eine Regel für die Einstellungen; Fehlermeldung auf Deutsch oder null.</summary>
-    public static string? Validate(LinkRule rule) => throw new NotImplementedException();
+        byte[] bytes;
+        try
+        {
+            bytes = AtomicFile.ReadAllBytes(file);
+        }
+        catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
+        {
+            return new LupeSettings();
+        }
+        catch (Exception ex) when (FileProblems.IsExpected(ex))
+        {
+            problem = $"Die Einstellungen in „{file}“ konnten nicht gelesen werden ({FileProblems.Describe(ex)}). Es gelten die Standardwerte.";
+            return new LupeSettings();
+        }
+
+        var json = SkipUtf8Bom(bytes);
+        if (IsBlank(json)) return new LupeSettings();
+
+        try
+        {
+            var replaced = new List<string>();
+            var filtered = new List<string>();
+            var settings = Parse(json, replaced, filtered);
+            if (replaced.Count > 0 || filtered.Count > 0)
+            {
+                problem = $"Einige Einstellungen in „{file}“ waren ungültig.";
+                if (replaced.Count > 0) problem += $" Standardwert verwendet für: {DisplayNames(replaced)}.";
+                if (filtered.Count > 0) problem += $" Unbrauchbare Einträge entfernt aus: {DisplayNames(filtered)}.";
+            }
+            return settings;
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or NotSupportedException or ArgumentException or FormatException)
+        {
+            var where = ex is JsonException { LineNumber: { } line } ? $" (Fehler in Zeile {line + 1})" : "";
+            problem = $"Die Einstellungsdatei „{file}“ ist beschädigt{where} und wurde nicht geladen. "
+                + "Es gelten die Standardwerte; die Datei wird erst beim nächsten Speichern ersetzt.";
+            return new LupeSettings();
+        }
+    }
+
+    /// <summary>
+    /// Speichert atomar (Ordner wird angelegt). Die Werte werden vorher mit <see cref="Normalize"/> bereinigt.
+    /// Kann die Datei nicht geschrieben werden, kommt eine <see cref="IOException"/> mit deutscher Meldung –
+    /// wer das nicht abfangen will, nimmt <see cref="TrySave"/>.
+    /// </summary>
+    public static void Save(LupeSettings settings, string? path = null)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        var file = ResolvePath(path);
+        try
+        {
+            SaveCore(settings, file);
+        }
+        catch (Exception ex) when (FileProblems.IsExpected(ex))
+        {
+            throw new IOException(SaveError(file, ex), ex);
+        }
+    }
+
+    /// <summary>Wie <see cref="Save"/>, aber ohne Ausnahme: false und deutsche Meldung in <paramref name="error"/>, wenn es nicht klappt.</summary>
+    public static bool TrySave(LupeSettings settings, out string? error, string? path = null)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        var file = ResolvePath(path);
+        try
+        {
+            SaveCore(settings, file);
+            error = null;
+            return true;
+        }
+        catch (Exception ex) when (FileProblems.IsExpected(ex))
+        {
+            error = SaveError(file, ex);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Bringt alle Werte in gültige Bereiche: unbekannte Aktions-Bits weg, Suffix nur "", "Enter" oder "Tab", Link-Regeln
+    /// ohne Muster weg (Präfix getrimmt; Regeln mit ungültigem Regex bleiben, damit man sie in der Tabelle sieht und
+    /// korrigiert – angewendet werden sie nicht), Formate in ZXing-Schreibweise (unbekannte und doppelte weg),
+    /// Tastenkürzel ohne gültige Taste oder Schreibtaste ohne Strg/Alt/Win → Standard, Zahlen begrenzt, null-Texte → "".
+    /// </summary>
+    public static LupeSettings Normalize(LupeSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        var defaults = new LupeSettings();
+        return settings with
+        {
+            Actions = settings.Actions & AllActions,
+            ScreenActions = settings.ScreenActions & AllActions,
+            TypeSuffix = NormalizeSuffix(settings.TypeSuffix),
+            LinkRules = settings.LinkRules is null ? defaults.LinkRules : NormalizeRules(settings.LinkRules),
+            Formats = settings.Formats is null ? defaults.Formats : NormalizeFormats(settings.Formats),
+            ScreenHotkey = IsUsableHotkey(settings.ScreenHotkey) ? settings.ScreenHotkey : Hotkey.Default,
+            RepeatSuppressMs = Math.Clamp(settings.RepeatSuppressMs, 0, MaxRepeatSuppressMs),
+            Camera = settings.Camera?.Trim() ?? "",
+            HistoryLimit = Math.Clamp(settings.HistoryLimit, MinHistoryLimit, MaxHistoryLimit),
+        };
+    }
+
+    private static string ResolvePath(string? path) => Path.GetFullPath(string.IsNullOrWhiteSpace(path) ? DefaultPath : path);
+
+    private static void SaveCore(LupeSettings settings, string file)
+    {
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(Normalize(settings), Json);
+        // Gleichzeitiges Speichern aus mehreren Threads nacheinander – die Datei ist danach immer eine vollständige Fassung
+        lock (SaveGate)
+        {
+            AtomicFile.Write(file, bytes);
+        }
+    }
+
+    private static string SaveError(string file, Exception ex) =>
+        $"Die Einstellungen konnten nicht in „{file}“ gespeichert werden ({FileProblems.Describe(ex)}).";
+
+    /// <summary>
+    /// Legt die Datei feldweise über die Standardwerte: Jedes bekannte Feld wird nur übernommen, wenn es sich in
+    /// den Zieltyp lesen lässt; bei Listen wird elementweise gefiltert.
+    /// </summary>
+    private static LupeSettings Parse(ReadOnlySpan<byte> json, List<string> replaced, List<string> filtered)
+    {
+        var root = JsonNode.Parse(json, NodeOptions, DocumentOptions);
+        if (root is not JsonObject file)
+            throw new JsonException("Die Datei enthält kein JSON-Objekt.");
+
+        var merged = JsonSerializer.SerializeToNode(new LupeSettings(), Json)!.AsObject();
+        foreach (var property in SettingsProperties)
+        {
+            if (!file.TryGetPropertyValue(property.Name, out var value)) continue;
+
+            if (value is JsonArray array && TryGetListElementType(property.PropertyType, out var elementType))
+            {
+                var kept = new JsonArray();
+                foreach (var item in array)
+                {
+                    if (CanRead(item, elementType)) kept.Add(item?.DeepClone());
+                }
+                if (kept.Count != array.Count) filtered.Add(property.Name);
+                merged[property.Name] = kept;
+            }
+            else if (CanRead(value, property.PropertyType))
+            {
+                merged[property.Name] = value?.DeepClone();
+            }
+            else
+            {
+                replaced.Add(property.Name);
+            }
+        }
+
+        var settings = merged.Deserialize<LupeSettings>(Json) ?? new LupeSettings();
+        return Normalize(settings);
+    }
+
+    /// <summary>Deutsche Bezeichnungen der Felder für Hinweise (wie in den Einstellungen der App).</summary>
+    private static readonly Dictionary<string, string> FieldNames = new(StringComparer.Ordinal)
+    {
+        [nameof(LupeSettings.Actions)] = "Aktionen (Kamera/Datei)",
+        [nameof(LupeSettings.ScreenActions)] = "Aktionen (Bildschirm)",
+        [nameof(LupeSettings.TypeSuffix)] = "Taste nach dem Eintippen",
+        [nameof(LupeSettings.LinkRules)] = "Link-Regeln",
+        [nameof(LupeSettings.Formats)] = "Formate",
+        [nameof(LupeSettings.ScreenHotkey)] = "Tastenkürzel",
+        [nameof(LupeSettings.Sound)] = "Ton",
+        [nameof(LupeSettings.AimHelp)] = "Zielhilfe",
+        [nameof(LupeSettings.RepeatSuppressMs)] = "Wiederholungssperre",
+        [nameof(LupeSettings.Camera)] = "Kamera",
+        [nameof(LupeSettings.KeepHistory)] = "Verlauf speichern",
+        [nameof(LupeSettings.HistoryLimit)] = "Größe des Verlaufs",
+    };
+
+    private static string DisplayNames(IEnumerable<string> properties) =>
+        string.Join(", ", properties.Select(p => FieldNames.GetValueOrDefault(p, p)));
+
+    private static bool CanRead(JsonNode? value, Type type)
+    {
+        try
+        {
+            _ = value.Deserialize(type, Json);
+            return true;
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or NotSupportedException or FormatException
+                                       or ArgumentException or OverflowException)
+        {
+            return false;
+        }
+    }
+
+    private static bool TryGetListElementType(Type type, out Type elementType)
+    {
+        if (type.IsGenericType && type.GetGenericTypeDefinition() is var definition
+            && (definition == typeof(IReadOnlyList<>) || definition == typeof(IList<>) || definition == typeof(List<>)
+                || definition == typeof(IEnumerable<>) || definition == typeof(IReadOnlyCollection<>)))
+        {
+            elementType = type.GetGenericArguments()[0];
+            return true;
+        }
+        if (type.IsArray)
+        {
+            elementType = type.GetElementType()!;
+            return true;
+        }
+        elementType = typeof(object);
+        return false;
+    }
+
+    private static string NormalizeSuffix(string? suffix) => suffix?.Trim() switch
+    {
+        { } s when s.Equals("Enter", StringComparison.OrdinalIgnoreCase) => "Enter",
+        { } s when s.Equals("Tab", StringComparison.OrdinalIgnoreCase) => "Tab",
+        _ => "",
+    };
+
+    private static LinkRule[] NormalizeRules(IReadOnlyList<LinkRule> rules) => rules
+        .Where(r => r is not null && !string.IsNullOrEmpty(r.Pattern))
+        .Select(r => r with { Prefix = r.Prefix?.Trim() ?? "" })
+        .ToArray();
+
+    /// <summary>Formatnamen in ZXing-Schreibweise (QR_CODE …); nur einzelne, bekannte Formate, ohne Doppelte.</summary>
+    private static string[] NormalizeFormats(IReadOnlyList<string> formats)
+    {
+        var result = new List<string>();
+        foreach (var raw in formats)
+        {
+            var name = raw?.Trim();
+            if (string.IsNullOrEmpty(name) || !name.All(c => char.IsAsciiLetterOrDigit(c) || c == '_') || char.IsAsciiDigit(name[0])) continue;
+            if (!Enum.TryParse<ZXing.BarcodeFormat>(name, ignoreCase: true, out var format)) continue;
+            // Sammelwerte wie All_1D sind keine einzelnen Formate
+            if (!Enum.IsDefined(format) || !BitOperations.IsPow2((uint)format)) continue;
+            var canonical = format.ToString();
+            if (!result.Contains(canonical, StringComparer.Ordinal)) result.Add(canonical);
+        }
+        return result.ToArray();
+    }
+
+    /// <summary>
+    /// Eine echte Taste (keine Maustaste, keine reine Umschalt-/Strg-/Alt-/Windows-Taste) im Bereich der Virtual-Key-Codes.
+    /// Ohne Strg, Alt oder Win (Umschalt allein zählt nicht) taugen nur F1–F24, Druck und Pause: Ein systemweites Kürzel
+    /// auf „A“, „Umschalt+A“, Enter oder einer Pfeiltaste finge diese Taste in allen Programmen ab – Tippen ginge nicht mehr.
+    /// </summary>
+    private static bool IsUsableHotkey(Hotkey? hotkey)
+    {
+        if (hotkey is null || hotkey.Key is < 0x08 or > 0xFE) return false;
+        if (hotkey.Key is 0x10 or 0x11 or 0x12 or 0x5B or 0x5C or (>= 0xA0 and <= 0xA5)) return false;
+        return hotkey.Ctrl || hotkey.Alt || hotkey.Win || IsStandaloneKey(hotkey.Key);
+    }
+
+    /// <summary>F1–F24 (0x70–0x87), Druck (0x2C) und Pause (0x13) – Tasten, die beim Schreiben nicht gebraucht werden.</summary>
+    private static bool IsStandaloneKey(int key) => key is (>= 0x70 and <= 0x87) or 0x2C or 0x13;
+
+    internal static ReadOnlySpan<byte> SkipUtf8Bom(byte[] bytes) =>
+        bytes.AsSpan().StartsWith((ReadOnlySpan<byte>)[0xEF, 0xBB, 0xBF]) ? bytes.AsSpan(3) : bytes;
+
+    internal static bool IsBlank(ReadOnlySpan<byte> json)
+    {
+        foreach (var b in json)
+        {
+            if (b is not ((byte)' ' or (byte)'\t' or (byte)'\r' or (byte)'\n')) return false;
+        }
+        return true;
+    }
 }
