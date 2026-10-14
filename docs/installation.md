@@ -21,7 +21,7 @@ Which file to download, what it needs, how to let Lupe use the camera, and how t
 
 ## Downloads
 
-All files are attached to the pre-release [**latest**](https://github.com/ict-baden/lupe/releases/tag/latest), which GitHub Actions updates on every push to `main`. The file names stay the same, so these links always deliver the newest build:
+All files are attached to the release [**latest**](https://github.com/ict-baden/lupe/releases/tag/latest) – on the repository page under *Releases* on the right – which GitHub Actions updates on every push to `main`. The file names stay the same, so these links always deliver the newest build:
 
 | File | Runtime | Use it for |
 |---|---|---|

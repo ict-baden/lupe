@@ -124,7 +124,7 @@
   </tr>
 </table>
 
-**① Download** – from the pre-release [**latest**](https://github.com/ict-baden/lupe/releases/tag/latest), rebuilt on every push to `main`. The file names stay the same, so these links always deliver the newest build:
+**① Download** – from the release [**latest**](https://github.com/ict-baden/lupe/releases/tag/latest) (also under *Releases* on the right of the repository page), rebuilt on every push to `main`. The file names stay the same, so these links always deliver the newest build:
 
 | File | What it is |
 |---|---|

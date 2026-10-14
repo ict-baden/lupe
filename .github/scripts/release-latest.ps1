@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Aktualisiert die rollierende Vorabversion „latest“ an Ort und Stelle – die Download-Links bleiben gültig.
+    Aktualisiert das rollierende Release „latest“ an Ort und Stelle – die Download-Links bleiben gültig.
 
 .DESCRIPTION
     Für GitHub Actions (braucht GH_TOKEN, GITHUB_REPOSITORY und GITHUB_SHA). Früher wurde „latest“ gelöscht und neu
@@ -16,7 +16,11 @@
        umbenennen – dazwischen liegt ein API-Aufruf, etwa eine halbe Sekunde; beides wird bei Fehlern wiederholt).
     4. Titel und Text werden aktualisiert, dann Dateien entfernt, die der neue Build nicht mehr hat (z. B. alte Namen
        mit Versionsnummer).
-    Gibt es den Release noch nicht, wird er als Vorabversion angelegt.
+    Gibt es den Release noch nicht, wird er angelegt.
+
+    Solange es kein Release aus einem Tag (v1.2.3) gibt, ist „latest“ ein normales Release mit dem Vermerk „Latest“:
+    GitHub zeigt Vorabversionen nicht in der Seitenleiste des Repos, dort stünde sonst nur „Create a new release“.
+    Gibt es ein Release aus einem Tag, wird „latest“ zur Vorabversion, und das Tag-Release behält den Platz.
 
 .EXAMPLE
     ./.github/scripts/release-latest.ps1 -Notes $notes -Title "Latest Build (main) – 0.1.0-ci.9"
@@ -112,11 +116,16 @@ if ($current -and $current -ne $sha) {
 }
 
 $release = Invoke-Retry { Find-Gh api "repos/$repo/releases/tags/$Tag" } | ConvertFrom-Json
+
+$taggedJq = '[.[] | select(.tag_name != "' + $Tag + '" and (.draft | not) and (.prerelease | not))] | length'
+$tagged = [int](Invoke-Retry { Invoke-Gh api "repos/$repo/releases?per_page=100" --jq $taggedJq })
+$kind = if ($tagged -gt 0) { @('--prerelease', '--latest=false') } else { @('--prerelease=false', '--latest') }
+Write-Host ("'$Tag' wird " + $(if ($tagged -gt 0) { "Vorabversion ($tagged Release(s) aus Tags vorhanden)." } else { "normales Release mit dem Vermerk 'Latest'." }))
 if (-not $release) {
     Write-Host "Release '$Tag' gibt es noch nicht – wird angelegt."
     # Steht der Tag noch (Release im Browser gelöscht), übergeht GitHub --target – also erst den Tag setzen
     if ($current) { Move-Tag }
-    & gh release create $Tag $files.FullName -R $repo --prerelease --target $sha --title $Title --notes $Notes
+    & gh release create $Tag $files.FullName -R $repo @kind --target $sha --title $Title --notes $Notes
     if ($LASTEXITCODE -ne 0) { throw "Release '$Tag' ließ sich nicht anlegen (Exit $LASTEXITCODE)." }
     return
 }
@@ -153,7 +162,7 @@ foreach ($file in $files) {
 
 # 4. Titel und Text gleich zu den getauschten Dateien. --target hält das Ziel des Releases beim neuen Commit – sonst
 #    prüft GitHub gegen den alten Stand. Danach weg, was der neue Build nicht mehr hat (auch neu-*-Reste früherer Läufe).
-Invoke-Retry { Invoke-Gh release edit $Tag -R $repo --title $Title --notes $Notes --prerelease --target $sha | Out-Null }
+Invoke-Retry { Invoke-Gh release edit $Tag -R $repo --title $Title --notes $Notes @kind --target $sha | Out-Null }
 $keep = @($files.Name)
 foreach ($stale in @(Invoke-Retry { Get-Assets $release.id } | Where-Object { $_.name -notin $keep })) {
     Remove-Asset $stale

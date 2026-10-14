@@ -120,8 +120,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
-          # Rollierende Vorabversion: immer der neueste main-Stand, unter festen Links. Wird an Ort und Stelle
-          # aktualisiert (kein Löschen und Neuanlegen) – Einzelheiten im Skript.
+          # Rollierendes Release: immer der neueste main-Stand, unter festen Links. Wird an Ort und Stelle
+          # aktualisiert (kein Löschen und Neuanlegen), Vorabversion erst, wenn es Releases aus Tags gibt – Einzelheiten im Skript.
           $base = "https://github.com/$env:GITHUB_REPOSITORY/releases/download/latest"
           $built = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm')
           $notes = "Automatischer Build von main ($($env:GITHUB_SHA.Substring(0,7))), Version ${{ steps.version.outputs.version }}, gebaut $built UTC.`n`n" +
