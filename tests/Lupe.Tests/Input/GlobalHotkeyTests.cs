@@ -225,6 +225,10 @@ public sealed class GlobalHotkeyTests
     }
 
     [Fact]
+    public void Fehlschlag_ohne_Windows_Grund_hat_keinen_englischen_Zusatz()
+        => Assert.Equal("Das Tastenkürzel Strg+Alt+Q konnte nicht angemeldet werden.", GlobalHotkey.Describe(-1, Hotkey.Default));
+
+    [Fact]
     public void Ungeeignetes_Kuerzel_wird_gar_nicht_erst_angemeldet()
     {
         var recorder = new Recorder();
@@ -381,11 +385,17 @@ public sealed class GlobalHotkeySystemTests
         Assert.True(pressed.Wait(TimeSpan.FromSeconds(5)), "Pressed kam nicht");
     }
 
-    /// <summary>Drückt die Tasten nacheinander und lässt sie in umgekehrter Reihenfolge los.</summary>
+    /// <summary>
+    /// Drückt die Tasten nacheinander und lässt sie in umgekehrter Reihenfolge los. Davor ein Druck auf die unbelegte
+    /// Maskentaste: Das Tastenkürzel verschluckt die Haupttaste, sonst sähe das Vordergrundfenster ein „nacktes“ Alt
+    /// und würde sein Menü öffnen.
+    /// </summary>
     internal static void Press(params int[] keys)
     {
         var inputs = new List<Native.INPUT>();
         foreach (int vk in keys) inputs.Add(KeyInput(vk, up: false));
+        inputs.Add(KeyInput(KeyboardTyper.VK_MASK, up: false));
+        inputs.Add(KeyInput(KeyboardTyper.VK_MASK, up: true));
         foreach (int vk in keys.Reverse()) inputs.Add(KeyInput(vk, up: true));
         Assert.Equal(inputs.Count, SystemKeyboard.Instance.Send(inputs.ToArray(), out _));
     }

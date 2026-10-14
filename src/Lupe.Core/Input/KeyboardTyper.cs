@@ -12,6 +12,8 @@ namespace Lupe.Core.Input;
 /// <para>Vor dem Tippen wird gewartet, bis keine Taste mehr gedrückt ist – sonst würde aus „a“ bei noch gehaltenem
 /// Strg (aus dem Tastenkürzel) ein Strg+A. Hält jemand eine Umschalttaste länger als 1,5 s fest, wird sie für das
 /// Tippen künstlich losgelassen. Lange Texte gehen in Paketen hinaus, damit das Zielprogramm mitkommt.</para>
+/// <para>Läuft das Vordergrundfenster mit höheren Rechten als Lupe (z. B. als Administrator), verwirft Windows die
+/// Eingaben stillschweigend (UIPI); das wird vorher erkannt und gemeldet, statt ins Leere zu tippen.</para>
 /// <para>Blockiert, bis alles gesendet ist – also nicht im UI-Thread mit sehr langen Texten aufrufen.</para>
 /// </remarks>
 public static class KeyboardTyper
@@ -53,7 +55,8 @@ public static class KeyboardTyper
     /// <param name="text">Der zu tippende Text.</param>
     /// <param name="suffix">"" (nichts), "Enter" oder "Tab" nach dem Text (Groß/Klein egal; Unbekanntes wird ignoriert).</param>
     /// <param name="ct">Bricht zwischen zwei Paketen ab (<see cref="OperationCanceledException"/>).</param>
-    /// <remarks>Lässt Windows keine Eingabe zu (gesperrter Desktop, Anmeldedialog), passiert nichts – den Grund liefert <see cref="TryType"/>.</remarks>
+    /// <remarks>Lässt Windows keine Eingabe zu (gesperrter Desktop, Anmeldedialog, Zielfenster mit Administratorrechten), passiert
+    /// nichts – den Grund liefert <see cref="TryType"/>.</remarks>
     public static void Type(string text, string suffix = "", CancellationToken ct = default)
     {
         if (!TryType(text, suffix, out string? error, ct)) Debug.WriteLine($"Lupe: {error}");
@@ -76,6 +79,12 @@ public static class KeyboardTyper
         if (inputs.Length == 0) return true;
 
         var stillDown = WaitForKeysReleased(keyboard, ct);
+        // Erst nach dem Warten prüfen – bis dahin kann ein anderes Fenster nach vorn gekommen sein.
+        if (keyboard.ForegroundProblem() is { } problem)
+        {
+            error = problem;
+            return false;
+        }
         var release = BuildModifierRelease(stillDown);
         if (release.Length > 0 && !Send(keyboard, release, typedBefore: false, out error)) return false;
 
@@ -232,9 +241,14 @@ public static class KeyboardTyper
         }
         error = sent > 0 || typedBefore
             ? "Eintippen wurde unterbrochen – der Text kam nur teilweise an."
-            : code == Native.ERROR_ACCESS_DENIED
-                ? "Eintippen nicht möglich – Windows nimmt gerade keine Tastatureingaben an (gesperrter Bildschirm, Anmeldedialog oder keine sichtbare Sitzung)."
-                : $"Eintippen nicht möglich (Windows-Fehler {code}).";
+            : code switch
+            {
+                Native.ERROR_ACCESS_DENIED =>
+                    "Eintippen nicht möglich – Windows nimmt gerade keine Tastatureingaben an (gesperrter Bildschirm, Anmeldedialog oder keine sichtbare Sitzung).",
+                // SendInput liefert 0 ohne Fehlercode, wenn ein anderes Programm die Eingabe gerade sperrt (BlockInput).
+                0 => "Eintippen nicht möglich – Windows hat die Tastatureingabe nicht angenommen (gerade von einem anderen Programm gesperrt?).",
+                _ => $"Eintippen nicht möglich (Windows-Fehler {code}).",
+            };
         return false;
     }
 
@@ -312,6 +326,8 @@ internal interface IKeyboard
     int Send(ReadOnlySpan<Native.INPUT> inputs, out int win32Error);
     bool IsDown(int virtualKey);
     void Pause(int milliseconds, CancellationToken ct);
+    /// <summary>Warum Eingaben das Vordergrundfenster nicht erreichen würden (deutsch), sonst null.</summary>
+    string? ForegroundProblem();
 }
 
 internal sealed unsafe class SystemKeyboard : IKeyboard
@@ -337,4 +353,6 @@ internal sealed unsafe class SystemKeyboard : IKeyboard
     public bool IsDown(int virtualKey) => Native.GetAsyncKeyState(virtualKey) < 0;
 
     public void Pause(int milliseconds, CancellationToken ct) => ct.WaitHandle.WaitOne(milliseconds);
+
+    public string? ForegroundProblem() => Elevation.ForegroundProblem();
 }

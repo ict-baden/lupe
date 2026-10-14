@@ -23,7 +23,7 @@ public static class HotkeyText
     private const int VK_NUMPAD0 = 0x60;
 
     /// <summary>Tasten mit festem Namen: erster Name zur Anzeige, die übrigen werden beim Einlesen auch erkannt.</summary>
-    private static readonly (int Vk, string[] Names)[] NamedKeys =
+    internal static readonly (int Vk, string[] Names)[] NamedKeys =
     [
         (0x08, ["Rücktaste", "Backspace", "Back", "Rück", "Ruecktaste"]),
         (0x09, ["Tab", "Tabulator"]),
@@ -51,6 +51,26 @@ public static class HotkeyText
         (0x6F, ["Num Geteilt", "Num/", "NumDivide", "Divide", "Num Durch"]),
         (0x90, ["NumLock", "Num-Feststell", "Num Feststell"]),
         (VK_SCROLL, ["Rollen", "ScrollLock", "Scroll", "Rollen-Feststell"]),
+        (0x5F, ["Standby", "Sleep", "Energiesparmodus"]),
+        // Browser-, Medien- und Starttasten (gehen auch ohne Strg/Alt/Win, siehe Problem)
+        (0xA6, ["Browser zurück", "BrowserBack"]),
+        (0xA7, ["Browser vor", "BrowserForward"]),
+        (0xA8, ["Browser neu laden", "BrowserRefresh"]),
+        (0xA9, ["Browser Stopp", "BrowserStop"]),
+        (0xAA, ["Browser Suche", "BrowserSearch"]),
+        (0xAB, ["Browser Favoriten", "BrowserFavorites"]),
+        (0xAC, ["Browser Startseite", "BrowserHome"]),
+        (0xAD, ["Stumm", "VolumeMute", "Mute"]),
+        (0xAE, ["Leiser", "VolumeDown"]),
+        (0xAF, ["Lauter", "VolumeUp"]),
+        (0xB0, ["Nächster Titel", "MediaNextTrack", "NextTrack"]),
+        (0xB1, ["Vorheriger Titel", "MediaPrevTrack", "PrevTrack", "PreviousTrack"]),
+        (0xB2, ["Stopp", "MediaStop"]),
+        (0xB3, ["Wiedergabe/Pause", "MediaPlayPause", "PlayPause"]),
+        (0xB4, ["E-Mail", "LaunchMail", "Mail"]),
+        (0xB5, ["Medienauswahl", "LaunchMediaSelect", "MediaSelect"]),
+        (0xB6, ["Start 1", "LaunchApp1", "App1"]),
+        (0xB7, ["Start 2", "LaunchApp2", "App2"]),
         (0xBB, ["Plus", "OemPlus"]),
         (0xBC, ["Komma", ",", "OemComma"]),
         (0xBD, ["Minus", "-", "OemMinus"]),

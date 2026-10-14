@@ -109,7 +109,7 @@ public static unsafe class ScreenCapture
         if (screen == 0)
         {
             image = null;
-            error = "Der Bildschirm lässt sich gerade nicht lesen.";
+            error = "Bildschirmfoto nicht möglich – der Bildschirm lässt sich gerade nicht lesen.";
             return false;
         }
         try

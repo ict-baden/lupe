@@ -19,6 +19,18 @@ internal sealed class FakeKeyboard : IKeyboard
     /// <summary>Wird nach jedem angenommenen Paket aufgerufen (z. B. um abzubrechen).</summary>
     public Action<int>? AfterSend { get; set; }
 
+    /// <summary>Was die Prüfung des Vordergrundfensters meldet (Standard: nichts, Tippen geht).</summary>
+    public Func<string?> Foreground { get; set; } = () => null;
+
+    /// <summary>Wie oft das Vordergrundfenster geprüft wurde und wie viele Pausen (= Zeit) bis dahin vergangen waren.</summary>
+    public List<int> ForegroundChecks { get; } = [];
+
+    public string? ForegroundProblem()
+    {
+        ForegroundChecks.Add(Pauses.Count);
+        return Foreground();
+    }
+
     public int Send(ReadOnlySpan<Native.INPUT> inputs, out int win32Error)
     {
         int index = Sent.Count;

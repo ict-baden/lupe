@@ -18,12 +18,18 @@ public sealed class DesktopFactAttribute : FactAttribute
     }
 }
 
-/// <summary>Test für das Verhalten ohne nutzbaren Bildschirm (läuft nur dort, wo <see cref="DesktopFactAttribute"/> überspringt).</summary>
+/// <summary>
+/// Test für das Verhalten, wenn Windows das Bildschirmfoto verweigert (Sitzung 0). Ist der Bildschirm nur verdeckt, läuft
+/// BitBlt durch – dann wird übersprungen.
+/// </summary>
 public sealed class NoDesktopFactAttribute : FactAttribute
 {
     public NoDesktopFactAttribute()
     {
-        if (DesktopProbe.SkipReason is null) Skip = "Nur ohne nutzbaren Bildschirm – hier liefert BitBlt echten Inhalt.";
+        if (!DesktopProbe.CaptureRefused)
+            Skip = DesktopProbe.SkipReason is null
+                ? "Nur ohne nutzbaren Bildschirm – hier liefert BitBlt echten Inhalt."
+                : "Nur wenn Windows das Bildschirmfoto verweigert – hier läuft BitBlt durch, zeigt aber nicht das Testfenster.";
     }
 }
 
@@ -36,10 +42,13 @@ public sealed class DesktopCollection
 
 internal static class DesktopProbe
 {
-    private static readonly Lazy<string?> Reason = new(Probe, LazyThreadSafetyMode.ExecutionAndPublication);
+    private static readonly Lazy<(string? Reason, bool Refused)> Result = new(Probe, LazyThreadSafetyMode.ExecutionAndPublication);
 
     /// <summary>null, wenn Bildschirmfotos hier echten Inhalt liefern, sonst der Grund zum Überspringen.</summary>
-    public static string? SkipReason => Reason.Value;
+    public static string? SkipReason => Result.Value.Reason;
+
+    /// <summary>Hat Windows das Bildschirmfoto abgelehnt (BitBlt scheiterte)?</summary>
+    public static bool CaptureRefused => Result.Value.Refused;
 
     /// <summary>Vier gut unterscheidbare Farbfelder.</summary>
     public static PixelImage Pattern(int size = 64)
@@ -109,25 +118,25 @@ internal static class DesktopProbe
         return (work.X + inset, work.Y + inset);
     }
 
-    private static string? Probe()
+    private static (string? Reason, bool Refused) Probe()
     {
         string session = $"Sitzung {Process.GetCurrentProcess().SessionId}";
         try
         {
-            if (ScreenCapture.Monitors().Count == 0) return $"Kein Monitor gefunden ({session}).";
+            if (ScreenCapture.Monitors().Count == 0) return ($"Kein Monitor gefunden ({session}).", false);
             var pattern = Pattern();
             var (x, y) = Spot();
             using var window = TestImageWindow.Show(pattern, x, y);
             if (!ScreenCapture.TryCapture(window.Bounds, out var shot, out string? error))
-                return $"BitBlt vom Bildschirm liefert hier keinen Inhalt ({session}, kein sichtbarer Desktop): {error}";
+                return ($"BitBlt vom Bildschirm liefert hier keinen Inhalt ({session}, kein sichtbarer Desktop): {error}", true);
             double agreement = Agreement(shot, pattern);
             if (agreement < 0.98)
-                return $"BitBlt liefert hier nicht den Inhalt des Testfensters ({session}, nur {agreement:P0} gleich) – Desktop verdeckt oder nicht sichtbar.";
-            return null;
+                return ($"BitBlt liefert hier nicht den Inhalt des Testfensters ({session}, nur {agreement:P0} gleich) – Desktop verdeckt oder nicht sichtbar.", false);
+            return (null, false);
         }
         catch (Exception ex)
         {
-            return $"Bildschirmtest nicht möglich ({session}): {ex.Message}";
+            return ($"Bildschirmtest nicht möglich ({session}): {ex.Message}", false);
         }
     }
 }

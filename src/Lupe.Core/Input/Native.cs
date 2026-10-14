@@ -98,6 +98,40 @@ internal static unsafe partial class Native
     [LibraryImport("user32.dll")]
     public static partial uint GetWindowThreadProcessId(nint hWnd, out uint lpdwProcessId);
 
+    // ---------- Rechte des Zielprozesses (UIPI) ----------
+    public const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+    public const uint TOKEN_QUERY = 0x0008;
+    /// <summary>TOKEN_INFORMATION_CLASS: TokenIntegrityLevel (TOKEN_MANDATORY_LABEL).</summary>
+    public const int TokenIntegrityLevel = 25;
+    /// <summary>TOKEN_INFORMATION_CLASS: TokenUIAccess (DWORD, ≠ 0 = darf UIPI umgehen).</summary>
+    public const int TokenUIAccess = 26;
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    public static partial nint OpenProcess(uint dwDesiredAccess, [MarshalAs(UnmanagedType.Bool)] bool bInheritHandle, uint dwProcessId);
+
+    /// <summary>Pseudo-Handle (-1) des eigenen Prozesses, muss nicht geschlossen werden.</summary>
+    [LibraryImport("kernel32.dll")]
+    public static partial nint GetCurrentProcess();
+
+    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool CloseHandle(nint hObject);
+
+    [LibraryImport("advapi32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool OpenProcessToken(nint processHandle, uint desiredAccess, out nint tokenHandle);
+
+    [LibraryImport("advapi32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool GetTokenInformation(nint tokenHandle, int tokenInformationClass, void* tokenInformation,
+        uint tokenInformationLength, out uint returnLength);
+
+    [LibraryImport("advapi32.dll")]
+    public static partial byte* GetSidSubAuthorityCount(nint pSid);
+
+    [LibraryImport("advapi32.dll")]
+    public static partial uint* GetSidSubAuthority(nint pSid, uint nSubAuthority);
+
     // ---------- Tastenkürzel und Nachrichtenfenster ----------
     public const uint MOD_ALT = 0x0001;
     public const uint MOD_CONTROL = 0x0002;

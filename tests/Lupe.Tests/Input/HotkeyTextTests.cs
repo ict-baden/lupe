@@ -47,6 +47,9 @@ public sealed class HotkeyTextTests
     [InlineData(0xBC, "Komma")]
     [InlineData(0xBD, "Minus")]
     [InlineData(0xBE, "Punkt")]
+    [InlineData(0xB3, "Wiedergabe/Pause")]
+    [InlineData(0xAF, "Lauter")]
+    [InlineData(0xA6, "Browser zurück")]
     [InlineData(0x07, "Taste 0x07")]
     [InlineData(0xFE, "Taste 0xFE")]
     public void Deutsche_Tastennamen(int vk, string name)
@@ -122,6 +125,26 @@ public sealed class HotkeyTextTests
     {
         Assert.False(HotkeyText.TryParse(text, out var hotkey), text);
         Assert.Null(hotkey);
+    }
+
+    [Fact]
+    public void Jeder_Tastenname_gehoert_zu_genau_einer_Taste()
+    {
+        // Doppelte Namen würden beim Einlesen stillschweigend die erste Taste treffen.
+        var all = HotkeyText.NamedKeys.SelectMany(k => k.Names.Select(n => (Name: string.Concat(n.Where(c => !char.IsWhiteSpace(c))).ToLowerInvariant(), k.Vk))).ToList();
+        var clashes = all.GroupBy(x => x.Name).Where(g => g.Select(x => x.Vk).Distinct().Count() > 1).Select(g => g.Key).ToList();
+        Assert.Empty(clashes);
+        Assert.Equal(HotkeyText.NamedKeys.Length, HotkeyText.NamedKeys.Select(k => k.Vk).Distinct().Count());
+        Assert.All(HotkeyText.NamedKeys, k => Assert.DoesNotContain("+", k.Names[0]));
+    }
+
+    [Fact]
+    public void Medientasten_mit_englischen_Namen()
+    {
+        Assert.True(HotkeyText.TryParse("MediaPlayPause", out var play));
+        Assert.Equal(0xB3, play.Key);
+        Assert.True(HotkeyText.TryParse("Strg+VolumeUp", out var louder));
+        Assert.Equal(new Hotkey(true, false, false, false, 0xAF), louder);
     }
 
     [Fact]

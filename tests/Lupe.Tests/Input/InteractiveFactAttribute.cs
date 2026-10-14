@@ -16,13 +16,17 @@ public sealed class InteractiveFactAttribute : FactAttribute
     }
 }
 
-/// <summary>Test für das Verhalten ohne sichtbaren Desktop (läuft nur dort, wo <see cref="InteractiveFactAttribute"/> überspringt).</summary>
+/// <summary>
+/// Test für das Verhalten ohne sichtbare Fensterstation (Sitzung 0, Dienst) – dort lehnt Windows SendInput und RegisterHotKey
+/// sicher ab. Auf einem nur gesperrten oder gerade nicht aktiven Desktop wird übersprungen: Dort ließe sich ein Tastenkürzel
+/// durchaus anmelden, und Eingaben könnten echte Fenster erreichen.
+/// </summary>
 public sealed class NonInteractiveFactAttribute : FactAttribute
 {
     public NonInteractiveFactAttribute()
     {
-        if (InteractiveDesktop.SkipReason is null)
-            Skip = "Nur ohne sichtbaren Desktop – hier würde wirklich in das Vordergrundfenster getippt.";
+        if (InteractiveDesktop.HiddenStationReason is null)
+            Skip = "Nur ohne sichtbare Fensterstation (Sitzung 0, Dienst) – hier würde wirklich in das Vordergrundfenster getippt.";
     }
 }
 
@@ -43,17 +47,21 @@ internal static class InteractiveDesktop
     private const uint WSF_VISIBLE = 0x0001;
     private const uint DESKTOP_READOBJECTS = 0x0001;
 
+    private static readonly Lazy<string?> Hidden = new(ProbeStation, LazyThreadSafetyMode.ExecutionAndPublication);
     private static readonly Lazy<string?> Reason = new(Probe, LazyThreadSafetyMode.ExecutionAndPublication);
 
     /// <summary>null, wenn dieser Prozess Eingaben senden und Tastenkürzel anmelden kann, sonst der Grund.</summary>
     public static string? SkipReason => Reason.Value;
+
+    /// <summary>Der Grund, wenn die Fensterstation dieses Prozesses unsichtbar ist (Sitzung 0, Dienst), sonst null.</summary>
+    public static string? HiddenStationReason => Hidden.Value;
 
     public static nint ThreadLayout => GetKeyboardLayout(0);
 
     /// <summary>Hohes Wort des HKL = Layout-Kennung; 0x0407 = Deutsch (Deutschland).</summary>
     public static bool IsGermanLayout(nint layout) => (((long)layout >> 16) & 0xFFFF) == 0x0407;
 
-    private static string? Probe()
+    private static string? ProbeStation()
     {
         int session = Process.GetCurrentProcess().SessionId;
         nint station = GetProcessWindowStation();
@@ -65,6 +73,12 @@ internal static class InteractiveDesktop
             return $"Kein sichtbarer Desktop: Fensterstation „{stationName}“ in Sitzung {session} nimmt keine Tastatureingaben "
                 + "und Tastenkürzel an (SendInput: Zugriff verweigert, RegisterHotKey: Fehler 1459).";
         }
+        return null;
+    }
+
+    private static string? Probe()
+    {
+        if (HiddenStationReason is { } hidden) return hidden;
         nint input = OpenInputDesktop(0, false, DESKTOP_READOBJECTS);
         if (input == 0)
             return $"Der aktive Desktop ist nicht zugänglich (gesperrt oder Anmeldebildschirm, Fehler {Marshal.GetLastWin32Error()}).";

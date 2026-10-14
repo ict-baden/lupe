@@ -209,6 +209,10 @@ public sealed class KeyboardTyperInputTests
     [Fact]
     public void INPUT_hat_die_Groesse_aus_dem_Windows_SDK()
         => Assert.Equal(IntPtr.Size == 8 ? 40 : 28, Unsafe.SizeOf<Native.INPUT>());
+
+    [Fact]
+    public void MSG_hat_die_Groesse_aus_dem_Windows_SDK()
+        => Assert.Equal(IntPtr.Size == 8 ? 48 : 28, Unsafe.SizeOf<Native.MSG>());
 }
 
 /// <summary>Ablauf von KeyboardTyper mit einer Tastatur-Attrappe: Warten, Loslassen, Pakete, Fehler, Abbruch.</summary>
@@ -327,6 +331,46 @@ public sealed class KeyboardTyperFlowTests
 
         Assert.Single(keyboard.Sent); // nach dem ersten Fehlschlag kein weiteres Paket
         Assert.Contains("nimmt gerade keine Tastatureingaben an", error);
+    }
+
+    [Fact]
+    public void Zielfenster_mit_hoeheren_Rechten_wird_gemeldet_statt_ins_Leere_zu_tippen()
+    {
+        // UIPI: SendInput würde hier „Erfolg“ melden, obwohl Windows alles verwirft.
+        var keyboard = new FakeKeyboard
+        {
+            IsDownAfterPauses = (vk, pauses) => pauses < 4 && vk == KeyboardTyper.VK_LCONTROL,
+            Foreground = () => Elevation.BlockedText,
+        };
+
+        Assert.False(KeyboardTyper.TypeCore("geheim", "Enter", keyboard, out string? error, default));
+
+        Assert.Equal(Elevation.BlockedText, error);
+        Assert.Contains("höheren Rechten", error);
+        Assert.Empty(keyboard.Sent);
+        Assert.Equal([4], keyboard.ForegroundChecks); // einmal, und erst nach dem Warten auf losgelassene Tasten
+    }
+
+    [Fact]
+    public void Ohne_Hindernis_wird_das_Vordergrundfenster_genau_einmal_geprueft()
+    {
+        var keyboard = new FakeKeyboard();
+
+        Assert.True(KeyboardTyper.TypeCore(string.Concat(Enumerable.Repeat("x", 900)), "", keyboard, out _, default));
+
+        Assert.Single(keyboard.ForegroundChecks);
+        Assert.True(keyboard.Sent.Count > 1);
+    }
+
+    [Fact]
+    public void SendInput_ohne_Fehlercode_bekommt_eine_verstaendliche_Meldung()
+    {
+        var keyboard = new FakeKeyboard { Accept = (_, _) => (0, 0) };
+
+        Assert.False(KeyboardTyper.TypeCore("x", "", keyboard, out string? error, default));
+
+        Assert.StartsWith("Eintippen nicht möglich – Windows hat die Tastatureingabe nicht angenommen", error);
+        Assert.DoesNotContain("Fehler 0", error);
     }
 
     [Fact]

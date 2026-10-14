@@ -10,6 +10,9 @@ namespace Lupe.Core.Input;
 /// <see cref="IsRegistered"/> und <see cref="Error"/>, ob es geklappt hat. Gedrückt halten löst nur einmal aus
 /// (MOD_NOREPEAT). <see cref="Dispose"/> meldet das Kürzel ab und beendet den Thread; danach kommt kein
 /// <see cref="Pressed"/> mehr. Dispose ist mehrfach aufrufbar, auch aus einem Pressed-Handler heraus.</para>
+/// <para>Läuft gerade ein Pressed-Handler, wartet Dispose (höchstens 5 s) auf ihn. Ein Handler sollte deshalb nicht
+/// synchron auf den UI-Thread warten (Dispatcher.BeginInvoke/InvokeAsync statt Invoke) – sonst stehen beide, wenn der
+/// UI-Thread gleichzeitig Dispose aufruft.</para>
 /// <para>Kürzel mit Strg+Alt (ohne Win) lassen AltGr-Zeichen durch, siehe <see cref="AltGr"/>.</para>
 /// </remarks>
 public sealed class GlobalHotkey : IDisposable
@@ -107,7 +110,8 @@ public sealed class GlobalHotkey : IDisposable
             {
                 keep = registeredWithWindows && !_disposed;
                 _registered = keep;
-                if (!registeredWithWindows) _error = Describe(error, _hotkey);
+                // Nach einer Zeitüberschreitung im Konstruktor (_disposed) bleibt dessen Meldung stehen.
+                if (!registeredWithWindows && !_disposed) _error = Describe(error, _hotkey);
             }
             _started.Set();
             if (!keep) return;
@@ -166,6 +170,7 @@ public sealed class GlobalHotkey : IDisposable
             Native.ERROR_REQUIRES_INTERACTIVE_WINDOWSTATION =>
                 $"Das Tastenkürzel {text} geht hier nicht – Lupe läuft ohne sichtbaren Desktop (z. B. als Dienst oder in Sitzung 0).",
             Native.ERROR_INVALID_PARAMETER => $"{text} ist kein gültiges Tastenkürzel.",
+            <= 0 => $"Das Tastenkürzel {text} konnte nicht angemeldet werden.", // Windows nannte keinen Grund
             _ => $"Das Tastenkürzel {text} konnte nicht angemeldet werden ({new Win32Exception(win32Error).Message}).",
         };
     }
