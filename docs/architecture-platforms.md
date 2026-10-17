@@ -10,7 +10,7 @@ macOS backends can be built in parallel without stepping on each other.
 | --- | --- | --- |
 | `src/Lupe.Core` | `net10.0` | Decoding (zxing-cpp), model, settings, history, link rules, scan loop, repeat filter, hotkey text, typing logic (`KeyboardTyper`) and the **platform interfaces** (`Lupe.Core.Platform`). No P/Invoke, no WinRT. |
 | `src/Lupe.Platform.Windows` | `net10.0-windows10.0.19041.0` | Today's Windows code, behaviour unchanged: MediaCapture camera, camera privacy, GDI capture with per-monitor DPI, SendInput + high-resolution waitable timer, UIPI/elevation check, RegisterHotKey + AltGr guard, WIC image decoding, HKCU `Run` autostart. |
-| `src/Lupe.Platform.Linux` | `net10.0` | Skeleton (every part reports “nicht verfügbar”). To be filled: FlashCap/V4L2, X11 `XGetImage` / Screenshot portal, XTest / RemoteDesktop portal, `XGrabKey` / GlobalShortcuts portal, `~/.config/autostart/lupe.desktop`. |
+| `src/Lupe.Platform.Linux` | `net10.0` | X11 and Wayland: FlashCap/V4L2 camera, X11 `XGetImage` / Screenshot portal, XTest / RemoteDesktop portal, `XGrabKey` / GlobalShortcuts portal, SkiaSharp image files, `~/.config/autostart/lupe.desktop`. Details in [platform-linux.md](platform-linux.md). |
 | `src/Lupe.Platform.MacOS` | `net10.0` | Skeleton. To be filled: FlashCap/AVFoundation, `screencapture -x`, CGEvent typing, Carbon `RegisterEventHotKey`, LaunchAgent autostart, permission hints. |
 | `src/Lupe` | `net10.0-windows10.0.19041.0` (WPF, for now) | The app. Calls `LupePlatform.Use(new WindowsPlatform())` at start. Will be replaced by the Avalonia app, which multi-targets `net10.0;net10.0-windows10.0.19041.0` and references the backend for its OS. |
 | `tests/Lupe.Tests` | `net10.0-windows10.0.19041.0;net10.0` | Windows TFM: all tests (core, Windows backend, WPF app). `net10.0`: platform-neutral tests only (files excluded in the csproj), runs on every OS. References the Linux/macOS skeletons in both TFMs. |
@@ -69,9 +69,16 @@ macOS key code.
 
 ## Paths
 
-Settings and history currently live under `LocalApplicationData/Lupe` (`SettingsStore.DefaultPath`,
-`HistoryStore.DefaultPath`). Moving them to XDG (`~/.config/lupe`, `~/.local/share/lupe`) and
-`~/Library/Application Support/Lupe` is open; do it in Core (it needs no native calls), keeping the Windows path unchanged.
+`Lupe.Core.Settings.AppPaths` decides where per-user files live; `SettingsStore.DefaultPath` and
+`HistoryStore.DefaultPath` use it.
+
+| OS | Settings (`einstellungen.json`) | History (`verlauf.json`) |
+| --- | --- | --- |
+| Windows | `%LocalAppData%\Lupe` (unchanged) | `%LocalAppData%\Lupe` |
+| Linux | `$XDG_CONFIG_HOME/lupe` (default `~/.config/lupe`) | `$XDG_DATA_HOME/lupe` (default `~/.local/share/lupe`) |
+| macOS | `~/Library/Application Support/Lupe` | `~/Library/Application Support/Lupe` |
+
+Backends that keep files of their own (the Linux RemoteDesktop restore token) put them next to the settings.
 
 ## Working in parallel
 

@@ -10,10 +10,10 @@ using Lupe.Platform.Linux.Screen;
 namespace Lupe.Platform.Linux;
 
 /// <summary>
-/// Lupe unter Linux. Noch ein Gerüst: Jeder Baustein meldet „nicht verfügbar“, bis er umgesetzt ist
-/// (siehe docs/architecture-platforms.md).
+/// Lupe unter Linux (X11 und Wayland, siehe docs/architecture-platforms.md): Kamera über FlashCap (V4L2), Bildschirm über
+/// XGetImage bzw. das Screenshot-Portal, Tippen über XTest bzw. das RemoteDesktop-Portal, Tastenkürzel über XGrabKey bzw.
+/// das GlobalShortcuts-Portal, Bilddateien über SkiaSharp, Autostart über ~/.config/autostart/lupe.desktop.
 /// </summary>
-/// <remarks>Geplant: Kamera über FlashCap (V4L2), Bildschirm über XGetImage bzw. das Screenshot-Portal, Tippen über XTest bzw. das RemoteDesktop-Portal, Tastenkürzel über XGrabKey bzw. das GlobalShortcuts-Portal, Autostart über ~/.config/autostart/lupe.desktop.</remarks>
 public sealed class LinuxPlatform : IPlatform
 {
     public string Name => "Linux";

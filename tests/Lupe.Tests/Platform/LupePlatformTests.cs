@@ -32,11 +32,11 @@ public sealed class LupePlatformTests
         Assert.Equal(expected, LupePlatform.AssemblyNameForThisOs());
     }
 
-    public static TheoryData<string> Geruest_Plattformen => ["unsupported", "linux", "macos"];
+    // Linux ist kein Gerüst mehr – siehe LinuxPlatformTests
+    public static TheoryData<string> Geruest_Plattformen => ["unsupported", "macos"];
 
     private static IPlatform Create(string kind) => kind switch
     {
-        "linux" => new Lupe.Platform.Linux.LinuxPlatform(),
         "macos" => new Lupe.Platform.MacOS.MacOSPlatform(),
         _ => new UnsupportedPlatform("Testsystem"),
     };
