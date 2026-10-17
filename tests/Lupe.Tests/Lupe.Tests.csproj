@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!-- Windows-TFM: alle Tests (Core + Windows-Anbindung + WPF-App). net10.0: nur die plattformneutralen Core-Tests,
+    <!-- Windows-TFM: alle Tests (Core + Windows-Anbindung + App als Prozess). net10.0: nur die plattformneutralen Core-Tests,
          die auch unter Linux und macOS laufen (dort ohne Plattform-Assembly, also mit UnsupportedPlatform). -->
     <TargetFrameworks>net10.0-windows10.0.19041.0;net10.0</TargetFrameworks>
     <!-- auch unter Linux/macOS wiederherstellbar (das Windows-Ziel wird dort nur nicht ausgeführt) -->
@@ -27,6 +27,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Lupe.Core\Lupe.Core.csproj" />
+    <!-- Die Avalonia-App selbst: Oberflächentests ohne Bildschirm (Ui/, Avalonia.Headless) auf jedem System -->
+    <ProjectReference Include="..\..\src\Lupe\Lupe.csproj" />
+    <PackageReference Include="Avalonia.Headless" Version="12.1.4" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
@@ -40,7 +43,7 @@
     <ProjectReference Include="..\..\src\Lupe.Platform.MacOS\Lupe.Platform.MacOS.csproj" />
   </ItemGroup>
 
-  <!-- Nur unter Windows: echte Kamera, GDI-Bildschirm, SendInput, RegisterHotKey, WIC-Bilddateien, WPF-App -->
+  <!-- Nur unter Windows: echte Kamera, GDI-Bildschirm, SendInput, RegisterHotKey, WIC-Bilddateien, Lupe.exe als Prozess -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <Compile Remove="App\**" />
     <Compile Remove="Screen\**" />

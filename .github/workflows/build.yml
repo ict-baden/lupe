@@ -75,11 +75,11 @@ jobs:
         run: |
           $v = '${{ steps.version.outputs.version }}'
           $common = @('src/Lupe/Lupe.csproj', '-c', 'Release', '-r', 'win-x64', '-p:PublishSingleFile=true', "-p:Version=$v", '-p:DebugType=none')
-          # Benötigt .NET 10 Desktop Runtime auf dem Zielgerät
+          # Benötigt .NET 10 Runtime auf dem Zielgerät
           dotnet publish @common --self-contained false -o out/framework
           # Ohne Runtime-Abhängigkeit, Grundlage für die MSI
           dotnet publish @common --self-contained true -o out/self-contained
-          # Eine einzige Exe zum Direkt-Download: Runtime und native DLLs (WPF) eingebettet
+          # Eine einzige Exe zum Direkt-Download: Runtime und native DLLs (Skia, HarfBuzz, ZXing) eingebettet
           dotnet publish @common --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o out/standalone
 
       - name: Pakete schnüren
@@ -128,6 +128,6 @@ jobs:
                    "Die Links bleiben gleich und zeigen immer auf den neuesten Build:`n`n" +
                    "- **[Lupe-x64.msi]($base/Lupe-x64.msi)**: Installer für alle Benutzer (Intune/GPO)`n" +
                    "- **[Lupe.exe]($base/Lupe.exe)**: eine Datei, läuft ohne Installation und ohne .NET-Runtime`n" +
-                   "- **[Lupe-win-x64-framework.zip]($base/Lupe-win-x64-framework.zip)**: kleine Variante, braucht die .NET 10 Desktop Runtime"
+                   "- **[Lupe-win-x64-framework.zip]($base/Lupe-win-x64-framework.zip)**: kleine Variante, braucht die .NET 10 Runtime"
           # Die Version im Titel: GitHub zeigt beim Release das Datum der ersten Veröffentlichung, nicht das des Builds
           ./.github/scripts/release-latest.ps1 -Notes $notes -Title "Latest Build (main) – ${{ steps.version.outputs.version }}"

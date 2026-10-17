@@ -1,37 +1,63 @@
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
+using System.Runtime.InteropServices;
+using Avalonia;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using Lupe.Core.Model;
 
 namespace Lupe.Services;
 
-/// <summary>Umwandlung zwischen <see cref="PixelImage"/> (Core) und WPF-Bildern.</summary>
+/// <summary>Umwandlung zwischen <see cref="PixelImage"/> (Core) und Avalonia-Bildern.</summary>
 internal static class Images
 {
     /// <summary>
-    /// Als WPF-Bild (eingefroren, also von jedem Thread aus nutzbar). Als Bgr32 – das vierte Byte zählt nicht: Ein
-    /// <see cref="PixelImage"/> ist undurchsichtig gemeint, und wo eine Quelle den Alphakanal doch auf 0 lässt (GDI,
-    /// manche Kameratreiber), bliebe das Bild sonst unsichtbar.
+    /// Als Avalonia-Bild. Undurchsichtig – das vierte Byte zählt nicht: Ein <see cref="PixelImage"/> ist undurchsichtig
+    /// gemeint, und wo eine Quelle den Alphakanal doch auf 0 lässt (GDI, manche Kameratreiber), bliebe das Bild sonst unsichtbar.
     /// </summary>
-    public static BitmapSource ToBitmap(PixelImage image)
+    public static WriteableBitmap ToBitmap(PixelImage image)
     {
-        var bitmap = BitmapSource.Create(image.Width, image.Height, 96, 96, PixelFormats.Bgr32, null, image.Bgra, image.Stride);
-        bitmap.Freeze();
+        var bitmap = new WriteableBitmap(new PixelSize(image.Width, image.Height), new Vector(96, 96), PixelFormat.Bgra8888, AlphaFormat.Opaque);
+        Write(bitmap, image);
         return bitmap;
     }
 
+    /// <summary>Schreibt ein Bild gleicher Größe in eine vorhandene Bitmap (Kamera-Vorschau, ohne neue Bitmap je Bild).</summary>
+    public static void Write(WriteableBitmap bitmap, PixelImage image)
+    {
+        using var buffer = bitmap.Lock();
+        int rowBytes = image.Width * 4;
+        if (buffer.RowBytes == image.Stride && image.Stride == rowBytes)
+        {
+            Marshal.Copy(image.Bgra, 0, buffer.Address, rowBytes * image.Height);
+            return;
+        }
+        for (int y = 0; y < image.Height; y++)
+            Marshal.Copy(image.Bgra, y * image.Stride, buffer.Address + y * buffer.RowBytes, rowBytes);
+    }
+
     /// <summary>
-    /// WPF-Bild → BGRA. Durchsichtiges wird auf Weiß verrechnet (dunkler Code auf transparentem Grund bleibt
+    /// Avalonia-Bild → BGRA. Durchsichtiges wird auf Weiß verrechnet (dunkler Code auf transparentem Grund bleibt
     /// erkennbar). Ist der Alphakanal überall 0 – das liefern manche Programme in der Zwischenablage –, gilt das
     /// Bild als undurchsichtig.
     /// </summary>
-    public static PixelImage FromBitmap(BitmapSource source)
+    public static PixelImage FromBitmap(Bitmap source)
     {
-        bool premultiplied = source.Format == PixelFormats.Pbgra32;
-        BitmapSource bgra = source.Format == PixelFormats.Bgra32 || premultiplied ? source : new FormatConvertedBitmap(source, PixelFormats.Bgra32, null, 0);
-        int width = bgra.PixelWidth, height = bgra.PixelHeight, stride = width * 4;
+        int width = source.PixelSize.Width, height = source.PixelSize.Height, stride = width * 4;
         var px = new byte[stride * height];
-        bgra.CopyPixels(px, stride, 0);
+        var handle = GCHandle.Alloc(px, GCHandleType.Pinned);
+        try
+        {
+            source.CopyPixels(new PixelRect(0, 0, width, height), handle.AddrOfPinnedObject(), px.Length, stride);
+        }
+        finally
+        {
+            handle.Free();
+        }
+
+        // Skia liefert je nach System BGRA oder RGBA, vormultipliziert oder nicht
+        bool rgba = source.Format is { } format && format == PixelFormat.Rgba8888;
+        bool premultiplied = source.AlphaFormat is null or AlphaFormat.Premul;
+        if (rgba)
+            for (int i = 0; i < px.Length; i += 4) (px[i], px[i + 2]) = (px[i + 2], px[i]);
 
         bool anyAlpha = false;
         for (int i = 3; i < px.Length; i += 4)
@@ -63,16 +89,5 @@ internal static class Images
         for (int row = 0; row < h; row++)
             Buffer.BlockCopy(image.Bgra, (top + row) * image.Stride + left * 4, px, row * w * 4, w * 4);
         return new PixelImage(w, h, px);
-    }
-
-    /// <summary>Zeichnet ein WPF-Element in ein Bild (für Demo-Bilder und Screenshots), 1 Punkt = 1 Pixel.</summary>
-    public static PixelImage Render(FrameworkElement element, int width, int height)
-    {
-        element.Measure(new Size(width, height));
-        element.Arrange(new Rect(0, 0, width, height));
-        element.UpdateLayout();
-        var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
-        bitmap.Render(element);
-        return FromBitmap(bitmap);
     }
 }

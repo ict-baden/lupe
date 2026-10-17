@@ -7,8 +7,6 @@ namespace Lupe;
 public static class AppInfo
 {
     public const string RepositoryUrl = "https://github.com/ict-baden/lupe";
-    /// <summary>Der Barcode-Reader, aus dem Lupe hervorgegangen ist (MIT-Lizenz).</summary>
-    public const string OriginUrl = "https://github.com/pieewiee/Barcode-Reader";
     public const string Publisher = "ICT-Baden";
 
     /// <summary>Version ohne Build-Anhang, z. B. „0.1.0“.</summary>

@@ -1,6 +1,6 @@
 # Platform architecture
 
-Lupe is being ported from Windows-only (WPF + WinRT) to Windows, Linux (X11 and Wayland) and macOS. This note describes
+Lupe is being ported from Windows-only (WPF + WinRT) to Windows, Linux (X11 and Wayland) and macOS; the UI is now Avalonia. This note describes
 the split between the platform-neutral core and the per-OS backends, so that the UI port (Avalonia) and the Linux and
 macOS backends can be built in parallel without stepping on each other.
 
@@ -12,8 +12,8 @@ macOS backends can be built in parallel without stepping on each other.
 | `src/Lupe.Platform.Windows` | `net10.0-windows10.0.19041.0` | Today's Windows code, behaviour unchanged: MediaCapture camera, camera privacy, GDI capture with per-monitor DPI, SendInput + high-resolution waitable timer, UIPI/elevation check, RegisterHotKey + AltGr guard, WIC image decoding, HKCU `Run` autostart. |
 | `src/Lupe.Platform.Linux` | `net10.0` | Skeleton (every part reports “nicht verfügbar”). To be filled: FlashCap/V4L2, X11 `XGetImage` / Screenshot portal, XTest / RemoteDesktop portal, `XGrabKey` / GlobalShortcuts portal, `~/.config/autostart/lupe.desktop`. |
 | `src/Lupe.Platform.MacOS` | `net10.0` | Skeleton. To be filled: FlashCap/AVFoundation, `screencapture -x`, CGEvent typing, Carbon `RegisterEventHotKey`, LaunchAgent autostart, permission hints. |
-| `src/Lupe` | `net10.0-windows10.0.19041.0` (WPF, for now) | The app. Calls `LupePlatform.Use(new WindowsPlatform())` at start. Will be replaced by the Avalonia app, which multi-targets `net10.0;net10.0-windows10.0.19041.0` and references the backend for its OS. |
-| `tests/Lupe.Tests` | `net10.0-windows10.0.19041.0;net10.0` | Windows TFM: all tests (core, Windows backend, WPF app). `net10.0`: platform-neutral tests only (files excluded in the csproj), runs on every OS. References the Linux/macOS skeletons in both TFMs. |
+| `src/Lupe` | `net10.0;net10.0-windows10.0.19041.0` | The Avalonia 12 app. The Windows target references `Lupe.Platform.Windows`, the `net10.0` target `Lupe.Platform.Linux` and `Lupe.Platform.MacOS`; `Program.CreatePlatform()` picks one with `OperatingSystem.IsXxx()` and calls `LupePlatform.Use(...)`. A runtime identifier selects the target (`-r win-x64` → Windows, anything else → `net10.0`). |
+| `tests/Lupe.Tests` | `net10.0-windows10.0.19041.0;net10.0` | Windows TFM: all tests (core, Windows backend, the app as a process, headless UI). `net10.0`: platform-neutral tests plus the headless UI tests (`Ui/`), runs on every OS. References the app and the Linux/macOS backends in both TFMs. |
 
 `Lupe.Core` grants `InternalsVisibleTo` to `Lupe.Tests` and all three `Lupe.Platform.*` assemblies, so backends may reuse
 internal helpers such as `CameraList.Build/MakeUnique/CleanName`, `FormatChooser`, `SafeEvents`, `PixelImages`,

@@ -1,6 +1,7 @@
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Lupe.Core.Model;
 
 namespace Lupe.UI;
@@ -30,8 +31,8 @@ public sealed record CodeMarker(IReadOnlyList<Point> Outline, string Label)
 
     private static List<Point> Band(Point a, Point b)
     {
-        var d = b - a;
-        double length = d.Length;
+        Vector d = b - a;
+        double length = Len(d);
         if (length < 1) return [new(a.X - 10, a.Y - 10), new(a.X + 10, a.Y - 10), new(a.X + 10, a.Y + 10), new(a.X - 10, a.Y + 10)];
         d /= length;
         var n = new Vector(-d.Y, d.X);
@@ -46,8 +47,8 @@ public sealed record CodeMarker(IReadOnlyList<Point> Outline, string Label)
     /// </summary>
     internal static List<Point>? BarBand(Point a, Point b, PixelImage image)
     {
-        var d = b - a;
-        double length = d.Length;
+        Vector d = b - a;
+        double length = Len(d);
         if (length < 8) return null;
         d /= length;
         var n = new Vector(-d.Y, d.X);
@@ -112,6 +113,8 @@ public sealed record CodeMarker(IReadOnlyList<Point> Outline, string Label)
         return 0.114 * image.Bgra[i] + 0.587 * image.Bgra[i + 1] + 0.299 * image.Bgra[i + 2];
     }
 
+    private static double Len(Vector v) => Math.Sqrt(v.X * v.X + v.Y * v.Y);
+
     private static List<Point> Expand(IReadOnlyList<Point> points, double factor)
     {
         double cx = points.Average(q => q.X), cy = points.Average(q => q.Y);
@@ -143,68 +146,73 @@ public sealed record CodeMarker(IReadOnlyList<Point> Outline, string Label)
 
 /// <summary>
 /// Zeigt ein Bild (Kamera, Datei) einpassend und darüber die Markierungen erkannter Codes in Akzentfarbe samt
-/// Format-Etikett, auf Wunsch mit Zielhilfe in der Mitte. Gezeichnet in OnRender: Linien bleiben unabhängig von
-/// der Bildgröße gleich dick.
+/// Format-Etikett, auf Wunsch mit Zielhilfe in der Mitte. Selbst gezeichnet: Linien bleiben unabhängig von der
+/// Bildgröße gleich dick.
 /// </summary>
-public sealed class CodeView : FrameworkElement
+public sealed class CodeView : Control
 {
-    public static readonly DependencyProperty SourceProperty = DependencyProperty.Register(nameof(Source), typeof(BitmapSource), typeof(CodeView),
-        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender));
-    public static readonly DependencyProperty MarkersProperty = DependencyProperty.Register(nameof(Markers), typeof(IReadOnlyList<CodeMarker>), typeof(CodeView),
-        new FrameworkPropertyMetadata(Array.Empty<CodeMarker>(), FrameworkPropertyMetadataOptions.AffectsRender));
-    public static readonly DependencyProperty ShowAimProperty = DependencyProperty.Register(nameof(ShowAim), typeof(bool), typeof(CodeView),
-        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
-    public static readonly DependencyProperty AccentProperty = DependencyProperty.Register(nameof(Accent), typeof(Brush), typeof(CodeView),
-        new FrameworkPropertyMetadata(Brushes.DodgerBlue, FrameworkPropertyMetadataOptions.AffectsRender));
-    public static readonly DependencyProperty AccentTextProperty = DependencyProperty.Register(nameof(AccentText), typeof(Brush), typeof(CodeView),
-        new FrameworkPropertyMetadata(Brushes.White, FrameworkPropertyMetadataOptions.AffectsRender));
+    public static readonly StyledProperty<Bitmap?> SourceProperty = AvaloniaProperty.Register<CodeView, Bitmap?>(nameof(Source));
+    public static readonly StyledProperty<IReadOnlyList<CodeMarker>> MarkersProperty =
+        AvaloniaProperty.Register<CodeView, IReadOnlyList<CodeMarker>>(nameof(Markers), Array.Empty<CodeMarker>());
+    public static readonly StyledProperty<bool> ShowAimProperty = AvaloniaProperty.Register<CodeView, bool>(nameof(ShowAim));
+    public static readonly StyledProperty<IBrush> AccentProperty = AvaloniaProperty.Register<CodeView, IBrush>(nameof(Accent), Brushes.DodgerBlue);
+    public static readonly StyledProperty<IBrush> AccentTextProperty = AvaloniaProperty.Register<CodeView, IBrush>(nameof(AccentText), Brushes.White);
 
-    private static readonly Typeface LabelFace = new(new FontFamily("Segoe UI Variable Text, Segoe UI"), FontStyles.Normal, FontWeights.SemiBold, FontStretches.Normal);
-    private static readonly Pen AimShadow = Freeze(new Pen(new SolidColorBrush(Color.FromArgb(0x70, 0, 0, 0)), 5) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round });
-    private static readonly Pen AimPen = Freeze(new Pen(new SolidColorBrush(Color.FromArgb(0xE0, 0xFF, 0xFF, 0xFF)), 3) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round });
+    private static readonly IPen AimShadow = new Pen(new SolidColorBrush(Color.FromArgb(0x70, 0, 0, 0)), 5, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round);
+    private static readonly IPen AimPen = new Pen(new SolidColorBrush(Color.FromArgb(0xE0, 0xFF, 0xFF, 0xFF)), 3, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round);
+    private static readonly IPen Halo = new Pen(new SolidColorBrush(Color.FromArgb(0x90, 0, 0, 0)), 5, lineJoin: PenLineJoin.Round);
+
+    static CodeView()
+    {
+        AffectsRender<CodeView>(SourceProperty, MarkersProperty, ShowAimProperty, AccentProperty, AccentTextProperty);
+    }
 
     public CodeView()
     {
-        SetResourceReference(AccentProperty, "AccentFillColorDefaultBrush");
-        SetResourceReference(AccentTextProperty, "TextOnAccentFillColorPrimaryBrush");
-        SnapsToDevicePixels = true;
+        this.SetResource(AccentProperty, "AccentFillColorDefaultBrush");
+        this.SetResource(AccentTextProperty, "TextOnAccentFillColorPrimaryBrush");
     }
 
-    public BitmapSource? Source { get => (BitmapSource?)GetValue(SourceProperty); set => SetValue(SourceProperty, value); }
-    public IReadOnlyList<CodeMarker> Markers { get => (IReadOnlyList<CodeMarker>)GetValue(MarkersProperty); set => SetValue(MarkersProperty, value); }
-    public bool ShowAim { get => (bool)GetValue(ShowAimProperty); set => SetValue(ShowAimProperty, value); }
-    public Brush Accent { get => (Brush)GetValue(AccentProperty); set => SetValue(AccentProperty, value); }
-    public Brush AccentText { get => (Brush)GetValue(AccentTextProperty); set => SetValue(AccentTextProperty, value); }
+    public Bitmap? Source { get => GetValue(SourceProperty); set => SetValue(SourceProperty, value); }
+    public IReadOnlyList<CodeMarker> Markers { get => GetValue(MarkersProperty); set => SetValue(MarkersProperty, value); }
+    public bool ShowAim { get => GetValue(ShowAimProperty); set => SetValue(ShowAimProperty, value); }
+    public IBrush Accent { get => GetValue(AccentProperty); set => SetValue(AccentProperty, value); }
+    public IBrush AccentText { get => GetValue(AccentTextProperty); set => SetValue(AccentTextProperty, value); }
+
+    /// <summary>Neues Kamerabild in derselben Bitmap: nur neu zeichnen.</summary>
+    public void Refresh() => InvalidateVisual();
 
     /// <summary>Wo das Bild im Element liegt (einpassend, mittig). Leer ohne Bild.</summary>
     public Rect ImageRect
     {
         get
         {
-            if (Source is not { PixelWidth: > 0, PixelHeight: > 0 } src || ActualWidth <= 0 || ActualHeight <= 0) return Rect.Empty;
-            double scale = Math.Min(ActualWidth / src.PixelWidth, ActualHeight / src.PixelHeight);
-            double w = src.PixelWidth * scale, h = src.PixelHeight * scale;
-            return new Rect((ActualWidth - w) / 2, (ActualHeight - h) / 2, w, h);
+            var size = Bounds.Size;
+            if (Source is not { } src || src.PixelSize.Width <= 0 || src.PixelSize.Height <= 0 || size.Width <= 0 || size.Height <= 0) return default;
+            double scale = Math.Min(size.Width / src.PixelSize.Width, size.Height / src.PixelSize.Height);
+            double w = src.PixelSize.Width * scale, h = src.PixelSize.Height * scale;
+            return new Rect((size.Width - w) / 2, (size.Height - h) / 2, w, h);
         }
     }
 
-    protected override void OnRender(DrawingContext dc)
+    public override void Render(DrawingContext dc)
     {
+        var size = Bounds.Size;
         // Durchsichtige Fläche, damit Ziehen und Ablegen überall im Element ankommen
-        dc.DrawRectangle(Brushes.Transparent, null, new Rect(0, 0, ActualWidth, ActualHeight));
+        dc.FillRectangle(Brushes.Transparent, new Rect(size));
         var rect = ImageRect;
-        if (rect.IsEmpty || Source is null) return;
-        double scale = rect.Width / Source.PixelWidth;
-        dc.DrawImage(Source, rect);
+        if (rect.Width <= 0 || Source is not { } source) return;
+        double scale = rect.Width / source.PixelSize.Width;
+        using (dc.PushRenderOptions(new RenderOptions { BitmapInterpolationMode = BitmapInterpolationMode.HighQuality }))
+            dc.DrawImage(source, new Rect(0, 0, source.PixelSize.Width, source.PixelSize.Height), rect);
 
         if (ShowAim) DrawAim(dc, rect);
 
         var accent = Accent;
-        var fill = accent.CloneCurrentValue();
-        fill.Opacity = 0.16;
-        var pen = new Pen(accent, 3) { LineJoin = PenLineJoin.Round };
-        var halo = new Pen(new SolidColorBrush(Color.FromArgb(0x90, 0, 0, 0)), 5) { LineJoin = PenLineJoin.Round };
-        double dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
+        var accentColor = (accent as ISolidColorBrush)?.Color ?? Colors.DodgerBlue;
+        var fill = new SolidColorBrush(accentColor, 0.16);
+        var pen = new Pen(accent, 3, lineJoin: PenLineJoin.Round);
+        var face = new Typeface(this.TryFindResource("UiFont", out var f) && f is FontFamily family ? family : FontFamily.Default, FontStyle.Normal, FontWeight.SemiBold);
 
         foreach (var marker in Markers)
         {
@@ -213,20 +221,22 @@ public sealed class CodeView : FrameworkElement
             var geometry = new StreamGeometry();
             using (var ctx = geometry.Open())
             {
-                ctx.BeginFigure(points[0], isFilled: true, isClosed: true);
-                ctx.PolyLineTo(points.Skip(1).ToList(), isStroked: true, isSmoothJoin: false);
+                ctx.BeginFigure(points[0], isFilled: true);
+                foreach (var p in points.Skip(1)) ctx.LineTo(p);
+                ctx.EndFigure(isClosed: true);
             }
-            geometry.Freeze();
-            dc.DrawGeometry(null, halo, geometry);
+            dc.DrawGeometry(null, Halo, geometry);
             dc.DrawGeometry(fill, pen, geometry);
 
             if (marker.Label.Length == 0) continue;
-            var text = new FormattedText(marker.Label, Labels.German, FlowDirection.LeftToRight, LabelFace, 12.5, AccentText, dpi);
+            var text = new FormattedText(marker.Label, Labels.German, FlowDirection.LeftToRight, face, 12.5, AccentText);
             double left = points.Min(q => q.X), top = points.Min(q => q.Y), bottom = points.Max(q => q.Y);
-            var box = new Rect(left, top - text.Height - 10, text.Width + 14, text.Height + 6);
-            if (box.Top < 2) box.Y = Math.Min(bottom + 4, ActualHeight - box.Height - 2);
-            box.X = Math.Clamp(box.X, 2, Math.Max(2, ActualWidth - box.Width - 2));
-            dc.DrawRoundedRectangle(accent, null, box, 4, 4);
+            double boxW = text.Width + 14, boxH = text.Height + 6;
+            double boxX = left, boxY = top - text.Height - 10;
+            if (boxY < 2) boxY = Math.Min(bottom + 4, size.Height - boxH - 2);
+            boxX = Math.Clamp(boxX, 2, Math.Max(2, size.Width - boxW - 2));
+            var box = new Rect(boxX, boxY, boxW, boxH);
+            dc.DrawRectangle(accent, null, box, 4, 4);
             dc.DrawText(text, new Point(box.X + 7, box.Y + 3));
         }
     }
@@ -236,31 +246,31 @@ public sealed class CodeView : FrameworkElement
     {
         double size = Math.Min(rect.Width, rect.Height) * 0.5;
         double arm = size * 0.16;
-        var c = new Point(rect.X + rect.Width / 2, rect.Y + rect.Height / 2);
+        var c = rect.Center;
         double l = c.X - size / 2, r = c.X + size / 2, t = c.Y - size / 2, b = c.Y + size / 2;
         var geometry = new StreamGeometry();
         using (var ctx = geometry.Open())
         {
             void Corner(Point a, Point m, Point z)
             {
-                ctx.BeginFigure(a, false, false);
-                ctx.LineTo(m, true, true);
-                ctx.LineTo(z, true, true);
+                ctx.BeginFigure(a, false);
+                ctx.LineTo(m);
+                ctx.LineTo(z);
+                ctx.EndFigure(false);
             }
             Corner(new(l, t + arm), new(l, t), new(l + arm, t));
             Corner(new(r - arm, t), new(r, t), new(r, t + arm));
             Corner(new(r, b - arm), new(r, b), new(r - arm, b));
             Corner(new(l + arm, b), new(l, b), new(l, b - arm));
             // kleines Kreuz in der Mitte
-            ctx.BeginFigure(new(c.X - 7, c.Y), false, false);
-            ctx.LineTo(new(c.X + 7, c.Y), true, false);
-            ctx.BeginFigure(new(c.X, c.Y - 7), false, false);
-            ctx.LineTo(new(c.X, c.Y + 7), true, false);
+            ctx.BeginFigure(new(c.X - 7, c.Y), false);
+            ctx.LineTo(new(c.X + 7, c.Y));
+            ctx.EndFigure(false);
+            ctx.BeginFigure(new(c.X, c.Y - 7), false);
+            ctx.LineTo(new(c.X, c.Y + 7));
+            ctx.EndFigure(false);
         }
-        geometry.Freeze();
         dc.DrawGeometry(null, AimShadow, geometry);
         dc.DrawGeometry(null, AimPen, geometry);
     }
-
-    private static T Freeze<T>(T f) where T : Freezable { f.Freeze(); return f; }
 }

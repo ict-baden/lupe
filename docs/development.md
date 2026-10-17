@@ -9,7 +9,7 @@ Building, testing and releasing Lupe, how the code is organised, and how the ima
 ## Requirements
 
 - **.NET 10 SDK.** `global.json` pins `10.0.100` with `rollForward: latestFeature`, so newer 10.0 feature bands work too.
-- **Windows** to run the app and the tests. Both projects target `net10.0-windows10.0.19041.0` (the Windows SDK version for `Windows.Media.Capture`) with a minimum of Windows 10 1809, and set `EnableWindowsTargeting`, so they can also be compiled elsewhere.
+- **Windows, Linux or macOS.** The app (`src/Lupe`, Avalonia) multi-targets `net10.0-windows10.0.19041.0` (with `Lupe.Platform.Windows`; the Windows SDK version for `Windows.Media.Capture`, minimum Windows 10 1809) and `net10.0` (with `Lupe.Platform.Linux` and `Lupe.Platform.MacOS`, chosen at run time). With a runtime identifier (`-r win-x64`, `-r linux-x64`, `-r osx-arm64`) only the matching target is built, so publish commands need no `-f`. `EnableWindowsTargeting` lets the Windows target compile elsewhere too. The full test set runs on Windows; the `net10.0` tests (core and the headless UI tests) run everywhere.
 - For the MSI: nothing extra – the WiX Toolset comes as an MSBuild SDK (`WixToolset.Sdk` 5.0.2, plus `WixToolset.Util.wixext`) via NuGet.
 - For the banner image: Node.js and Google Chrome (see [Screenshots and images](#screenshots-and-images)).
 
@@ -17,15 +17,16 @@ Building, testing and releasing Lupe, how the code is organised, and how the ima
 
 ```powershell
 dotnet build Lupe.sln
-dotnet run --project src/Lupe -- --demo          # window with demo camera and sample history
-dotnet run --project src/Lupe -- --hilfe         # command-line help
+dotnet run --project src/Lupe -f net10.0-windows10.0.19041.0 -- --demo   # Windows: demo camera and sample history
+dotnet run --project src/Lupe -f net10.0 -- --demo                       # Linux, macOS
+dotnet run --project src/Lupe -f net10.0 -- --hilfe                      # command-line help
 ```
 
 Release builds as the CI produces them:
 
 ```powershell
 $common = 'src/Lupe/Lupe.csproj', '-c', 'Release', '-r', 'win-x64', '-p:PublishSingleFile=true', '-p:DebugType=none'
-dotnet publish @common --self-contained false -o out/framework       # needs the .NET 10 Desktop Runtime
+dotnet publish @common --self-contained false -o out/framework       # needs the .NET 10 Runtime
 dotnet publish @common --self-contained true  -o out/self-contained  # basis of the MSI
 dotnet publish @common --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true `
                -p:EnableCompressionInSingleFile=true -o out/standalone  # the single Lupe.exe
@@ -63,6 +64,7 @@ The camera tests that run in real time (`Camera/ScanLoopRealtimeTests` and `Came
 | `Input/*` | Typing sequence against a simulated keyboard (batches, held keys, partial input), real typing into a Win32 text box (desktop only), shortcut registration against a simulated Windows API, AltGr protection, shortcut text in German and English, elevation check |
 | `History/*`, `Settings/*` | Concurrency, broken and locked files, atomic writes, CSV format and injection protection, link-rule safety, tolerant loading and backups |
 | `App/*` | The command line end to end through the real exe – image formats, several files, exit codes, redirection into files with umlauts and emoji, BOM handling, `.cmd` files waiting; window and demo behaviour; the screenshot switch |
+| `Ui/*` | The Avalonia UI without a screen (`Avalonia.Headless` with Skia, any OS): page navigation with Ctrl+1…6, badges and notices, recording a shortcut in the settings, choosing one of several codes with the number keys, sorting the history, accent colours per theme, key-code mapping |
 
 ## Architecture
 
@@ -104,10 +106,11 @@ flowchart TB
 | `src/Lupe.Platform.Linux`, `src/Lupe.Platform.MacOS` | Skeletons that report “nicht verfügbar” until the backends are implemented |
 | `src/Lupe.Core/History` | `HistoryStore`, `HistoryFile` (JSON), `HistoryCsv` |
 | `src/Lupe.Core/Settings` | `SettingsStore` (tolerant loading, normalising), `SettingsFile` (backup, merge of a locked file), `LinkRules`, `AtomicFile` |
-| `src/Lupe` | `Program.cs` (entry point: command line without WPF, or the window), `App.xaml.cs` (window, tray, shortcut), `AppState` (shared state), `Cli/` (`CommandLine`, `ConsoleSession`), `UI/` (pages, `SelectionOverlay`, `ResultToast`, `CodeChoiceWindow`, `TrayIcon`, Fluent theme shared in style with Zutritt and Vitrine), `Services/` (`Hits` – the hit pipeline, `Desktop` – beep, clipboard, browser, typing, `Autostart`, `SingleInstance`), `Demo/` (demo data, all codes generated with zxing-cpp) |
+| `src/Lupe` | Avalonia 12 app. `Program.cs` (entry point: picks the platform, command line without UI, the window, or headless screenshots), `App.axaml(.cs)` (window, tray, shortcut), `AppState` (shared state), `Cli/` (`CommandLine`, `ConsoleSession`), `UI/` (pages, `SelectionOverlay` – one window per monitor, `ResultToast`, `CodeChoiceWindow`, `AppTray`, `Dialogs`, `Theme/` – Windows 11 colours in the style of Zutritt and Vitrine, light/dark, Mica), `Services/` (`Hits` – the hit pipeline, `Desktop` – beep, clipboard, browser, typing, `Autostart`, `SingleInstance` – mutex on Windows, lock file and local socket elsewhere), `Demo/` (demo data, all codes generated with zxing-cpp), `Assets/LupeIcons.ttf` (Fluent UI System Icons subset on the Segoe Fluent Icons code points, used on Linux and macOS) |
 | `installer/` | WiX 5 MSI |
 | `tests/Lupe.Tests` | xUnit tests |
 | `tools/screenshots` | Generator for the documentation images |
+| `tools/icons` | `make-lupe-icons.py` builds `src/Lupe/Assets/LupeIcons.ttf` (fontTools): the Fluent UI System Icons Lupe uses, scaled to fill the em square and mapped to the Segoe Fluent Icons code points, so XAML keeps one set of glyph codes on every OS |
 
 The only NuGet dependency of the core is `ZXingCpp` 0.5.3 (Apache-2.0): the .NET wrapper of zxing-cpp 3.1.1 with the native `ZXing.dll` (x64 and arm64, here `runtimes/win-x64/native`), which also contains libzint and libzueci (BSD-3-Clause). A publish for `win-x64` puts `ZXing.dll` next to `Lupe.exe`; the single-file `Lupe.exe` carries it inside and extracts it on first start (`IncludeNativeLibrariesForSelfExtract`). Licence texts of all third-party components: [`THIRD-PARTY-NOTICES.txt`](../THIRD-PARTY-NOTICES.txt) – copied next to `Lupe.exe` and embedded for the *Info* page; update it together with the package. Code comments, some identifiers and all user-facing text are in German.
 
@@ -144,7 +147,7 @@ npm install            # playwright-core, for the banner
 
 The script
 
-1. builds Lupe (Release) and runs `Lupe.exe --screenshots <temp>`: every page of the demo, light and dark, with the window at 1100 × 740 and 1.5× scale (1650 × 1110 pixels), plus the selection overlay over a demo desktop (1600 × 900) and the result notification – off-screen and never activated, so no visible desktop is needed. The German file names are mapped to the English ones used here (`kamera` → `camera`, `bildschirm` → `screen`, `auswahl` → `selection`, `treffer` → `result`, `datei` → `file`, `verlauf` → `history`, `einstellungen` → `settings`, `info` → `about`);
+1. builds Lupe (Release) and runs `Lupe.exe --screenshots <temp>`: every page of the demo, light and dark, with the window at 1100 × 740 and 1.5× scale (1650 × 1110 pixels), plus the selection overlay over a demo desktop (1600 × 900) and the result notification – drawn without a screen (Avalonia.Headless with Skia), so no visible desktop is needed, also on Linux without an X server. The accent colour is fixed to the Windows default blue, and Mica and the notification's shadow are left out. The German file names are mapped to the English ones used here (`kamera` → `camera`, `bildschirm` → `screen`, `auswahl` → `selection`, `treffer` → `result`, `datei` → `file`, `verlauf` → `history`, `einstellungen` → `settings`, `info` → `about`);
 2. renders `banner.html` to `banner.png` (2560 × 840) with the installed Google Chrome through playwright-core (`CHROME_PATH` for another browser). The banner uses `file-light.png` from step 1.
 
 The screenshots use fixed data: a fixed time (14 October 2026, 10:42; `--demo` uses the current time), links only to reserved example domains (`example.org`, `example.com`, `.example`), and codes generated by zxing-cpp – the codes in the screenshots are real and readable.

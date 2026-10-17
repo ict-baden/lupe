@@ -1,9 +1,8 @@
 using System.Collections.Specialized;
-using System.Windows;
-using System.Windows.Controls;
+using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Lupe.Core.Input;
 using Lupe.Core.Model;
-using Lupe.Services;
 
 namespace Lupe.UI.Pages;
 
@@ -17,7 +16,6 @@ public partial class ScreenPage : UserControl, IPage
         InitializeComponent();
         _state = state;
         ResultList.ItemsSource = state.ScreenResults;
-        CodeActions.Bind(this, state);
         state.ScreenResults.CollectionChanged += OnResultsChanged;
         state.HotkeyChanged += Update;
         state.SettingsChanged += (_, _) => Update();
@@ -37,7 +35,7 @@ public partial class ScreenPage : UserControl, IPage
         HotkeyKeys.ItemsSource = hotkey.Split('+', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
         bool problem = _state.HotkeyError is not null && !_state.HotkeyOffInDemo;
-        HotkeyWarning.Visibility = problem ? Visibility.Visible : Visibility.Collapsed;
+        HotkeyWarning.IsVisible = problem;
         HotkeyWarningText.Text = problem ? _state.HotkeyError : "";
         HotkeyNote.Text = _state.HotkeyOffInDemo ? "in der Demo aus – hier den Knopf nehmen" : problem ? "gerade nicht verfügbar" : "aus jedem Programm";
 
@@ -55,10 +53,10 @@ public partial class ScreenPage : UserControl, IPage
     }
 
     private void OnResultsChanged(object? sender, NotifyCollectionChangedEventArgs? e) =>
-        ResultsEmpty.Visibility = _state.ScreenResults.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        ResultsEmpty.IsVisible = _state.ScreenResults.Count == 0;
 
-    private void Scan_Click(object sender, RoutedEventArgs e) => _state.RequestScreenScan();
-    private void GoSettings_Click(object sender, RoutedEventArgs e) => _state.RequestPage("einstellungen");
+    private void Scan_Click(object? sender, RoutedEventArgs e) => _state.RequestScreenScan();
+    private void GoSettings_Click(object? sender, RoutedEventArgs e) => _state.RequestPage("einstellungen");
 
     public Task PrepareScreenshotAsync()
     {

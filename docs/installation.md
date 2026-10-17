@@ -14,7 +14,7 @@ Which file to download, what it needs, how to let Lupe use the camera, and how t
 | Topic | Requirement |
 |---|---|
 | **Operating system** | 64-bit Windows 10 version 1809 (build 17763) or later, or Windows 11. Builds are produced for `win-x64` only. |
-| **.NET** | None for the MSI and for `Lupe.exe` – both carry the .NET 10 runtime. The ZIP variant needs the **.NET 10 Desktop Runtime**. |
+| **.NET** | None for the MSI and for `Lupe.exe` – both carry the .NET 10 runtime. The ZIP variant needs the **.NET 10 Runtime**. |
 | **Camera** (optional) | Any webcam that Windows offers to apps through `Windows.Media.Capture` with a colour image. Pure infrared cameras (Windows Hello) are not listed. Windows editions “N” and “KN” need the **Media Feature Pack** for the camera. |
 | **Image formats** | PNG, JPEG, BMP, GIF, TIFF, ICO and JPEG XR work out of the box. WebP, HEIC/HEIF, AVIF and JPEG XL work when the matching image extension from the Microsoft Store is installed. |
 | **Language** | The user interface and the command-line output are German, regardless of the Windows display language. |
@@ -27,7 +27,7 @@ All files are attached to the release [**latest**](https://github.com/ict-baden/
 |---|---|---|
 | [`Lupe-x64.msi`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-x64.msi) | included | Installing for all users of a PC, also through software distribution (Intune, GPO). |
 | [`Lupe.exe`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe.exe) | included | Running without installation, e.g. from a user folder or a USB stick. |
-| [`Lupe-win-x64-framework.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-win-x64-framework.zip) | .NET 10 Desktop Runtime | A small download where the runtime is already installed. |
+| [`Lupe-win-x64-framework.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-win-x64-framework.zip) | .NET 10 Runtime | A small download where the runtime is already installed. |
 
 Builds from `main` carry versions like `0.1.0-ci.12` (12 = the number of the build run); the release title names the version of the current files. Tagged versions (`v1.2.3`) get their own release, where the MSI and the ZIP carry the version in their names (e.g. `Lupe-1.2.3-x64.msi`) and `Lupe.exe` keeps its name.
 
@@ -70,7 +70,7 @@ The installer closes a running Lupe before it replaces the files. It installs no
 
 **`Lupe.exe`** is the whole program in one file – runtime and native libraries are embedded. Copy it anywhere and start it. Because it is not signed, SmartScreen may show *Windows protected your PC*; *More info* › *Run anyway* starts it.
 
-**The ZIP** contains a smaller, framework-dependent build and a copy of the project's `README.md` (its images and links point into the repository and only work on GitHub). Extract it and start `Lupe.exe`; Windows asks for the .NET 10 Desktop Runtime if it is missing.
+**The ZIP** contains a smaller, framework-dependent build and a copy of the project's `README.md` (its images and links point into the repository and only work on GitHub). Extract it and start `Lupe.exe`; Windows asks for the .NET 10 Runtime if it is missing.
 
 All variants behave the same: same features, same command line, same settings and history under `%LocalAppData%\Lupe` of the user who runs it – see [Data & privacy](data-and-privacy.md).
 

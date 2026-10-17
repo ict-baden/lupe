@@ -41,6 +41,12 @@ internal static class ConsoleSession
     {
         if (_attached) return;
         _attached = true;
+        // Unter Linux und macOS ist Lupe ein gewöhnliches Konsolenprogramm – stdout/stderr sind schon richtig verbunden (UTF-8)
+        if (!OperatingSystem.IsWindows())
+        {
+            IsInteractive = !Console.IsOutputRedirected;
+            return;
+        }
 
         // Ziele vor AttachConsole bestimmen – danach zeigen die Standard-Handles auf die Konsole
         var outHandle = Native.GetStdHandle(Native.STD_OUTPUT_HANDLE);

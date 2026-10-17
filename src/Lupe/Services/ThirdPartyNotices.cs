@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Reflection;
 
 namespace Lupe.Services;
@@ -36,7 +35,7 @@ internal static class ThirdPartyNotices
                 path = Path.Combine(folder, FileName);
                 File.WriteAllText(path, text);
             }
-            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true })?.Dispose();
+            Shell.OpenFile(path);
             return null;
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException or UnauthorizedAccessException)

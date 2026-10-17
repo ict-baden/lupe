@@ -1,8 +1,9 @@
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Interop;
-using System.Windows.Threading;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Threading;
 using Lupe.Core.Input;
 using Lupe.Interop;
 using Lupe.UI.Pages;
@@ -11,20 +12,23 @@ using Lupe.UI.Theme;
 namespace Lupe.UI;
 
 /// <summary>Hauptfenster: Navigation links (wie Vitrine und Zutritt), Seiten rechts, Meldungen unten.</summary>
-public partial class MainWindow : Window, IThemedWindow
+public partial class MainWindow : Window
 {
-    private sealed record PageEntry(RadioButton Nav, string Slug, string Title, string Subtitle, UserControl Page);
+    private sealed record PageEntry(NavButton Nav, string Slug, string Title, string Subtitle, UserControl Page);
 
     /// <summary>Seiten in der Reihenfolge, in der <c>--screenshots</c> sie aufnimmt (Dateiname = Kürzel).</summary>
     internal static readonly string[] PageSlugs = ["kamera", "bildschirm", "datei", "verlauf", "einstellungen", "info"];
 
-    private readonly AppState _state;
+    private readonly AppState _state = null!;
     private readonly bool _screenshot;
-    private readonly PageEntry[] _pages;
-    private readonly FilePage _file;
-    private readonly DispatcherTimer _infoTimer;
+    private readonly PageEntry[] _pages = [];
+    private readonly FilePage _file = null!;
+    private readonly DispatcherTimer _infoTimer = new() { Interval = TimeSpan.FromSeconds(8) };
     private PageEntry? _current;
     private bool _pageVisible;
+
+    /// <summary>Für den XAML-Vorschauer.</summary>
+    public MainWindow() => InitializeComponent();
 
     internal MainWindow(AppState state, bool screenshotMode = false)
     {
@@ -41,12 +45,12 @@ public partial class MainWindow : Window, IThemedWindow
             new(NavSettings, "einstellungen", "Einstellungen", "Was mit Ergebnissen passiert – Änderungen gelten und speichern sofort", new SettingsPage(state)),
             new(NavInfo, "info", "Info", "Über Lupe", new InfoPage(state)),
         ];
+        foreach (var page in _pages) page.Nav.IsCheckedChanged += Nav_Checked;
 
-        _infoTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(8) };
         _infoTimer.Tick += (_, _) =>
         {
             _infoTimer.Stop();
-            InfoBar.Visibility = Visibility.Collapsed;
+            InfoBar.IsVisible = false;
         };
 
         state.Notice += ShowNotice;
@@ -64,11 +68,18 @@ public partial class MainWindow : Window, IThemedWindow
             state.HistoryChanged -= UpdateBadges;
         };
 
-        SourceInitialized += OnSourceInitialized;
-        Loaded += (_, _) => { if (state.StartupProblem is { } problem) ShowNotice(NoticeKind.Warning, problem); };
-        IsVisibleChanged += (_, _) => SyncPageVisibility();
-        StateChanged += (_, _) => SyncPageVisibility();
-        PreviewKeyDown += OnPreviewKeyDown;
+        Opened += (_, _) =>
+        {
+            // Screenshots: kein Mica (gibt es in Bildern nicht), normaler Hintergrund aus dem Theme
+            if (!_screenshot)
+            {
+                ThemeManager.ApplyWindowChrome(this);
+                // Ohne Ein- und Ausblend-Animation: Beim Bildschirm-Scan muss das Fenster sofort weg sein
+                Native.DisableTransitions(this);
+            }
+            if (state.StartupProblem is { } problem) ShowNotice(NoticeKind.Warning, problem);
+        };
+        AddHandler(KeyDownEvent, OnPreviewKeyDown, RoutingStrategies.Tunnel);
         if (state.IsDemo && !screenshotMode)
         {
             Title = "Lupe – Demo";
@@ -80,28 +91,17 @@ public partial class MainWindow : Window, IThemedWindow
         NavCamera.IsChecked = true;
     }
 
-    private void OnSourceInitialized(object? sender, EventArgs e)
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
-        // Screenshots: kein Mica (gibt es in Bildern nicht), normaler Hintergrund aus dem Theme
-        if (_screenshot) return;
-        ThemeManager.ApplyWindowChrome(this);
-        // Ohne Ein- und Ausblend-Animation: Beim Bildschirm-Scan muss das Fenster sofort weg sein, sonst steht es
-        // halb durchsichtig im Standbild
-        int disable = 1;
-        Native.DwmSetWindowAttribute(new WindowInteropHelper(this).Handle, Native.DWMWA_TRANSITIONS_FORCEDISABLED, ref disable, sizeof(int));
-    }
-
-    public void ThemeChanged()
-    {
-        if (!_screenshot) ThemeManager.ApplyWindowChrome(this);
+        base.OnPropertyChanged(change);
+        if (change.Property == IsVisibleProperty || change.Property == WindowStateProperty) SyncPageVisibility();
     }
 
     // ================= Navigation =================
 
-    private void Nav_Checked(object sender, RoutedEventArgs e)
+    private void Nav_Checked(object? sender, RoutedEventArgs e)
     {
-        // Während InitializeComponent gibt es die Seiten noch nicht
-        if (_pages is null || _pages.FirstOrDefault(p => p.Nav == sender) is not { } entry) return;
+        if (sender is not NavButton { IsChecked: true } nav || _pages.FirstOrDefault(p => p.Nav == nav) is not { } entry || entry == _current) return;
         if (_current is not null && _pageVisible) ((IPage)_current.Page).OnHidden();
         _pageVisible = false;
         _current = entry;
@@ -129,11 +129,13 @@ public partial class MainWindow : Window, IThemedWindow
         else ((IPage)_current.Page).OnHidden();
     }
 
-    private void OnPreviewKeyDown(object sender, KeyEventArgs e)
+    private void OnPreviewKeyDown(object? sender, KeyEventArgs e)
     {
-        if (Keyboard.Modifiers != ModifierKeys.Control) return;
+        // Strg (macOS: Befehlstaste)
+        var command = OperatingSystem.IsMacOS() ? KeyModifiers.Meta : KeyModifiers.Control;
+        if (e.KeyModifiers != command) return;
         // Strg+V außerhalb von Eingabefeldern: Bild aus der Zwischenablage lesen (Seite „Datei“)
-        if (e.Key == Key.V && Keyboard.FocusedElement is not TextBox)
+        if (e.Key == Key.V && FocusManager?.GetFocusedElement() is not TextBox)
         {
             ShowPage("datei");
             _file.PasteFromClipboard();
@@ -166,37 +168,38 @@ public partial class MainWindow : Window, IThemedWindow
         {
             // Die Demo meldet kein globales Kürzel an (neben einer echten Lupe wäre es sonst belegt)
             StatusDetail.Text = "in der Demo aus";
-            StatusCircle.SetResourceReference(Border.BackgroundProperty, "ControlFillColorDefaultBrush");
-            StatusGlyph.SetResourceReference(TextBlock.ForegroundProperty, "TextFillColorSecondaryBrush");
+            StatusCircle.SetResource(Border.BackgroundProperty, "ControlFillColorDefaultBrush");
+            StatusGlyph.SetResource(TextBlock.ForegroundProperty, "TextFillColorSecondaryBrush");
             StatusGlyph.Text = "\uE765";
-            StatusCircle.ToolTip = "In der Demo ist das Tastenkürzel nicht angemeldet – „Ausschnitt scannen“ auf der Seite Bildschirm geht trotzdem.";
-            Nav.SetBadge(NavScreen, null);
+            ToolTip.SetTip(StatusCircle, "In der Demo ist das Tastenkürzel nicht angemeldet – „Ausschnitt scannen“ auf der Seite Bildschirm geht trotzdem.");
+            NavScreen.Badge = null;
         }
         else if (_state.HotkeyError is { } error)
         {
-            StatusDetail.Text = "belegt – siehe Einstellungen";
-            StatusCircle.SetResourceReference(Border.BackgroundProperty, "SystemFillColorCautionBackgroundBrush");
-            StatusGlyph.SetResourceReference(TextBlock.ForegroundProperty, "SystemFillColorCautionBrush");
+            StatusDetail.Text = "nicht verfügbar – siehe Einstellungen";
+            StatusCircle.SetResource(Border.BackgroundProperty, "SystemFillColorCautionBackgroundBrush");
+            StatusGlyph.SetResource(TextBlock.ForegroundProperty, "SystemFillColorCautionBrush");
             StatusGlyph.Text = "\uE7BA";
-            StatusCircle.ToolTip = error;
-            Nav.SetBadge(NavScreen, "!");
-            Nav.SetBadgeTone(NavScreen, "Warnung");
+            ToolTip.SetTip(StatusCircle, error);
+            NavScreen.Badge = "!";
+            NavScreen.BadgeWarning = true;
         }
         else
         {
             StatusDetail.Text = _state.HotkeyActive ? "scannt einen Ausschnitt" : "noch nicht angemeldet";
-            StatusCircle.SetResourceReference(Border.BackgroundProperty, "AccentFillColorDefaultBrush");
-            StatusGlyph.SetResourceReference(TextBlock.ForegroundProperty, "TextOnAccentFillColorPrimaryBrush");
+            StatusCircle.SetResource(Border.BackgroundProperty, "AccentFillColorDefaultBrush");
+            StatusGlyph.SetResource(TextBlock.ForegroundProperty, "TextOnAccentFillColorPrimaryBrush");
             StatusGlyph.Text = "\uE765";
-            StatusCircle.ToolTip = $"{hotkey} scannt einen Bildschirmausschnitt – aus jedem Programm.";
-            Nav.SetBadge(NavScreen, null);
+            ToolTip.SetTip(StatusCircle, $"{hotkey} scannt einen Bildschirmausschnitt – aus jedem Programm.");
+            NavScreen.Badge = null;
+            NavScreen.BadgeWarning = false;
         }
     }
 
     private void UpdateBadges()
     {
         int count = _state.History.Entries.Count;
-        Nav.SetBadge(NavHistory, count == 0 ? null : count > 999 ? "999+" : count.ToString(Labels.German));
+        NavHistory.Badge = count == 0 ? null : count > 999 ? "999+" : count.ToString(Labels.German);
     }
 
     // ================= Meldungen =================
@@ -212,20 +215,24 @@ public partial class MainWindow : Window, IThemedWindow
         };
         InfoIcon.Text = glyph;
         InfoText.Text = text;
-        InfoIcon.SetResourceReference(TextBlock.ForegroundProperty, iconBrush);
-        if (background is null) InfoBar.Background = System.Windows.Media.Brushes.Transparent;
-        else InfoBar.SetResourceReference(Border.BackgroundProperty, background);
-        InfoBar.Visibility = Visibility.Visible;
+        InfoIcon.SetResource(TextBlock.ForegroundProperty, iconBrush);
+        if (background is null)
+        {
+            InfoBar.ClearValue(Border.BackgroundProperty);
+            InfoBar.Background = Brushes.Transparent;
+        }
+        else InfoBar.SetResource(Border.BackgroundProperty, background);
+        InfoBar.IsVisible = true;
 
         // Erfolg und Hinweise verschwinden von selbst, Fehler und Warnungen bleiben bis zum Schließen
         _infoTimer.Stop();
         if (kind is NoticeKind.Info or NoticeKind.Success) _infoTimer.Start();
     }
 
-    private void CloseInfo_Click(object sender, RoutedEventArgs e)
+    private void CloseInfo_Click(object? sender, RoutedEventArgs e)
     {
         _infoTimer.Stop();
-        InfoBar.Visibility = Visibility.Collapsed;
+        InfoBar.IsVisible = false;
     }
 
     // ================= Beenden und Screenshots =================
@@ -241,7 +248,7 @@ public partial class MainWindow : Window, IThemedWindow
     internal async Task PrepareScreenshotAsync(string slug)
     {
         _infoTimer.Stop();
-        InfoBar.Visibility = Visibility.Collapsed;
+        InfoBar.IsVisible = false;
         ShowPage(slug);
         await ((IPage)_current!.Page).PrepareScreenshotAsync();
     }

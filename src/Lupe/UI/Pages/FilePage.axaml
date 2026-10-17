@@ -1,0 +1,68 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:Lupe.UI"
+             x:Class="Lupe.UI.Pages.FilePage"
+             DragDrop.AllowDrop="True">
+    <Grid Margin="36,0,36,20" RowDefinitions="Auto,*,Auto">
+
+        <!-- ========== Bild holen ========== -->
+        <Grid Margin="0,0,0,12" ColumnDefinitions="Auto,Auto,*">
+            <Button Classes="accent" Click="Open_Click" AutomationProperties.Name="Bild öffnen">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE8E5;" Classes="glyph"/>
+                    <TextBlock Text="Bild öffnen …" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <Button x:Name="PasteButton" Grid.Column="1" Margin="8,0,0,0" Click="Paste_Click" ToolTip.Tip="Strg+V" AutomationProperties.Name="Aus Zwischenablage">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE77F;" Classes="glyph"/>
+                    <TextBlock Text="Aus Zwischenablage" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <TextBlock x:Name="SourceText" Grid.Column="2" Classes="caption" FontSize="13" Margin="16,0,0,0" VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" Text="oder Strg+V · oder ein Bild hierher ziehen"/>
+        </Grid>
+
+        <!-- ========== Vorschau / Ablagefläche ========== -->
+        <Border x:Name="DropArea" Grid.Row="1" MinHeight="180" CornerRadius="8" Background="{DynamicResource DropZoneBackground}" ClipToBounds="True">
+            <Panel>
+                <Rectangle x:Name="DropFrame" RadiusX="8" RadiusY="8" StrokeThickness="1.5" StrokeDashArray="5,4"
+                           Stroke="{DynamicResource DropZoneStroke}" IsHitTestVisible="False"/>
+                <ui:CodeView x:Name="View" Margin="12"/>
+                <StackPanel x:Name="DropHint" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" Margin="24">
+                    <TextBlock Text="&#xEB9F;" FontFamily="{DynamicResource IconFont}" FontSize="40" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
+                    <TextBlock Text="Bild hierher ziehen" Classes="subtitle" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                    <TextBlock x:Name="DropHintText" Classes="caption" FontSize="13" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,6,0,0" MaxWidth="440"
+                               Text="Fotos, Scans und Bildschirmfotos – PNG, JPEG, BMP, GIF, TIFF und was das System sonst lesen kann. Auch mehrere Codes in einem Bild."/>
+                </StackPanel>
+                <Border x:Name="BusyTag" HorizontalAlignment="Center" VerticalAlignment="Center" CornerRadius="6" Padding="14,8"
+                        Background="#CC000000" IsVisible="False" IsHitTestVisible="False">
+                    <TextBlock x:Name="BusyText" Text="Suche Codes …" Foreground="White" FontSize="14"/>
+                </Border>
+            </Panel>
+        </Border>
+
+        <!-- ========== Gefundene Codes ========== -->
+        <Border Grid.Row="2" Classes="card" Margin="0,12,0,0" Padding="16,12">
+            <StackPanel>
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock x:Name="ResultTitle" Text="Gefundene Codes" Classes="bodyStrong" VerticalAlignment="Center"/>
+                    <Button x:Name="CopyAllButton" Grid.Column="1" Classes="ghost" Click="CopyAll_Click" IsVisible="False"
+                            ToolTip.Tip="Alle Codes zeilenweise kopieren">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8C8;" Classes="glyph"/>
+                            <TextBlock Text="Alle kopieren" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+                <TextBlock x:Name="ResultEmpty" Text="Noch kein Bild gelesen." Classes="body" Margin="0,8,0,0"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <ScrollViewer MaxHeight="190" VerticalScrollBarVisibility="Auto" Focusable="False">
+                    <ItemsControl x:Name="ResultList" ItemTemplate="{StaticResource CodeRow}" Margin="0,6,0,0" Focusable="False"/>
+                </ScrollViewer>
+                <TextBlock x:Name="ResultDone" Classes="caption" Margin="0,6,0,0" IsVisible="False"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

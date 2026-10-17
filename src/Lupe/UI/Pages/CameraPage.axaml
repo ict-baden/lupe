@@ -1,0 +1,99 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:Lupe.UI"
+             xmlns:cam="clr-namespace:Lupe.Core.Camera;assembly=Lupe.Core"
+             x:Class="Lupe.UI.Pages.CameraPage">
+    <Grid Margin="36,0,36,20" RowDefinitions="Auto,*,Auto">
+
+        <!-- ========== Kamera wählen, starten ========== -->
+        <Grid Margin="0,0,0,12" ColumnDefinitions="Auto,Auto,Auto,*,Auto">
+            <ComboBox x:Name="CameraBox" Width="280" VerticalAlignment="Center" SelectionChanged="CameraBox_SelectionChanged"
+                      AutomationProperties.Name="Kamera">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="cam:CameraInfo">
+                        <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Grid.Column="1" Classes="ghost" Margin="4,0,0,0" Click="Refresh_Click" VerticalAlignment="Center"
+                    ToolTip.Tip="Kameras neu suchen" AutomationProperties.Name="Kameras neu suchen">
+                <TextBlock Text="&#xE72C;" Classes="icon" FontSize="14"/>
+            </Button>
+            <Button x:Name="StartButton" Grid.Column="2" Classes="accent" Margin="8,0,0,0" MinWidth="120"
+                    Click="StartStop_Click" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock x:Name="StartGlyph" Text="&#xE768;" Classes="glyph"/>
+                    <TextBlock x:Name="StartText" Text="Starten" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+            <CheckBox x:Name="AimToggle" Grid.Column="4" Content="Zielhilfe" VerticalAlignment="Center" Click="Aim_Click"
+                      ToolTip.Tip="Winkel in der Bildmitte – dort hinein den Code halten"/>
+        </Grid>
+
+        <!-- ========== Sucher ========== -->
+        <Border Grid.Row="1" CornerRadius="8" Background="{DynamicResource ViewfinderBackground}" ClipToBounds="True">
+            <Panel>
+                <ui:CodeView x:Name="View" Margin="2"/>
+
+                <StackPanel x:Name="Placeholder" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="520" Margin="24">
+                    <TextBlock x:Name="PlaceholderGlyph" Text="&#xE722;" FontFamily="{DynamicResource IconFont}" FontSize="40"
+                               Foreground="{DynamicResource ViewfinderTextSecondary}" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="PlaceholderTitle" Text="Kamera ist aus" FontFamily="{DynamicResource DisplayFont}" FontSize="20" FontWeight="SemiBold"
+                               Foreground="{DynamicResource ViewfinderText}" TextAlignment="Center" TextWrapping="Wrap" Margin="0,14,0,0"/>
+                    <TextBlock x:Name="PlaceholderText" FontSize="13" Foreground="{DynamicResource ViewfinderTextSecondary}" TextAlignment="Center"
+                               TextWrapping="Wrap" Margin="0,6,0,0" LineHeight="20"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,18,0,0">
+                        <Button x:Name="PlaceholderStart" Classes="accent" Click="StartStop_Click" Margin="4,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE768;" Classes="glyph"/>
+                                <TextBlock x:Name="PlaceholderStartText" Text="Kamera starten" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="GoScreen" Click="GoScreen_Click" Margin="4,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE7F4;" Classes="glyph"/>
+                                <TextBlock Text="Bildschirm" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button x:Name="GoFile" Click="GoFile_Click" Margin="4,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE8B9;" Classes="glyph"/>
+                                <TextBlock Text="Datei" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Läuft: Name der Kamera oben links -->
+                <Border x:Name="LiveTag" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12" CornerRadius="4" Padding="8,3"
+                        Background="#99000000" IsVisible="False" IsHitTestVisible="False">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="8" Height="8" Fill="#FFE8505B" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="LiveText" Foreground="White" FontSize="12" Margin="7,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Border>
+            </Panel>
+        </Border>
+
+        <!-- ========== Ergebnis ========== -->
+        <Border Grid.Row="2" Classes="card" Margin="0,12,0,0" Padding="16,12">
+            <StackPanel>
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock x:Name="ResultTitle" Text="Zuletzt erkannt" Classes="bodyStrong" VerticalAlignment="Center"/>
+                    <Button x:Name="CopyAllButton" Grid.Column="1" Classes="ghost" Click="CopyAll_Click" IsVisible="False"
+                            ToolTip.Tip="Alle Codes zeilenweise kopieren">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8C8;" Classes="glyph"/>
+                            <TextBlock Text="Alle kopieren" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+                <TextBlock x:Name="ResultEmpty" Text="Noch nichts erkannt." Classes="body" Margin="0,8,0,0"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                <ItemsControl x:Name="ResultList" ItemTemplate="{StaticResource CodeRow}" Margin="0,6,0,0" Focusable="False"/>
+                <TextBlock x:Name="ResultDone" Classes="caption" Margin="0,6,0,0" IsVisible="False"/>
+                <TextBlock x:Name="TypeHint" Classes="caption" Margin="0,8,0,0" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>
