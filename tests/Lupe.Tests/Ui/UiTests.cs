@@ -15,6 +15,9 @@ namespace Lupe.Tests.Ui;
 /// <summary>Oberfläche ohne Bildschirm (Avalonia.Headless): Navigation, Meldungen, Tastenkürzel-Aufnahme, Auswahlfenster, Verlauf.</summary>
 public sealed class UiTests
 {
+    // Seitenwechsel: unter macOS mit ⌘, sonst mit Strg (wie MainWindow)
+    private static RawInputModifiers Command => OperatingSystem.IsMacOS() ? RawInputModifiers.Meta : RawInputModifiers.Control;
+
     private static AppState Demo() => AppState.OpenDemo(strict: false, new DateTimeOffset(2026, 10, 14, 10, 42, 0, TimeSpan.Zero));
 
     [Fact]
@@ -28,10 +31,10 @@ public sealed class UiTests
             try
             {
                 Assert.Equal("Kamera", window.PageTitle.Text);
-                window.KeyPressQwerty(PhysicalKey.Digit4, RawInputModifiers.Control);
+                window.KeyPressQwerty(PhysicalKey.Digit4, Command);
                 Assert.Equal("Verlauf", window.PageTitle.Text);
                 Assert.True(window.NavHistory.IsChecked);
-                window.KeyPressQwerty(PhysicalKey.Digit6, RawInputModifiers.Control);
+                window.KeyPressQwerty(PhysicalKey.Digit6, Command);
                 Assert.Equal("Info", window.PageTitle.Text);
                 window.ShowPage("einstellungen");
                 Assert.Equal("Einstellungen", window.PageTitle.Text);

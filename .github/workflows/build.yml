@@ -71,7 +71,8 @@ jobs:
 
       - name: Tests
         # Tests, die eine Webcam oder einen sichtbaren Desktop brauchen, überspringen sich selbst.
-        run: dotnet test Lupe.sln -c Release --no-build --logger "trx;LogFileName=tests.trx" --results-directory TestResults
+        # Beide Test-Ziele nacheinander: parallel bremsen sie sich gegenseitig, und die Echtzeit-Tests verpassen ihre Zeitfenster
+        run: dotnet test Lupe.sln -c Release --no-build -p:TestTfmsInParallel=false --logger "trx;LogFileName=tests.trx" --results-directory TestResults
 
       - name: Testergebnisse
         if: always()

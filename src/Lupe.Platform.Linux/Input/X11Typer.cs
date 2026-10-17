@@ -32,6 +32,7 @@ internal sealed unsafe class X11Typer : IDisposable
     private int _nextSpare;
     private long _lastRemap;
     private Timer? _restoreTimer;
+    private long _lastSend;
 
     /// <summary>Warum gerade nicht getippt werden kann (deutsch), sonst null.</summary>
     public string? Problem()
@@ -61,6 +62,7 @@ internal sealed unsafe class X11Typer : IDisposable
             }
             LoadMapping();
             byte shift = X11.XKeysymToKeycode(_display, Keysyms.ShiftL);
+            Premap(events, shift);
             int accepted = 0;
             for (int i = 0; i < events.Length; i++)
             {
@@ -179,6 +181,43 @@ internal sealed unsafe class X11Typer : IDisposable
         return Fake(spare, up);
     }
 
+    /// <summary>
+    /// Belegt vorab alle Zeichen des Stapels, die das Layout nicht hat (so viele freie Tastencodes es gibt), und wartet
+    /// danach einmal. Xlib-Programme lesen eine geänderte Belegung erst beim Verarbeiten nach; wechselt sie zwischen den
+    /// Tastendrücken, kam auf einem langsamen Rechner (CI unter Xvfb) für einige Tasten keine Keysym an.
+    /// </summary>
+    private void Premap(ReadOnlySpan<KeyEvent> events, byte shift)
+    {
+        bool changed = false;
+        nuint* syms = stackalloc nuint[2];
+        for (int i = 0; i < events.Length; i++)
+        {
+            var e = events[i];
+            if ((e.Flags & KeyFlags.Unicode) == 0 || (e.Flags & KeyFlags.Up) != 0) continue;
+            char c = (char)e.Scan;
+            int cp = c;
+            if (char.IsHighSurrogate(c) && i + 1 < events.Length && char.IsLowSurrogate((char)events[i + 1].Scan))
+            {
+                cp = Keysyms.JoinSurrogates(c, (char)events[++i].Scan);
+            }
+            uint keysym = Keysyms.FromCodePoint(cp);
+            if (keysym == Keysyms.NoSymbol || _assigned.ContainsValue(keysym)) continue;
+            var (keycode, level) = FindInLayout(keysym);
+            if (keycode != 0 && (level == 0 || shift != 0 && level == 1)) continue;
+            byte free = _spare.FirstOrDefault(kc => !_assigned.ContainsKey(kc));
+            if (free == 0) break; // alle belegt – den Rest wechselt Press reihum
+            syms[0] = keysym;
+            syms[1] = keysym;
+            X11.XChangeKeyboardMapping(_display, free, 2, syms, 1);
+            _assigned[free] = keysym;
+            changed = true;
+        }
+        if (!changed) return;
+        X11.XSync(_display, 0);
+        Thread.Sleep(RemapGap);
+        _lastRemap = Environment.TickCount64;
+    }
+
     private bool Fake(byte keycode, bool up) => X11.XTestFakeKeyEvent(_display, keycode, up ? 0 : 1, 0) != 0;
 
     /// <summary>Tastencode und Ebene (0 = ohne, 1 = mit Umschalt) der Keysym in der Grundgruppe des Layouts.</summary>
@@ -230,8 +269,28 @@ internal sealed unsafe class X11Typer : IDisposable
     private void ScheduleRestore()
     {
         if (_assigned.Count == 0) return;
-        _restoreTimer ??= new Timer(_ => Restore());
+        _lastSend = Environment.TickCount64;
+        _restoreTimer ??= new Timer(_ => RestoreWhenIdle());
         _restoreTimer.Change(RestoreDelay, Timeout.InfiniteTimeSpan);
+    }
+
+    /// <summary>
+    /// Zeitgeber: Belegungen erst entfernen, wenn seit dem letzten Tippen <see cref="RestoreDelay"/> vergangen ist. Lief der
+    /// Zeitgeber ab, während gerade getippt wurde, wartete er auf die Sperre und hätte die eben gesetzten Belegungen sofort
+    /// danach entfernt – das Ziel las dann für diese Tasten keine Keysym (CI unter Xvfb).
+    /// </summary>
+    private void RestoreWhenIdle()
+    {
+        lock (_gate)
+        {
+            long left = _lastSend + (long)RestoreDelay.TotalMilliseconds - Environment.TickCount64;
+            if (left > 0)
+            {
+                _restoreTimer?.Change(TimeSpan.FromMilliseconds(left), Timeout.InfiniteTimeSpan);
+                return;
+            }
+            Restore();
+        }
     }
 
     /// <summary>Entfernt die vorübergehenden Belegungen wieder.</summary>

@@ -98,8 +98,16 @@ public sealed class ZxingCppCapabilityTests
         for (int i = 0; i < 300; i++) live.Decode(frame);
         long before = Settled();
 
-        for (int i = 0; i < 3000; i++) Assert.Single(live.Decode(frame));
-        long growth = Settled() - before;
+        // Zwei Durchgänge: Ein Leck wächst in beiden. Einmaliges Wachstum (glibc legt unter Linux neue Speicherbereiche je
+        // Thread an, die es nicht zurückgibt) nur im ersten – gezählt wird der kleinere Wert.
+        long growth = long.MaxValue;
+        for (int round = 0; round < 2 && growth >= 4 * 1024 * 1024; round++)
+        {
+            for (int i = 0; i < 3000; i++) Assert.Single(live.Decode(frame));
+            long after = Settled();
+            growth = Math.Min(growth, after - before);
+            before = after;
+        }
 
         // Je Bild legt zxing-cpp Leseoptionen, ein Bild, eine Trefferliste und einen Treffer mit Text und Bytes an; blieben
         // sie liegen, wüchse der Speicher hier um mehrere Megabyte

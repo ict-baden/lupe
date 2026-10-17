@@ -387,7 +387,13 @@ public sealed class BarcodeDecoderTests
         using var cts = new CancellationTokenSource();
         // Eigener Thread statt CancelAfter: Dessen Timer läuft über den Threadpool, und den belegen die Erkennung und parallel
         // laufende Tests auf GitHub-Runnern mit wenigen Kernen – dort kam der Abbruch erst, als die Erkennung schon fertig war.
-        var canceller = new Thread(() => { Thread.Sleep(40); cts.Cancel(); }) { IsBackground = true };
+        // 10 ms: auf schnellen Macs ist die Erkennung nach 40 ms schon durch.
+        var canceller = new Thread(() =>
+        {
+            Thread.Sleep(10);
+            try { cts.Cancel(); }
+            catch (ObjectDisposedException) { } // Test schon gescheitert und aufgeräumt – nicht den Testprozess abstürzen lassen
+        }) { IsBackground = true };
         var sw = Stopwatch.StartNew();
         canceller.Start();
 
