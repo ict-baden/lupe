@@ -182,7 +182,9 @@ jobs:
         run: dotnet build tests/Lupe.Tests -c Release -f net10.0
 
       - name: Tests
-        run: dotnet test tests/Lupe.Tests -c Release -f net10.0 --no-build --logger "trx;LogFileName=tests-macos.trx" --results-directory TestResults
+        timeout-minutes: 20
+        # --blame-hang-timeout: ein hängender Test (z. B. eine Systemabfrage, die auf eine Erlaubnis wartet) bricht ab und wird benannt
+        run: dotnet test tests/Lupe.Tests -c Release -f net10.0 --no-build --blame-hang-timeout 4m --blame-hang-dump-type none --logger "console;verbosity=normal" --logger "trx;LogFileName=tests-macos.trx" --results-directory TestResults
 
       - name: Testergebnisse
         if: always()
