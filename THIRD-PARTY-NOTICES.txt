@@ -66,6 +66,26 @@ Lupe contains the following third-party software. Each part keeps its own licenc
    Licence: MIT (section D)
 
 
+4. FlashCap 1.12.0 - webcam access on Linux (V4L2) and macOS (AVFoundation)
+   Files: FlashCap.dll, FlashCap.Core.dll (NuGet package "FlashCap")
+   Source: https://github.com/kekyo/FlashCap
+   Copyright (c) Kouji Matsui (@kozy_kekyo, @kekyo@mi.kekyo.net)
+   Licence: Apache License, Version 2.0 (section A)
+
+5. SkiaSharp 3.119.4 - image decoding on Linux (camera MJPEG, image files, portal screenshots)
+   Files: SkiaSharp.dll, libSkiaSharp.so (NuGet packages "SkiaSharp", "SkiaSharp.NativeAssets.Linux")
+   Source: https://github.com/mono/SkiaSharp
+   Copyright (c) 2015-2016 Xamarin, Inc., Copyright (c) 2017-2018 Microsoft Corporation
+   Licence: MIT (section D). libSkiaSharp contains Skia (https://skia.org), Copyright (c) 2011 Google Inc.,
+   licence BSD 3-Clause (section B), and the libraries Skia uses (libpng, libjpeg-turbo, libwebp, zlib, FreeType,
+   expat, HarfBuzz); their notices: https://github.com/mono/SkiaSharp/blob/main/THIRD-PARTY-NOTICES.txt
+
+6. Tmds.DBus.Protocol 0.94.1 - D-Bus client for the desktop portals on Linux (Wayland)
+   Files: Tmds.DBus.Protocol.dll
+   Source: https://github.com/tmds/Tmds.DBus
+   Copyright (c) 2016 Tom Deseyn
+   Licence: MIT (section D)
+
 A. Apache License, Version 2.0
 ------------------------------
 

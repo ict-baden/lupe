@@ -21,7 +21,7 @@ public sealed class SettingsStoreTests : IDisposable
         return SettingsStore.Load(FilePath, out problem);
     }
 
-    [Fact]
+    [WindowsFact]
     public void Standardpfad_liegt_pro_Benutzer_unter_LocalAppData()
     {
         var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);

@@ -60,9 +60,8 @@ public static class SettingsStore
 
     private static readonly Lock SaveGate = new();
 
-    public static string DefaultPath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
-        "Lupe", "einstellungen.json");
+    /// <summary>Windows: %LocalAppData%\Lupe\einstellungen.json; Linux: ~/.config/lupe; macOS: ~/Library/Application Support/Lupe (siehe <see cref="AppPaths"/>).</summary>
+    public static string DefaultPath => Path.Combine(AppPaths.ConfigDirectory, "einstellungen.json");
 
     /// <summary>Fehlt die Datei oder ist sie kaputt: Standardwerte (eine kaputte Datei wird nicht überschrieben, bis gespeichert wird).</summary>
     public static LupeSettings Load(string? path = null) => Load(path, out _, out _);

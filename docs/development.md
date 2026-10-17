@@ -51,8 +51,22 @@ The xUnit project `tests/Lupe.Tests` has about 1,300 test cases. Tests that need
 | `[CodecFact]` | when Windows has a working codec for the format (WebP, HEIC …) | without the Store extension, or with a registered but broken one |
 | `[LeistungFact]` | timing tests with fixed limits | when `CI=true` (GitHub Actions) – runners are too uneven; force with `LUPE_LEISTUNG=1` |
 | `[AppCoreFact]` | tests through the real `Lupe.exe` | when `Lupe.exe` has not been built |
+| `[X11Fact]` | Linux with an X server and no Wayland – `XGetImage`, XTest typing into a test window, `XGrabKey` | elsewhere; run them with `xvfb-run` |
+| `[WaylandFact]` | Linux in a Wayland session with a session bus and xdg-desktop-portal | elsewhere |
 
 Counterparts such as `[NoDesktopFact]` and `[NonInteractiveFact]` check the behaviour **without** a desktop – that the core (`ScreenCapture.TryCapture`, `KeyboardTyper.TryType`, `GlobalHotkey`) reports a refused screenshot, refused input or a refused shortcut with the reason instead of failing silently. The app passes that reason on to the user.
+
+On Linux, run the platform-neutral tests and the X11 tests under a virtual X server (packages `xvfb`, `libx11-6`,
+`libxtst6`, `libxrandr2`):
+
+```bash
+xvfb-run -a -s "-screen 0 1280x1024x24" dotnet test tests/Lupe.Tests -f net10.0
+```
+
+The Wayland tests need a compositor and the portals, e.g. `sway` headless (`WLR_BACKENDS=headless`,
+`WLR_RENDERER=pixman`) with `pipewire`, `xdg-desktop-portal`, `xdg-desktop-portal-wlr` and `xdg-desktop-portal-gtk`
+inside `dbus-run-session`. Tests that change `LinuxSession.Environment` or talk to the X server share the collection
+`Linux-Sitzung` and do not run in parallel.
 
 The camera tests that run in real time (`Camera/ScanLoopRealtimeTests` and `Camera/FakeFrameSourceTests`: frame rate, repeat suppression) belong to the xUnit collection `Echtzeit`, which xUnit runs on its own after all parallel tests have finished. On runners with few cores, the other tests otherwise slowed recognition down so much that time windows were missed.
 
@@ -103,7 +117,8 @@ flowchart TB
 | `src/Lupe.Core/Screen` | `ScreenCapture` (facade over the platform: monitors, capture), `PixelRect`, `MonitorArea` |
 | `src/Lupe.Core/Input` | `KeyboardTyper` (event sequence, batching, pacing; output via `IKeyboardOutput`), `KeyEvent`, `HotkeyText` (display and parsing) |
 | `src/Lupe.Platform.Windows` | `WindowsPlatform`: `Camera/` (`CaptureSession` with MediaCapture, `FrameConverter`, `CameraProblems`, `CameraPrivacy`), `Screen/` (GDI capture, `DpiScope`, `DisplayNames`), `Input/` (`WindowsKeyboard` with SendInput and waitable timer, `Elevation`, `GlobalHotkey`, `AltGr`), `Imaging/` (WIC decoder), registry autostart |
-| `src/Lupe.Platform.Linux`, `src/Lupe.Platform.MacOS` | Skeletons that report “nicht verfügbar” until the backends are implemented |
+| `src/Lupe.Platform.Linux` | Linux backend (X11 and Wayland), see [platform-linux.md](platform-linux.md) |
+| `src/Lupe.Platform.MacOS` | Skeleton that reports “nicht verfügbar” until the backend is implemented |
 | `src/Lupe.Core/History` | `HistoryStore`, `HistoryFile` (JSON), `HistoryCsv` |
 | `src/Lupe.Core/Settings` | `SettingsStore` (tolerant loading, normalising), `SettingsFile` (backup, merge of a locked file), `LinkRules`, `AtomicFile` |
 | `src/Lupe` | Avalonia 12 app. `Program.cs` (entry point: picks the platform, command line without UI, the window, or headless screenshots), `App.axaml(.cs)` (window, tray, shortcut), `AppState` (shared state), `Cli/` (`CommandLine`, `ConsoleSession`), `UI/` (pages, `SelectionOverlay` – one window per monitor, `ResultToast`, `CodeChoiceWindow`, `AppTray`, `Dialogs`, `Theme/` – Windows 11 colours in the style of Zutritt and Vitrine, light/dark, Mica), `Services/` (`Hits` – the hit pipeline, `Desktop` – beep, clipboard, browser, typing, `Autostart`, `SingleInstance` – mutex on Windows, lock file and local socket elsewhere), `Demo/` (demo data, all codes generated with zxing-cpp), `Assets/LupeIcons.ttf` (Fluent UI System Icons subset on the Segoe Fluent Icons code points, used on Linux and macOS) |
