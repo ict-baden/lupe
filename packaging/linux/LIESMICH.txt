@@ -1,0 +1,15 @@
+Lupe für Linux (X11 und Wayland)
+================================
+
+Starten ohne Einrichten:   ./Lupe
+Für diesen Benutzer einrichten (Anwendungsmenü, Befehl „lupe“):
+                           ./install.sh
+Wieder entfernen:          ~/.local/opt/lupe/install.sh --entfernen
+
+Benötigt (meist schon vorhanden): libX11, libXtst, libXrandr, libXi, libICE, libSM, fontconfig, ICU
+  Debian/Ubuntu:  sudo apt install libx11-6 libxtst6 libxrandr2 libxi6 libice6 libsm6 libfontconfig1
+  Fedora:         sudo dnf install libX11 libXtst libXrandr libXi libICE libSM fontconfig libicu
+
+Kamera: der Benutzer muss in der Gruppe „video“ sein (sudo usermod -aG video $USER, danach neu anmelden).
+Wayland: Bildschirmausschnitt, Eintippen und Tastenkürzel laufen über die Desktop-Portale; der Desktop fragt beim
+ersten Mal nach der Erlaubnis. Einzelheiten: https://github.com/ict-baden/lupe/blob/main/docs/platform-linux.md

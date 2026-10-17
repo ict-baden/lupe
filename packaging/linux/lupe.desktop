@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Lupe
+GenericName=QR- und Barcodes lesen
+Comment=Liest QR- und Barcodes per Webcam, Bildschirmausschnitt, Datei oder Zwischenablage
+Exec=lupe
+Icon=lupe
+Terminal=false
+Categories=Utility;Graphics;Scanning;
+Keywords=QR;Barcode;Scanner;Code;
+StartupWMClass=Lupe

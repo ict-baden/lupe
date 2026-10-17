@@ -15,18 +15,19 @@ concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: false
 
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
 jobs:
-  build:
-    runs-on: windows-latest
-    env:
-      DOTNET_NOLOGO: true
-      DOTNET_CLI_TELEMETRY_OPTOUT: true
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      msi: ${{ steps.version.outputs.msi }}
+      suffix: ${{ steps.version.outputs.suffix }}
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-dotnet@v4
-        with:
-          global-json-file: global.json
 
       - name: Version bestimmen
         id: version
@@ -52,6 +53,16 @@ jobs:
           "suffix=$suffix" >> $env:GITHUB_OUTPUT
           Write-Host "Version: $v  MSI: $msi  Dateien: Lupe$suffix-x64.msi"
 
+  windows:
+    needs: version
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
       - name: Restore
         run: dotnet restore Lupe.sln
 
@@ -66,14 +77,14 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Testergebnisse
+          name: Testergebnisse-windows
           path: TestResults/*.trx
           if-no-files-found: ignore
 
       - name: Publish
         shell: pwsh
         run: |
-          $v = '${{ steps.version.outputs.version }}'
+          $v = '${{ needs.version.outputs.version }}'
           $common = @('src/Lupe/Lupe.csproj', '-c', 'Release', '-r', 'win-x64', '-p:PublishSingleFile=true', "-p:Version=$v", '-p:DebugType=none')
           # Benötigt .NET 10 Runtime auf dem Zielgerät
           dotnet publish @common --self-contained false -o out/framework
@@ -87,22 +98,135 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
           Copy-Item README.md out/framework/
-          Compress-Archive -Path out/framework/* -DestinationPath "dist/Lupe${{ steps.version.outputs.suffix }}-win-x64-framework.zip"
+          Compress-Archive -Path out/framework/* -DestinationPath "dist/Lupe${{ needs.version.outputs.suffix }}-win-x64-framework.zip"
           Copy-Item out/standalone/Lupe.exe dist/Lupe.exe
 
       - name: MSI bauen
         shell: pwsh
         run: |
           # Self-contained: läuft ohne installierte .NET-Runtime
-          dotnet build installer/Lupe.Installer.wixproj -c Release "-p:PublishDir=$PWD/out/self-contained/" -p:ProductVersion=${{ steps.version.outputs.msi }}
-          Copy-Item installer/bin/Release/Lupe.msi "dist/Lupe${{ steps.version.outputs.suffix }}-x64.msi"
+          dotnet build installer/Lupe.Installer.wixproj -c Release "-p:PublishDir=$PWD/out/self-contained/" -p:ProductVersion=${{ needs.version.outputs.msi }}
+          Copy-Item installer/bin/Release/Lupe.msi "dist/Lupe${{ needs.version.outputs.suffix }}-x64.msi"
           Get-ChildItem dist | Format-Table Name, Length
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Lupe-${{ steps.version.outputs.version }}
+          name: Pakete-windows
           path: dist/*
           if-no-files-found: error
+
+  linux:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Pakete für Tests
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends xvfb xauth libx11-6 libxtst6 libxrandr2 libxi6 libice6 libsm6 libfontconfig1
+
+      - name: Build
+        run: dotnet build tests/Lupe.Tests -c Release -f net10.0
+
+      - name: Tests (unter Xvfb)
+        # Plattformneutrale Tests, die Avalonia-Oberfläche ohne Bildschirm und die X11-Tests (XGetImage, XTest, XGrabKey)
+        run: xvfb-run -a -s "-screen 0 1280x1024x24" dotnet test tests/Lupe.Tests -c Release -f net10.0 --no-build --logger "trx;LogFileName=tests-linux.trx" --results-directory TestResults
+
+      - name: Testergebnisse
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Testergebnisse-linux
+          path: TestResults/*.trx
+          if-no-files-found: ignore
+
+      - name: Publish und Pakete
+        run: |
+          v='${{ needs.version.outputs.version }}'
+          for arch in x64 arm64; do
+            dotnet publish src/Lupe/Lupe.csproj -c Release -r linux-$arch --self-contained true "-p:Version=$v" -p:DebugType=none -o out/linux-$arch
+            packaging/linux/package.sh out/linux-$arch $arch "$v" dist '${{ needs.version.outputs.suffix }}'
+          done
+          ls -l dist
+
+      - name: Pakete prüfen
+        run: |
+          dpkg-deb --info dist/*.deb
+          tar -tzf dist/Lupe*-linux-x64.tar.gz | grep -E '^lupe/(Lupe|lupe.desktop|install.sh|lupe.png|libZXing.so|libSkiaSharp.so)$'
+          mkdir -p /tmp/lupe-probe && tar -xzf dist/Lupe*-linux-x64.tar.gz -C /tmp/lupe-probe
+          /tmp/lupe-probe/lupe/Lupe --hilfe | head -n 3
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pakete-linux
+          path: dist/*
+          if-no-files-found: error
+
+  macos:
+    needs: version
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Build
+        run: dotnet build tests/Lupe.Tests -c Release -f net10.0
+
+      - name: Tests
+        run: dotnet test tests/Lupe.Tests -c Release -f net10.0 --no-build --logger "trx;LogFileName=tests-macos.trx" --results-directory TestResults
+
+      - name: Testergebnisse
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Testergebnisse-macos
+          path: TestResults/*.trx
+          if-no-files-found: ignore
+
+      - name: Publish und Lupe.app
+        run: |
+          v='${{ needs.version.outputs.version }}'
+          for arch in arm64 x64; do
+            dotnet publish src/Lupe/Lupe.csproj -c Release -r osx-$arch --self-contained true "-p:Version=$v" -p:DebugType=none -o out/osx-$arch
+            packaging/macos/package.sh out/osx-$arch $arch "$v" dist '${{ needs.version.outputs.suffix }}'
+          done
+          ls -l dist
+
+      - name: Lupe.app prüfen
+        run: |
+          mkdir -p /tmp/lupe-probe && ditto -x -k dist/Lupe*-macos-arm64.zip /tmp/lupe-probe
+          plutil -p /tmp/lupe-probe/Lupe.app/Contents/Info.plist | grep NSCameraUsageDescription
+          /tmp/lupe-probe/Lupe.app/Contents/MacOS/Lupe --hilfe | head -n 3
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pakete-macos
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    needs: [version, windows, linux, macos]
+    if: github.event_name != 'pull_request' && (github.ref_type == 'tag' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Pakete-*
+          path: dist
+          merge-multiple: true
+
+      - name: Dateien
+        run: ls -l dist
 
       - name: Release erstellen (nur bei Tag v*)
         if: github.ref_type == 'tag'
@@ -115,7 +239,7 @@ jobs:
           gh release create $env:GITHUB_REF_NAME (Get-ChildItem dist/*).FullName --title "Lupe $env:GITHUB_REF_NAME" --generate-notes @pre
 
       - name: "Release 'latest' aktualisieren (main)"
-        if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         env:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
@@ -124,10 +248,19 @@ jobs:
           # aktualisiert (kein Löschen und Neuanlegen), Vorabversion erst, wenn es Releases aus Tags gibt – Einzelheiten im Skript.
           $base = "https://github.com/$env:GITHUB_REPOSITORY/releases/download/latest"
           $built = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm')
-          $notes = "Automatischer Build von main ($($env:GITHUB_SHA.Substring(0,7))), Version ${{ steps.version.outputs.version }}, gebaut $built UTC.`n`n" +
-                   "Die Links bleiben gleich und zeigen immer auf den neuesten Build:`n`n" +
+          $notes = "Automatischer Build von main ($($env:GITHUB_SHA.Substring(0,7))), Version ${{ needs.version.outputs.version }}, gebaut $built UTC.`n`n" +
+                   "Die Links bleiben gleich und zeigen immer auf den neuesten Build.`n`n" +
+                   "**Windows** (10 1809 oder neuer, x64)`n`n" +
                    "- **[Lupe-x64.msi]($base/Lupe-x64.msi)**: Installer für alle Benutzer (Intune/GPO)`n" +
                    "- **[Lupe.exe]($base/Lupe.exe)**: eine Datei, läuft ohne Installation und ohne .NET-Runtime`n" +
-                   "- **[Lupe-win-x64-framework.zip]($base/Lupe-win-x64-framework.zip)**: kleine Variante, braucht die .NET 10 Runtime"
+                   "- **[Lupe-win-x64-framework.zip]($base/Lupe-win-x64-framework.zip)**: kleine Variante, braucht die .NET 10 Runtime`n`n" +
+                   "**Linux** (X11 und Wayland)`n`n" +
+                   "- **[lupe_amd64.deb]($base/lupe_amd64.deb)**: Paket für Debian/Ubuntu (x64)`n" +
+                   "- **[Lupe-linux-x64.tar.gz]($base/Lupe-linux-x64.tar.gz)** / **[Lupe-linux-arm64.tar.gz]($base/Lupe-linux-arm64.tar.gz)**: entpacken, ``./install.sh```n`n" +
+                   "**macOS** (12 oder neuer, nicht notarisiert: beim ersten Start Rechtsklick → Öffnen)`n`n" +
+                   "- **[Lupe-macos-arm64.zip]($base/Lupe-macos-arm64.zip)**: Apple Silicon`n" +
+                   "- **[Lupe-macos-x64.zip]($base/Lupe-macos-x64.zip)**: Intel"
+          $expected = 'Lupe-x64.msi', 'Lupe.exe', 'Lupe-win-x64-framework.zip', 'lupe_amd64.deb', 'Lupe-linux-x64.tar.gz',
+                      'Lupe-linux-arm64.tar.gz', 'Lupe-macos-arm64.zip', 'Lupe-macos-x64.zip'
           # Die Version im Titel: GitHub zeigt beim Release das Datum der ersten Veröffentlichung, nicht das des Builds
-          ./.github/scripts/release-latest.ps1 -Notes $notes -Title "Latest Build (main) – ${{ steps.version.outputs.version }}"
+          ./.github/scripts/release-latest.ps1 -Notes $notes -Title "Latest Build (main) – ${{ needs.version.outputs.version }}" -Expected $expected

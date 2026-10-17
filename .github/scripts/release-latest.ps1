@@ -22,15 +22,22 @@
     GitHub zeigt Vorabversionen nicht in der Seitenleiste des Repos, dort stünde sonst nur „Create a new release“.
     Gibt es ein Release aus einem Tag, wird „latest“ zur Vorabversion, und das Tag-Release behält den Platz.
 
+    Die Dateien kommen aus drei Jobs (Windows: MSI, Exe, ZIP; Linux: tar.gz x64/arm64, .deb; macOS: zwei .app-ZIPs);
+    -Expected listet sie, damit ein unvollständiger Satz nicht veröffentlicht wird.
+
 .EXAMPLE
-    ./.github/scripts/release-latest.ps1 -Notes $notes -Title "Latest Build (main) – 0.1.0-ci.9"
+    ./.github/scripts/release-latest.ps1 -Notes $notes -Title "Latest Build (main) – 0.1.0-ci.9" -Expected 'Lupe-x64.msi', 'Lupe.exe'
+
 #>
 param(
     [Parameter(Mandatory)] [string] $Notes,
     [string] $Title = 'Latest Build (main)',
     [string] $Tag = 'latest',
     [string] $Branch = 'main',
-    [string] $Dist = 'dist'
+    [string] $Dist = 'dist',
+    # Dateien, die jeder Build haben muss (Windows, Linux, macOS). Fehlt eine, bricht das Skript ab, bevor etwas
+    # geändert ist – sonst entfernte Schritt 4 die alte Datei, und ihr fester Link endete im Leeren.
+    [string[]] $Expected = @()
 )
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false # Exit-Codes von gh werden unten selbst geprüft
@@ -90,6 +97,8 @@ function Skip([string] $why) {
 
 $files = @(Get-ChildItem $Dist -File)
 if ($files.Count -eq 0) { throw "Keine Dateien in $Dist." }
+$absent = @($Expected | Where-Object { $_ -notin $files.Name })
+if ($absent.Count -gt 0) { throw "Im Build fehlen: $($absent -join ', ') – nichts veröffentlicht." }
 
 # 1. Nur den neuesten Stand von main veröffentlichen. Die Dateiliste des Vergleichs endet bei 300 Dateien; umbenannte
 #    Workflows stehen nur unter previous_filename.
