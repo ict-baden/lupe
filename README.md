@@ -130,7 +130,7 @@
 |---|---|
 | [`Lupe-x64.msi`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-x64.msi) | Installer for all users, Start menu entry, no autostart; .NET included. |
 | [`Lupe.exe`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe.exe) | A single file that runs without installation; .NET included. |
-| [`Lupe-win-x64-framework.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-win-x64-framework.zip) | Small variant; needs the .NET 10 Desktop Runtime. |
+| [`Lupe-win-x64-framework.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-win-x64-framework.zip) | Small variant; needs the .NET 10 Runtime. |
 
 The repository is private: sign in to GitHub with an account that has access to `ict-baden`, otherwise GitHub answers with a 404 page. Requirements, downloading from the command line, the Windows camera privacy setting, autostart and uninstalling: **[Installation →](docs/installation.md)**
 
@@ -194,7 +194,7 @@ Light codes on dark backgrounds – dark mode, displays – are read in every fo
 
 ## Compared with Barcode-Reader
 
-Lupe is a rewrite of Till's [Barcode-Reader](https://github.com/pieewiee/Barcode-Reader) (.NET Framework 4.5.2, AForge for the webcam, MIT licence) on a current stack: .NET 10, WPF with the Fluent look of the sibling tools Vitrine and Zutritt, `Windows.Media.Capture` for the camera.
+Lupe is a rewrite of Till's [Barcode-Reader](https://github.com/pieewiee/Barcode-Reader) (.NET Framework 4.5.2, AForge for the webcam, MIT licence) on a current stack: .NET 10, Avalonia (Windows, Linux, macOS) with the Windows 11 look of the sibling tools Vitrine and Zutritt, `Windows.Media.Capture` for the camera on Windows.
 
 | | Barcode-Reader | Lupe |
 |---|---|---|

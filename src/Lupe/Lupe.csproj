@@ -20,8 +20,6 @@
     <Description>Liest QR- und Barcodes per Webcam, Bildschirmausschnitt, Datei oder Zwischenablage</Description>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    <!-- Avalonia lädt seine nativen Teile (Skia, HarfBuzz) auch aus der einzelnen Lupe.exe -->
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
@@ -70,4 +68,11 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Lupe.Tests" />
   </ItemGroup>
+
+  <!-- SkiaSharp und HarfBuzzSharp bringen Debug-Symbole ihrer nativen Bibliotheken mit (gut 100 MB) – nicht ausliefern -->
+  <Target Name="LupeOhneNativeSymbole" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.pdb' and $([System.String]::Copy('%(Filename)').StartsWith('lib'))" />
+    </ItemGroup>
+  </Target>
 </Project>
