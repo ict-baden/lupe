@@ -9,11 +9,26 @@ namespace Lupe.Platform.MacOS.Camera;
 /// <summary>Webcams unter macOS über FlashCap (AVFoundation).</summary>
 public sealed class MacOSCameraProvider : ICameraProvider
 {
+    internal static TimeSpan ListTimeout { get; set; } = TimeSpan.FromSeconds(10);
+
     public async Task<IReadOnlyList<CameraInfo>> ListAsync(CancellationToken ct = default)
     {
         ct.ThrowIfCancellationRequested();
         if (!OperatingSystem.IsMacOS()) return [];
-        var descriptors = await Task.Run(Enumerate, ct).ConfigureAwait(false);
+        // Ohne Erlaubnis gar nicht erst fragen; die Kamera-Seite zeigt den Hinweis aus MacOSPermissions
+        if (MacOSPermissions.Camera() is CameraAuthorization.Denied or CameraAuthorization.Restricted) return [];
+        List<CaptureDeviceDescriptor> descriptors;
+        try
+        {
+            // AVFoundation kann beim Auflisten hängen (auf GitHub-Runnern ohne Kamera und ohne Dialog dauerhaft) –
+            // dann wie „keine Kamera“, statt die Kamera-Seite ewig suchen zu lassen
+            descriptors = await Task.Run(Enumerate, ct).WaitAsync(ListTimeout, ct).ConfigureAwait(false);
+        }
+        catch (TimeoutException)
+        {
+            Trace.TraceWarning($"Lupe: Kameras nach {ListTimeout.TotalSeconds:0} s noch nicht aufgelistet – keine Kamera angenommen.");
+            return [];
+        }
         ct.ThrowIfCancellationRequested();
         var names = CameraList.MakeUnique(descriptors.Select(d => d.Name).ToList());
         return descriptors.Select((d, i) => new CameraInfo(IdOf(d), names[i])).ToList();
