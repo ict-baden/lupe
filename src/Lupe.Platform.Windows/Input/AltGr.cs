@@ -1,6 +1,7 @@
+using Lupe.Core.Input;
 using Lupe.Core.Model;
 
-namespace Lupe.Core.Input;
+namespace Lupe.Platform.Windows.Input;
 
 /// <summary>
 /// Schutz für Tastenkürzel mit Strg+Alt: Windows meldet AltGr als Strg+Alt, ein global belegtes Strg+Alt+Q schluckt
@@ -21,13 +22,13 @@ internal static unsafe class AltGr
     }
 
     /// <summary>Nur Kürzel mit Strg und Alt (ohne Win) kollidieren mit AltGr.</summary>
-    public static bool Applies(Hotkey hotkey) => hotkey.Ctrl && hotkey.Alt && !hotkey.Win;
+    public static bool Applies(Hotkey hotkey) => HotkeyText.AltGrApplies(hotkey);
 
     /// <summary>Tippt das von Windows geschluckte AltGr-Zeichen nach (Unicode, ohne auf das Loslassen zu warten).</summary>
     public static void Retype(string text)
     {
         var inputs = KeyboardTyper.BuildInputs(text, null);
-        SystemKeyboard.Instance.Send(inputs, out _);
+        WindowsKeyboard.Instance.Send(inputs, out _);
     }
 
     /// <summary>Tastaturlayout des Fensters, in das gerade getippt wird (jeder Thread kann ein eigenes haben).</summary>

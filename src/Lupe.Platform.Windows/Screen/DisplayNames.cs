@@ -1,6 +1,8 @@
 using System.Diagnostics;
+using Lupe.Core.Model;
+using Lupe.Core.Screen;
 
-namespace Lupe.Core.Screen;
+namespace Lupe.Platform.Windows.Screen;
 
 /// <summary>
 /// Liest die Klarnamen der angeschlossenen Monitore (z. B. „DELL U2720Q“) über die DisplayConfig-API und ordnet sie

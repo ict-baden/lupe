@@ -1,7 +1,8 @@
 using System.Diagnostics;
+using Lupe.Core.Camera;
 using Lupe.Core.Model;
 
-namespace Lupe.Core.Camera;
+namespace Lupe.Platform.Windows.Camera;
 
 /// <summary>
 /// Echte Kamera als <see cref="IFrameSource"/>. Jeder Start öffnet eine neue <see cref="CaptureSession"/>

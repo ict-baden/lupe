@@ -1,5 +1,7 @@
 using Windows.Devices.Enumeration;
 
+using Lupe.Platform.Windows.Camera;
+
 namespace Lupe.Tests.Camera;
 
 /// <summary>

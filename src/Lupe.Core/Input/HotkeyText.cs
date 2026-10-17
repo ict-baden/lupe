@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Lupe.Core.Model;
+using Lupe.Core.Platform;
 
 namespace Lupe.Core.Input;
 
@@ -178,18 +179,27 @@ public static class HotkeyText
     /// Zeichen in dem Fall nach (siehe <see cref="GlobalHotkey"/>), sicherer ist trotzdem ein Kürzel mit Win. Kennt das
     /// Tastaturlayout des aufrufenden Threads ein Zeichen auf der Taste, nennt der Hinweis es.
     /// </summary>
-    public static string? AltGrWarning(Hotkey hotkey) => AltGrWarning(hotkey, Native.GetKeyboardLayout(0));
-
-    internal static string? AltGrWarning(Hotkey hotkey, nint layout)
+    public static string? AltGrWarning(Hotkey hotkey)
     {
         ArgumentNullException.ThrowIfNull(hotkey);
-        if (!AltGr.Applies(hotkey)) return null;
+        var layout = LupePlatform.Current.KeyboardLayout;
+        return layout.AltGrIsCtrlAlt ? AltGrWarning(hotkey, layout.AltGrText) : null;
+    }
+
+    /// <param name="altGrText">Was AltGr (+ Umschalt) + Taste im gewünschten Layout schreibt (siehe <see cref="IKeyboardLayout.AltGrText"/>).</param>
+    internal static string? AltGrWarning(Hotkey hotkey, Func<int, bool, string?> altGrText)
+    {
+        ArgumentNullException.ThrowIfNull(hotkey);
+        if (!AltGrApplies(hotkey)) return null;
         var text = Format(hotkey);
-        var character = AltGr.Text(hotkey.Key, hotkey.Shift, layout);
+        var character = altGrText(hotkey.Key, hotkey.Shift);
         var detail = character is null ? "" : $" (AltGr+{(hotkey.Shift ? "Umschalt+" : "")}{KeyName(hotkey.Key)} schreibt „{character}“)";
         return $"{text} kann auf deutschen Tastaturen mit AltGr-Zeichen kollidieren{detail} – Windows meldet AltGr als Strg+Alt. "
             + "Lupe tippt das Zeichen dann nach; sicherer ist ein Kürzel mit Win, z. B. Win+Umschalt+Q.";
     }
+
+    /// <summary>Nur Kürzel mit Strg und Alt (ohne Win) kollidieren mit AltGr (wo das System AltGr als Strg+Alt meldet).</summary>
+    public static bool AltGrApplies(Hotkey hotkey) => hotkey.Ctrl && hotkey.Alt && !hotkey.Win;
 
     private static bool StandsAlone(int vk)
         => vk is (>= VK_F1 and <= VK_F24) or VK_SNAPSHOT or VK_PAUSE or VK_SCROLL or (>= 0xA6 and <= 0xB7);
@@ -274,8 +284,7 @@ public static class HotkeyText
     /// </summary>
     private static string? LayoutChar(int vk)
     {
-        uint mapped = Native.MapVirtualKeyW((uint)vk, Native.MAPVK_VK_TO_CHAR);
-        char c = (char)(mapped & 0xFFFF); // oberstes Bit = Tottaste
+        if (LupePlatform.Current.KeyboardLayout.KeyChar(vk) is not { } c) return null;
         if (c <= ' ' || c == '+' || char.IsControl(c) || char.IsWhiteSpace(c) || char.IsSurrogate(c)) return null;
         return LayoutKey(char.ToLowerInvariant(c)) == vk ? char.ToUpperInvariant(c).ToString() : null;
     }
@@ -283,13 +292,9 @@ public static class HotkeyText
     /// <summary>Die Taste, die im aktuellen Tastaturlayout ohne Umschalttaste das Zeichen schreibt, sonst null.</summary>
     private static int? LayoutKey(char c)
     {
+        var layout = LupePlatform.Current.KeyboardLayout;
         foreach (char candidate in (ReadOnlySpan<char>)[char.ToLowerInvariant(c), char.ToUpperInvariant(c)])
-        {
-            short result = Native.VkKeyScanW(candidate);
-            if (result == -1) continue;
-            int vk = result & 0xFF, shiftState = (result >> 8) & 0xFF;
-            if (shiftState == 0 && vk is >= 1 and <= 0xFE) return vk;
-        }
+            if (layout.KeyForChar(candidate) is { } vk and >= 1 and <= 0xFE) return vk;
         return null;
     }
 }

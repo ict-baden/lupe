@@ -2,7 +2,9 @@ using System.Runtime.CompilerServices;
 using Lupe.Core.Model;
 using Lupe.Core.Screen;
 using Lupe.Tests.TestSupport;
-using CoreNative = Lupe.Core.Screen.Native;
+using CoreNative = Lupe.Platform.Windows.Screen.Native;
+
+using Lupe.Platform.Windows.Screen;
 
 namespace Lupe.Tests.Screen;
 
@@ -151,7 +153,7 @@ public sealed class ScreenCaptureTests
     [InlineData(@"", null)]
     [InlineData(@"\\.\MONITOR4", null)]
     public void Geraetenummer_aus_dem_GDI_Namen(string device, int? expected)
-        => Assert.Equal(expected, ScreenCapture.DeviceNumber(device));
+        => Assert.Equal(expected, WindowsScreenCapture.DeviceNumber(device));
 
     [Theory]
     [InlineData(1, null, "Bildschirm 1")]
@@ -233,7 +235,7 @@ public sealed class GdiCopyTests
         using var source = new MemoryDc(Coordinates(250, 200));
         var area = new PixelRect(37, 21, 121, 90); // ungerade Breite: kein Zeilen-Padding bei 32 Bit
 
-        Assert.True(ScreenCapture.CopyFromDc(source.Handle, area, CoreNative.SRCCOPY, out var image, out string? error), error);
+        Assert.True(WindowsScreenCapture.CopyFromDc(source.Handle, area, CoreNative.SRCCOPY, out var image, out string? error), error);
 
         Assert.Equal(121, image.Width);
         Assert.Equal(90, image.Height);
@@ -257,7 +259,7 @@ public sealed class GdiCopyTests
     {
         using var source = new MemoryDc(Coordinates(64, 64));
 
-        Assert.True(ScreenCapture.CopyFromDc(source.Handle, new PixelRect(0, 0, 64, 64), CoreNative.SRCCOPY | CoreNative.CAPTUREBLT, out var image, out _));
+        Assert.True(WindowsScreenCapture.CopyFromDc(source.Handle, new PixelRect(0, 0, 64, 64), CoreNative.SRCCOPY | CoreNative.CAPTUREBLT, out var image, out _));
 
         Assert.Equal(63, image.Bgra[(63 * 64 + 63) * 4]);
         Assert.Equal(255, image.Bgra[3]);
@@ -270,7 +272,7 @@ public sealed class GdiCopyTests
         var screen = TestCodes.Embed(TestCodes.Render(text, BarcodeFormat.QR_CODE, 220, 220), 800, 600, 431, 287);
         using var source = new MemoryDc(screen);
 
-        Assert.True(ScreenCapture.CopyFromDc(source.Handle, new PixelRect(400, 250, 300, 300), CoreNative.SRCCOPY, out var image, out _));
+        Assert.True(WindowsScreenCapture.CopyFromDc(source.Handle, new PixelRect(400, 250, 300, 300), CoreNative.SRCCOPY, out var image, out _));
 
         Assert.Equal(text, DesktopProbe.DecodeQr(image));
         Assert.Equal(1.0, DesktopProbe.Agreement(image, CropOf(screen, 400, 250, 300, 300), tolerance: 0));
@@ -281,7 +283,7 @@ public sealed class GdiCopyTests
     {
         using var source = new MemoryDc(Coordinates(100, 80));
 
-        Assert.True(ScreenCapture.CopyFromDc(source.Handle, new PixelRect(90, 70, 20, 20), CoreNative.SRCCOPY, out var image, out _));
+        Assert.True(WindowsScreenCapture.CopyFromDc(source.Handle, new PixelRect(90, 70, 20, 20), CoreNative.SRCCOPY, out var image, out _));
 
         Assert.Equal(20, image.Width);
         int inside = (5 * image.Stride) + 5 * 4; // Quelle (95, 75)
@@ -295,7 +297,7 @@ public sealed class GdiCopyTests
     [Fact]
     public void Ungueltige_Quelle_meldet_Fehler_statt_zu_werfen()
     {
-        bool ok = ScreenCapture.CopyFromDc(0, new PixelRect(0, 0, 10, 10), CoreNative.SRCCOPY, out var image, out string? error);
+        bool ok = WindowsScreenCapture.CopyFromDc(0, new PixelRect(0, 0, 10, 10), CoreNative.SRCCOPY, out var image, out string? error);
 
         Assert.False(ok);
         Assert.Null(image);
@@ -308,7 +310,7 @@ public sealed class GdiCopyTests
         using var source = new MemoryDc(Coordinates(64, 64));
         int before = GdiObjects();
         for (int i = 0; i < 300; i++)
-            Assert.True(ScreenCapture.CopyFromDc(source.Handle, new PixelRect(i % 32, 0, 32, 32), CoreNative.SRCCOPY, out _, out _));
+            Assert.True(WindowsScreenCapture.CopyFromDc(source.Handle, new PixelRect(i % 32, 0, 32, 32), CoreNative.SRCCOPY, out _, out _));
         Assert.InRange(GdiObjects() - before, -10, 10);
     }
 

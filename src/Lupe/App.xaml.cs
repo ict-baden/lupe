@@ -4,6 +4,7 @@ using System.Windows.Threading;
 using Lupe.Cli;
 using Lupe.Core.Input;
 using Lupe.Core.Model;
+using Lupe.Core.Platform;
 using Lupe.Services;
 using Lupe.UI;
 using Lupe.UI.Theme;
@@ -21,7 +22,7 @@ public partial class App : Application
     private AppState? _state;
     private MainWindow? _window;
     private TrayIcon? _tray;
-    private GlobalHotkey? _hotkey;
+    private IGlobalHotkey? _hotkey;
     private ScreenScan? _scan;
     private bool _exiting;
     private bool _cleanedUp;
@@ -156,7 +157,7 @@ public partial class App : Application
         var label = HotkeyLabel(hotkey);
         try
         {
-            var registered = new GlobalHotkey(hotkey);
+            var registered = LupePlatform.Current.Hotkeys.Register(hotkey);
             if (registered.IsRegistered)
             {
                 registered.Pressed += (_, _) => Dispatcher.BeginInvoke(StartScreenScan);

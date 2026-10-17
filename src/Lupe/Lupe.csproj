@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Lupe.Core\Lupe.Core.csproj" />
+    <ProjectReference Include="..\Lupe.Platform.Windows\Lupe.Platform.Windows.csproj" />
   </ItemGroup>
 
   <ItemGroup>

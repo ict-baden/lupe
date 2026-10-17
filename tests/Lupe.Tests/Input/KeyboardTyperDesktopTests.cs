@@ -2,6 +2,8 @@ using System.Runtime.InteropServices;
 using Lupe.Core.Input;
 using Lupe.Tests.Screen;
 
+using Lupe.Platform.Windows.Input;
+
 namespace Lupe.Tests.Input;
 
 /// <summary>
@@ -123,7 +125,7 @@ public sealed class KeyboardTyperDesktopTests
     }
 
     private static void Send(Native.INPUT input)
-        => Assert.Equal(1, SystemKeyboard.Instance.Send([input], out _));
+        => Assert.Equal(1, WindowsKeyboard.Send([input], out _));
 
     [DllImport("user32.dll")]
     private static extern nint SendMessageW(nint hwnd, uint msg, nint wParam, nint lParam);

@@ -2,6 +2,8 @@ using System.Runtime.InteropServices;
 using Lupe.Core.Camera;
 using Windows.Media.Capture.Frames;
 
+using Lupe.Platform.Windows.Camera;
+
 namespace Lupe.Tests.Camera;
 
 public sealed class CameraProblemsTests

@@ -96,9 +96,12 @@ flowchart TB
 |---|---|
 | `src/Lupe.Core/Model` | `PixelImage` (BGRA picture shared by all parts), `DecodedCode`, `ResultActions`, `LinkRule`, `HistoryEntry`, `Hotkey`, `LupeSettings` with all defaults |
 | `src/Lupe.Core/Decoding` | `BarcodeDecoder` (stages, tiles, result order), `LiveBarcodeDecoder` (camera), `FormatReaders` (format list, readers, two-line confirmation for barcodes), `MultiDecode`, `WindowSearch` (Data Matrix/Aztec away from the centre), `GrayImage`, `ImageFile` and `ImageIntegrity` (loading, truncated files) |
-| `src/Lupe.Core/Camera` | `Cameras` (list and open), `CaptureSession` (MediaCapture, frame reader), `FormatChooser`, `FrameConverter`, `ScanLoop` (throttling), `RepeatFilter`, `CameraProblems` and `CameraPrivacy` (messages), `FakeFrameSource` for tests and the demo |
-| `src/Lupe.Core/Screen` | `ScreenCapture` (monitors, GDI capture), `DpiScope` (per-monitor DPI for the calling thread), `DisplayNames` |
-| `src/Lupe.Core/Input` | `KeyboardTyper`, `Elevation` (integrity check), `GlobalHotkey`, `HotkeyText` (display and parsing), `AltGr` |
+| `src/Lupe.Core/Platform` | Platform interfaces (`IPlatform` and its parts), `LupePlatform` (active platform), `UnsupportedPlatform` – see [architecture-platforms.md](architecture-platforms.md) |
+| `src/Lupe.Core/Camera` | `Cameras` (list and open via the platform), `CameraList` (names), `FormatChooser`, `ScanLoop` (throttling), `RepeatFilter`, `FakeFrameSource` for tests and the demo |
+| `src/Lupe.Core/Screen` | `ScreenCapture` (facade over the platform: monitors, capture), `PixelRect`, `MonitorArea` |
+| `src/Lupe.Core/Input` | `KeyboardTyper` (event sequence, batching, pacing; output via `IKeyboardOutput`), `KeyEvent`, `HotkeyText` (display and parsing) |
+| `src/Lupe.Platform.Windows` | `WindowsPlatform`: `Camera/` (`CaptureSession` with MediaCapture, `FrameConverter`, `CameraProblems`, `CameraPrivacy`), `Screen/` (GDI capture, `DpiScope`, `DisplayNames`), `Input/` (`WindowsKeyboard` with SendInput and waitable timer, `Elevation`, `GlobalHotkey`, `AltGr`), `Imaging/` (WIC decoder), registry autostart |
+| `src/Lupe.Platform.Linux`, `src/Lupe.Platform.MacOS` | Skeletons that report “nicht verfügbar” until the backends are implemented |
 | `src/Lupe.Core/History` | `HistoryStore`, `HistoryFile` (JSON), `HistoryCsv` |
 | `src/Lupe.Core/Settings` | `SettingsStore` (tolerant loading, normalising), `SettingsFile` (backup, merge of a locked file), `LinkRules`, `AtomicFile` |
 | `src/Lupe` | `Program.cs` (entry point: command line without WPF, or the window), `App.xaml.cs` (window, tray, shortcut), `AppState` (shared state), `Cli/` (`CommandLine`, `ConsoleSession`), `UI/` (pages, `SelectionOverlay`, `ResultToast`, `CodeChoiceWindow`, `TrayIcon`, Fluent theme shared in style with Zutritt and Vitrine), `Services/` (`Hits` – the hit pipeline, `Desktop` – beep, clipboard, browser, typing, `Autostart`, `SingleInstance`), `Demo/` (demo data, all codes generated with zxing-cpp) |

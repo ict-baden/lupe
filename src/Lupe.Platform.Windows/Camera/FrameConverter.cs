@@ -1,10 +1,11 @@
 using System.Numerics;
 using System.Runtime.InteropServices;
+using Lupe.Core.Camera;
 using Lupe.Core.Model;
-using Windows.Graphics.Imaging;
 using WinRT;
+using Windows.Graphics.Imaging;
 
-namespace Lupe.Core.Camera;
+namespace Lupe.Platform.Windows.Camera;
 
 /// <summary>Kamerabild (<see cref="SoftwareBitmap"/>) → <see cref="PixelImage"/>: BGRA8, dicht gepackt, Alpha 255.</summary>
 internal static class FrameConverter

@@ -59,7 +59,7 @@ public sealed class WindowTests
         try
         {
             WaitForWindow(process, "Lupe – Demo");
-            using var hotkey = new Core.Input.GlobalHotkey(Core.Model.Hotkey.Default);
+            using var hotkey = new Lupe.Platform.Windows.Input.GlobalHotkey(Core.Model.Hotkey.Default);
             if (!hotkey.IsRegistered)
             {
                 // Hält es eine andere Lupe dieser Sitzung (nicht die Demo), lässt sich das hier nicht prüfen

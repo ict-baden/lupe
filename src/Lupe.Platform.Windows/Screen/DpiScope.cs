@@ -1,4 +1,7 @@
-namespace Lupe.Core.Screen;
+using Lupe.Core.Model;
+using Lupe.Core.Screen;
+
+namespace Lupe.Platform.Windows.Screen;
 
 /// <summary>
 /// Schaltet den aufrufenden Thread vorübergehend auf „Per-Monitor-DPI (V2)“, damit Monitor-Rechtecke,

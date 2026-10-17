@@ -1,4 +1,7 @@
-namespace Lupe.Core.Input;
+using Lupe.Core.Input;
+using Lupe.Core.Model;
+
+namespace Lupe.Platform.Windows.Input;
 
 /// <summary>
 /// Erkennt, wann Windows Tastatureingaben stillschweigend verwirft: Läuft das Vordergrundfenster in einem Prozess mit

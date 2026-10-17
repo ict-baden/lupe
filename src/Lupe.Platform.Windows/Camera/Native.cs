@@ -1,6 +1,8 @@
 using System.Runtime.InteropServices;
+using Lupe.Core.Camera;
+using Lupe.Core.Model;
 
-namespace Lupe.Core.Camera;
+namespace Lupe.Platform.Windows.Camera;
 
 /// <summary>
 /// Interop für die Kamera: Zugriff auf den rohen Pixelspeicher einer <see cref="Windows.Graphics.Imaging.SoftwareBitmap"/>

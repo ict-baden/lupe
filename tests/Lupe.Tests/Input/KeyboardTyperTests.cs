@@ -12,13 +12,17 @@ public sealed class KeyboardTyperInputTests
         var inputs = KeyboardTyper.BuildInputs("Ab1", "");
 
         Assert.Equal(Keys.Chars("Ab1"), Keys.Describe(inputs));
-        Assert.All(inputs, i =>
+        Assert.All(inputs, i => Assert.Equal(0, i.VirtualKey)); // bei KEYEVENTF_UNICODE muss der Tastencode 0 sein
+#if WINDOWS
+        Assert.All(inputs, e =>
         {
-            Assert.Equal(Native.INPUT_KEYBOARD, i.type);
-            Assert.Equal(0, i.u.ki.wVk); // bei KEYEVENTF_UNICODE muss der Tastencode 0 sein
+            var i = Lupe.Platform.Windows.Input.WindowsKeyboard.ToInput(e);
+            Assert.Equal(Lupe.Platform.Windows.Input.Native.INPUT_KEYBOARD, i.type);
+            Assert.Equal(0, i.u.ki.wVk);
             Assert.Equal(0u, i.u.ki.time);
             Assert.Equal(0, i.u.ki.dwExtraInfo);
         });
+#endif
     }
 
     [Fact]
@@ -75,12 +79,12 @@ public sealed class KeyboardTyperInputTests
     {
         var inputs = KeyboardTyper.BuildInputs("\n\t", "");
 
-        Assert.Equal(KeyboardTyper.VK_RETURN, inputs[0].u.ki.wVk);
-        Assert.Equal(0x1C, inputs[0].u.ki.wScan);
-        Assert.Equal(0u, inputs[0].u.ki.dwFlags);
-        Assert.Equal(Native.KEYEVENTF_KEYUP, inputs[1].u.ki.dwFlags);
-        Assert.Equal(KeyboardTyper.VK_TAB, inputs[2].u.ki.wVk);
-        Assert.Equal(0x0F, inputs[2].u.ki.wScan);
+        Assert.Equal(KeyboardTyper.VK_RETURN, inputs[0].VirtualKey);
+        Assert.Equal(0x1C, inputs[0].Scan);
+        Assert.Equal(KeyFlags.None, inputs[0].Flags);
+        Assert.Equal(KeyFlags.Up, inputs[1].Flags);
+        Assert.Equal(KeyboardTyper.VK_TAB, inputs[2].VirtualKey);
+        Assert.Equal(0x0F, inputs[2].Scan);
     }
 
     [Fact]
@@ -120,8 +124,8 @@ public sealed class KeyboardTyperInputTests
         else
         {
             Assert.Equal(4, inputs.Length);
-            Assert.Equal(expectedVk, inputs[2].u.ki.wVk);
-            Assert.Equal(expectedVk, inputs[3].u.ki.wVk);
+            Assert.Equal(expectedVk, inputs[2].VirtualKey);
+            Assert.Equal(expectedVk, inputs[3].VirtualKey);
         }
     }
 
@@ -146,7 +150,7 @@ public sealed class KeyboardTyperInputTests
             int depth = 0;
             for (int i = offset; i < offset + count; i++)
             {
-                depth += (inputs[i].u.ki.dwFlags & Native.KEYEVENTF_KEYUP) != 0 ? -1 : 1;
+                depth += inputs[i].IsUp ? -1 : 1;
                 Assert.True(depth >= 0);
             }
             Assert.Equal(0, depth); // nach jedem Paket ist keine Taste mehr gedrückt
@@ -175,8 +179,8 @@ public sealed class KeyboardTyperInputTests
         var release = KeyboardTyper.BuildModifierRelease([KeyboardTyper.VK_CONTROL, KeyboardTyper.VK_LCONTROL, KeyboardTyper.VK_MENU, KeyboardTyper.VK_LMENU]);
 
         Assert.Equal(["↓VKE8", "↑VKE8", "↑VKA2", "↑VKA4"], Keys.Describe(release));
-        Assert.Equal(0x1D, release[2].u.ki.wScan);
-        Assert.Equal(0x38, release[3].u.ki.wScan);
+        Assert.Equal(0x1D, release[2].Scan);
+        Assert.Equal(0x38, release[3].Scan);
     }
 
     [Fact]
@@ -206,18 +210,34 @@ public sealed class KeyboardTyperInputTests
         Assert.Empty(KeyboardTyper.DanglingKeyUps(inputs));
     }
 
+#if WINDOWS
     [Fact]
     public void INPUT_hat_die_Groesse_aus_dem_Windows_SDK()
-        => Assert.Equal(IntPtr.Size == 8 ? 40 : 28, Unsafe.SizeOf<Native.INPUT>());
+        => Assert.Equal(IntPtr.Size == 8 ? 40 : 28, Unsafe.SizeOf<Lupe.Platform.Windows.Input.Native.INPUT>());
 
     [Fact]
     public void MSG_hat_die_Groesse_aus_dem_Windows_SDK()
-        => Assert.Equal(IntPtr.Size == 8 ? 48 : 28, Unsafe.SizeOf<Native.MSG>());
+        => Assert.Equal(IntPtr.Size == 8 ? 48 : 28, Unsafe.SizeOf<Lupe.Platform.Windows.Input.Native.MSG>());
+
+    [Fact]
+    public void Flags_haben_die_Werte_von_KEYEVENTF()
+    {
+        Assert.Equal(Lupe.Platform.Windows.Input.Native.KEYEVENTF_EXTENDEDKEY, (uint)KeyFlags.Extended);
+        Assert.Equal(Lupe.Platform.Windows.Input.Native.KEYEVENTF_KEYUP, (uint)KeyFlags.Up);
+        Assert.Equal(Lupe.Platform.Windows.Input.Native.KEYEVENTF_UNICODE, (uint)KeyFlags.Unicode);
+    }
+#endif
 }
 
 /// <summary>Ablauf von KeyboardTyper mit einer Tastatur-Attrappe: Warten, Loslassen, Pakete, Fehler, Abbruch.</summary>
 public sealed class KeyboardTyperFlowTests
 {
+#if WINDOWS
+    private const string BlockedText = Lupe.Platform.Windows.Input.Elevation.BlockedText;
+#else
+    private const string BlockedText = "Eintippen nicht möglich – das Fenster im Vordergrund läuft mit höheren Rechten als Lupe.";
+#endif
+
     private static readonly int PollsUntilTimeout = KeyboardTyper.KeyReleaseTimeoutMs / KeyboardTyper.KeyPollMs;
 
     [Fact]
@@ -322,6 +342,7 @@ public sealed class KeyboardTyperFlowTests
         Assert.Equal(0, keyboard.KeyQueries); // nicht einmal auf Tasten gewartet
     }
 
+#if WINDOWS // Windows-Texte für SendInput-Fehler
     [Fact]
     public void Gesperrter_Desktop_meldet_den_Grund_auf_Deutsch()
     {
@@ -332,6 +353,7 @@ public sealed class KeyboardTyperFlowTests
         Assert.Single(keyboard.Sent); // nach dem ersten Fehlschlag kein weiteres Paket
         Assert.Contains("nimmt gerade keine Tastatureingaben an", error);
     }
+#endif
 
     [Fact]
     public void Zielfenster_mit_hoeheren_Rechten_wird_gemeldet_statt_ins_Leere_zu_tippen()
@@ -340,12 +362,12 @@ public sealed class KeyboardTyperFlowTests
         var keyboard = new FakeKeyboard
         {
             IsDownAfterPauses = (vk, pauses) => pauses < 4 && vk == KeyboardTyper.VK_LCONTROL,
-            Foreground = () => Elevation.BlockedText,
+            Foreground = () => BlockedText,
         };
 
         Assert.False(KeyboardTyper.TypeCore("geheim", "Enter", keyboard, out string? error, default));
 
-        Assert.Equal(Elevation.BlockedText, error);
+        Assert.Equal(BlockedText, error);
         Assert.Contains("höheren Rechten", error);
         Assert.Empty(keyboard.Sent);
         Assert.Equal([4], keyboard.ForegroundChecks); // einmal, und erst nach dem Warten auf losgelassene Tasten
@@ -362,6 +384,7 @@ public sealed class KeyboardTyperFlowTests
         Assert.True(keyboard.Sent.Count > 1);
     }
 
+#if WINDOWS // Windows-Texte für SendInput-Fehler
     [Fact]
     public void SendInput_ohne_Fehlercode_bekommt_eine_verstaendliche_Meldung()
     {
@@ -372,7 +395,9 @@ public sealed class KeyboardTyperFlowTests
         Assert.StartsWith("Eintippen nicht möglich – Windows hat die Tastatureingabe nicht angenommen", error);
         Assert.DoesNotContain("Fehler 0", error);
     }
+#endif
 
+#if WINDOWS // Windows-Texte für SendInput-Fehler
     [Fact]
     public void Anderer_Fehler_nennt_die_Windows_Nummer()
     {
@@ -382,6 +407,7 @@ public sealed class KeyboardTyperFlowTests
 
         Assert.Equal("Eintippen nicht möglich (Windows-Fehler 87).", error);
     }
+#endif
 
     [Fact]
     public void Teilweise_angenommener_Text_wird_gemeldet_und_haengende_Tasten_losgelassen()
@@ -459,6 +485,7 @@ public sealed class KeyboardTyperFlowTests
         Assert.Throws<ArgumentNullException>(() => KeyboardTyper.TryType(null!, "", out _));
     }
 
+#if WINDOWS
     [NonInteractiveFact]
     public void Ohne_sichtbaren_Desktop_meldet_TryType_den_Grund_und_Type_wirft_nicht()
     {
@@ -467,6 +494,7 @@ public sealed class KeyboardTyperFlowTests
 
         KeyboardTyper.Type("Lupe", "Enter"); // keine Ausnahme
     }
+#endif
 
     [Fact]
     public void Mit_Zeichenpause_geht_jedes_Zeichen_einzeln_hinaus()

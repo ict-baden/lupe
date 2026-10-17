@@ -1,6 +1,8 @@
 using Lupe.Core.Model;
 using Windows.Graphics.Imaging;
 
+using Lupe.Platform.Windows.Imaging;
+
 namespace Lupe.Tests.Decoding;
 
 /// <summary>

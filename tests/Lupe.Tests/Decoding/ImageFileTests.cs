@@ -4,6 +4,8 @@ using Lupe.Core.Model;
 using Lupe.Tests.TestSupport;
 using Windows.Graphics.Imaging;
 
+using Lupe.Platform.Windows.Imaging;
+
 namespace Lupe.Tests.Decoding;
 
 /// <summary>Echte Bilddateien laden – geschrieben mit den Windows-Encodern, gelesen mit <see cref="ImageFile"/>.</summary>
@@ -487,7 +489,7 @@ public sealed class ImageFileTests : IDisposable
     [InlineData(unchecked((int)0x8007000E), "bild.png", "ist zu groß")]
     public void Fehlercodes_werden_uebersetzt(int hresult, string name, string expected)
     {
-        var ex = ImageFile.Translate(new COMException("intern", hresult), name);
+        var ex = WicImageDecoder.TranslateError(new COMException("intern", hresult), name);
 
         Assert.IsType<InvalidDataException>(ex);
         Assert.Contains($"„{name}“", ex.Message);

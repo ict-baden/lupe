@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
 using System.Runtime.ExceptionServices;
 
+using Lupe.Platform.Windows.Screen;
+
 namespace Lupe.Tests.Screen;
 
 /// <summary>

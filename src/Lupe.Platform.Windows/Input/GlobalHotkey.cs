@@ -1,8 +1,10 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using Lupe.Core.Input;
 using Lupe.Core.Model;
+using Lupe.Core.Platform;
 
-namespace Lupe.Core.Input;
+namespace Lupe.Platform.Windows.Input;
 
 /// <summary>Systemweites Tastenkürzel (RegisterHotKey) auf eigenem Thread mit Nachrichtenfenster.</summary>
 /// <remarks>
@@ -15,7 +17,7 @@ namespace Lupe.Core.Input;
 /// UI-Thread gleichzeitig Dispose aufruft.</para>
 /// <para>Kürzel mit Strg+Alt (ohne Win) lassen AltGr-Zeichen durch, siehe <see cref="AltGr"/>.</para>
 /// </remarks>
-public sealed class GlobalHotkey : IDisposable
+public sealed class GlobalHotkey : IGlobalHotkey
 {
     internal const int HotkeyId = 0x4C55; // „LU“
     internal const uint WM_STOP = Native.WM_APP + 0x4C;

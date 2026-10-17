@@ -7,6 +7,7 @@ using System.Windows.Media.Imaging;
 using Lupe.Core.Decoding;
 using Lupe.Core.Input;
 using Lupe.Core.Model;
+using Lupe.Core.Platform;
 using Lupe.Interop;
 
 namespace Lupe.Services;
@@ -139,15 +140,7 @@ internal static class Typing
     /// </summary>
     public static async Task<string?> TypeIntoAsync(nint target, string text, string suffix, int delayMs)
     {
-        if (target == 0 || !Native.IsWindow(target)) return "Das Fenster von vorher gibt es nicht mehr.";
-        if (Native.IsIconic(target)) Native.ShowWindow(target, Native.SW_RESTORE);
-        Native.SetForegroundWindow(target);
-        for (int i = 0; i < 20 && Native.GetForegroundWindow() != target; i++)
-        {
-            await Task.Delay(25);
-            if (i == 8) Native.SetForegroundWindow(target);
-        }
-        if (Native.GetForegroundWindow() != target) return "Das Fenster von vorher ließ sich nicht aktivieren – nichts eingetippt.";
+        if (await LupePlatform.Current.ActiveWindow.ActivateAsync(target) is { } notActive) return notActive;
         try
         {
             // Wartet im Core, bis Strg/Alt des Tastenkürzels losgelassen sind – nicht auf dem Oberflächen-Thread. TryType statt

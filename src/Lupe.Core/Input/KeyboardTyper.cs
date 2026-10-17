@@ -1,9 +1,10 @@
 using System.Diagnostics;
-using System.Runtime.InteropServices;
+using Lupe.Core.Platform;
 
 namespace Lupe.Core.Input;
 
-/// <summary>Tippt Text als Tastatureingabe in das Vordergrundfenster (SendInput mit Unicode, unabhängig vom Tastaturlayout).</summary>
+/// <summary>Tippt Text als Tastatureingabe in das Vordergrundfenster (Unicode, unabhängig vom Tastaturlayout) – über
+/// <see cref="IPlatform.Keyboard"/> der aktiven Plattform; Windows: SendInput mit KEYEVENTF_UNICODE.</summary>
 /// <remarks>
 /// <para>Jedes Zeichen geht als Unicode-Tastendruck (KEYEVENTF_UNICODE) hinaus, Zeichen außerhalb der BMP (Emoji) als
 /// Surrogatpaar in einem Stück. Zeilenumbrüche (\r\n, \n, \r, U+0085, U+2028, U+2029) werden zur Eingabetaste,
@@ -18,7 +19,7 @@ namespace Lupe.Core.Input;
 /// </remarks>
 public static class KeyboardTyper
 {
-    /// <summary>Höchstens so viele Ereignisse je SendInput (≈ 200 Zeichen).</summary>
+    /// <summary>Höchstens so viele Ereignisse je Paket (≈ 200 Zeichen).</summary>
     internal const int MaxInputsPerBatch = 400;
     /// <summary>Pause zwischen zwei Paketen, damit das Zielprogramm seine Warteschlange abarbeiten kann.</summary>
     internal const int BatchPauseMs = 15;
@@ -74,10 +75,10 @@ public static class KeyboardTyper
     public static bool TryType(string text, string suffix, int delayMs, out string? error, CancellationToken ct = default)
     {
         // Zwei gleichzeitige Aufrufe würden ihre Pakete ineinander verschränken – nacheinander tippen.
-        lock (TypingGate) return TypeCore(text, suffix, SystemKeyboard.Instance, out error, ct, delayMs);
+        lock (TypingGate) return TypeCore(text, suffix, LupePlatform.Current.Keyboard, out error, ct, delayMs);
     }
 
-    internal static bool TypeCore(string text, string? suffix, IKeyboard keyboard, out string? error, CancellationToken ct, int delayMs = 0)
+    internal static bool TypeCore(string text, string? suffix, IKeyboardOutput keyboard, out string? error, CancellationToken ct, int delayMs = 0)
     {
         ArgumentNullException.ThrowIfNull(text);
         ct.ThrowIfCancellationRequested();
@@ -110,11 +111,11 @@ public static class KeyboardTyper
         return true;
     }
 
-    /// <summary>Die vollständige INPUT-Folge für Text und Suffix (je Taste Drücken und Loslassen).</summary>
-    internal static Native.INPUT[] BuildInputs(string text, string? suffix)
+    /// <summary>Die vollständige Ereignisfolge für Text und Suffix (je Taste Drücken und Loslassen).</summary>
+    internal static KeyEvent[] BuildInputs(string text, string? suffix)
     {
         ArgumentNullException.ThrowIfNull(text);
-        var list = new List<Native.INPUT>(text.Length * 2 + 2);
+        var list = new List<KeyEvent>(text.Length * 2 + 2);
         for (int i = 0; i < text.Length; i++)
         {
             char c = text[i];
@@ -164,14 +165,14 @@ public static class KeyboardTyper
     };
 
     /// <summary>Teilt die Folge in Pakete von höchstens <paramref name="max"/> Ereignissen – nur an Stellen, an denen keine Taste gedrückt ist.</summary>
-    internal static List<(int Offset, int Count)> Batches(Native.INPUT[] inputs, int max)
+    internal static List<(int Offset, int Count)> Batches(KeyEvent[] inputs, int max)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(max);
         var batches = new List<(int, int)>();
         int start = 0, safeEnd = 0, depth = 0;
         for (int i = 0; i < inputs.Length; i++)
         {
-            depth += (inputs[i].u.ki.dwFlags & Native.KEYEVENTF_KEYUP) != 0 ? -1 : 1;
+            depth += inputs[i].IsUp ? -1 : 1;
             if (depth == 0) safeEnd = i + 1;
             if (i + 1 - start >= max && safeEnd > start)
             {
@@ -184,7 +185,7 @@ public static class KeyboardTyper
     }
 
     /// <summary>Wartet, bis keine Taste mehr gedrückt ist; liefert die nach Ablauf der Frist noch gedrückten Tasten.</summary>
-    internal static List<int> WaitForKeysReleased(IKeyboard keyboard, CancellationToken ct)
+    internal static List<int> WaitForKeysReleased(IKeyboardOutput keyboard, CancellationToken ct)
     {
         int maxPolls = KeyReleaseTimeoutMs / KeyPollMs;
         for (int poll = 0; ; poll++)
@@ -196,7 +197,7 @@ public static class KeyboardTyper
         }
     }
 
-    private static List<int> PressedKeys(IKeyboard keyboard)
+    private static List<int> PressedKeys(IKeyboardOutput keyboard)
     {
         var down = new List<int>();
         // Ab 0x08: Maustasten (0x01–0x06) zählen nicht; VK_PACKET ist kein echter Tastendruck.
@@ -209,7 +210,7 @@ public static class KeyboardTyper
     /// Ereignisse, die noch gedrückte Umschalttasten (Strg, Alt, Umschalt, Win – links wie rechts) loslassen. Ist Alt oder
     /// Win dabei, kommt vorher ein Druck auf eine unbelegte Taste, damit Windows kein Menü bzw. Startmenü öffnet.
     /// </summary>
-    internal static Native.INPUT[] BuildModifierRelease(IReadOnlyCollection<int> pressed)
+    internal static KeyEvent[] BuildModifierRelease(IReadOnlyCollection<int> pressed)
     {
         var set = new HashSet<int>(pressed);
         // Meldet Windows nur die allgemeine Taste, gilt die linke.
@@ -224,7 +225,7 @@ public static class KeyboardTyper
             (VK_LSHIFT, 0x2A, false), (VK_RSHIFT, 0x36, false),
             (VK_LWIN, 0x5B, true), (VK_RWIN, 0x5C, true),
         ];
-        var list = new List<Native.INPUT>();
+        var list = new List<KeyEvent>();
         if (set.Contains(VK_LMENU) || set.Contains(VK_RMENU) || set.Contains(VK_LWIN) || set.Contains(VK_RWIN))
         {
             list.Add(Key(VK_MASK, 0, up: false, extended: false));
@@ -235,7 +236,7 @@ public static class KeyboardTyper
         return [.. list];
     }
 
-    private static bool Send(IKeyboard keyboard, ReadOnlySpan<Native.INPUT> inputs, bool typedBefore, out string? error)
+    private static bool Send(IKeyboardOutput keyboard, ReadOnlySpan<KeyEvent> inputs, bool typedBefore, out string? error)
     {
         int sent = keyboard.Send(inputs, out int code);
         if (sent >= inputs.Length)
@@ -251,153 +252,67 @@ public static class KeyboardTyper
         }
         error = sent > 0 || typedBefore
             ? "Eintippen wurde unterbrochen – der Text kam nur teilweise an."
-            : code switch
-            {
-                Native.ERROR_ACCESS_DENIED =>
-                    "Eintippen nicht möglich – Windows nimmt gerade keine Tastatureingaben an (gesperrter Bildschirm, Anmeldedialog oder keine sichtbare Sitzung).",
-                // SendInput liefert 0 ohne Fehlercode, wenn ein anderes Programm die Eingabe gerade sperrt (BlockInput).
-                0 => "Eintippen nicht möglich – Windows hat die Tastatureingabe nicht angenommen (gerade von einem anderen Programm gesperrt?).",
-                _ => $"Eintippen nicht möglich (Windows-Fehler {code}).",
-            };
+            : keyboard.DescribeRejection(code);
         return false;
     }
 
     /// <summary>Loslass-Ereignisse für alle Tasten, die in <paramref name="sent"/> gedrückt, aber nicht losgelassen wurden.</summary>
-    internal static Native.INPUT[] DanglingKeyUps(ReadOnlySpan<Native.INPUT> sent)
+    internal static KeyEvent[] DanglingKeyUps(ReadOnlySpan<KeyEvent> sent)
     {
-        var open = new List<Native.KEYBDINPUT>();
-        foreach (var input in sent)
+        var open = new List<KeyEvent>();
+        foreach (var e in sent)
         {
-            var ki = input.u.ki;
-            bool up = (ki.dwFlags & Native.KEYEVENTF_KEYUP) != 0;
-            int index = open.FindIndex(k => k.wVk == ki.wVk && k.wScan == ki.wScan
-                && (k.dwFlags & Native.KEYEVENTF_UNICODE) == (ki.dwFlags & Native.KEYEVENTF_UNICODE));
-            if (!up) open.Add(ki);
+            int index = open.FindIndex(k => k.VirtualKey == e.VirtualKey && k.Scan == e.Scan && k.IsUnicode == e.IsUnicode);
+            if (!e.IsUp) open.Add(e);
             else if (index >= 0) open.RemoveAt(index);
         }
-        var result = new Native.INPUT[open.Count];
-        for (int i = 0; i < open.Count; i++)
-        {
-            var k = open[i];
-            result[i] = new Native.INPUT
-            {
-                type = Native.INPUT_KEYBOARD,
-                u = new Native.INPUTUNION { ki = k with { dwFlags = k.dwFlags | Native.KEYEVENTF_KEYUP } },
-            };
-        }
+        var result = new KeyEvent[open.Count];
+        for (int i = 0; i < open.Count; i++) result[i] = open[i] with { Flags = open[i].Flags | KeyFlags.Up };
         return result;
     }
 
-    private static void AddKey(List<Native.INPUT> list, ushort vk, ushort scan)
+    private static void AddKey(List<KeyEvent> list, ushort vk, ushort scan)
     {
         list.Add(Key(vk, scan, up: false, extended: false));
         list.Add(Key(vk, scan, up: true, extended: false));
     }
 
-    private static void AddUnicode(List<Native.INPUT> list, char c)
+    private static void AddUnicode(List<KeyEvent> list, char c)
     {
         list.Add(Unicode(c, up: false));
         list.Add(Unicode(c, up: true));
     }
 
-    private static Native.INPUT Key(ushort vk, ushort scan, bool up, bool extended) => new()
-    {
-        type = Native.INPUT_KEYBOARD,
-        u = new Native.INPUTUNION
-        {
-            ki = new Native.KEYBDINPUT
-            {
-                wVk = vk,
-                wScan = scan,
-                dwFlags = (up ? Native.KEYEVENTF_KEYUP : 0) | (extended ? Native.KEYEVENTF_EXTENDEDKEY : 0),
-            },
-        },
-    };
+    private static KeyEvent Key(ushort vk, ushort scan, bool up, bool extended) =>
+        new(vk, scan, (up ? KeyFlags.Up : 0) | (extended ? KeyFlags.Extended : 0));
 
-    internal static Native.INPUT Unicode(char c, bool up) => new()
-    {
-        type = Native.INPUT_KEYBOARD,
-        u = new Native.INPUTUNION
-        {
-            ki = new Native.KEYBDINPUT
-            {
-                wVk = 0,
-                wScan = c,
-                dwFlags = Native.KEYEVENTF_UNICODE | (up ? Native.KEYEVENTF_KEYUP : 0),
-            },
-        },
-    };
+    internal static KeyEvent Unicode(char c, bool up) => new(0, c, KeyFlags.Unicode | (up ? KeyFlags.Up : 0));
 }
 
-/// <summary>Zugriff auf die echte Tastatur – austauschbar, damit sich Warten, Pakete und Fehler ohne Desktop testen lassen.</summary>
-internal interface IKeyboard
+/// <summary>Art eines Tastatur-Ereignisses; gleiche Werte wie KEYEVENTF_* in Windows.</summary>
+[Flags]
+public enum KeyFlags : uint
 {
-    /// <summary>Sendet die Ereignisse; liefert, wie viele Windows angenommen hat (bei weniger: Win32-Fehler).</summary>
-    int Send(ReadOnlySpan<Native.INPUT> inputs, out int win32Error);
-    bool IsDown(int virtualKey);
-    void Pause(int milliseconds, CancellationToken ct);
-    /// <summary>Warum Eingaben das Vordergrundfenster nicht erreichen würden (deutsch), sonst null.</summary>
-    string? ForegroundProblem();
+    None = 0,
+    /// <summary>Erweiterte Taste (rechte Strg/Alt, Win).</summary>
+    Extended = 0x1,
+    /// <summary>Loslassen (sonst Drücken).</summary>
+    Up = 0x2,
+    /// <summary>Unicode-Zeichen in <see cref="KeyEvent.Scan"/> statt einer Taste.</summary>
+    Unicode = 0x4,
 }
 
-internal sealed unsafe class SystemKeyboard : IKeyboard
+/// <summary>
+/// Ein Tastendruck oder Loslassen, plattformneutral. Tasten heißen wie in Windows (Virtual-Key-Codes: 0x0D Eingabe,
+/// 0x09 Tab, 0xA0–0xA5 Umschalt/Strg/Alt links/rechts, 0x5B/0x5C Win, 0xE8 unbelegt); andere Plattformen setzen sie
+/// in ihre Tastencodes um. Bei <see cref="KeyFlags.Unicode"/> steht das Zeichen (UTF-16-Einheit) in <see cref="Scan"/>
+/// – Zeichen außerhalb der BMP kommen als Surrogatpaar: beide Hälften drücken, dann beide loslassen.
+/// </summary>
+public readonly record struct KeyEvent(ushort VirtualKey, ushort Scan, KeyFlags Flags)
 {
-    public static SystemKeyboard Instance { get; } = new();
-
-    private SystemKeyboard() { }
-
-    public int Send(ReadOnlySpan<Native.INPUT> inputs, out int win32Error)
-    {
-        if (inputs.IsEmpty)
-        {
-            win32Error = 0;
-            return 0;
-        }
-        uint sent;
-        fixed (Native.INPUT* p = inputs)
-            sent = Native.SendInput((uint)inputs.Length, p, sizeof(Native.INPUT));
-        win32Error = sent == inputs.Length ? 0 : Marshal.GetLastPInvokeError();
-        return (int)sent;
-    }
-
-    public bool IsDown(int virtualKey) => Native.GetAsyncKeyState(virtualKey) < 0;
-
-    /// <summary>
-    /// Wartet genau: Gewöhnliche Wartezeiten teilt Windows in 15,6-ms-Schritte ein (aus 20 ms Zeichenpause wurden 31 ms),
-    /// und einen feineren Takt per timeBeginPeriod gewährt Windows 11 Prozessen mit minimiertem Fenster nicht verlässlich –
-    /// genau dann tippt Lupe aber als Handscanner. Ein hochauflösender Wartezeitgeber hält die Zeit unabhängig davon.
-    /// </summary>
-    public void Pause(int milliseconds, CancellationToken ct)
-    {
-        if (milliseconds <= 0) return;
-        nint timer = Native.CreateWaitableTimerExW(0, null, Native.CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, Native.TIMER_ALL_ACCESS);
-        if (timer == 0)
-        {
-            ct.WaitHandle.WaitOne(milliseconds);
-            return;
-        }
-        try
-        {
-            long due = -10_000L * milliseconds; // negativ = relativ, in 100-ns-Schritten
-            if (!Native.SetWaitableTimer(timer, &due, 0, 0, 0, false))
-            {
-                ct.WaitHandle.WaitOne(milliseconds);
-                return;
-            }
-            using var wait = new BorrowedWaitHandle(timer);
-            WaitHandle.WaitAny([wait, ct.WaitHandle]);
-        }
-        finally
-        {
-            Native.CloseHandle(timer);
-        }
-    }
-
-    /// <summary>Ein fremdes Windows-Handle als WaitHandle (gibt es nicht frei).</summary>
-    private sealed class BorrowedWaitHandle : WaitHandle
-    {
-        public BorrowedWaitHandle(nint handle) => SafeWaitHandle = new Microsoft.Win32.SafeHandles.SafeWaitHandle(handle, ownsHandle: false);
-    }
-
-    public string? ForegroundProblem() => Elevation.ForegroundProblem();
+    public bool IsUp => (Flags & KeyFlags.Up) != 0;
+    public bool IsUnicode => (Flags & KeyFlags.Unicode) != 0;
+    public bool IsExtended => (Flags & KeyFlags.Extended) != 0;
+    /// <summary>Das Zeichen bei einem Unicode-Ereignis.</summary>
+    public char Character => (char)Scan;
 }

@@ -1,6 +1,10 @@
 using Lupe.Core.Input;
 using Lupe.Core.Model;
 
+#if WINDOWS
+using Lupe.Platform.Windows.Input;
+#endif
+
 namespace Lupe.Tests.Input;
 
 public sealed class HotkeyTextTests
@@ -27,24 +31,34 @@ public sealed class HotkeyTextTests
 
     // ---------- Hinweis: Strg+Alt und AltGr ----------
 
+    private static string? NoAltGrChar(int vk, bool shift) => null;
+
     [Fact]
     public void Standard_und_Kuerzel_mit_Win_brauchen_keinen_AltGr_Hinweis()
     {
-        Assert.Null(HotkeyText.AltGrWarning(Hotkey.Default));
-        Assert.Null(HotkeyText.AltGrWarning(Key(0x51, ctrl: true, alt: true, win: true)));
-        Assert.Null(HotkeyText.AltGrWarning(Key(0x78, ctrl: true, shift: true)));
-        Assert.Null(HotkeyText.AltGrWarning(Key(0x51, alt: true)));
+        Assert.Null(HotkeyText.AltGrWarning(Hotkey.Default, NoAltGrChar));
+        Assert.Null(HotkeyText.AltGrWarning(Key(0x51, ctrl: true, alt: true, win: true), NoAltGrChar));
+        Assert.Null(HotkeyText.AltGrWarning(Key(0x78, ctrl: true, shift: true), NoAltGrChar));
+        Assert.Null(HotkeyText.AltGrWarning(Key(0x51, alt: true), NoAltGrChar));
     }
 
     [Fact]
     public void Strg_Alt_bekommt_den_AltGr_Hinweis()
     {
-        var hint = HotkeyText.AltGrWarning(Key(0x51, ctrl: true, alt: true));
+        var hint = HotkeyText.AltGrWarning(Key(0x51, ctrl: true, alt: true), NoAltGrChar);
 
         Assert.NotNull(hint);
         Assert.StartsWith("Strg+Alt+Q kann auf deutschen Tastaturen mit AltGr-Zeichen kollidieren", hint);
         Assert.Contains("Win+Umschalt+Q", hint);
-        Assert.NotNull(HotkeyText.AltGrWarning(Key(0x45, ctrl: true, alt: true, shift: true))); // Strg+Umschalt+Alt+E
+        Assert.NotNull(HotkeyText.AltGrWarning(Key(0x45, ctrl: true, alt: true, shift: true), NoAltGrChar)); // Strg+Umschalt+Alt+E
+    }
+
+#if WINDOWS
+    [Fact]
+    public void Unter_Windows_kollidiert_Strg_Alt_mit_AltGr()
+    {
+        Assert.NotNull(HotkeyText.AltGrWarning(Key(0x51, ctrl: true, alt: true)));
+        Assert.Null(HotkeyText.AltGrWarning(Hotkey.Default));
     }
 
     [GermanKeyboardFact]
@@ -52,11 +66,12 @@ public sealed class HotkeyTextTests
     {
         var layout = InteractiveDesktop.ThreadLayout;
 
-        Assert.Contains("(AltGr+Q schreibt „@“)", HotkeyText.AltGrWarning(Key(0x51, ctrl: true, alt: true), layout));
-        Assert.Contains("(AltGr+E schreibt „€“)", HotkeyText.AltGrWarning(Key(0x45, ctrl: true, alt: true), layout));
+        Assert.Contains("(AltGr+Q schreibt „@“)", HotkeyText.AltGrWarning(Key(0x51, ctrl: true, alt: true), (vk, shift) => AltGr.Text(vk, shift, layout)));
+        Assert.Contains("(AltGr+E schreibt „€“)", HotkeyText.AltGrWarning(Key(0x45, ctrl: true, alt: true), (vk, shift) => AltGr.Text(vk, shift, layout)));
         // F9 hat kein AltGr-Zeichen: Hinweis ja, aber ohne Zeichen
-        Assert.DoesNotContain("schreibt", HotkeyText.AltGrWarning(Key(0x78, ctrl: true, alt: true), layout));
+        Assert.DoesNotContain("schreibt", HotkeyText.AltGrWarning(Key(0x78, ctrl: true, alt: true), (vk, shift) => AltGr.Text(vk, shift, layout)));
     }
+#endif
 
     [Fact]
     public void Reihenfolge_der_Umschalttasten_ist_Win_Strg_Umschalt_Alt()
@@ -220,6 +235,7 @@ public sealed class HotkeyTextTests
         }
     }
 
+#if WINDOWS
     [GermanKeyboardFact]
     public void Deutsches_Layout_zeigt_Umlaute_und_Sonderzeichen()
     {
@@ -231,6 +247,7 @@ public sealed class HotkeyTextTests
         Assert.True(HotkeyText.TryParse("strg+ü", out var hotkey));
         Assert.Equal(0xBA, hotkey.Key);
     }
+#endif
 
     [Fact]
     public void Format_mit_null_ist_ein_Programmierfehler()

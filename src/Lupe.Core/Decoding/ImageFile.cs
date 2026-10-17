@@ -1,12 +1,13 @@
 using Lupe.Core.Model;
-using Windows.Graphics.Imaging;
-using Windows.Storage.Streams;
+using Lupe.Core.Platform;
 
 namespace Lupe.Core.Decoding;
 
 /// <summary>
-/// Lädt Bilddateien (PNG, JPEG, BMP, GIF, TIFF, ICO, JPEG XR und – wenn der Codec installiert ist – WebP, HEIC/AVIF,
-/// JPEG XL) über Windows.Graphics.Imaging als <see cref="PixelImage"/>.
+/// Lädt Bilddateien als <see cref="PixelImage"/> – Datei- und Stromverwaltung, Prüfung auf abgeschnittene Dateien und
+/// Meldungen hier, das Dekodieren über <see cref="IPlatform.Images"/> der aktiven Plattform (Windows:
+/// Windows.Graphics.Imaging mit PNG, JPEG, BMP, GIF, TIFF, ICO, JPEG XR und – wenn der Codec installiert ist – WebP,
+/// HEIC/AVIF, JPEG XL).
 /// <list type="bullet">
 /// <item>EXIF-Drehung wird angewendet, Farben werden nach sRGB umgerechnet.</item>
 /// <item>Transparenz wird auf weißem Grund verrechnet (schwarzer Code auf transparentem PNG bleibt lesbar); das
@@ -22,23 +23,7 @@ namespace Lupe.Core.Decoding;
 public static class ImageFile
 {
     /// <summary>Größte geladene Bildfläche (40 Megapixel ≈ 160 MB im Speicher); größere Bilder werden verkleinert.</summary>
-    internal const int MaxPixels = 40_000_000;
-
-    /// <summary>Endungen, die angeboten werden, sofern Windows dafür einen Decoder hat – in dieser Reihenfolge.</summary>
-    private static readonly string[] Candidates =
-    [
-        ".png", ".jpg", ".jpeg", ".jpe", ".jfif", ".bmp", ".dib", ".gif", ".tif", ".tiff", ".ico", ".jxr", ".wdp",
-        ".webp", ".heic", ".heif", ".hif", ".avif", ".jxl",
-    ];
-
-    /// <summary>Diese Decoder bringt Windows immer mit.</summary>
-    private static readonly string[] BuiltIn =
-        [".png", ".jpg", ".jpeg", ".jpe", ".jfif", ".bmp", ".dib", ".gif", ".tif", ".tiff", ".ico", ".jxr", ".wdp"];
-
-    /// <summary>Formate, für die Windows eine Erweiterung aus dem Microsoft Store braucht.</summary>
-    private static readonly string[] NeedsExtension = [".webp", ".heic", ".heif", ".hif", ".avif", ".jxl"];
-
-    private static readonly Lazy<IReadOnlyList<string>> s_extensions = new(DetectExtensions);
+    public const int MaxPixels = 40_000_000;
 
     public static Task<PixelImage> LoadAsync(string path, CancellationToken ct = default) => LoadAsync(path, MaxPixels, ct);
 
@@ -79,7 +64,7 @@ public static class ImageFile
     internal const long MaxStreamBytes = 512L * 1024 * 1024;
 
     /// <summary>Dateiendungen, die im Öffnen-Dialog angeboten werden (z. B. ".png"), kleingeschrieben.</summary>
-    public static IReadOnlyList<string> Extensions => s_extensions.Value;
+    public static IReadOnlyList<string> Extensions => LupePlatform.Current.Images.Extensions;
 
     internal static async Task<PixelImage> LoadAsync(string path, int maxPixels, CancellationToken ct)
     {
@@ -132,15 +117,13 @@ public static class ImageFile
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maxPixels);
         ct.ThrowIfCancellationRequested();
+        var decoder = LupePlatform.Current.Images;
         try
         {
             // Abgeschnittene PNG/JPEG/GIF lesen die Windows-Decoder klaglos (Rest grau oder weiß) – vorher selbst prüfen
             if (await Task.Run(() => ImageIntegrity.Truncation(stream), ct).ConfigureAwait(false) is { } reason)
                 throw new InvalidDataException($"„{name}“ ist unvollständig – {reason} (abgebrochener Download oder Kopiervorgang?).");
-            using IRandomAccessStream ras = stream.AsRandomAccessStream();
-            var decoder = await BitmapDecoder.CreateAsync(ras).AsTask(ct).ConfigureAwait(false);
-            var frame = await PickFrameAsync(decoder, ct).ConfigureAwait(false);
-            return await ReadPixelsAsync(frame, name, maxPixels, ct).ConfigureAwait(false);
+            return await decoder.DecodeAsync(stream, name, maxPixels, ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -148,71 +131,15 @@ public static class ImageFile
         }
         catch (Exception ex) when (ex is not (InvalidDataException or OperationCanceledException))
         {
-            throw Translate(ex, name);
+            throw decoder.Translate(ex, name);
         }
-    }
-
-    /// <summary>Erstes Bild; bei Symbolen (ICO) das größte, damit nicht das 16×16-Bildchen gelesen wird.</summary>
-    private static async Task<BitmapFrame> PickFrameAsync(BitmapDecoder decoder, CancellationToken ct)
-    {
-        var first = await decoder.GetFrameAsync(0).AsTask(ct).ConfigureAwait(false);
-        if (decoder.FrameCount <= 1 || decoder.DecoderInformation?.CodecId != BitmapDecoder.IcoDecoderId) return first;
-        var best = first;
-        for (uint i = 1; i < decoder.FrameCount; i++)
-        {
-            var frame = await decoder.GetFrameAsync(i).AsTask(ct).ConfigureAwait(false);
-            if ((long)frame.PixelWidth * frame.PixelHeight > (long)best.PixelWidth * best.PixelHeight) best = frame;
-        }
-        return best;
-    }
-
-    private static async Task<PixelImage> ReadPixelsAsync(BitmapFrame frame, string name, int maxPixels, CancellationToken ct)
-    {
-        uint pw = frame.PixelWidth, ph = frame.PixelHeight;
-        if (pw == 0 || ph == 0) throw new InvalidDataException($"„{name}“ enthält kein Bild (0 Pixel).");
-        // Drehung um 90°/270° (EXIF) vertauscht Breite und Höhe
-        bool swapped = frame.OrientedPixelWidth != pw || frame.OrientedPixelHeight != ph;
-
-        var transform = new BitmapTransform();
-        uint w = pw, h = ph;
-        double total = (double)pw * ph;
-        if (total > maxPixels)
-        {
-            double scale = Math.Sqrt(maxPixels / total);
-            w = Math.Max(1, (uint)Math.Floor(pw * scale));
-            h = Math.Max(1, (uint)Math.Floor(ph * scale));
-            transform.ScaledWidth = w;
-            transform.ScaledHeight = h;
-            transform.InterpolationMode = BitmapInterpolationMode.Fant;
-        }
-
-        PixelDataProvider data;
-        try
-        {
-            data = await frame.GetPixelDataAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Straight, transform,
-                ExifOrientationMode.RespectExifOrientation, ColorManagementMode.ColorManageToSRgb).AsTask(ct).ConfigureAwait(false);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            // Kaputte oder exotische Farbprofile: dann eben ohne Farbumrechnung
-            data = await frame.GetPixelDataAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Straight, transform,
-                ExifOrientationMode.RespectExifOrientation, ColorManagementMode.DoNotColorManage).AsTask(ct).ConfigureAwait(false);
-        }
-
-        var pixels = data.DetachPixelData();
-        int width = (int)(swapped ? h : w), height = (int)(swapped ? w : h);
-        // Sicherheitsnetz, falls der Decoder anders skaliert hat als verlangt (eine vertauschte Lage verriete die Länge nicht)
-        if (pixels.Length != (long)width * height * 4)
-            throw new InvalidDataException($"„{name}“ konnte nicht gelesen werden: Der Bilddecoder hat eine unerwartete Pixelzahl geliefert.");
-        FlattenOnWhite(pixels);
-        return new PixelImage(width, height, pixels);
     }
 
     /// <summary>
     /// Verrechnet Transparenz (nicht vormultipliziert) auf weißem Grund und setzt Alpha auf 255. Ist der Alphakanal
     /// überall 0 (kommt bei manchen 32-Bit-BMPs vor), gilt das Bild als undurchsichtig.
     /// </summary>
-    internal static void FlattenOnWhite(byte[] bgra)
+    public static void FlattenOnWhite(byte[] bgra)
     {
         bool anyVisible = false;
         for (int i = 3; i < bgra.Length; i += 4)
@@ -233,7 +160,7 @@ public static class ImageFile
 
     /// <summary>
     /// Zeigt den Datenstrom des Aufrufers ab <paramref name="origin"/> (seine Position beim Aufruf) – und schließt ihn nie:
-    /// Der Adapter für Windows.Graphics.Imaging schließt beim Freigeben sonst auch den darunterliegenden Strom.
+    /// Manche Decoder-Adapter (Windows.Graphics.Imaging) schließen beim Freigeben sonst auch den darunterliegenden Strom.
     /// </summary>
     private sealed class KeepOpen(Stream inner, long origin) : Stream
     {
@@ -258,40 +185,6 @@ public static class ImageFile
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
     }
 
-    // ---------- Fehler ----------
-
-    private const int WincodecErrComponentNotFound = unchecked((int)0x88982F50);
-    private const int WincodecErrUnknownImageFormat = unchecked((int)0x88982F07);
-    private const int WincodecErrComponentInitializeFailure = unchecked((int)0x88982F8B);
-    private const int WincodecErrUnsupportedPixelFormat = unchecked((int)0x88982F80);
-    private const int WincodecErrUnsupportedOperation = unchecked((int)0x88982F81);
-    private const int WincodecErrImageSizeOutOfRange = unchecked((int)0x88982F51);
-    private const int MfErrTopoCodecNotFound = unchecked((int)0xC00D5212);
-    private const int EOutOfMemory = unchecked((int)0x8007000E);
-
-    /// <summary>Übersetzt Fehler der Bildverarbeitung in eine deutsche, handlungsleitende Meldung.</summary>
-    internal static Exception Translate(Exception ex, string name)
-    {
-        string extension = Path.GetExtension(name).ToLowerInvariant();
-        int hr = ex.HResult;
-        if (ex is OutOfMemoryException || hr == EOutOfMemory || hr == WincodecErrImageSizeOutOfRange)
-            return new InvalidDataException($"„{name}“ ist zu groß, um geladen zu werden.", ex);
-        if (hr is WincodecErrComponentNotFound or WincodecErrUnknownImageFormat or WincodecErrComponentInitializeFailure
-            or MfErrTopoCodecNotFound or WincodecErrUnsupportedPixelFormat or WincodecErrUnsupportedOperation)
-        {
-            if (NeedsExtension.Contains(extension))
-                return new InvalidDataException(
-                    $"„{name}“ kann nicht gelesen werden: Für {extension.TrimStart('.').ToUpperInvariant()} fehlt Windows der passende Codec " +
-                    "(Bilderweiterung aus dem Microsoft Store, z. B. „HEIF-Bilderweiterungen“ oder „Webp-Bilderweiterungen“).", ex);
-            return new InvalidDataException($"„{name}“ ist kein unterstütztes Bildformat (PNG, JPEG, BMP, GIF, TIFF …) oder beschädigt.", ex);
-        }
-        if ((uint)hr >> 16 == 0x8898)
-            return new InvalidDataException($"„{name}“ ist beschädigt oder kein gültiges Bild.", ex);
-        if (ex is IOException io)
-            return new IOException($"„{name}“ konnte nicht gelesen werden: {io.Message}", ex);
-        return new InvalidDataException($"„{name}“ konnte nicht als Bild gelesen werden ({ex.Message.Trim()}).", ex);
-    }
-
     private static string DisplayName(string path)
     {
         try
@@ -302,26 +195,6 @@ public static class ImageFile
         catch (ArgumentException)
         {
             return path;
-        }
-    }
-
-    // ---------- Endungen ----------
-
-    private static IReadOnlyList<string> DetectExtensions()
-    {
-        try
-        {
-            var installed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var codec in BitmapDecoder.GetDecoderInformationEnumerator())
-                foreach (var ext in codec.FileExtensions)
-                    installed.Add(ext);
-            var list = Candidates.Where(installed.Contains).ToList();
-            return list.Count > 0 ? list.AsReadOnly() : BuiltIn.AsReadOnly();
-        }
-        catch (Exception ex) when (ex is not OutOfMemoryException)
-        {
-            System.Diagnostics.Debug.WriteLine($"Bild-Decoder nicht abfragbar: {ex.Message}");
-            return BuiltIn.AsReadOnly();
         }
     }
 }

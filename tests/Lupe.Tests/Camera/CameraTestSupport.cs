@@ -3,6 +3,7 @@ using Lupe.Core.Camera;
 using Lupe.Core.Model;
 using Lupe.Tests.TestSupport;
 
+
 namespace Lupe.Tests.Camera;
 
 /// <summary>Bildquelle zum Fernsteuern: Bilder und Ausfälle kommen genau dann, wenn der Test es will (synchron).</summary>

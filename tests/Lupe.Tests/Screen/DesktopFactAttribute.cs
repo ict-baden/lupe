@@ -3,6 +3,8 @@ using Lupe.Core.Model;
 using Lupe.Core.Screen;
 using Lupe.Tests.TestSupport;
 
+using Lupe.Platform.Windows.Screen;
+
 namespace Lupe.Tests.Screen;
 
 /// <summary>

@@ -1,5 +1,7 @@
 using System.Runtime.InteropServices;
 
+using Lupe.Platform.Windows.Screen;
+
 namespace Lupe.Tests.Screen;
 
 /// <summary>Win32-Aufrufe nur für die Tests: Testfenster, Speicher-Bitmaps, DPI-Zustand des Threads.</summary>

@@ -3,6 +3,8 @@ using Lupe.Core.Input;
 using Lupe.Core.Model;
 using Lupe.Tests.Screen;
 
+using Lupe.Platform.Windows.Input;
+
 namespace Lupe.Tests.Input;
 
 /// <summary>
@@ -464,7 +466,7 @@ public sealed class GlobalHotkeySystemTests
         inputs.Add(KeyInput(KeyboardTyper.VK_MASK, up: false));
         inputs.Add(KeyInput(KeyboardTyper.VK_MASK, up: true));
         foreach (int vk in keys.Reverse()) inputs.Add(KeyInput(vk, up: true));
-        Assert.Equal(inputs.Count, SystemKeyboard.Instance.Send(inputs.ToArray(), out _));
+        Assert.Equal(inputs.Count, WindowsKeyboard.Send(inputs.ToArray(), out _));
     }
 
     internal static Native.INPUT KeyInput(int vk, bool up) => new()

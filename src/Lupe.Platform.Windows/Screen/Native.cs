@@ -1,6 +1,8 @@
 using System.Runtime.InteropServices;
+using Lupe.Core.Model;
+using Lupe.Core.Screen;
 
-namespace Lupe.Core.Screen;
+namespace Lupe.Platform.Windows.Screen;
 
 /// <summary>
 /// Win32-Aufrufe für Bildschirmfotos: Monitore und DPI (user32, shcore), Kopie über GDI (gdi32) und

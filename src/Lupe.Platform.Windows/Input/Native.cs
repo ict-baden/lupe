@@ -1,6 +1,8 @@
 using System.Runtime.InteropServices;
+using Lupe.Core.Input;
+using Lupe.Core.Model;
 
-namespace Lupe.Core.Input;
+namespace Lupe.Platform.Windows.Input;
 
 /// <summary>Win32-Aufrufe für Tastatureingabe (SendInput, Tastaturlayout) und globale Tastenkürzel (RegisterHotKey, Nachrichtenfenster).</summary>
 internal static unsafe partial class Native
@@ -221,4 +223,20 @@ internal static unsafe partial class Native
 
     [LibraryImport("kernel32.dll")]
     public static partial uint GetCurrentThreadId();
+
+    // ---------- Vordergrundfenster ----------
+
+    public const int SW_RESTORE = 9;
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool IsIconic(nint hWnd);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool ShowWindow(nint hWnd, int nCmdShow);
+
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool SetForegroundWindow(nint hWnd);
 }

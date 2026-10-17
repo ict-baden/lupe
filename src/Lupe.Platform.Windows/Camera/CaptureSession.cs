@@ -1,12 +1,13 @@
 using System.Diagnostics;
+using Lupe.Core.Camera;
 using Lupe.Core.Model;
 using Windows.Graphics.Imaging;
-using Windows.Media.Capture;
 using Windows.Media.Capture.Frames;
+using Windows.Media.Capture;
 using Windows.Media.Devices;
 using Windows.Media.MediaProperties;
 
-namespace Lupe.Core.Camera;
+namespace Lupe.Platform.Windows.Camera;
 
 /// <summary>Womit eine Kamerasitzung läuft (Diagnose, Tests).</summary>
 /// <param name="Width">Breite des Kameraformats.</param>
@@ -51,8 +52,8 @@ internal sealed class CaptureSession : IAsyncDisposable
     private Task? _disposeTask;
     // feste Delegaten, damit das Abmelden bei WinRT sicher dieselben Einträge trifft
     private readonly MediaCaptureFailedEventHandler _captureFailedHandler;
-    private readonly Windows.Foundation.TypedEventHandler<MediaCapture, object> _streamStateHandler;
-    private readonly Windows.Foundation.TypedEventHandler<MediaFrameReader, MediaFrameArrivedEventArgs> _frameArrivedHandler;
+    private readonly global::Windows.Foundation.TypedEventHandler<MediaCapture, object> _streamStateHandler;
+    private readonly global::Windows.Foundation.TypedEventHandler<MediaFrameReader, MediaFrameArrivedEventArgs> _frameArrivedHandler;
 
     public CaptureSession(CameraInfo camera, Action<CaptureSession, PixelImage> onFrame, Action<CaptureSession, string> onFailure)
     {
@@ -372,7 +373,7 @@ internal sealed class CaptureSession : IAsyncDisposable
         }
     }
 
-    private async Task DeliverFromSurfaceAsync(MediaFrameReference frame, Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface surface)
+    private async Task DeliverFromSurfaceAsync(MediaFrameReference frame, global::Windows.Graphics.DirectX.Direct3D11.IDirect3DSurface surface)
     {
         try
         {

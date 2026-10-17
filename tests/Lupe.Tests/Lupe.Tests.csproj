@@ -1,11 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
-    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <!-- Windows-TFM: alle Tests (Core + Windows-Anbindung + WPF-App). net10.0: nur die plattformneutralen Core-Tests,
+         die auch unter Linux und macOS laufen (dort ohne Plattform-Assembly, also mit UnsupportedPlatform). -->
+    <TargetFrameworks>net10.0-windows10.0.19041.0;net10.0</TargetFrameworks>
+    <!-- auch unter Linux/macOS wiederherstellbar (das Windows-Ziel wird dort nur nicht ausgeführt) -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,5 +27,25 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Lupe.Core\Lupe.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+    <ProjectReference Include="..\..\src\Lupe.Platform.Windows\Lupe.Platform.Windows.csproj" />
+  </ItemGroup>
+
+  <!-- Linux/macOS-Anbindungen (net10.0, überall übersetzbar): Tests ihrer reinen Logik laufen überall, Tests gegen das
+       echte System nur auf dem jeweiligen System (unter Linux in CI mit xvfb-run) -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Lupe.Platform.Linux\Lupe.Platform.Linux.csproj" />
+    <ProjectReference Include="..\..\src\Lupe.Platform.MacOS\Lupe.Platform.MacOS.csproj" />
+  </ItemGroup>
+
+  <!-- Nur unter Windows: echte Kamera, GDI-Bildschirm, SendInput, RegisterHotKey, WIC-Bilddateien, WPF-App -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <Compile Remove="App\**" />
+    <Compile Remove="Screen\**" />
+    <Compile Remove="Camera\CameraFactAttribute.cs;Camera\CameraProblemsTests.cs;Camera\FrameConverterTests.cs;Camera\RealCameraReentrancyTests.cs;Camera\RealCameraTests.cs;Camera\CamerasTests.cs" />
+    <Compile Remove="Decoding\ImageIntegrityTests.cs;Decoding\CodecFactAttribute.cs;Decoding\ImageFileTests.cs;Decoding\TestImageFiles.cs;Decoding\ForeignCodeImages.cs;Decoding\ForeignFormatTests.cs" />
+    <Compile Remove="Input\ElevationTests.cs;Input\GlobalHotkeyTests.cs;Input\KeyboardTyperDesktopTests.cs;Input\InteractiveFactAttribute.cs" />
   </ItemGroup>
 </Project>

@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using Lupe.Core.Input;
 
+using Lupe.Platform.Windows.Input;
+
 namespace Lupe.Tests.Input;
 
 /// <summary>Erkennung von Zielfenstern mit höheren Rechten (UIPI verwirft dorthin Eingaben, ohne Fehler zu melden).</summary>

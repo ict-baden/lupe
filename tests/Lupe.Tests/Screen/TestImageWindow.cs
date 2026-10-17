@@ -2,6 +2,8 @@ using System.Runtime.InteropServices;
 using Lupe.Core.Model;
 using Lupe.Core.Screen;
 
+using Lupe.Platform.Windows.Screen;
+
 namespace Lupe.Tests.Screen;
 
 /// <summary>

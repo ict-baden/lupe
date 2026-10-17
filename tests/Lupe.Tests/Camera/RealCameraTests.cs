@@ -4,6 +4,8 @@ using Lupe.Core.Model;
 using Xunit.Abstractions;
 using static Lupe.Tests.Camera.CameraTestSupport;
 
+using Lupe.Platform.Windows.Camera;
+
 namespace Lupe.Tests.Camera;
 
 /// <summary>

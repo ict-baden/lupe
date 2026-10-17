@@ -2,6 +2,8 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 
+using Lupe.Platform.Windows.Input;
+
 namespace Lupe.Tests.Input;
 
 /// <summary>

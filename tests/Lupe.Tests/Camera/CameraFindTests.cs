@@ -1,5 +1,6 @@
 using Lupe.Core.Camera;
 
+
 namespace Lupe.Tests.Camera;
 
 /// <summary><see cref="Cameras.Find"/>: die gespeicherte Kamera (Kennung oder Name) in der aktuellen Liste wiederfinden.</summary>

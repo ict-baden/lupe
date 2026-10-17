@@ -1,6 +1,8 @@
+using Lupe.Core.Camera;
+using Lupe.Core.Model;
 using Microsoft.Win32;
 
-namespace Lupe.Core.Camera;
+namespace Lupe.Platform.Windows.Camera;
 
 /// <summary>Was die Windows-Datenschutzeinstellungen zum Kamerazugriff von Lupe sagen.</summary>
 internal enum CameraPrivacyState

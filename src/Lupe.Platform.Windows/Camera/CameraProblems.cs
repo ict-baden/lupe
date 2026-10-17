@@ -1,6 +1,8 @@
+using Lupe.Core.Camera;
+using Lupe.Core.Model;
 using Windows.Media.Capture.Frames;
 
-namespace Lupe.Core.Camera;
+namespace Lupe.Platform.Windows.Camera;
 
 /// <summary>Art eines Kameraproblems – bestimmt die Meldung und ob ein zweiter Versuch im geteilten Modus lohnt.</summary>
 internal enum CameraProblemKind

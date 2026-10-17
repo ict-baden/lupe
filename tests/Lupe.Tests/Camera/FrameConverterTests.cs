@@ -5,6 +5,8 @@ using Lupe.Tests.TestSupport;
 using Windows.Graphics.Imaging;
 using static Lupe.Tests.Camera.CameraTestSupport;
 
+using Lupe.Platform.Windows.Camera;
+
 namespace Lupe.Tests.Camera;
 
 /// <summary>Umwandlung echter <see cref="SoftwareBitmap"/>s (wie sie der Frame-Reader liefert) in <see cref="PixelImage"/>.</summary>

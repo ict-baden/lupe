@@ -1,4 +1,6 @@
 using Lupe.Cli;
+using Lupe.Core.Platform;
+using Lupe.Platform.Windows;
 using Lupe.Services;
 
 namespace Lupe;
@@ -12,6 +14,8 @@ internal static class Program
     [STAThread]
     public static int Main(string[] args)
     {
+        // Systemfunktionen (Kamera, Bildschirm, Tippen, Tastenkürzel …) über die Windows-Anbindung
+        LupePlatform.Use(new WindowsPlatform());
         var options = StartOptions.Parse(args);
         if (options.Mode == AppMode.CommandLine) return CommandLine.Run(args);
 

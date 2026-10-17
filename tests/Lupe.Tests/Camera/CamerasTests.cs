@@ -3,6 +3,8 @@ using Lupe.Core.Camera;
 using Windows.Devices.Enumeration;
 using static Lupe.Tests.Camera.CameraTestSupport;
 
+using Lupe.Platform.Windows.Camera;
+
 namespace Lupe.Tests.Camera;
 
 /// <summary>
