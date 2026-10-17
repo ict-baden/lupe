@@ -2,9 +2,9 @@
 
 # Installation
 
-Which file to download, what it needs, how to let Lupe use the camera, and how to start it with Windows or remove it again.
+Which file to download, what it needs, how to let Lupe use the camera, and how to start it with Windows or remove it again. Linux and macOS have their own sections at the end.
 
-**Contents:** [Requirements](#requirements) · [Downloads](#downloads) · [MSI installer](#msi-installer) · [Single exe and ZIP](#single-exe-and-zip) · [First start](#first-start) · [Camera access in Windows](#camera-access-in-windows) · [Start with Windows](#start-with-windows) · [Running as administrator](#running-as-administrator) · [Updates and uninstalling](#updates-and-uninstalling)
+**Contents:** [Requirements](#requirements) · [Downloads](#downloads) · [MSI installer](#msi-installer) · [Single exe and ZIP](#single-exe-and-zip) · [First start](#first-start) · [Camera access in Windows](#camera-access-in-windows) · [Start with Windows](#start-with-windows) · [Running as administrator](#running-as-administrator) · [Updates and uninstalling](#updates-and-uninstalling) · [Linux](#linux) · [macOS](#macos)
 
 > [!IMPORTANT]
 > **Pre-release.** Lupe is built and tested in GitHub Actions on every push to `main` (and for pull requests and `v*` tags), but there is no stable release yet. Program and MSI are **not code-signed**; Windows SmartScreen may warn when you start them.
@@ -13,7 +13,7 @@ Which file to download, what it needs, how to let Lupe use the camera, and how t
 
 | Topic | Requirement |
 |---|---|
-| **Operating system** | 64-bit Windows 10 version 1809 (build 17763) or later, or Windows 11. Builds are produced for `win-x64` only. |
+| **Operating system** | 64-bit Windows 10 version 1809 (build 17763) or later, or Windows 11. Windows builds are produced for `win-x64`; Linux and macOS: see [Linux](#linux) and [macOS](#macos). |
 | **.NET** | None for the MSI and for `Lupe.exe` – both carry the .NET 10 runtime. The ZIP variant needs the **.NET 10 Runtime**. |
 | **Camera** (optional) | Any webcam that Windows offers to apps through `Windows.Media.Capture` with a colour image. Pure infrared cameras (Windows Hello) are not listed. Windows editions “N” and “KN” need the **Media Feature Pack** for the camera. |
 | **Image formats** | PNG, JPEG, BMP, GIF, TIFF, ICO and JPEG XR work out of the box. WebP, HEIC/HEIF, AVIF and JPEG XL work when the matching image extension from the Microsoft Store is installed. |
@@ -129,6 +129,38 @@ If you regularly type into an elevated program, start Lupe with *Run as administ
 - **Uninstalling** (*Settings › Apps › Installed apps › Lupe* – on Windows 10 *Apps & features* –, or silently as shown under [MSI installer](#msi-installer)) removes the program files and the Start menu entry. It does **not** remove:
   - `%LocalAppData%\Lupe` of each user (settings and history) – delete that folder to remove them;
   - the autostart entry of users who switched on *Mit Windows starten*. Switch it off before uninstalling, or delete the value `Lupe` under `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`.
+
+## Linux
+
+Lupe runs on X11 and Wayland desktops, x64 and arm64. Both packages include .NET.
+
+| File | Install |
+|---|---|
+| [`lupe_amd64.deb`](https://github.com/ict-baden/lupe/releases/download/latest/lupe_amd64.deb) | Debian, Ubuntu and derivatives (x64): `sudo apt install ./lupe_amd64.deb`. Installs to `/opt/lupe`, the command `lupe` and a menu entry; `sudo apt remove lupe` removes it. |
+| [`Lupe-linux-x64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-x64.tar.gz), [`Lupe-linux-arm64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-arm64.tar.gz) | Any distribution: `tar -xzf Lupe-linux-x64.tar.gz && lupe/install.sh`. Installs for the current user only (no root) into `~/.local/opt/lupe`, with the command `lupe` in `~/.local/bin` and a menu entry. `./Lupe` inside the folder also runs it without installing. Remove with `~/.local/opt/lupe/install.sh --entfernen`. |
+
+Tagged releases name the package `lupe_1.2.3_amd64.deb`. The libraries Lupe needs are part of every desktop installation; on a minimal system install `libx11-6 libxtst6 libxrandr2 libxi6 libice6 libsm6 libfontconfig1` and ICU (the `.deb` pulls them in).
+
+- **Camera:** your user must be in the group `video` – `sudo usermod -aG video $USER`, then sign out and in again. Lupe says so on the page *Kamera* when the device is there but not readable.
+- **X11:** the screen scan, typing (XTest) and the shortcut work without asking. If another program holds the shortcut, Lupe reports it as taken.
+- **Wayland:** the screen scan, typing and the shortcut go through `xdg-desktop-portal`. The desktop asks once for permission to take screenshots, to control the keyboard (*Remote Desktop*) and to register the shortcut; it may choose different keys. GNOME before 48 and some compositors have no GlobalShortcuts portal – start the scan from the tray menu or the window then. See [Limitations › Linux and macOS](limitations.md#linux-and-macos).
+- **Tray icon:** needs a StatusNotifier host. On GNOME install the extension *AppIndicator and KStatusNotifierItem Support*; without it, closing the window still keeps Lupe running, but there is no icon to bring it back – start `lupe` again.
+- **Start with the session:** the autostart setting writes `~/.config/autostart/lupe.desktop`.
+- **Data:** settings in `~/.config/lupe`, history in `~/.local/share/lupe` (or the `XDG_CONFIG_HOME` / `XDG_DATA_HOME` folders you set).
+
+## macOS
+
+Lupe runs on macOS 12 or later. Download [`Lupe-macos-arm64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-arm64.zip) for Apple Silicon (M1 and later) or [`Lupe-macos-x64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-x64.zip) for Intel Macs, unzip it and move `Lupe.app` to *Programme* (*Applications*). .NET is included.
+
+- **Gatekeeper:** the app is only ad-hoc signed, not signed with a developer certificate and not notarised. The first time, **right-click `Lupe.app` → *Öffnen* (*Open*)** and confirm. On macOS 15 and later, where that button may be missing, allow it under *System Settings › Privacy & Security* (*Trotzdem öffnen* / *Open Anyway*), or run `xattr -dr com.apple.quarantine /Applications/Lupe.app`.
+- **Permissions** – macOS asks for each one the first time Lupe needs it; when one is missing, Lupe shows a German hint with a button to the right page in *System Settings › Privacy & Security*:
+  - *Kamera* (Camera) for the page *Kamera*,
+  - *Bildschirmaufnahme* (Screen Recording) for the screen scan – after allowing it, quit and start Lupe again,
+  - *Bedienungshilfen* (Accessibility) for typing.
+- **Shortcut:** the default is <kbd>⌘</kbd>+<kbd>⌥</kbd>+<kbd>Q</kbd>; <kbd>⌘</kbd>+<kbd>⇧</kbd>+<kbd>Q</kbd> is *Log Out* on macOS.
+- **Start at login:** the autostart setting writes the LaunchAgent `~/Library/LaunchAgents/de.ict-baden.lupe.plist`.
+- **Data:** settings and history in `~/Library/Application Support/Lupe`.
+- **Uninstalling:** quit Lupe, delete `Lupe.app`, and if you like the folder above and the LaunchAgent.
 
 ---
 

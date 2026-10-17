@@ -5,6 +5,8 @@
 <p align="center">
   <a href="https://github.com/ict-baden/lupe/releases/tag/latest"><img alt="Download: latest" src="https://img.shields.io/badge/Download-latest-2ea44f?logo=github&logoColor=white"></a>
   <img alt="Windows 10 and 11, x64" src="https://img.shields.io/badge/Windows-10%20%7C%2011%20x64-0078D4">
+  <img alt="Linux x64 and arm64, X11 and Wayland" src="https://img.shields.io/badge/Linux-x64%20%7C%20arm64-E95420?logo=linux&logoColor=white">
+  <img alt="macOS 12 or later, Apple Silicon and Intel" src="https://img.shields.io/badge/macOS-12%2B-111111?logo=apple&logoColor=white">
   <img alt=".NET 10" src="https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white">
   <img alt="Data stays on this PC" src="https://img.shields.io/badge/Data-stays%20local-2E7D32">
   <img alt="User interface in German" src="https://img.shields.io/badge/UI-German-6B7280">
@@ -24,7 +26,7 @@
 <br>
 
 <p align="center">
-  <b>Read every QR code and barcode on Windows – wherever it is.</b><br>
+  <b>Read every QR code and barcode on Windows, Linux and macOS – wherever it is.</b><br>
   Lupe reads codes from a webcam, from any part of the screen, from image files and from the clipboard.<br>
   It copies the content, types it into the window you were working in, or, when it matches one of your link rules, opens the resulting link.
 </p>
@@ -131,8 +133,13 @@
 | [`Lupe-x64.msi`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-x64.msi) | Installer for all users, Start menu entry, no autostart; .NET included. |
 | [`Lupe.exe`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe.exe) | A single file that runs without installation; .NET included. |
 | [`Lupe-win-x64-framework.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-win-x64-framework.zip) | Small variant; needs the .NET 10 Runtime. |
+| [`lupe_amd64.deb`](https://github.com/ict-baden/lupe/releases/download/latest/lupe_amd64.deb) | Linux package for Debian and Ubuntu (x64): `sudo apt install ./lupe_amd64.deb`. |
+| [`Lupe-linux-x64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-x64.tar.gz), [`Lupe-linux-arm64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-arm64.tar.gz) | Linux, any distribution: unpack and run `lupe/install.sh` (per user, no root). |
+| [`Lupe-macos-arm64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-arm64.zip), [`Lupe-macos-x64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-x64.zip) | `Lupe.app` for Apple Silicon or Intel Macs, not notarised: the first time, right-click → *Öffnen* (*Open*). |
 
-The repository is private: sign in to GitHub with an account that has access to `ict-baden`, otherwise GitHub answers with a 404 page. Requirements, downloading from the command line, the Windows camera privacy setting, autostart and uninstalling: **[Installation →](docs/installation.md)**
+All variants include .NET except the framework ZIP. On macOS the default shortcut is <kbd>⌘</kbd>+<kbd>⌥</kbd>+<kbd>Q</kbd> (<kbd>⌘</kbd>+<kbd>⇧</kbd>+<kbd>Q</kbd> logs out there).
+
+The repository is private: sign in to GitHub with an account that has access to `ict-baden`, otherwise GitHub answers with a 404 page. Requirements, downloading from the command line, the camera and screen permissions on each system, autostart and uninstalling: **[Installation →](docs/installation.md)**
 
 **② Scan** – the shortcut works in every program as long as Lupe is running, also when its window is closed. The camera, files and the clipboard are on the pages *Kamera* and *Datei*. Walkthrough: **[Using the app →](docs/usage.md)**
 
@@ -216,7 +223,7 @@ Lupe is a rewrite of Till's [Barcode-Reader](https://github.com/pieewiee/Barcode
 
 <table>
   <tr>
-    <td width="50%" valign="top"><a href="docs/installation.md"><b>Installation</b></a><br><sub>MSI, single exe, ZIP, requirements, camera privacy setting, autostart, updates and uninstalling</sub></td>
+    <td width="50%" valign="top"><a href="docs/installation.md"><b>Installation</b></a><br><sub>Windows (MSI, single exe, ZIP), Linux (.deb, tar.gz), macOS (Lupe.app), requirements, permissions, autostart, updates and uninstalling</sub></td>
     <td width="50%" valign="top"><a href="docs/usage.md"><b>Using the app</b></a><br><sub>Every page with screenshots, the screen scan step by step, workflows such as “scan from the screen, type into the ERP” – German labels explained</sub></td>
   </tr>
   <tr>
@@ -243,7 +250,8 @@ Lupe is a rewrite of Till's [Barcode-Reader](https://github.com/pieewiee/Barcode
 - **Control characters are not typed.** The group separator in GS1 codes, for example, is dropped when typing; the command line shows it as `\x1D`.
 - **MaxiCode** is only found in clean, upright images.
 - **Command line into a pipe** uses the console's code page; characters outside it are replaced. Redirect into a file for lossless UTF-8.
-- **Pre-release 0.1.0, not code-signed.** SmartScreen may warn.
+- **Linux and macOS are new and less tested than Windows.** On Wayland the screen scan, typing and the shortcut go through the desktop portals, which ask for permission and are not offered by every desktop; Lupe cannot see which window is in front there. The macOS build has not run on a real Mac yet. Details: [Limitations › Linux and macOS](docs/limitations.md#linux-and-macos).
+- **Pre-release 0.1.0, not code-signed.** SmartScreen may warn; macOS Gatekeeper asks once.
 - **No licence yet.** The licence has not been decided; the repository contains no licence file. The licences of the bundled third-party components (zxing-cpp with libzint and libzueci, C#/WinRT, .NET) are in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which ships next to `Lupe.exe` and opens from *Info › Erkennung › Lizenztexte*.
 
 Everything else: **[Limitations →](docs/limitations.md)**

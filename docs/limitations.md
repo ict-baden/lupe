@@ -4,14 +4,14 @@
 
 What Lupe cannot do, what was not tested the way it will be used, and the pitfalls worth knowing – stated plainly.
 
-**Contents:** [Status](#status) · [Not tested on real hardware](#not-tested-on-real-hardware) · [Decoding](#decoding) · [Camera](#camera) · [Screen scan and shortcut](#screen-scan-and-shortcut) · [Typing](#typing) · [History and files](#history-and-files) · [Command line](#command-line)
+**Contents:** [Status](#status) · [Not tested on real hardware](#not-tested-on-real-hardware) · [Decoding](#decoding) · [Camera](#camera) · [Screen scan and shortcut](#screen-scan-and-shortcut) · [Typing](#typing) · [History and files](#history-and-files) · [Command line](#command-line) · [Linux and macOS](#linux-and-macos)
 
 ## Status
 
 - **Pre-release 0.1.0.** Builds come from GitHub Actions; there is no stable release yet.
 - **Not code-signed.** SmartScreen may warn about `Lupe.exe` and the MSI.
 - **German only.** User interface and command-line output are German.
-- **Windows x64 only**, Windows 10 1809 or later.
+- **Windows x64** (Windows 10 1809 or later), **Linux** x64/arm64 (X11 and Wayland) and **macOS** 12 or later (Apple Silicon and Intel). Windows is the platform Lupe was built and tested on; see [Linux and macOS](#linux-and-macos).
 - **No licence yet.** The licence has not been decided; the repository contains no licence file.
 
 ## Not tested on real hardware
@@ -69,6 +69,20 @@ What Lupe cannot do, what was not tested the way it will be used, and the pitfal
 - **PowerShell 7.4+** writes the console's code page into files with `> codes.txt`; use a `.cmd` file or set `[Console]::OutputEncoding` first.
 - **`> NUL`** does not silence the output.
 - **No file name in the output lines** – call `lesen` once per image if you need it ([example](command-line.md#examples)).
+
+
+## Linux and macOS
+
+- **New ports, less tested.** The Linux backend ran in containers only: X11 under Xvfb (screen capture, XTest typing, `XGrabKey`) and Wayland in a headless sway with `xdg-desktop-portal-wlr` (screenshot portal). No real webcam, no KDE or GNOME portals, no multi-monitor or HiDPI setup. **The macOS backend has not run on a Mac yet** – it builds, and its logic tests pass on CI; the native calls are untested.
+- **Wayland: no foreground window.** Wayland does not tell programs which window is in front. Lupe cannot bring back “the window you came from”; it types into whatever has the focus after the selection closes.
+- **Wayland: everything through portals.** Screen scan (Screenshot portal), typing (RemoteDesktop portal) and the shortcut (GlobalShortcuts portal) need `xdg-desktop-portal` with a backend for the desktop. The desktop asks for permission and may pick other keys for the shortcut. Without the GlobalShortcuts portal (GNOME before 48, some wlroots compositors) there is no global shortcut – Lupe says so in the settings; the tray menu and the window still start the scan. Characters that are not on the active keyboard layout may not arrive through the RemoteDesktop portal, depending on the desktop – use *Kopieren* there.
+- **Wayland: monitor layout.** The overlay is one full-screen window per monitor; monitor positions come from XWayland and are only known after the first screenshot.
+- **Linux tray icon.** GNOME shows no tray icon without the AppIndicator extension. Lupe cannot detect that; closing the window then leaves Lupe running in the background without a visible icon.
+- **Linux camera.** Needs the group `video`. Unplugging is detected by a watchdog (no frames for a while), not by a system event.
+- **macOS permissions.** Camera, Screen Recording and Accessibility must be allowed in *System Settings › Privacy & Security*; after allowing Screen Recording, Lupe has to be restarted. The shortcut only works while Lupe runs (also in the background).
+- **macOS camera unplugging** is not detected; the picture just stops.
+- **macOS screen capture** uses `screencapture` per display. The work area is the full screen (menu bar and Dock are not subtracted). With displays of different scale, the screenshot of a lower-scale display is enlarged.
+- **Not notarised.** Gatekeeper asks once (*right-click › Öffnen*), see [Installation › macOS](installation.md#macos).
 
 ---
 
