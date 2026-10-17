@@ -1,3 +1,4 @@
+using Lupe.Tests.TestSupport;
 using System.Diagnostics;
 using Lupe.Core.History;
 using Xunit.Abstractions;
@@ -138,7 +139,7 @@ public sealed class HistoryReplaceAndDeleteTests(ITestOutputHelper output) : IDi
         Assert.Null(error);
     }
 
-    [Fact]
+    [WindowsFact]
     public void TryDeleteFile_meldet_gesperrte_Datei_auf_Deutsch()
     {
         new HistoryStore(FilePath).Add(Make("x"));

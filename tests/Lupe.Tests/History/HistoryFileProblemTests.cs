@@ -1,3 +1,4 @@
+using Lupe.Tests.TestSupport;
 using System.Text;
 using System.Text.Json;
 using Lupe.Core.History;
@@ -218,7 +219,7 @@ public sealed class HistoryFileProblemTests : IDisposable
         Assert.Null(store.Problem);
     }
 
-    [Fact]
+    [WindowsFact]
     public void Scheitert_das_Speichern_bleibt_der_Eintrag_im_Speicher_und_die_alte_Datei_heil()
     {
         var store = new HistoryStore(FilePath);

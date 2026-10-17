@@ -1,3 +1,4 @@
+using Lupe.Tests.TestSupport;
 using System.Text;
 using Lupe.Core.Settings;
 
@@ -48,7 +49,7 @@ public sealed class AtomicFileTests : IDisposable
         Assert.Equal(["datei.json"], _temp.FileNames()); // Temp-Datei weggeräumt
     }
 
-    [Fact]
+    [WindowsFact]
     public void Dauerhaft_gesperrte_Zieldatei_wirft_und_bleibt_heil()
     {
         File.WriteAllText(FilePath, "alt");

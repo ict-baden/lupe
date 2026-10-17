@@ -1,3 +1,4 @@
+using Lupe.Tests.TestSupport;
 using System.Text;
 using Lupe.Core.History;
 using Lupe.Core.Model;
@@ -273,7 +274,7 @@ public sealed class HistoryCsvTests : IDisposable
         Assert.NotNull(ex.InnerException);
     }
 
-    [Fact]
+    [WindowsFact]
     public void Export_ueber_eine_in_Excel_geoeffnete_Datei_meldet_sich_deutsch()
     {
         File.WriteAllText(CsvPath, "alt");

@@ -1,3 +1,4 @@
+using Lupe.Tests.TestSupport;
 using Lupe.Core.History;
 using Lupe.Core.Model;
 using static Lupe.Tests.History.TestEntries;
@@ -12,7 +13,7 @@ public sealed class HistoryStoreTests : IDisposable
 
     public void Dispose() => _temp.Dispose();
 
-    [Fact]
+    [WindowsFact]
     public void Standardpfad_liegt_pro_Benutzer_unter_LocalAppData()
     {
         var local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);

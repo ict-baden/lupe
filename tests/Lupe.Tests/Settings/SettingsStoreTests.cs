@@ -1,3 +1,4 @@
+using Lupe.Tests.TestSupport;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -545,7 +546,7 @@ public sealed class SettingsStoreTests : IDisposable
         Assert.Equal(ex.Message, error);
     }
 
-    [Fact]
+    [WindowsFact]
     public void Gesperrte_Datei_bleibt_beim_gescheiterten_Speichern_heil()
     {
         SettingsStore.Save(new LupeSettings { HistoryLimit = 77 }, FilePath);
