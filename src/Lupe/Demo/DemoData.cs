@@ -54,7 +54,7 @@ internal static class DemoData
             E(TimeSpan.FromMinutes(48), ScanSource.Zwischenablage, "QR_CODE", "WIFI:T:WPA;S:Gaeste;P:Willkommen-2026;;"),
             E(TimeSpan.FromMinutes(81), ScanSource.Kamera, "EAN_13", Ean, ResultActions.Kopieren | ResultActions.LinkOeffnen),
             E(TimeSpan.FromHours(3.2), ScanSource.Bildschirm, "AZTEC", "TICKET 7X9-KL2 WAGEN 8 PLATZ 64", ResultActions.Eintippen),
-            E(TimeSpan.FromHours(22), ScanSource.Bildschirm, "QR_CODE", "BEGIN:VCARD\nVERSION:3.0\nN:Muster;Anna\nORG:ICT-Baden\nTEL:+41 56 000 00 00\nEND:VCARD"),
+            E(TimeSpan.FromHours(22), ScanSource.Bildschirm, "QR_CODE", "BEGIN:VCARD\nVERSION:3.0\nORG:ICT-Baden\nTITLE:Empfang\nTEL:+41 56 000 00 00\nEND:VCARD"),
             E(TimeSpan.FromHours(26), ScanSource.Kamera, "PDF_417", "PAKET 1Z999AA10123456784"),
             E(TimeSpan.FromHours(50), ScanSource.Datei, "CODE_39", "INV-2026-0042"),
             E(TimeSpan.FromHours(75), ScanSource.Kamera, "QR_CODE", "https://example.com/termine?id=118", ResultActions.Kopieren | ResultActions.LinkOeffnen),

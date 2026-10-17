@@ -29,15 +29,6 @@
                     </StackPanel>
                 </Button>
             </ui:SettingCard>
-            <ui:SettingCard Glyph="&#xE81C;" Header="Herkunft"
-                            Description="Neubau des Barcode-Readers von Till (pieewiee/Barcode-Reader, MIT-Lizenz): Webcam-Scan mit Markierung, Ton, Wiederholungssperre, Eintippen und Link-Regeln stammen von dort.">
-                <Button Click="OpenOrigin_Click">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE8A7;" Classes="glyph"/>
-                        <TextBlock Text="Ansehen" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-            </ui:SettingCard>
             <ui:SettingCard Glyph="&#xED14;" Header="Erkennung und Oberfläche"
                             Description="zxing-cpp 3.1.1 (Apache-2.0) mit libzint und libzueci (BSD-3-Clause) – QR und Micro QR, Data Matrix, Aztec, PDF417, MaxiCode, EAN, UPC, Code 128/39/93, ITF, Codabar, GS1 DataBar und weitere. Oberfläche mit Avalonia (MIT).">
                 <Button Click="OpenNotices_Click" AutomationProperties.Name="Lizenztexte der mitgelieferten Bibliotheken anzeigen">
