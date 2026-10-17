@@ -86,6 +86,12 @@ public sealed record Hotkey(bool Ctrl, bool Alt, bool Shift, bool Win, int Key)
     /// meldet AltGr als Strg+Alt, ein systemweit angemeldetes Strg+Alt+Q finge auf deutschen Tastaturen AltGr+Q = „@“ ab.
     /// </summary>
     public static Hotkey Default { get; } = new(Ctrl: false, Alt: false, Shift: true, Win: true, Key: 0x51); // Win+Umschalt+Q
+
+    /// <summary>macOS: ⌘⌥Q (Win+Alt+Q). ⌘⇧Q (Win+Umschalt+Q) ist dort „Abmelden“.</summary>
+    public static Hotkey MacDefault { get; } = new(Ctrl: false, Alt: true, Shift: false, Win: true, Key: 0x51);
+
+    /// <summary>Standard für dieses System: <see cref="MacDefault"/> unter macOS, sonst <see cref="Default"/>.</summary>
+    public static Hotkey PlatformDefault => OperatingSystem.IsMacOS() ? MacDefault : Default;
 }
 
 /// <summary>Einstellungen – als JSON unter %LocalAppData%\Lupe\einstellungen.json gespeichert.</summary>
@@ -107,7 +113,7 @@ public sealed record LupeSettings
     public IReadOnlyList<LinkRule> LinkRules { get; init; } = [new(@"^https://\S+$")];
     /// <summary>Aktive Formate in ZXing-Schreibweise; leer = alle.</summary>
     public IReadOnlyList<string> Formats { get; init; } = [];
-    public Hotkey ScreenHotkey { get; init; } = Hotkey.Default;
+    public Hotkey ScreenHotkey { get; init; } = Hotkey.PlatformDefault;
     public bool Sound { get; init; } = true;
     /// <summary>Zielhilfe (Fadenkreuz) im Kamerabild.</summary>
     public bool AimHelp { get; init; } = true;

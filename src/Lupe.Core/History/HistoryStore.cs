@@ -52,7 +52,7 @@ public sealed class HistoryStore
         _snapshot = _entries.ToArray().AsReadOnly();
     }
 
-    /// <summary>Windows: %LocalAppData%\Lupeerlauf.json; Linux: ~/.local/share/lupe; macOS: ~/Library/Application Support/Lupe (siehe <see cref="Settings.AppPaths"/>).</summary>
+    /// <summary>Windows: %LocalAppData%\Lupe\verlauf.json; Linux: ~/.local/share/lupe; macOS: ~/Library/Application Support/Lupe (siehe <see cref="Settings.AppPaths"/>).</summary>
     public static string DefaultPath => Path.Combine(Settings.AppPaths.DataDirectory, "verlauf.json");
 
     /// <summary>Vollständiger Pfad der Verlaufsdatei (auch wenn <see cref="Persist"/> aus ist).</summary>

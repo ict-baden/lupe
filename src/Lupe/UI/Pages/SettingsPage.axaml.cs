@@ -72,7 +72,7 @@ public partial class SettingsPage : UserControl, IPage
         // Noch einmal ins Feld klicken (es hat den Fokus schon): erneut aufnehmen
         HotkeyBox.AddHandler(PointerPressedEvent, (_, _) => { if (HotkeyBox.IsFocused && !_recording) StartRecording(); }, RoutingStrategies.Tunnel);
         HotkeyBox.AddHandler(KeyDownEvent, HotkeyBox_PreviewKeyDown, RoutingStrategies.Tunnel);
-        ToolTip.SetTip(HotkeyDefaultButton, FormatHotkey(Hotkey.Default));
+        ToolTip.SetTip(HotkeyDefaultButton, FormatHotkey(Hotkey.PlatformDefault));
         Load();
     }
 
@@ -304,8 +304,8 @@ public partial class SettingsPage : UserControl, IPage
 
     private void HotkeyDefault_Click(object? sender, RoutedEventArgs e)
     {
-        _state.UpdateSettings(s => s with { ScreenHotkey = Hotkey.Default });
-        HotkeyBox.Text = FormatHotkey(Hotkey.Default);
+        _state.UpdateSettings(s => s with { ScreenHotkey = Hotkey.PlatformDefault });
+        HotkeyBox.Text = FormatHotkey(Hotkey.PlatformDefault);
     }
 
     private void UpdateHotkeyState()

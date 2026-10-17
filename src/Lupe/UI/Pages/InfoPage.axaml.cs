@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Lupe.Core.History;
 using Lupe.Core.Input;
 using Lupe.Core.Settings;
 using Lupe.Services;
@@ -23,7 +24,7 @@ public partial class InfoPage : UserControl, IPage
             CommandIntro.Text = "Dasselbe Programm liest Bilder auch ohne Fenster – je Code eine Zeile „FORMAT⇥Inhalt“, für Skripte und geplante Aufgaben:";
             CommandExample.Text = "lupe lesen ~/Scans/etikett.png --format QR_CODE";
             CommandHelp.Text = "Alle Befehle und Optionen: lupe --hilfe";
-            DataCard.Description = $"Einstellungen und Verlauf liegen unter {DataFolderText()} – nur für Sie. Lupe schickt nichts ins Internet; Links öffnet nur der Browser, wenn Sie es einstellen.";
+            DataCard.Description = $"{DataFolderText()} – nur für Sie. Lupe schickt nichts ins Internet; Links öffnet nur der Browser, wenn Sie es einstellen.";
         }
         if (state.IsDemo && !state.Strict) DataCard.Description = "Demo: Einstellungen und Verlauf liegen nur im Speicher und verschwinden beim Beenden.";
         DataButton.IsEnabled = !state.IsDemo || state.Strict;
@@ -53,9 +54,20 @@ public partial class InfoPage : UserControl, IPage
         catch (Exception ex) when (ex is not OutOfMemoryException) { return ""; }
     }
 
+    /// <summary>Unter Linux liegen Einstellungen (~/.config/lupe) und Verlauf (~/.local/share/lupe) getrennt (XDG).</summary>
     private static string DataFolderText()
     {
-        var folder = DataFolder();
+        var settings = Shorten(DataFolder());
+        string history;
+        try { history = Shorten(Path.GetDirectoryName(HistoryStore.DefaultPath) ?? ""); }
+        catch (Exception ex) when (ex is not OutOfMemoryException) { history = settings; }
+        return history == settings || history.Length == 0
+            ? $"Einstellungen und Verlauf liegen unter {settings}"
+            : $"Einstellungen liegen unter {settings}, der Verlauf unter {history}";
+    }
+
+    private static string Shorten(string folder)
+    {
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         return home.Length > 0 && folder.StartsWith(home, StringComparison.Ordinal) ? "~" + folder[home.Length..] : folder;
     }

@@ -52,7 +52,7 @@ public sealed class SettingsStoreTests : IDisposable
         Assert.Equal(20, settings.TypeDelayMs);
         Assert.Equal([new LinkRule(@"^https://\S+$")], settings.LinkRules);
         Assert.Empty(settings.Formats);
-        Assert.Equal(Hotkey.Default, settings.ScreenHotkey);
+        Assert.Equal(Hotkey.PlatformDefault, settings.ScreenHotkey);
         Assert.True(settings.Sound);
         Assert.True(settings.AimHelp);
         Assert.Equal(3000, settings.RepeatSuppressMs);
@@ -247,7 +247,7 @@ public sealed class SettingsStoreTests : IDisposable
         Assert.Equal(50, settings.HistoryLimit);  // übernommen
         Assert.Equal(3000, settings.RepeatSuppressMs);
         Assert.Equal(ResultActions.Kopieren, settings.Actions);
-        Assert.Equal(Hotkey.Default, settings.ScreenHotkey);
+        Assert.Equal(Hotkey.PlatformDefault, settings.ScreenHotkey);
         Assert.Equal("", settings.Camera);
         Assert.False(settings.KeepHistory);
         Assert.NotNull(problem);
@@ -427,7 +427,7 @@ public sealed class SettingsStoreTests : IDisposable
     [InlineData("null")]
     public void Unbrauchbares_Tastenkuerzel_wird_Standard(string hotkey)
     {
-        Assert.Equal(Hotkey.Default, LoadJson($$"""{ "ScreenHotkey": {{hotkey}} }""", out _).ScreenHotkey);
+        Assert.Equal(Hotkey.PlatformDefault, LoadJson($$"""{ "ScreenHotkey": {{hotkey}} }""", out _).ScreenHotkey);
     }
 
     [Theory]
@@ -449,8 +449,8 @@ public sealed class SettingsStoreTests : IDisposable
         // Systemweit angemeldet, würde das Kürzel die Taste in allen Programmen verschlucken
         var hotkey = new Hotkey(Ctrl: false, Alt: false, Shift: shift, Win: false, Key: key);
 
-        Assert.Equal(Hotkey.Default, SettingsStore.Normalize(new LupeSettings { ScreenHotkey = hotkey }).ScreenHotkey);
-        Assert.Equal(Hotkey.Default, LoadJson($$"""{ "ScreenHotkey": {{JsonSerializer.Serialize(hotkey)}} }""", out _).ScreenHotkey);
+        Assert.Equal(Hotkey.PlatformDefault, SettingsStore.Normalize(new LupeSettings { ScreenHotkey = hotkey }).ScreenHotkey);
+        Assert.Equal(Hotkey.PlatformDefault, LoadJson($$"""{ "ScreenHotkey": {{JsonSerializer.Serialize(hotkey)}} }""", out _).ScreenHotkey);
     }
 
     [Theory]
@@ -498,7 +498,7 @@ public sealed class SettingsStoreTests : IDisposable
         Assert.Equal("", clean.TypeSuffix);
         Assert.Equal([new LinkRule("^a$")], clean.LinkRules);
         Assert.Empty(clean.Formats);
-        Assert.Equal(Hotkey.Default, clean.ScreenHotkey);
+        Assert.Equal(Hotkey.PlatformDefault, clean.ScreenHotkey);
         Assert.Equal(0, clean.RepeatSuppressMs);
         Assert.Equal("", clean.Camera);
         Assert.Equal(1, clean.HistoryLimit);

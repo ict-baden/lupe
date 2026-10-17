@@ -183,7 +183,7 @@ public static class SettingsStore
             TypeDelayMs = Math.Clamp(settings.TypeDelayMs, 0, MaxTypeDelayMs),
             LinkRules = settings.LinkRules is null ? defaults.LinkRules : NormalizeRules(settings.LinkRules),
             Formats = settings.Formats is null ? defaults.Formats : NormalizeFormats(settings.Formats),
-            ScreenHotkey = IsUsableHotkey(settings.ScreenHotkey) ? settings.ScreenHotkey : Hotkey.Default,
+            ScreenHotkey = IsUsableHotkey(settings.ScreenHotkey) ? settings.ScreenHotkey : Hotkey.PlatformDefault,
             RepeatSuppressMs = Math.Clamp(settings.RepeatSuppressMs, 0, MaxRepeatSuppressMs),
             Camera = settings.Camera?.Trim() ?? "",
             HistoryLimit = Math.Clamp(settings.HistoryLimit, MinHistoryLimit, MaxHistoryLimit),

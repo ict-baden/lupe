@@ -191,7 +191,7 @@ internal static class CommandLine
         string formats;
         try { formats = string.Join(", ", BarcodeDecoder.AllFormats); }
         catch (Exception) { formats = "QR_CODE, DATA_MATRIX, AZTEC, PDF_417, EAN_13, CODE_128 und weitere"; }
-        var hotkey = HotkeyText.Format(Hotkey.Default);
+        var hotkey = HotkeyText.Format(Hotkey.PlatformDefault);
 
         Console.WriteLine($$"""
             Lupe {{AppInfo.Version}} – QR- und Barcodes lesen

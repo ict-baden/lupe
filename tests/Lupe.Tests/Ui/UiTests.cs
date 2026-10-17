@@ -113,7 +113,7 @@ public sealed class UiTests
 
                 // Ohne Strg/Alt/Win: abgelehnt, Aufnahme läuft weiter
                 window.KeyPressQwerty(PhysicalKey.K, RawInputModifiers.None);
-                Assert.Equal(Hotkey.Default, state.Settings.ScreenHotkey);
+                Assert.Equal(Hotkey.PlatformDefault, state.Settings.ScreenHotkey);
 
                 window.KeyPressQwerty(PhysicalKey.K, RawInputModifiers.Control | RawInputModifiers.Alt);
                 Assert.Equal(new Hotkey(true, true, false, false, 0x4B), state.Settings.ScreenHotkey);
