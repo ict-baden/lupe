@@ -330,7 +330,7 @@ public partial class CameraPage : UserControl, IPage
         // Wie ein Handscanner: „Eintippen“ schreibt in das Programm, das gerade vorn ist – Lupe selbst zählt nicht
         var active = LupePlatform.Current.ActiveWindow;
         var foreground = active.Foreground();
-        nint typeTarget = foreground == 0 || active.IsOwnWindow(foreground) ? 0 : foreground;
+        nint typeTarget = TypeTargets.From(active, foreground, lupeActive: TopLevel.GetTopLevel(this) is Window { IsActive: true });
         var report = await _state.Hits.ReportAsync(codes, ScanSource.Kamera, typeTarget);
         ShowResults(report.Codes, report.Entries, report.Time, report.NeedsChoice ? null : report.Outcome);
     }

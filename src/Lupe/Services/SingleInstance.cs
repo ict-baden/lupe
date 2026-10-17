@@ -13,15 +13,18 @@ internal abstract class SingleInstance : IDisposable
     /// <summary>Erste Instanz: Besitz übernehmen. Läuft schon eine, null.</summary>
     public static SingleInstance? TryAcquire() => OperatingSystem.IsWindows() ? WindowsInstance.Acquire() : UnixInstance.Acquire();
 
-    /// <summary>Zweite Instanz: die erste bitten, ihr Fenster zu zeigen.</summary>
-    public static void SignalFirst()
+    /// <summary>Zweite Instanz: die erste bitten, ihr Fenster zu zeigen – oder (<paramref name="scan"/>) einen Ausschnitt zu scannen.</summary>
+    public static void SignalFirst(bool scan)
     {
-        if (OperatingSystem.IsWindows()) WindowsInstance.Signal();
-        else UnixInstance.Signal();
+        if (OperatingSystem.IsWindows()) WindowsInstance.Signal(scan);
+        else UnixInstance.Signal(scan);
     }
 
-    /// <summary>Ruft <paramref name="onShow"/> (auf einem Hintergrund-Thread) bei jedem weiteren Start auf.</summary>
-    public abstract void Listen(Action onShow);
+    /// <summary>
+    /// Ruft bei jedem weiteren Start (auf einem Hintergrund-Thread) <paramref name="onShow"/> auf, bei
+    /// <c>--bildschirm</c> stattdessen <paramref name="onScan"/>.
+    /// </summary>
+    public abstract void Listen(Action onShow, Action onScan);
 
     public abstract void Dispose();
 
@@ -31,8 +34,11 @@ internal abstract class SingleInstance : IDisposable
         // „Local\“ = je Sitzung: mehrere angemeldete Benutzer (Terminalserver) haben jeder ihre eigene Lupe
         private const string MutexName = @"Local\ICT-Baden.Lupe";
         private const string ShowEventName = @"Local\ICT-Baden.Lupe.Fenster";
+        private const string ScanEventName = @"Local\ICT-Baden.Lupe.Scan";
 
+        private readonly EventWaitHandle _scan = new(false, EventResetMode.AutoReset, ScanEventName);
         private RegisteredWaitHandle? _wait;
+        private RegisteredWaitHandle? _waitScan;
         private bool _disposed;
 
         public static SingleInstance? Acquire()
@@ -46,14 +52,14 @@ internal abstract class SingleInstance : IDisposable
             return new WindowsInstance(mutex, new EventWaitHandle(false, EventResetMode.AutoReset, ShowEventName));
         }
 
-        public static void Signal()
+        public static void Signal(bool scan)
         {
             // Diese Instanz wurde gerade vom Benutzer gestartet und darf deshalb den Vordergrund vergeben – die erste
             // Instanz bekommt dieses Recht, sonst blinkte ihr Fenster nur in der Taskleiste
             Native.AllowSetForegroundWindow(Native.ASFW_ANY);
             try
             {
-                using var signal = EventWaitHandle.OpenExisting(ShowEventName);
+                using var signal = EventWaitHandle.OpenExisting(scan ? ScanEventName : ShowEventName);
                 signal.Set();
             }
             catch (Exception ex) when (ex is WaitHandleCannotBeOpenedException or UnauthorizedAccessException or IOException)
@@ -62,10 +68,12 @@ internal abstract class SingleInstance : IDisposable
             }
         }
 
-        public override void Listen(Action onShow)
+        public override void Listen(Action onShow, Action onScan)
         {
             _wait?.Unregister(null);
+            _waitScan?.Unregister(null);
             _wait = ThreadPool.RegisterWaitForSingleObject(show, (_, _) => onShow(), null, Timeout.Infinite, executeOnlyOnce: false);
+            _waitScan = ThreadPool.RegisterWaitForSingleObject(_scan, (_, _) => onScan(), null, Timeout.Infinite, executeOnlyOnce: false);
         }
 
         public override void Dispose()
@@ -73,7 +81,9 @@ internal abstract class SingleInstance : IDisposable
             if (_disposed) return;
             _disposed = true;
             _wait?.Unregister(null);
+            _waitScan?.Unregister(null);
             show.Dispose();
+            _scan.Dispose();
             try { mutex.ReleaseMutex(); }
             catch (ApplicationException) { } // auf einem anderen Thread freigegeben – das System räumt beim Beenden auf
             mutex.Dispose();
@@ -116,13 +126,16 @@ internal abstract class SingleInstance : IDisposable
             }
         }
 
-        public static void Signal()
+        // Ein Byte je Signal
+        private const byte ShowByte = 1, ScanByte = 2;
+
+        public static void Signal(bool scan)
         {
             try
             {
                 using var client = new NamedPipeClientStream(".", PipeName, PipeDirection.Out);
                 client.Connect(1000);
-                client.WriteByte(1);
+                client.WriteByte(scan ? ScanByte : ShowByte);
             }
             catch (Exception ex) when (ex is IOException or TimeoutException or UnauthorizedAccessException)
             {
@@ -130,7 +143,7 @@ internal abstract class SingleInstance : IDisposable
             }
         }
 
-        public override void Listen(Action onShow)
+        public override void Listen(Action onShow, Action onScan)
         {
             var token = _stop.Token;
             _ = Task.Run(async () =>
@@ -142,8 +155,9 @@ internal abstract class SingleInstance : IDisposable
                         await using var server = new NamedPipeServerStream(PipeName, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
                         await server.WaitForConnectionAsync(token);
                         var buffer = new byte[1];
-                        _ = await server.ReadAsync(buffer, token);
-                        onShow();
+                        int read = await server.ReadAsync(buffer, token);
+                        if (read == 1 && buffer[0] == ScanByte) onScan();
+                        else onShow();
                     }
                     catch (OperationCanceledException)
                     {

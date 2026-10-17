@@ -74,8 +74,10 @@ public partial class App : Application
         // Die Demo meldet kein globales Kürzel an: Neben einer echten Lupe wäre es sonst „belegt“ (oder nähme es ihr weg).
         // „Ausschnitt scannen“ geht dort über den Knopf.
         if (_options.Mode != AppMode.Demo) RegisterHotkey(state.Settings.ScreenHotkey);
-        _instance?.Listen(() => Dispatcher.UIThread.Post(ShowMainWindow));
+        _instance?.Listen(() => Dispatcher.UIThread.Post(ShowMainWindow), () => Dispatcher.UIThread.Post(StartExternalScan));
 
+        // --bildschirm als erste Lupe: gleich scannen, danach wie beim Autostart im Infobereich weiter
+        if (_options.ScanOnStart) Dispatcher.UIThread.Post(StartExternalScan, DispatcherPriority.Background);
         // Autostart: nur im Infobereich – außer es gibt keinen (dann wäre Lupe unsichtbar und unerreichbar)
         if (_options.Mode == AppMode.Background && _tray?.IsVisible == true) return;
         ShowMainWindow();
@@ -143,10 +145,15 @@ public partial class App : Application
 
     // ================= Tastenkürzel und Bildschirm-Scan =================
 
-    private void StartScreenScan()
+    private void StartScreenScan() => StartScreenScan(external: false);
+
+    /// <summary><c>--bildschirm</c> (Tastenkürzel des Desktops): Der Scan kommt sicher aus einem anderen Programm.</summary>
+    private void StartExternalScan() => StartScreenScan(external: true);
+
+    private void StartScreenScan(bool external)
     {
         if (_state is null || _scan is null || _exiting) return;
-        Ui.Run(_state, _scan.RunAsync, "Bildschirm-Scan");
+        Ui.Run(_state, () => _scan.RunAsync(external), "Bildschirm-Scan");
     }
 
     private void RegisterHotkey(Hotkey hotkey)

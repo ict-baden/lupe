@@ -29,8 +29,10 @@ internal static class Program
             instance = SingleInstance.TryAcquire();
             if (instance is null)
             {
-                // Läuft schon: das vorhandene Fenster nach vorn holen – beim Autostart nicht, da will niemand ein Fenster
-                if (options.Mode == AppMode.Normal) SingleInstance.SignalFirst();
+                // Läuft schon: das vorhandene Fenster nach vorn holen (oder dort scannen) – beim Autostart nicht, da will
+                // niemand ein Fenster
+                if (options.ScanOnStart) SingleInstance.SignalFirst(scan: true);
+                else if (options.Mode == AppMode.Normal) SingleInstance.SignalFirst(scan: false);
                 return 0;
             }
         }
@@ -39,10 +41,29 @@ internal static class Program
         {
             return BuildApp(options, instance).UsePlatformDetect().StartWithClassicDesktopLifetime(args, Avalonia.Controls.ShutdownMode.OnExplicitShutdown);
         }
+        catch (Exception ex) when (OperatingSystem.IsLinux() && ex.Message.Contains("XOpenDisplay", StringComparison.Ordinal))
+        {
+            // Avalonia zeichnet unter Linux über X11 – unter Wayland also über XWayland. Ohne X-Server kein Fenster:
+            // verständlich melden statt mit einem Stacktrace abzustürzen
+            ConsoleSession.Attach();
+            Console.Error.WriteLine(NoDisplayMessage(Environment.GetEnvironmentVariable("DISPLAY"), Environment.GetEnvironmentVariable("WAYLAND_DISPLAY")));
+            return CommandLine.ExitError;
+        }
         finally
         {
             instance?.Dispose();
         }
+    }
+
+    /// <summary>Meldung, wenn Linux keinen X-Server erreicht (Wayland ohne XWayland, SSH ohne Weiterleitung).</summary>
+    internal static string NoDisplayMessage(string? display, string? waylandDisplay)
+    {
+        var where = string.IsNullOrEmpty(display) ? "DISPLAY ist nicht gesetzt" : $"DISPLAY={display} ist nicht erreichbar";
+        var hint = string.IsNullOrEmpty(waylandDisplay)
+            ? "Lupe in einer grafischen Sitzung starten."
+            : "Unter Wayland braucht das Fenster XWayland – in der Desktop-Sitzung einschalten (sway: „xwayland enable“).";
+        return $"Lupe kann kein Fenster öffnen: kein X-Server ({where}). {hint} " +
+               "Bilder lesen geht auch ohne Fenster: lupe lesen <Datei>";
     }
 
     /// <summary>Die Anbindung für dieses System; die Windows-Ausgabe bringt Lupe.Platform.Windows mit, die andere Linux und macOS.</summary>
@@ -100,7 +121,9 @@ internal static class Program
 
 internal enum AppMode { Normal, Background, Demo, Screenshots, CommandLine }
 
-internal sealed record StartOptions(AppMode Mode, string ScreenshotFolder = "", string Theme = "beide")
+/// <param name="ScanOnStart"><c>--bildschirm</c>: gleich einen Ausschnitt scannen – für ein eigenes Tastenkürzel des Desktops,
+/// wo Programme keine globalen Kürzel anmelden dürfen (Wayland ohne GlobalShortcuts-Portal).</param>
+internal sealed record StartOptions(AppMode Mode, string ScreenshotFolder = "", string Theme = "beide", bool ScanOnStart = false)
 {
     public static StartOptions Parse(string[] args)
     {
@@ -108,6 +131,7 @@ internal sealed record StartOptions(AppMode Mode, string ScreenshotFolder = "", 
         var first = args[0].Trim();
         if (args.Length == 1 && first.Equals("--demo", StringComparison.OrdinalIgnoreCase)) return new(AppMode.Demo);
         if (args.Length == 1 && first.Equals("--hintergrund", StringComparison.OrdinalIgnoreCase)) return new(AppMode.Background);
+        if (args.Length == 1 && first.Equals("--bildschirm", StringComparison.OrdinalIgnoreCase)) return new(AppMode.Background, ScanOnStart: true);
 
         if (first.Equals("--screenshots", StringComparison.OrdinalIgnoreCase))
         {

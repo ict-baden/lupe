@@ -19,23 +19,29 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
 
     public bool IsBusy => _busy;
 
-    public async Task RunAsync()
+    /// <param name="external">
+    /// Ausgelöst von außen (<c>lupe --bildschirm</c> über ein Tastenkürzel des Desktops): Getippt wird in das Fenster mit dem
+    /// Fokus, auch wenn das System nicht sagt, welches vorn ist (Wayland) – dort ist „Lupe-Fenster aktiv“ über XWayland
+    /// nicht verlässlich.
+    /// </param>
+    public async Task RunAsync(bool external = false)
     {
         // Tastenkürzel während eines laufenden Scans (Overlay offen) nicht doppelt auslösen
         if (_busy) return;
         _busy = true;
-        try { await RunCoreAsync(); }
+        try { await RunCoreAsync(external); }
         finally { _busy = false; }
     }
 
-    private async Task RunCoreAsync()
+    private async Task RunCoreAsync(bool external)
     {
         var main = mainWindow();
         var active = LupePlatform.Current.ActiveWindow;
         var foreground = active.Foreground();
         // Weiß das System nicht, welches Fenster vorn ist (Wayland): Kam der Scan aus Lupe, ist ihr Fenster aktiv
-        bool fromLupe = foreground == 0 ? main is { IsActive: true } : active.IsOwnWindow(foreground);
-        nint typeTarget = fromLupe ? 0 : foreground;
+        bool fromLupe = foreground == 0 ? !external && main is { IsActive: true } : active.IsOwnWindow(foreground);
+        // Wayland: kein Fenster bekannt – getippt wird dann in das Fenster, das nach der Auswahl den Fokus hat
+        nint typeTarget = fromLupe ? 0 : TypeTargets.From(active, foreground, lupeActive: false);
         bool hidden = false;
         try
         {

@@ -232,4 +232,20 @@ public sealed class AppLogicTests
         // Frühere Formate im Verlauf bleiben lesbar
         Assert.Equal("Intelligent Mail", FormatLabel("IMB"));
     }
+
+    // ================= Linux ohne X-Server =================
+
+    private static string NoDisplay(string? display, string? wayland) =>
+        (string)AppInternals.Call("Lupe.Program", "NoDisplayMessage", display, wayland)!;
+
+    [AppFact]
+    public void Ohne_X_Server_unter_Wayland_Hinweis_auf_XWayland()
+    {
+        var text = NoDisplay(null, "wayland-1");
+        Assert.Contains("DISPLAY ist nicht gesetzt", text);
+        Assert.Contains("XWayland", text);
+        Assert.Contains("lupe lesen", text);
+        Assert.Contains("DISPLAY=:5 ist nicht erreichbar", NoDisplay(":5", null));
+        Assert.DoesNotContain("XWayland", NoDisplay(":5", null));
+    }
 }

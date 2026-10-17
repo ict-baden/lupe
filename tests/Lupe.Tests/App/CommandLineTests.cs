@@ -117,6 +117,14 @@ public sealed class CommandLineTests
         Assert.Contains("steht allein", r.Err);
     }
 
+    [AppFact]
+    public void Bildschirm_mit_weiteren_Angaben_ist_Fehler()
+    {
+        var r = AppExe.Run("--bildschirm", "x");
+        Assert.Equal(3, r.ExitCode);
+        Assert.Contains("steht allein", r.Err);
+    }
+
     // ================= mit Erkennung (nach dem Zusammenführen) =================
 
     [AppCoreFact]

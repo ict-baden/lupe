@@ -34,6 +34,7 @@ internal static class CommandLine
                 "--screenshots" => throw new UsageException("Aufruf: Lupe.exe --screenshots <ordner> [--theme hell|dunkel|beide]"),
                 "--demo" => throw new UsageException("„--demo“ steht allein: Lupe.exe --demo"),
                 "--hintergrund" => throw new UsageException("„--hintergrund“ steht allein: Lupe.exe --hintergrund"),
+                "--bildschirm" => throw new UsageException("„--bildschirm“ steht allein: Lupe.exe --bildschirm"),
                 _ => throw new UsageException($"Unbekannter Befehl „{command}“."),
             };
         }
@@ -200,6 +201,8 @@ internal static class CommandLine
               Lupe.exe                              Oberfläche starten
               Lupe.exe lesen <bild> [<bild> …] [--format <format>]
               Lupe.exe --hintergrund                nur im Infobereich starten (für den Autostart)
+              Lupe.exe --bildschirm                 gleich einen Ausschnitt scannen (läuft Lupe schon,
+                                                    scannt diese) – für ein eigenes Tastenkürzel
               Lupe.exe --demo                       Oberfläche mit Demo-Kamera und Beispielverlauf
                                                     (speichert nichts, ohne globales Tastenkürzel)
               Lupe.exe --screenshots <ordner> [--theme hell|dunkel|beide]

@@ -125,6 +125,26 @@ public interface IActiveWindow
     Task<string?> ActivateAsync(nint window, CancellationToken ct = default);
 }
 
+/// <summary>Ziele für „Eintippen“, die kein echtes Fenster sind.</summary>
+public static class TypeTargets
+{
+    /// <summary>
+    /// „Das Fenster mit dem Fokus“, wenn das System nicht sagt, welches vorn ist (Wayland: <see cref="IActiveWindow.IsSupported"/>
+    /// ist false). Nur dann vergeben; <see cref="IActiveWindow.ActivateAsync"/> hat dort nichts zu tun.
+    /// </summary>
+    public const nint FocusedWindow = -1;
+
+    /// <summary>
+    /// Ziel aus dem Vordergrundfenster: Lupe selbst oder unbekannt bei bekanntem System = 0 (nicht tippen). Weiß das System
+    /// es nicht (<paramref name="foreground"/> 0, nicht unterstützt), entscheidet <paramref name="lupeActive"/>.
+    /// </summary>
+    public static nint From(IActiveWindow active, nint foreground, bool lupeActive)
+    {
+        if (foreground != 0) return active.IsOwnWindow(foreground) ? 0 : foreground;
+        return !active.IsSupported && !lupeActive ? FocusedWindow : 0;
+    }
+}
+
 /// <summary>„Mit dem System starten“ für den aktuellen Benutzer (startet Lupe nur im Infobereich: <c>--hintergrund</c>).</summary>
 public interface IAutostart
 {

@@ -12,6 +12,7 @@ The same `Lupe.exe` that opens the window also reads image files without one: gi
 Lupe.exe                              start the window
 Lupe.exe lesen <image> [<image> …] [--format <format>]
 Lupe.exe --hintergrund                start in the notification area only (for autostart)
+Lupe.exe --bildschirm                 scan a part of the screen right away (for a desktop shortcut)
 Lupe.exe --demo                       window with demo camera and sample history
 Lupe.exe --screenshots <folder> [--theme hell|dunkel|beide]
 Lupe.exe --hilfe                      help (also --help, -h, -?, /?, /h, hilfe)
@@ -152,6 +153,7 @@ Each of these stands alone; combined with anything else, Lupe answers with an er
 | Switch | Does |
 |---|---|
 | `--hintergrund` | Starts Lupe in the notification area without a window – used by *Mit Windows starten*. If Lupe already runs, it ends without doing anything. If there is no notification area, the window opens anyway. |
+| `--bildschirm` | Starts a screen scan straight away. If Lupe already runs, that Lupe scans and the new start ends. Meant for a shortcut set up in the desktop's own settings where programs may not register global shortcuts (Wayland without the GlobalShortcuts portal, e.g. sway: `bindsym $mod+Shift+q exec lupe --bildschirm`). After the scan Lupe stays in the notification area (or opens its window if there is none). |
 | `--demo` | Opens the window with a demo camera, a sample history and sample settings. Nothing is saved, no global shortcut is registered, there is no notification-area icon, and the demo ends with its window. It can run next to a normal Lupe. |
 | `--screenshots <folder>` | Renders every page of the demo, the selection overlay and the result notification as PNG files into the folder – light, dark or both (default; choose with `--theme hell\|dunkel\|beide`). Used for this documentation; works without a visible desktop. Exit code 0, or 3 on errors. |
 
