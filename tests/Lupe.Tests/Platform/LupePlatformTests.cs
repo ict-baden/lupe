@@ -45,6 +45,7 @@ public sealed class LupePlatformTests
     [MemberData(nameof(Geruest_Plattformen))]
     public async Task Geruest_meldet_nicht_verfuegbar_statt_abzustuerzen(string kind)
     {
+        if (kind == "macos" && OperatingSystem.IsMacOS()) return; // dort echt – siehe MacOSSystemTests
         var platform = Create(kind);
 
         Assert.Empty(await platform.Cameras.ListAsync());

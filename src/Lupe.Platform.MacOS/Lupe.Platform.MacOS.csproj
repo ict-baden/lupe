@@ -15,4 +15,8 @@
   <ItemGroup>
     <InternalsVisibleTo Include="Lupe.Tests" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FlashCap" Version="1.12.0" />
+  </ItemGroup>
 </Project>
