@@ -110,6 +110,7 @@ flowchart TB
 | `installer/` | WiX 5 MSI |
 | `tests/Lupe.Tests` | xUnit tests |
 | `tools/screenshots` | Generator for the documentation images |
+| `tools/icons` | `make-lupe-icons.py` builds `src/Lupe/Assets/LupeIcons.ttf` (fontTools): the Fluent UI System Icons Lupe uses, scaled to fill the em square and mapped to the Segoe Fluent Icons code points, so XAML keeps one set of glyph codes on every OS |
 
 The only NuGet dependency of the core is `ZXingCpp` 0.5.3 (Apache-2.0): the .NET wrapper of zxing-cpp 3.1.1 with the native `ZXing.dll` (x64 and arm64, here `runtimes/win-x64/native`), which also contains libzint and libzueci (BSD-3-Clause). A publish for `win-x64` puts `ZXing.dll` next to `Lupe.exe`; the single-file `Lupe.exe` carries it inside and extracts it on first start (`IncludeNativeLibrariesForSelfExtract`). Licence texts of all third-party components: [`THIRD-PARTY-NOTICES.txt`](../THIRD-PARTY-NOTICES.txt) – copied next to `Lupe.exe` and embedded for the *Info* page; update it together with the package. Code comments, some identifiers and all user-facing text are in German.
 
