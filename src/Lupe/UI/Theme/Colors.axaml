@@ -1,0 +1,110 @@
+<!-- Farben im Windows-11-Stil (Schlüssel wie in WinUI/WPF-Fluent, Werte von dort), hell und dunkel. Die Akzentfarben
+     (AccentFillColorDefaultBrush …) setzt ThemeManager aus der Systemfarbe; Schriften ebenfalls (je System). -->
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush x:Key="ApplicationBackgroundBrush" Color="#FFF3F3F3"/>
+            <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#E4000000"/>
+            <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#9E000000"/>
+            <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#72000000"/>
+            <SolidColorBrush x:Key="ControlFillColorDefaultBrush" Color="#B3FFFFFF"/>
+            <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#80F9F9F9"/>
+            <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="#0F000000"/>
+            <SolidColorBrush x:Key="CardBackgroundFillColorDefaultBrush" Color="#B3FFFFFF"/>
+            <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#0F000000"/>
+            <SolidColorBrush x:Key="SubtleFillColorSecondaryBrush" Color="#09000000"/>
+            <SolidColorBrush x:Key="DividerStrokeColorDefaultBrush" Color="#0F000000"/>
+            <SolidColorBrush x:Key="SystemFillColorCautionBrush" Color="#FF9D5D00"/>
+            <SolidColorBrush x:Key="SystemFillColorCautionBackgroundBrush" Color="#FFFFF4CE"/>
+            <SolidColorBrush x:Key="SystemFillColorCriticalBrush" Color="#FFC42B1C"/>
+            <SolidColorBrush x:Key="SystemFillColorCriticalBackgroundBrush" Color="#FFFDE7E9"/>
+            <SolidColorBrush x:Key="SystemFillColorSuccessBrush" Color="#FF0F7B0F"/>
+            <SolidColorBrush x:Key="SystemFillColorSuccessBackgroundBrush" Color="#FFDFF6DD"/>
+
+            <!-- Avalonia-Fluent an WinUI angleichen: helle Knöpfe und Felder mit dezentem Rand -->
+            <SolidColorBrush x:Key="ButtonBackground" Color="#FFFBFBFB"/>
+            <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#FFF6F6F6"/>
+            <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#FFF0F0F0"/>
+            <SolidColorBrush x:Key="ButtonBorderBrush" Color="#FFE3E3E3"/>
+            <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#FFE0E0E0"/>
+            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#FFE0E0E0"/>
+            <SolidColorBrush x:Key="ComboBoxBackground" Color="#FFFBFBFB"/>
+            <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#FFF6F6F6"/>
+            <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#FFF0F0F0"/>
+            <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#FFE3E3E3"/>
+            <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#FFDADADA"/>
+            <SolidColorBrush x:Key="TextControlBackground" Color="#FFFBFBFB"/>
+            <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#FFF6F6F6"/>
+            <SolidColorBrush x:Key="TextControlBorderBrush" Color="#FFE3E3E3"/>
+            <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#FFDADADA"/>
+
+            <!-- Eigener Kippschalter (CheckBox.toggle), wie Vitrine und Zutritt -->
+            <SolidColorBrush x:Key="ControlOff" Color="#06000000"/>
+            <SolidColorBrush x:Key="ControlOffStroke" Color="#72000000"/>
+            <SolidColorBrush x:Key="Knob" Color="#9E000000"/>
+            <!-- Sucher (Kamerabild, Vorschau): auch im hellen Theme dunkel, damit Bilder ruhig wirken -->
+            <SolidColorBrush x:Key="ViewfinderBackground" Color="#FF202020"/>
+            <SolidColorBrush x:Key="ViewfinderText" Color="#E6FFFFFF"/>
+            <SolidColorBrush x:Key="ViewfinderTextSecondary" Color="#A0FFFFFF"/>
+            <SolidColorBrush x:Key="DropZoneBackground" Color="#08000000"/>
+            <SolidColorBrush x:Key="DropZoneStroke" Color="#40000000"/>
+            <!-- Kleine Fenster (Auswahl mehrerer Codes, Ergebnis-Hinweis): undurchsichtig, wie Vitrines Flyout -->
+            <SolidColorBrush x:Key="FlyoutBackground" Color="#FFF9F9F9"/>
+            <!-- Kopfkarte im Produkt-Akzent Orange-Rot des Symbols, dezent -->
+            <LinearGradientBrush x:Key="HeroBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#2EF7A531" Offset="0"/>
+                <GradientStop Color="#1AE8505B" Offset="1"/>
+            </LinearGradientBrush>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+            <SolidColorBrush x:Key="ApplicationBackgroundBrush" Color="#FF202020"/>
+            <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#FFFFFFFF"/>
+            <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#C5FFFFFF"/>
+            <SolidColorBrush x:Key="TextFillColorTertiaryBrush" Color="#87FFFFFF"/>
+            <SolidColorBrush x:Key="ControlFillColorDefaultBrush" Color="#0FFFFFFF"/>
+            <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#15FFFFFF"/>
+            <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="#12FFFFFF"/>
+            <SolidColorBrush x:Key="CardBackgroundFillColorDefaultBrush" Color="#0DFFFFFF"/>
+            <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#19000000"/>
+            <SolidColorBrush x:Key="SubtleFillColorSecondaryBrush" Color="#0FFFFFFF"/>
+            <SolidColorBrush x:Key="DividerStrokeColorDefaultBrush" Color="#15FFFFFF"/>
+            <SolidColorBrush x:Key="SystemFillColorCautionBrush" Color="#FFFCE100"/>
+            <SolidColorBrush x:Key="SystemFillColorCautionBackgroundBrush" Color="#FF433519"/>
+            <SolidColorBrush x:Key="SystemFillColorCriticalBrush" Color="#FFFF99A4"/>
+            <SolidColorBrush x:Key="SystemFillColorCriticalBackgroundBrush" Color="#FF442726"/>
+            <SolidColorBrush x:Key="SystemFillColorSuccessBrush" Color="#FF6CCB5F"/>
+            <SolidColorBrush x:Key="SystemFillColorSuccessBackgroundBrush" Color="#FF393D1B"/>
+
+            <SolidColorBrush x:Key="ButtonBackground" Color="#FF2D2D2D"/>
+            <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#FF323232"/>
+            <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#FF272727"/>
+            <SolidColorBrush x:Key="ButtonBorderBrush" Color="#FF363636"/>
+            <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="#FF3A3A3A"/>
+            <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="#FF333333"/>
+            <SolidColorBrush x:Key="ComboBoxBackground" Color="#FF2D2D2D"/>
+            <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#FF323232"/>
+            <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#FF272727"/>
+            <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="#FF363636"/>
+            <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="#FF3E3E3E"/>
+            <SolidColorBrush x:Key="TextControlBackground" Color="#FF2D2D2D"/>
+            <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#FF323232"/>
+            <SolidColorBrush x:Key="TextControlBorderBrush" Color="#FF363636"/>
+            <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#FF3E3E3E"/>
+
+            <SolidColorBrush x:Key="ControlOff" Color="#00000000"/>
+            <SolidColorBrush x:Key="ControlOffStroke" Color="#9AFFFFFF"/>
+            <SolidColorBrush x:Key="Knob" Color="#D0FFFFFF"/>
+            <SolidColorBrush x:Key="ViewfinderBackground" Color="#FF161616"/>
+            <SolidColorBrush x:Key="ViewfinderText" Color="#E6FFFFFF"/>
+            <SolidColorBrush x:Key="ViewfinderTextSecondary" Color="#A0FFFFFF"/>
+            <SolidColorBrush x:Key="DropZoneBackground" Color="#08FFFFFF"/>
+            <SolidColorBrush x:Key="DropZoneStroke" Color="#50FFFFFF"/>
+            <SolidColorBrush x:Key="FlyoutBackground" Color="#FF2C2C2C"/>
+            <LinearGradientBrush x:Key="HeroBrush" StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Color="#33F7A531" Offset="0"/>
+                <GradientStop Color="#1FE8505B" Offset="1"/>
+            </LinearGradientBrush>
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

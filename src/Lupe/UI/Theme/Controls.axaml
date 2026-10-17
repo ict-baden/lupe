@@ -1,0 +1,308 @@
+<!-- Lupe-eigene Stile (von Zutritt und Vitrine übernommen). Standard-Steuerelemente stylt Avalonia Fluent; Farben
+     kommen aus Colors.axaml und ThemeManager, Schriften (UiFont, DisplayFont, IconFont, MonoFont) setzt ThemeManager je System. -->
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:Lupe.UI">
+
+    <!-- ========== Text ========== -->
+    <Style Selector="TextBlock.title">
+        <Setter Property="FontFamily" Value="{DynamicResource DisplayFont}"/>
+        <Setter Property="FontSize" Value="28"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+    </Style>
+    <Style Selector="TextBlock.subtitle">
+        <Setter Property="FontFamily" Value="{DynamicResource DisplayFont}"/>
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="TextBlock.section">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+        <Setter Property="Margin" Value="2,22,0,8"/>
+    </Style>
+    <Style Selector="TextBlock.bodyStrong">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="TextBlock.body">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="TextBlock.caption">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="TextBlock.icon">
+        <Setter Property="FontFamily" Value="{DynamicResource IconFont}"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+    </Style>
+    <!-- Symbol in Knöpfen (vor dem Text) -->
+    <Style Selector="TextBlock.glyph">
+        <Setter Property="FontFamily" Value="{DynamicResource IconFont}"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,0,8,0"/>
+    </Style>
+    <!-- Zellen in Tabellen: einzeilig, abgeschnitten -->
+    <Style Selector="TextBlock.cell">
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="FontSize" Value="13"/>
+    </Style>
+    <!-- Inhalt eines Codes: einzeilig, gekürzt, voller Text als Tooltip -->
+    <Style Selector="TextBlock.code">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- ========== Knöpfe ========== -->
+    <Style Selector="Button.ghost">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Padding" Value="8,6"/>
+    </Style>
+    <!-- Spaltenkopf einer Tabelle (Verlauf): Klick sortiert -->
+    <Style Selector="Button.header">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="Padding" Value="8,0,4,0"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="VerticalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="FontSize" Value="13"/>
+    </Style>
+    <Style Selector="Button.link">
+        <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FontSize" Value="13"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <TextBlock Name="T" Text="{TemplateBinding Content, Converter={x:Static ui:Converters.ToText}}" Foreground="{TemplateBinding Foreground}"
+                           Background="Transparent" TextWrapping="Wrap"/>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="Button.link:pointerover /template/ TextBlock#T">
+        <Setter Property="TextDecorations" Value="Underline"/>
+    </Style>
+
+    <!-- ========== Schalter (CheckBox als Kippschalter, wie Vitrine: „Aus“/„Ein“ links vom Schalter) ========== -->
+    <Style Selector="CheckBox.toggle">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="MinWidth" Value="0"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <StackPanel Orientation="Horizontal" Background="Transparent">
+                    <TextBlock Name="State" Text="Aus" VerticalAlignment="Center" Margin="0,0,12,0"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="13" MinWidth="22" TextAlignment="Right"/>
+                    <Panel Width="40" Height="20">
+                        <Border Name="Track" CornerRadius="10" Background="{DynamicResource ControlOff}"
+                                BorderBrush="{DynamicResource ControlOffStroke}" BorderThickness="1"/>
+                        <Ellipse Name="Knob" Width="12" Height="12" Fill="{DynamicResource Knob}"
+                                 HorizontalAlignment="Left" Margin="4,0,0,0"/>
+                    </Panel>
+                </StackPanel>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="CheckBox.toggle:checked /template/ Border#Track">
+        <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}"/>
+    </Style>
+    <Style Selector="CheckBox.toggle:checked /template/ Ellipse#Knob">
+        <Setter Property="Fill" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}"/>
+        <!-- Ohne Animation fest verschoben, damit auch Screenshots den Endzustand zeigen -->
+        <Setter Property="Margin" Value="24,0,0,0"/>
+    </Style>
+    <Style Selector="CheckBox.toggle:checked /template/ TextBlock#State">
+        <Setter Property="Text" Value="Ein"/>
+    </Style>
+    <Style Selector="CheckBox.toggle:pointerover /template/ Ellipse#Knob">
+        <Setter Property="Width" Value="14"/>
+        <Setter Property="Height" Value="14"/>
+        <Setter Property="Margin" Value="3,0,0,0"/>
+    </Style>
+    <Style Selector="CheckBox.toggle:checked:pointerover /template/ Ellipse#Knob">
+        <Setter Property="Margin" Value="23,0,0,0"/>
+    </Style>
+    <Style Selector="CheckBox.toggle:disabled">
+        <Setter Property="Opacity" Value="0.45"/>
+    </Style>
+
+    <!-- ========== Navigation links (wie Vitrine, plus Abzeichen) ========== -->
+    <Style Selector="ui|NavButton">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Height" Value="38"/>
+        <Setter Property="Margin" Value="0,1"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="GroupName" Value="nav"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Panel Background="Transparent">
+                    <Border Name="Bd" CornerRadius="6" Background="Transparent"/>
+                    <Border Name="Pill" Width="3" Height="16" CornerRadius="1.5" HorizontalAlignment="Left"
+                            Background="{DynamicResource AccentFillColorDefaultBrush}" IsVisible="False"/>
+                    <Grid Margin="14,0,10,0" VerticalAlignment="Center" ColumnDefinitions="Auto,*,Auto">
+                        <TextBlock Classes="icon" Text="{TemplateBinding Glyph}" Margin="0,0,14,0"/>
+                        <ContentPresenter Grid.Column="1" VerticalAlignment="Center" Content="{TemplateBinding Content}"/>
+                        <Border Name="Badge" Grid.Column="2" CornerRadius="9" MinWidth="24" Height="18" Padding="6,0"
+                                Background="{DynamicResource SubtleFillColorSecondaryBrush}"
+                                IsVisible="{TemplateBinding Badge, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                            <TextBlock Name="BadgeText" Text="{TemplateBinding Badge}" FontSize="11" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                        </Border>
+                    </Grid>
+                </Panel>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="ui|NavButton:warning /template/ Border#Badge">
+        <Setter Property="Background" Value="{DynamicResource SystemFillColorCautionBackgroundBrush}"/>
+    </Style>
+    <Style Selector="ui|NavButton:warning /template/ TextBlock#BadgeText">
+        <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}"/>
+    </Style>
+    <Style Selector="ui|NavButton:pointerover /template/ Border#Bd">
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
+    </Style>
+    <Style Selector="ui|NavButton:checked /template/ Border#Bd">
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
+    </Style>
+    <Style Selector="ui|NavButton:checked /template/ Border#Pill">
+        <Setter Property="IsVisible" Value="True"/>
+    </Style>
+
+    <!-- ========== Karten ========== -->
+    <Style Selector="Border.card">
+        <Setter Property="Background" Value="{DynamicResource CardBackgroundFillColorDefaultBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="16,14"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+    <Style Selector="Border.caution">
+        <Setter Property="Background" Value="{DynamicResource SystemFillColorCautionBackgroundBrush}"/>
+    </Style>
+    <Style Selector="Border.hero">
+        <Setter Property="Background" Value="{DynamicResource HeroBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="24,20"/>
+        <Setter Property="Margin" Value="0,8,0,4"/>
+    </Style>
+
+    <!-- ========== Einstellungszeile (wie Vitrine) ========== -->
+    <Style Selector="ui|SettingCard">
+        <Setter Property="Margin" Value="0,0,0,4"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                        CornerRadius="8" Padding="16,12" MinHeight="68">
+                    <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
+                        <TextBlock Name="Ic" Text="{TemplateBinding Glyph}" Classes="icon" FontSize="18"
+                                   Margin="2,0,18,0" IsVisible="{TemplateBinding Glyph, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{TemplateBinding Header}" Classes="body"/>
+                            <TextBlock Name="Desc" Text="{TemplateBinding Description}" Classes="caption" Margin="0,2,0,0"
+                                       IsVisible="{TemplateBinding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                        </StackPanel>
+                        <ContentPresenter Name="CP" Grid.Column="2" VerticalAlignment="Center" Margin="16,0,0,0" Content="{TemplateBinding Content}"/>
+                    </Grid>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <!-- ========== Lupe: Format-Etikett, Nummer, Ergebniszeilen ========== -->
+    <Style Selector="Border.formatTag">
+        <Setter Property="Background" Value="{DynamicResource AccentSubtle}"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="7,2"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+    </Style>
+    <Style Selector="TextBlock.formatTag">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+    </Style>
+    <!-- Nummer einer Markierung (1, 2, …) – dieselbe Zahl steht im Bild am Code -->
+    <Style Selector="Border.number">
+        <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}"/>
+        <Setter Property="CornerRadius" Value="10"/>
+        <Setter Property="MinWidth" Value="20"/>
+        <Setter Property="Height" Value="20"/>
+        <Setter Property="Padding" Value="5,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="TextBlock.number">
+        <Setter Property="FontSize" Value="11.5"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <!-- Seitenrahmen der Einstellungen und Info: gleicher Rand wie die Kopfzeile -->
+    <Style Selector="ScrollViewer.page">
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+        <Setter Property="HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="Padding" Value="36,0,30,28"/>
+        <Setter Property="Focusable" Value="False"/>
+    </Style>
+
+    <!-- Tabellenzeilen (Verlauf): dicht, Auswahl dezent getönt statt voll mit Akzent -->
+    <Style Selector="ListBox.table">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="FontSize" Value="13"/>
+    </Style>
+    <Style Selector="ListBox.table ListBoxItem">
+        <Setter Property="MinHeight" Value="32"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Margin" Value="4,0"/>
+        <Setter Property="CornerRadius" Value="4"/>
+    </Style>
+    <!-- Gewählte Zeile wie WinUI: dezent grau mit Akzentstrich links -->
+    <Style Selector="ListBox.table ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}"/>
+        <Setter Property="BorderThickness" Value="3,0,0,0"/>
+    </Style>
+    <Style Selector="ListBox.table ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}"/>
+    </Style>
+    <Style Selector="ListBox.choice ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SelectedRow}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}"/>
+    </Style>
+    <Style Selector="ListBox.choice ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SelectedRowHover}"/>
+    </Style>
+</Styles>

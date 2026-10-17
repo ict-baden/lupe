@@ -1,68 +1,80 @@
-using System.Globalization;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Input;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Data.Converters;
+using Lupe.Services;
 
 namespace Lupe.UI;
 
 /// <summary>Eine Einstellungszeile im Windows-11-Stil: Symbol, Titel, Beschreibung, Steuerelement rechts (wie Vitrine).</summary>
 public class SettingCard : ContentControl
 {
-    public static readonly DependencyProperty HeaderProperty =
-        DependencyProperty.Register(nameof(Header), typeof(string), typeof(SettingCard), new PropertyMetadata(""));
-    public static readonly DependencyProperty DescriptionProperty =
-        DependencyProperty.Register(nameof(Description), typeof(string), typeof(SettingCard), new PropertyMetadata(null));
-    public static readonly DependencyProperty GlyphProperty =
-        DependencyProperty.Register(nameof(Glyph), typeof(string), typeof(SettingCard), new PropertyMetadata(null));
+    public static readonly StyledProperty<string> HeaderProperty = AvaloniaProperty.Register<SettingCard, string>(nameof(Header), "");
+    public static readonly StyledProperty<string?> DescriptionProperty = AvaloniaProperty.Register<SettingCard, string?>(nameof(Description));
+    public static readonly StyledProperty<string?> GlyphProperty = AvaloniaProperty.Register<SettingCard, string?>(nameof(Glyph));
 
-    public string Header { get => (string)GetValue(HeaderProperty); set => SetValue(HeaderProperty, value); }
-    public string? Description { get => (string?)GetValue(DescriptionProperty); set => SetValue(DescriptionProperty, value); }
-    public string? Glyph { get => (string?)GetValue(GlyphProperty); set => SetValue(GlyphProperty, value); }
+    public string Header { get => GetValue(HeaderProperty); set => SetValue(HeaderProperty, value); }
+    public string? Description { get => GetValue(DescriptionProperty); set => SetValue(DescriptionProperty, value); }
+    public string? Glyph { get => GetValue(GlyphProperty); set => SetValue(GlyphProperty, value); }
+
+    protected override Type StyleKeyOverride => typeof(SettingCard);
 }
 
-/// <summary>Abzeichen auf der Navigation (z. B. Zahl der Verlaufseinträge). Leer = keins.</summary>
-public static class Nav
+/// <summary>Eintrag der Navigation links: Symbol, Text, Abzeichen (z. B. Zahl der Verlaufseinträge; leer = keins).</summary>
+public class NavButton : RadioButton
 {
-    public static readonly DependencyProperty BadgeProperty =
-        DependencyProperty.RegisterAttached("Badge", typeof(string), typeof(Nav), new PropertyMetadata(null));
-    /// <summary>Farbe des Abzeichens: "Warnung" oder leer (neutral).</summary>
-    public static readonly DependencyProperty BadgeToneProperty =
-        DependencyProperty.RegisterAttached("BadgeTone", typeof(string), typeof(Nav), new PropertyMetadata(""));
+    public static readonly StyledProperty<string?> GlyphProperty = AvaloniaProperty.Register<NavButton, string?>(nameof(Glyph));
+    public static readonly StyledProperty<string?> BadgeProperty = AvaloniaProperty.Register<NavButton, string?>(nameof(Badge));
 
-    public static string? GetBadge(DependencyObject o) => (string?)o.GetValue(BadgeProperty);
-    public static void SetBadge(DependencyObject o, string? value) => o.SetValue(BadgeProperty, value);
-    public static string GetBadgeTone(DependencyObject o) => (string)o.GetValue(BadgeToneProperty);
-    public static void SetBadgeTone(DependencyObject o, string value) => o.SetValue(BadgeToneProperty, value);
+    public string? Glyph { get => GetValue(GlyphProperty); set => SetValue(GlyphProperty, value); }
+    public string? Badge { get => GetValue(BadgeProperty); set => SetValue(BadgeProperty, value); }
+
+    private bool _warning;
+
+    /// <summary>Abzeichen als Warnung (gelb) statt neutral.</summary>
+    public bool BadgeWarning
+    {
+        get => _warning;
+        set
+        {
+            _warning = value;
+            PseudoClasses.Set(":warning", value);
+        }
+    }
+
+    protected override Type StyleKeyOverride => typeof(NavButton);
+}
+
+public static class Converters
+{
+    /// <summary>Inhalt eines Knopfs als Text (für Link-Knöpfe).</summary>
+    public static readonly IValueConverter ToText = new FuncValueConverter<object?, string>(o => o?.ToString() ?? "");
 }
 
 /// <summary>
-/// Leerer Text → sichtbar (für Platzhalter über Eingabefeldern), sonst eingeklappt; mit ConverterParameter
-/// "invert" umgekehrt.
-/// </summary>
-public sealed class EmptyToVisibleConverter : IValueConverter
-{
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => string.IsNullOrEmpty(value as string) ^ (parameter as string == "invert") ? Visibility.Visible : Visibility.Collapsed;
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
-}
-
-/// <summary>true → sichtbar, false → eingeklappt; mit ConverterParameter "invert" umgekehrt.</summary>
-public sealed class BoolToVisibleConverter : IValueConverter
-{
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        => (value is true) ^ (parameter as string == "invert") ? Visibility.Visible : Visibility.Collapsed;
-
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
-}
-
-/// <summary>
-/// Befehle der Ergebniszeilen (Vorlage „CodeRow“ in Controls.xaml). Parameter ist das <see cref="Services.CodeItem"/>;
-/// jede Seite und jedes Fenster bindet sie selbst (CommandBindings).
+/// Befehle der Ergebniszeilen (Vorlage „CodeRow“ in App.axaml). Parameter ist das <see cref="CodeItem"/>. Was aus einer
+/// Ergebniszeile kopiert oder geöffnet wird, vermerkt der Verlaufseintrag des Treffers.
 /// </summary>
 public static class CodeCommands
 {
-    public static readonly RoutedUICommand Copy = new("Kopieren", nameof(Copy), typeof(CodeCommands));
-    public static readonly RoutedUICommand OpenLink = new("Link öffnen", nameof(OpenLink), typeof(CodeCommands));
+    /// <summary>Der Zustand der laufenden Oberfläche (je Prozess einer; Screenshots legen ihren eigenen an).</summary>
+    internal static AppState? State { get; set; }
+
+    public static ICommand Copy { get; } = new Command(p => p is CodeItem, p =>
+    {
+        if (State is { } state && p is CodeItem item) _ = CodeActions.CopyAsync(state, item);
+    });
+
+    public static ICommand OpenLink { get; } = new Command(p => p is CodeItem { HasLink: true }, p =>
+    {
+        if (State is { } state && p is CodeItem { Link: not null } item) CodeActions.Open(state, item);
+    });
+
+    private sealed class Command(Func<object?, bool> canExecute, Action<object?> execute) : ICommand
+    {
+        public event EventHandler? CanExecuteChanged { add { } remove { } }
+        public bool CanExecute(object? parameter) => canExecute(parameter);
+        public void Execute(object? parameter) => execute(parameter);
+    }
 }

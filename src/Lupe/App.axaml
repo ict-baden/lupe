@@ -1,0 +1,48 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:Lupe.UI"
+             xmlns:svc="clr-namespace:Lupe.Services"
+             x:Class="Lupe.App"
+             Name="Lupe"
+             RequestedThemeVariant="Default">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Lupe/UI/Theme/Colors.axaml"/>
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Ergebniszeile (Kamera, Bildschirm, Datei): Nummer der Markierung, Format, Inhalt, Knöpfe.
+                 Die Knöpfe lösen CodeCommands aus (Kopieren, Link öffnen). -->
+            <DataTemplate x:Key="CodeRow" x:DataType="svc:CodeItem">
+                <Grid Margin="0,3" ColumnDefinitions="Auto,Auto,*,Auto,Auto">
+                    <Border Classes="number" Margin="0,0,10,0" IsVisible="{Binding NumberText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+                        <TextBlock Classes="number" Text="{Binding NumberText}"/>
+                    </Border>
+                    <Border Grid.Column="1" Classes="formatTag" Margin="0,0,12,0">
+                        <TextBlock Classes="formatTag" Text="{Binding FormatLabel}"/>
+                    </Border>
+                    <TextBlock Grid.Column="2" Classes="code" Text="{Binding OneLine}" ToolTip.Tip="{Binding ToolTipText}"/>
+                    <Button Grid.Column="3" Margin="12,0,0,0" Command="{x:Static ui:CodeCommands.Copy}" CommandParameter="{Binding}"
+                            ToolTip.Tip="Inhalt in die Zwischenablage kopieren" AutomationProperties.Name="Kopieren">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Classes="glyph" Text="&#xE8C8;"/>
+                            <TextBlock Text="Kopieren" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Grid.Column="4" Margin="6,0,0,0" Command="{x:Static ui:CodeCommands.OpenLink}" CommandParameter="{Binding}"
+                            ToolTip.Tip="{Binding LinkText}" AutomationProperties.Name="Link öffnen" IsVisible="{Binding HasLink}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Classes="glyph" Text="&#xE8A7;"/>
+                            <TextBlock Text="Link öffnen" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </DataTemplate>
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme/>
+        <StyleInclude Source="avares://Lupe/UI/Theme/Controls.axaml"/>
+    </Application.Styles>
+</Application>

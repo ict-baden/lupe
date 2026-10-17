@@ -1,0 +1,100 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="clr-namespace:Lupe.UI"
+             x:Class="Lupe.UI.Pages.ScreenPage">
+    <ScrollViewer Classes="page">
+        <StackPanel MaxWidth="1000">
+            <!-- ========== Kopf: großer Knopf und Tastenkürzel ========== -->
+            <Border Classes="hero" Margin="0,0,0,4">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
+                        <TextBlock Text="Code auf dem Bildschirm?" Classes="subtitle"/>
+                        <TextBlock Classes="body" Margin="0,6,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   Text="Lupe blendet sich kurz aus, Sie ziehen ein Rechteck um den Code – fertig. Funktioniert über alle Monitore, mit Rechnungen, Webseiten, Videokonferenzen und Fotos."/>
+                        <WrapPanel Orientation="Horizontal" Margin="0,16,0,0">
+                            <TextBlock Text="Tastenkürzel" Classes="caption" FontSize="13" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <ItemsControl x:Name="HotkeyKeys" Focusable="False" VerticalAlignment="Center">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                        <Border CornerRadius="5" BorderThickness="1,1,1,2" Padding="9,3" Margin="0,0,5,0" MinWidth="30"
+                                                Background="{DynamicResource ControlFillColorDefaultBrush}" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                                            <TextBlock Text="{Binding}" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center"
+                                                       Foreground="{DynamicResource TextFillColorPrimaryBrush}"/>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock x:Name="HotkeyNote" Text="aus jedem Programm" Classes="caption" FontSize="13" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                            <Button Classes="link" Content="ändern" Margin="10,0,0,0" VerticalAlignment="Center" Click="GoSettings_Click"/>
+                        </WrapPanel>
+                    </StackPanel>
+                    <Button x:Name="ScanButton" Grid.Column="1" Classes="accent" Height="52" MinWidth="230" Padding="22,0"
+                            VerticalAlignment="Center" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                            Click="Scan_Click" AutomationProperties.Name="Ausschnitt scannen">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE7A8;" FontFamily="{DynamicResource IconFont}" FontSize="18" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                            <TextBlock Text="Ausschnitt scannen" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Tastenkürzel belegt oder auf diesem System nicht möglich -->
+            <Border x:Name="HotkeyWarning" Classes="card caution" IsVisible="False">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <TextBlock Text="&#xE7BA;" Classes="icon" Foreground="{DynamicResource SystemFillColorCautionBrush}" Margin="0,0,14,0"/>
+                    <StackPanel Grid.Column="1">
+                        <TextBlock Text="Tastenkürzel nicht verfügbar" Classes="bodyStrong"/>
+                        <TextBlock x:Name="HotkeyWarningText" Classes="caption" FontSize="13" Margin="0,2,0,0"/>
+                    </StackPanel>
+                    <Button Grid.Column="2" Content="Anderes wählen" Click="GoSettings_Click" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                </Grid>
+            </Border>
+
+            <!-- ========== So geht's ========== -->
+            <TextBlock Text="So geht’s" Classes="section"/>
+            <UniformGrid Columns="3" Margin="-4,0,-4,0">
+                <Border Classes="card" Margin="4,0">
+                    <StackPanel>
+                        <TextBlock Text="1  Tastenkürzel drücken" Classes="bodyStrong"/>
+                        <TextBlock Classes="caption" FontSize="13" Margin="0,4,0,0"
+                                   Text="In jedem Programm – auch wenn Lupe nur im Infobereich läuft. Oder hier auf den Knopf."/>
+                    </StackPanel>
+                </Border>
+                <Border Classes="card" Margin="4,0">
+                    <StackPanel>
+                        <TextBlock Text="2  Rechteck aufziehen" Classes="bodyStrong"/>
+                        <TextBlock Classes="caption" FontSize="13" Margin="0,4,0,0"
+                                   Text="Mit der Maus um den Code. Ein Klick ohne Ziehen nimmt den ganzen Bildschirm, Esc bricht ab."/>
+                    </StackPanel>
+                </Border>
+                <Border Classes="card" Margin="4,0">
+                    <StackPanel>
+                        <TextBlock Text="3  Ergebnis verwenden" Classes="bodyStrong"/>
+                        <TextBlock Classes="caption" FontSize="13" Margin="0,4,0,0"
+                                   Text="Laut Einstellungen kopiert, in das vorherige Fenster getippt oder als Link geöffnet. Mehrere Codes: Auswahl."/>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <ui:SettingCard Glyph="&#xE945;" Header="Bei einem Treffer" x:Name="ActionsCard" Margin="0,8,0,4">
+                <Button Content="Ändern" Click="GoSettings_Click"/>
+            </ui:SettingCard>
+
+            <!-- ========== Zuletzt erkannt ========== -->
+            <TextBlock Text="Zuletzt vom Bildschirm" Classes="section"/>
+            <Border Classes="card" Padding="16,10">
+                <StackPanel>
+                    <TextBlock x:Name="ResultsEmpty" Text="Noch nichts gescannt." Classes="body" Margin="0,4"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <ItemsControl x:Name="ResultList" ItemTemplate="{StaticResource CodeRow}" Focusable="False"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

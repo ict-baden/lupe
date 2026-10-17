@@ -1,0 +1,53 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Lupe.UI.ResultToast"
+        Title="Lupe – Ergebnis" WindowDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent"
+        CanResize="False" ShowInTaskbar="False" Topmost="True" ShowActivated="False" SizeToContent="Height" Width="420"
+        WindowStartupLocation="Manual" FontFamily="{DynamicResource UiFont}" UseLayoutRounding="True"
+        Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+    <Border x:Name="Card" Margin="16" CornerRadius="10" Background="{DynamicResource FlyoutBackground}"
+            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1" BoxShadow="0 6 28 0 #59000000">
+        <StackPanel Margin="16,12,12,14">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Border x:Name="IconCircle" Width="28" Height="28" CornerRadius="14" Background="{DynamicResource AccentFillColorDefaultBrush}">
+                    <TextBlock x:Name="IconGlyph" Text="&#xED14;" Classes="icon" FontSize="14" HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}"/>
+                </Border>
+                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                    <TextBlock x:Name="TitleText" Text="QR-Code erkannt" Classes="bodyStrong" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="SubtitleText" Text="Lupe · Bildschirm" Classes="caption"/>
+                </StackPanel>
+                <Button Grid.Column="2" Classes="ghost" Click="Close_Click" VerticalAlignment="Top" ToolTip.Tip="Schließen"
+                        AutomationProperties.Name="Schließen">
+                    <TextBlock Text="&#xE711;" Classes="icon" FontSize="11"/>
+                </Button>
+            </Grid>
+
+            <TextBlock x:Name="ContentText" Classes="body" Margin="0,10,4,0" MaxHeight="64" TextTrimming="CharacterEllipsis"/>
+            <StackPanel x:Name="DoneRow" Orientation="Horizontal" Margin="0,8,0,0">
+                <TextBlock Text="&#xE73E;" Classes="icon" FontSize="12" Foreground="{DynamicResource SystemFillColorSuccessBrush}" Margin="0,0,8,0"/>
+                <TextBlock x:Name="DoneText" Classes="caption" FontSize="13"/>
+            </StackPanel>
+            <TextBlock x:Name="ProblemText" Classes="caption" FontSize="12.5" Margin="0,6,0,0"
+                       Foreground="{DynamicResource SystemFillColorCautionBrush}"/>
+
+            <StackPanel x:Name="ButtonRow" Orientation="Horizontal" Margin="0,12,0,0">
+                <Button x:Name="CopyButton" Click="Copy_Click">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8C8;" Classes="glyph"/>
+                        <TextBlock Text="Kopieren" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button x:Name="LinkButton" Click="Link_Click" Margin="6,0,0,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8A7;" Classes="glyph"/>
+                        <TextBlock Text="Link öffnen" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Click="Open_Click" Margin="6,0,0,0" Classes="ghost">
+                    <TextBlock x:Name="OpenText" Text="In Lupe zeigen" VerticalAlignment="Center"/>
+                </Button>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

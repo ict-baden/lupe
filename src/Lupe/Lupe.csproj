@@ -1,10 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
-    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <!-- Zwei Ziele: net10.0-windows mit der Windows-Anbindung (MediaCapture, SendInput …), net10.0 mit den Anbindungen
+         für Linux und macOS. Mit Runtime-Kennung (dotnet publish -r …) gilt nur das passende Ziel – so bleiben
+         „dotnet publish src/Lupe/Lupe.csproj -r win-x64“ (Installer, CI) und „-r linux-x64“ ohne -f eindeutig. -->
+    <TargetFrameworks Condition="'$(RuntimeIdentifier)' == ''">net10.0;net10.0-windows10.0.19041.0</TargetFrameworks>
+    <TargetFramework Condition="'$(RuntimeIdentifier)' != '' and $(RuntimeIdentifier.StartsWith('win'))">net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework Condition="'$(RuntimeIdentifier)' != '' and !$(RuntimeIdentifier.StartsWith('win'))">net10.0</TargetFramework>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Lupe</RootNamespace>
@@ -16,9 +19,14 @@
     <Product>Lupe</Product>
     <Description>Liest QR- und Barcodes per Webcam, Bildschirmausschnitt, Datei oder Zwischenablage</Description>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <!-- Eigener Einstiegspunkt (Program.Main): Befehlszeile ganz ohne WPF, sonst Oberfläche.
-         App.xaml wird deshalb als normale Seite übersetzt, nicht als ApplicationDefinition mit eigenem Main. -->
-    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- Avalonia lädt seine nativen Teile (Skia, HarfBuzz) auch aus der einzelnen Lupe.exe -->
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <DefineConstants>$(DefineConstants);LUPE_WINDOWS</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,13 +34,30 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Lupe.Core\Lupe.Core.csproj" />
-    <ProjectReference Include="..\Lupe.Platform.Windows\Lupe.Platform.Windows.csproj" />
+    <PackageReference Include="Avalonia" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.4" />
+    <!-- Screenshots zeichnen ohne Bildschirm (auch in einer Dienst-Sitzung oder in CI ohne X-Server) -->
+    <PackageReference Include="Avalonia.Headless" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Skia" Version="12.1.4" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Assets\lupe.ico" />
-    <Resource Include="Assets\lupe.png" />
+    <ProjectReference Include="..\Lupe.Core\Lupe.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Systemanbindung je Ziel: Windows-Build mit Lupe.Platform.Windows, sonst Linux und macOS (Wahl zur Laufzeit) -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
+    <ProjectReference Include="..\Lupe.Platform.Windows\Lupe.Platform.Windows.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <ProjectReference Include="..\Lupe.Platform.Linux\Lupe.Platform.Linux.csproj" />
+    <ProjectReference Include="..\Lupe.Platform.MacOS\Lupe.Platform.MacOS.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
   </ItemGroup>
 
   <!-- Lizenztexte der mitgelieferten Bibliotheken: neben Lupe.exe (ZIP, MSI) und eingebettet für die Info-Seite
@@ -40,5 +65,9 @@
   <ItemGroup>
     <None Include="..\..\THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <EmbeddedResource Include="..\..\THIRD-PARTY-NOTICES.txt" LogicalName="THIRD-PARTY-NOTICES.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Lupe.Tests" />
   </ItemGroup>
 </Project>

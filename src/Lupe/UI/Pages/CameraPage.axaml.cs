@@ -1,14 +1,14 @@
 using System.Collections.ObjectModel;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Threading;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Interactivity;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using Lupe.Core.Camera;
 using Lupe.Core.Decoding;
 using Lupe.Core.Model;
+using Lupe.Core.Platform;
 using Lupe.Demo;
-using Lupe.Interop;
 using Lupe.Services;
 
 namespace Lupe.UI.Pages;
@@ -53,7 +53,6 @@ public partial class CameraPage : UserControl, IPage
         InitializeComponent();
         _state = state;
         ResultList.ItemsSource = _results;
-        CodeActions.Bind(this, state);
         AimToggle.IsChecked = state.Settings.AimHelp;
         View.ShowAim = state.Settings.AimHelp;
 
@@ -95,7 +94,7 @@ public partial class CameraPage : UserControl, IPage
         if (_loop is null && !_starting) return;
         // Als Handscanner läuft die Kamera auch bei minimiertem Fenster weiter und tippt in das Programm vorn. Beim
         // Seitenwechsel und beim Schließen des Fensters (Infobereich) hält sie an – unsichtbar soll sie nicht laufen.
-        if (ScannerMode && Window.GetWindow(this) is { IsVisible: true, WindowState: WindowState.Minimized } window)
+        if (ScannerMode && TopLevel.GetTopLevel(this) is Window { IsVisible: true, WindowState: WindowState.Minimized } window)
         {
             WatchWindow(window);
             _keptWhileMinimized = true;
@@ -114,9 +113,9 @@ public partial class CameraPage : UserControl, IPage
     {
         if (_watchedWindow == window) return;
         _watchedWindow = window;
-        window.IsVisibleChanged += (_, _) =>
+        window.PropertyChanged += (_, e) =>
         {
-            if (!window.IsVisible && _keptWhileMinimized) OnHidden();
+            if (e.Property == Visual.IsVisibleProperty && !window.IsVisible && _keptWhileMinimized) OnHidden();
         };
     }
 
@@ -144,9 +143,9 @@ public partial class CameraPage : UserControl, IPage
         UpdateButtons();
     }
 
-    private void Refresh_Click(object sender, RoutedEventArgs e) => Ui.Run(_state, ListCamerasAsync, "Kameras suchen");
+    private void Refresh_Click(object? sender, RoutedEventArgs e) => Ui.Run(_state, ListCamerasAsync, "Kameras suchen");
 
-    private void CameraBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    private void CameraBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (_suppressSelection || CameraBox.SelectedItem is not CameraInfo info) return;
         if (info.Id != _state.Settings.Camera) _state.UpdateSettings(s => s with { Camera = info.Id });
@@ -156,7 +155,7 @@ public partial class CameraPage : UserControl, IPage
 
     // ================= Start und Stopp =================
 
-    private void StartStop_Click(object sender, RoutedEventArgs e)
+    private void StartStop_Click(object? sender, RoutedEventArgs e)
     {
         if (_loop is not null) Ui.Run(_state, StopCameraAsync, "Kamera stoppen");
         else Ui.Run(_state, StartAsync, "Kamera starten");
@@ -195,8 +194,8 @@ public partial class CameraPage : UserControl, IPage
             }
             _decoder = decoder;
             loop.Frame += (_, image) => OnFrame(generation, image);
-            loop.Detected += (_, hit) => Dispatcher.BeginInvoke(() => Ui.Run(_state, () => OnDetectedAsync(generation, hit.Codes), "Treffer verarbeiten"));
-            loop.Failed += (_, message) => Dispatcher.BeginInvoke(() => OnFailed(generation, message));
+            loop.Detected += (_, hit) => Dispatcher.UIThread.Post(() => Ui.Run(_state, () => OnDetectedAsync(generation, hit.Codes), "Treffer verarbeiten"));
+            loop.Failed += (_, message) => Dispatcher.UIThread.Post(() => OnFailed(generation, message));
             _source = source;
             _loop = loop;
             try
@@ -210,7 +209,7 @@ public partial class CameraPage : UserControl, IPage
                 return;
             }
             LiveText.Text = source.Name;
-            LiveTag.Visibility = Visibility.Visible;
+            LiveTag.IsVisible = true;
             _markerTimer.Start();
         }
         finally
@@ -246,7 +245,7 @@ public partial class CameraPage : UserControl, IPage
         _source = null;
         _decoder = null;
         _markerTimer.Stop();
-        LiveTag.Visibility = Visibility.Collapsed;
+        LiveTag.IsVisible = false;
         View.Markers = [];
         if (loop is not null)
         {
@@ -276,7 +275,7 @@ public partial class CameraPage : UserControl, IPage
         // Jede Erkennung (auch Wiederholungen, die die Sperre nicht meldet) zeigt die Markierung – so folgt sie dem Code.
         // Den Umriss gleich hier berechnen: Hier ist das Bild noch da (1D-Codes: Band so hoch wie die Striche).
         Interlocked.Exchange(ref _pendingMarkers, new MarkerUpdate(Markers(codes, numbered: false, image), generation));
-        if (Interlocked.Exchange(ref _markersQueued, 1) == 0) Dispatcher.BeginInvoke(ApplyMarkers, DispatcherPriority.Render);
+        if (Interlocked.Exchange(ref _markersQueued, 1) == 0) Dispatcher.UIThread.Post(ApplyMarkers, DispatcherPriority.Render);
         return codes;
     }
 
@@ -284,7 +283,7 @@ public partial class CameraPage : UserControl, IPage
     {
         if (generation != Volatile.Read(ref _generation)) return;
         Interlocked.Exchange(ref _pendingFrame, image);
-        if (Interlocked.Exchange(ref _renderQueued, 1) == 0) Dispatcher.BeginInvoke(() => RenderFrame(generation), DispatcherPriority.Render);
+        if (Interlocked.Exchange(ref _renderQueued, 1) == 0) Dispatcher.UIThread.Post(() => RenderFrame(generation), DispatcherPriority.Render);
     }
 
     private void RenderFrame(int generation)
@@ -293,18 +292,20 @@ public partial class CameraPage : UserControl, IPage
         var image = Interlocked.Exchange(ref _pendingFrame, null);
         if (image is null || generation != _generation || _loop is null) return;
         ShowImage(image);
-        if (Placeholder.Visibility == Visibility.Visible) ShowHint(Hint.None);
+        if (Placeholder.IsVisible) ShowHint(Hint.None);
     }
 
     private void ShowImage(PixelImage image)
     {
-        if (_bitmap is null || _bitmap.PixelWidth != image.Width || _bitmap.PixelHeight != image.Height)
+        if (_bitmap is null || _bitmap.PixelSize.Width != image.Width || _bitmap.PixelSize.Height != image.Height)
         {
-            // Bgr32: Alpha egal (siehe Images.ToBitmap) – ein Treiber mit Alpha 0 ergäbe sonst einen leeren Sucher
-            _bitmap = new WriteableBitmap(image.Width, image.Height, 96, 96, PixelFormats.Bgr32, null);
+            // Undurchsichtig: Alpha egal (siehe Images.ToBitmap) – ein Treiber mit Alpha 0 ergäbe sonst einen leeren Sucher
+            _bitmap = Images.ToBitmap(image);
             View.Source = _bitmap;
+            return;
         }
-        _bitmap.WritePixels(new Int32Rect(0, 0, image.Width, image.Height), image.Bgra, image.Stride, 0);
+        Images.Write(_bitmap, image);
+        View.Refresh();
     }
 
     private void ApplyMarkers()
@@ -327,8 +328,9 @@ public partial class CameraPage : UserControl, IPage
     {
         if (generation != _generation || codes.Count == 0) return;
         // Wie ein Handscanner: „Eintippen“ schreibt in das Programm, das gerade vorn ist – Lupe selbst zählt nicht
-        var foreground = Native.GetForegroundWindow();
-        nint typeTarget = foreground == 0 || Native.IsOwnWindow(foreground) ? 0 : foreground;
+        var active = LupePlatform.Current.ActiveWindow;
+        var foreground = active.Foreground();
+        nint typeTarget = foreground == 0 || active.IsOwnWindow(foreground) ? 0 : foreground;
         var report = await _state.Hits.ReportAsync(codes, ScanSource.Kamera, typeTarget);
         ShowResults(report.Codes, report.Entries, report.Time, report.NeedsChoice ? null : report.Outcome);
     }
@@ -340,15 +342,15 @@ public partial class CameraPage : UserControl, IPage
         for (int i = 0; i < codes.Count; i++)
             _results.Add(new CodeItem(codes[i], ScanSource.Kamera, time, _state.LinkFor(codes[i].Text), codes.Count > 1 ? i + 1 : 0,
                 i < entries.Count ? entries[i] : null));
-        ResultEmpty.Visibility = _results.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-        CopyAllButton.Visibility = _results.Count > 1 ? Visibility.Visible : Visibility.Collapsed;
+        ResultEmpty.IsVisible = _results.Count == 0;
+        CopyAllButton.IsVisible = _results.Count > 1;
         ResultTitle.Text = codes.Count > 1 ? $"{codes.Count} Codes erkannt · {Labels.ShortTime(time, DateTimeOffset.Now)}" : $"Zuletzt erkannt · {Labels.ShortTime(time, DateTimeOffset.Now)}";
 
         string done = codes.Count > 1
             ? "Mehrere Codes im Bild – alle stehen im Verlauf. Den gewünschten kopieren oder öffnen."
             : outcome is null ? "" : outcome.Summary;
         ResultDone.Text = done;
-        ResultDone.Visibility = done.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+        ResultDone.IsVisible = done.Length > 0;
     }
 
     private void OnFailed(int generation, string message)
@@ -369,9 +371,9 @@ public partial class CameraPage : UserControl, IPage
 
     private void ShowHint(Hint hint, string? detail = null)
     {
-        Placeholder.Visibility = hint == Hint.None ? Visibility.Collapsed : Visibility.Visible;
-        PlaceholderStart.Visibility = hint is Hint.Stopped or Hint.Error ? Visibility.Visible : Visibility.Collapsed;
-        GoScreen.Visibility = GoFile.Visibility = hint is Hint.NoCamera or Hint.Error ? Visibility.Visible : Visibility.Collapsed;
+        Placeholder.IsVisible = hint != Hint.None;
+        PlaceholderStart.IsVisible = hint is Hint.Stopped or Hint.Error;
+        GoScreen.IsVisible = GoFile.IsVisible = hint is Hint.NoCamera or Hint.Error;
         (PlaceholderGlyph.Text, PlaceholderTitle.Text, PlaceholderText.Text, PlaceholderStartText.Text) = hint switch
         {
             Hint.Starting => ("\uE722", "Kamera wird gestartet …", "", ""),
@@ -382,7 +384,7 @@ public partial class CameraPage : UserControl, IPage
             _ => ("\uE722", "Kamera ist aus",
                 "Code in die Mitte des Bildes halten – Lupe erkennt ihn von selbst, meldet ihn mit einem Ton und legt ihn in den Verlauf.", "Kamera starten"),
         };
-        PlaceholderText.Visibility = PlaceholderText.Text.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+        PlaceholderText.IsVisible = PlaceholderText.Text?.Length > 0;
     }
 
     private void UpdateButtons(bool starting = false)
@@ -393,7 +395,7 @@ public partial class CameraPage : UserControl, IPage
         StartGlyph.Text = running ? "\uE71A" : "\uE768";
     }
 
-    private void Aim_Click(object sender, RoutedEventArgs e)
+    private void Aim_Click(object? sender, RoutedEventArgs e)
     {
         bool on = AimToggle.IsChecked == true;
         _state.UpdateSettings(s => s with { AimHelp = on });
@@ -412,12 +414,12 @@ public partial class CameraPage : UserControl, IPage
             ShowResults([.. _results.Select(r => r.Code)], [.. _results.Select(r => r.Entry)], _results[0].Time, null);
     }
 
-    private void GoScreen_Click(object sender, RoutedEventArgs e) => _state.RequestPage("bildschirm");
-    private void GoFile_Click(object sender, RoutedEventArgs e) => _state.RequestPage("datei");
+    private void GoScreen_Click(object? sender, RoutedEventArgs e) => _state.RequestPage("bildschirm");
+    private void GoFile_Click(object? sender, RoutedEventArgs e) => _state.RequestPage("datei");
 
-    private void CopyAll_Click(object sender, RoutedEventArgs e)
+    private async void CopyAll_Click(object? sender, RoutedEventArgs e)
     {
-        if (_state.Hits.CopyAll([.. _results]) is { } error) _state.Report(NoticeKind.Error, error);
+        if (await _state.Hits.CopyAllAsync([.. _results]) is { } error) _state.Report(NoticeKind.Error, error);
         else _state.Report(NoticeKind.Success, $"{_results.Count} Codes zeilenweise kopiert.");
     }
 
@@ -434,13 +436,16 @@ public partial class CameraPage : UserControl, IPage
 
         var frame = DemoData.CameraFrame();
         // Derselbe Decoder wie bei laufender Kamera – erkennt er den Demo-Code nicht, scheitert der Screenshot sichtbar
-        var codes = _state.CreateLiveDecoder().Decode(frame);
+        // (Die schnelle Stufe ist zeitbegrenzt – auf einem ausgelasteten Rechner bekommt sie ein paar Anläufe)
+        var live = _state.CreateLiveDecoder();
+        IReadOnlyList<DecodedCode> codes = [];
+        for (int attempt = 0; attempt < 3 && codes.Count == 0; attempt++) codes = live.Decode(frame);
         if (codes.Count == 0) throw new InvalidOperationException("Im Demo-Kamerabild wurde kein Code erkannt.");
         ShowImage(frame);
         View.Markers = Markers(codes, numbered: false, frame);
         ShowHint(Hint.None);
         LiveText.Text = DemoData.Camera.Name;
-        LiveTag.Visibility = Visibility.Visible;
+        LiveTag.IsVisible = true;
         // Wie bei laufender Kamera: Knopf bedienbar (StopCameraAsync hat ihn ohne gewählte Kamera ausgegraut)
         UpdateButtons();
         StartText.Text = "Stoppen";

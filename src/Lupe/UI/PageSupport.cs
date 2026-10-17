@@ -1,7 +1,5 @@
-using System.Windows;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Threading;
+using Avalonia.Controls;
+using Avalonia.Threading;
 using Lupe.Services;
 
 namespace Lupe.UI;
@@ -21,6 +19,10 @@ internal interface IPage
 
 internal static class Ui
 {
+    /// <summary>Eigenschaft an eine Ressource binden (folgt Hell/Dunkel) – wie SetResourceReference in WPF.</summary>
+    public static void SetResource(this Avalonia.StyledElement element, Avalonia.AvaloniaProperty property, string key) =>
+        element.Bind(property, element.GetResourceObservable(key));
+
     /// <summary>
     /// Startet Arbeit aus einem Ereignis heraus. Fehler werden als Meldung gezeigt statt abzustürzen – außer im
     /// Screenshot-Modus, dort sollen sie den Lauf sichtbar abbrechen.
@@ -40,28 +42,10 @@ internal static class Ui
         }
     }
 
-    /// <summary>Wartet, bis WPF Layout und Rendern erledigt hat (für Screenshots).</summary>
+    /// <summary>Wartet, bis Layout und anstehende Arbeit erledigt sind (für Screenshots).</summary>
     public static async Task IdleAsync()
     {
-        await Dispatcher.CurrentDispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
-    }
-
-    public static T? FindChild<T>(DependencyObject root) where T : DependencyObject
-    {
-        var queue = new Queue<DependencyObject>();
-        queue.Enqueue(root);
-        while (queue.Count > 0)
-        {
-            var current = queue.Dequeue();
-            int n = VisualTreeHelper.GetChildrenCount(current);
-            for (int i = 0; i < n; i++)
-            {
-                var child = VisualTreeHelper.GetChild(current, i);
-                if (child is T t) return t;
-                queue.Enqueue(child);
-            }
-        }
-        return null;
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
     }
 }
 
@@ -102,22 +86,9 @@ internal sealed class Debouncer
 /// <summary>Kopieren und Link öffnen aus Ergebniszeilen – mit Meldung statt Ausnahme.</summary>
 internal static class CodeActions
 {
-    /// <summary>
-    /// Bindet <see cref="CodeCommands"/> an ein Element (Seite oder Fenster). Was aus einer Ergebniszeile kopiert oder
-    /// geöffnet wird, vermerkt der Verlaufseintrag des Treffers (<see cref="Core.Model.HistoryEntry.ActionsDone"/>).
-    /// </summary>
-    public static void Bind(UIElement target, AppState state)
+    public static async Task CopyAsync(AppState state, CodeItem item)
     {
-        target.CommandBindings.Add(new CommandBinding(CodeCommands.Copy,
-            (_, e) => { if (e.Parameter is CodeItem item) Copy(state, item); }));
-        target.CommandBindings.Add(new CommandBinding(CodeCommands.OpenLink,
-            (_, e) => { if (e.Parameter is CodeItem { Link: not null } item) Open(state, item); },
-            (_, e) => e.CanExecute = e.Parameter is CodeItem { HasLink: true }));
-    }
-
-    public static void Copy(AppState state, CodeItem item)
-    {
-        if (Copy(state, item.Text)) state.Hits.Record(item, Core.Model.ResultActions.Kopieren);
+        if (await CopyAsync(state, item.Text)) state.Hits.Record(item, Core.Model.ResultActions.Kopieren);
     }
 
     public static void Open(AppState state, CodeItem item)
@@ -126,9 +97,9 @@ internal static class CodeActions
     }
 
     /// <summary>Kopiert und meldet es; false bei einem Fehler (dann mit Fehlermeldung).</summary>
-    public static bool Copy(AppState state, string text)
+    public static async Task<bool> CopyAsync(AppState state, string text)
     {
-        if (Shell.Copy(text) is { } error)
+        if (await Shell.CopyAsync(text) is { } error)
         {
             state.Report(NoticeKind.Error, error);
             return false;

@@ -1,7 +1,8 @@
-using System.ComponentModel;
-using System.Windows;
-using System.Windows.Threading;
-using Lupe.Cli;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Markup.Xaml;
+using Avalonia.Threading;
 using Lupe.Core.Input;
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
@@ -21,11 +22,14 @@ public partial class App : Application
     private readonly SingleInstance? _instance;
     private AppState? _state;
     private MainWindow? _window;
-    private TrayIcon? _tray;
+    private AppTray? _tray;
     private IGlobalHotkey? _hotkey;
     private ScreenScan? _scan;
     private bool _exiting;
     private bool _cleanedUp;
+
+    /// <summary>Für den XAML-Vorschauer; Lupe selbst startet über <see cref="Program"/>.</summary>
+    public App() : this(new StartOptions(AppMode.Demo), null) { }
 
     internal App(StartOptions options, SingleInstance? instance)
     {
@@ -33,20 +37,18 @@ public partial class App : Application
         _instance = instance;
     }
 
-    protected override void OnStartup(StartupEventArgs e)
+    public override void Initialize() => AvaloniaXamlLoader.Load(this);
+
+    private IClassicDesktopStyleApplicationLifetime? Desktop => ApplicationLifetime as IClassicDesktopStyleApplicationLifetime;
+
+    public override void OnFrameworkInitializationCompleted()
     {
-        base.OnStartup(e);
-        DispatcherUnhandledException += OnUnhandled;
-        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        base.OnFrameworkInitializationCompleted();
+        Dispatcher.UIThread.UnhandledException += OnUnhandled;
+        ThemeManager.Initialize(this);
+        // Screenshots stellen Theme und Zustand selbst her (Screenshots.RunAsync)
+        if (_options.Mode == AppMode.Screenshots || Desktop is not { } desktop) return;
 
-        if (_options.Mode == AppMode.Screenshots)
-        {
-            ConsoleSession.Attach();
-            Dispatcher.InvokeAsync(RunScreenshotsAsync);
-            return;
-        }
-
-        ThemeManager.Initialize();
         var state = _options.Mode == AppMode.Demo ? AppState.OpenDemo(strict: false, DateTimeOffset.Now) : AppState.Open();
         _state = state;
         _scan = new ScreenScan(state, () => _window);
@@ -58,12 +60,13 @@ public partial class App : Application
         };
         state.SettingsChanged += OnSettingsChanged;
         state.HotkeySuspendChanged += OnHotkeySuspendChanged;
-        SessionEnding += (_, _) => Cleanup();
+        desktop.ShutdownRequested += (_, _) => Cleanup();
+        desktop.Exit += (_, _) => Cleanup();
 
         // Infobereich nur für die echte Lupe – die Demo endet mit ihrem Fenster
         if (_options.Mode != AppMode.Demo)
         {
-            _tray = new TrayIcon("Lupe");
+            _tray = new AppTray(this, "Lupe");
             _tray.ScanRequested += StartScreenScan;
             _tray.OpenRequested += ShowMainWindow;
             _tray.ExitRequested += () => _ = ExitAsync();
@@ -71,7 +74,7 @@ public partial class App : Application
         // Die Demo meldet kein globales Kürzel an: Neben einer echten Lupe wäre es sonst „belegt“ (oder nähme es ihr weg).
         // „Ausschnitt scannen“ geht dort über den Knopf.
         if (_options.Mode != AppMode.Demo) RegisterHotkey(state.Settings.ScreenHotkey);
-        _instance?.Listen(() => Dispatcher.BeginInvoke(ShowMainWindow));
+        _instance?.Listen(() => Dispatcher.UIThread.Post(ShowMainWindow));
 
         // Autostart: nur im Infobereich – außer es gibt keinen (dann wäre Lupe unsichtbar und unerreichbar)
         if (_options.Mode == AppMode.Background && _tray?.IsVisible == true) return;
@@ -87,7 +90,6 @@ public partial class App : Application
         {
             _window = new MainWindow(_state);
             _window.Closing += OnWindowClosing;
-            MainWindow = _window;
         }
         if (!_window.IsVisible) _window.Show();
         if (_window.WindowState == WindowState.Minimized) _window.WindowState = WindowState.Normal;
@@ -95,10 +97,9 @@ public partial class App : Application
         // Aktivieren allein reicht nicht immer (Fokusdiebstahl-Schutz) – kurz nach vorn holen
         _window.Topmost = true;
         _window.Topmost = false;
-        _window.Focus();
     }
 
-    private void OnWindowClosing(object? sender, CancelEventArgs e)
+    private void OnWindowClosing(object? sender, WindowClosingEventArgs e)
     {
         if (_exiting || _state is null) return;
         if (_state.Settings.KeepRunningInTray && _tray?.IsVisible == true)
@@ -107,17 +108,16 @@ public partial class App : Application
             _window?.Hide();
             if (!_state.Settings.TrayHintShown)
             {
-                _tray.ShowBalloon("Lupe läuft weiter", $"{HotkeyLabel()} scannt einen Ausschnitt. Beenden über das Lupe-Symbol im Infobereich.");
+                ResultToast.ShowHint(_state, "Lupe läuft weiter", $"{HotkeyLabel()} scannt einen Ausschnitt. Beenden über das Lupe-Symbol im Infobereich.");
                 _state.UpdateSettings(s => s with { TrayHintShown = true });
             }
             return;
         }
-        // Erst die Kamera anhalten, dann schließen und beenden – aber nach diesem Ereignis: Während „Closing“ lässt WPF
-        // kein weiteres Close() zu (InvalidOperationException), und ExitAsync liefe ohne Kamera bis dahin synchron durch.
-        // Die Ausnahme ginge im verworfenen Task unter: Fenster bliebe offen, beim nächsten Schließen liefe Lupe
-        // unsichtbar weiter und hielte die Einzelinstanz fest.
+        // Erst die Kamera anhalten, dann schließen und beenden – aber nach diesem Ereignis: Während „Closing“ soll kein
+        // weiteres Close() laufen. Die Ausnahme ginge sonst im verworfenen Task unter, das Fenster bliebe offen und beim
+        // nächsten Schließen liefe Lupe unsichtbar weiter.
         e.Cancel = true;
-        Dispatcher.BeginInvoke(() => _ = ExitAsync());
+        Dispatcher.UIThread.Post(() => _ = ExitAsync());
     }
 
     private async Task ExitAsync()
@@ -130,7 +130,7 @@ public partial class App : Application
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            // Beim Beenden nichts mehr melden – die Kamera gibt Windows ohnehin frei
+            // Beim Beenden nichts mehr melden – die Kamera gibt das System ohnehin frei
         }
         try { _window?.Close(); }
         catch (InvalidOperationException)
@@ -138,7 +138,7 @@ public partial class App : Application
             // Das Fenster schließt gerade schon – beendet wird trotzdem
         }
         Cleanup();
-        Shutdown(0);
+        Desktop?.Shutdown(0);
     }
 
     // ================= Tastenkürzel und Bildschirm-Scan =================
@@ -160,7 +160,7 @@ public partial class App : Application
             var registered = LupePlatform.Current.Hotkeys.Register(hotkey);
             if (registered.IsRegistered)
             {
-                registered.Pressed += (_, _) => Dispatcher.BeginInvoke(StartScreenScan);
+                registered.Pressed += (_, _) => Dispatcher.UIThread.Post(StartScreenScan);
                 _hotkey = registered;
                 _state.SetHotkeyStatus(true, null);
             }
@@ -175,8 +175,8 @@ public partial class App : Application
         {
             _state.SetHotkeyStatus(false, $"Das Tastenkürzel {label} ließ sich nicht anmelden: {ex.Message}");
         }
-        _tray?.SetScanLabel($"Ausschnitt scannen\t{label}");
-        _tray?.SetTooltip(_state.HotkeyError is null ? $"Lupe – {label} scannt einen Ausschnitt" : "Lupe – Tastenkürzel belegt");
+        _tray?.SetScanLabel($"Ausschnitt scannen ({label})");
+        _tray?.SetTooltip(_state.HotkeyError is null ? $"Lupe – {label} scannt einen Ausschnitt" : "Lupe – Tastenkürzel nicht verfügbar");
     }
 
     private void OnSettingsChanged(LupeSettings old, LupeSettings now)
@@ -206,36 +206,13 @@ public partial class App : Application
         catch (Exception ex) when (ex is not OutOfMemoryException) { return "Das Tastenkürzel"; }
     }
 
-    // ================= Screenshots =================
-
-    private async Task RunScreenshotsAsync()
-    {
-        int code;
-        try
-        {
-            code = await Screenshots.RunAsync(_options.ScreenshotFolder, _options.Theme);
-        }
-        catch (Exception ex)
-        {
-            // Bewusst nicht verschluckt: Fehler (auch fehlende Core-Bausteine) sichtbar melden und mit 3 enden
-            Console.Error.WriteLine($"Screenshots fehlgeschlagen: {ex}");
-            code = CommandLine.ExitError;
-        }
-        Shutdown(code);
-    }
-
     // ================= Fehler und Aufräumen =================
 
     private void OnUnhandled(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
-        // Niemals wegen eines Fehlers abstürzen – stattdessen freundlich melden
+        // Niemals wegen eines Fehlers abstürzen – stattdessen freundlich melden (Screenshots: dort bricht der Lauf ab)
+        if (_options.Mode == AppMode.Screenshots) return;
         e.Handled = true;
-        if (_options.Mode == AppMode.Screenshots)
-        {
-            Console.Error.WriteLine($"Screenshots fehlgeschlagen: {e.Exception}");
-            Shutdown(CommandLine.ExitError);
-            return;
-        }
         _state?.Report(NoticeKind.Error, $"Unerwarteter Fehler: {e.Exception.Message}");
     }
 
@@ -248,11 +225,5 @@ public partial class App : Application
         _tray?.Dispose();
         _tray = null;
         _state?.Dispose();
-    }
-
-    protected override void OnExit(ExitEventArgs e)
-    {
-        Cleanup();
-        base.OnExit(e);
     }
 }

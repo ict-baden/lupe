@@ -1,5 +1,5 @@
 using System.Collections.ObjectModel;
-using System.Windows.Threading;
+using Avalonia.Threading;
 using Lupe.Core.Decoding;
 using Lupe.Core.History;
 using Lupe.Core.Model;
@@ -40,6 +40,8 @@ internal sealed class AppState : IDisposable
         IsDemo = isDemo;
         Strict = strict;
         Hits = new Hits(this);
+        // Die Knöpfe der Ergebniszeilen (Kopieren, Link öffnen) arbeiten mit dem Zustand dieser Oberfläche
+        UI.CodeCommands.State = this;
     }
 
     /// <summary>Demo oder Screenshots: nichts wird gespeichert, weder Einstellungen noch Verlauf noch Autostart.</summary>
@@ -128,7 +130,7 @@ internal sealed class AppState : IDisposable
 
     // ================= Öffnen =================
 
-    /// <summary>Normaler Start mit den Dateien unter %LocalAppData%\Lupe.</summary>
+    /// <summary>Normaler Start mit den Dateien im Lupe-Ordner des Benutzers (Windows: %LocalAppData%\Lupe).</summary>
     public static AppState Open()
     {
         var problems = new List<string>();
@@ -271,7 +273,6 @@ internal sealed class AppState : IDisposable
     /// <summary>Beim Start gesperrte Einstellungsdatei: eine Weile im Hintergrund erneut lesen, statt die ganze Sitzung mit Standardwerten zu laufen.</summary>
     private void StartSettingsRetry()
     {
-        if (System.Windows.Application.Current?.Dispatcher is not { } dispatcher) return;
         int attempts = 0;
         _settingsRetry = new DispatcherTimer(TimeSpan.FromSeconds(5), DispatcherPriority.Background, (_, _) =>
         {
@@ -288,7 +289,7 @@ internal sealed class AppState : IDisposable
                 Report(result is null || result.IsProblem ? NoticeKind.Warning : NoticeKind.Info, message);
             if (result is not null && !SettingsStore.SameValues(result.Settings, Settings)) Apply(Settings, result.Settings);
             else SettleHistory();
-        }, dispatcher);
+        });
         _settingsRetry.Start();
     }
 
@@ -341,9 +342,8 @@ internal sealed class AppState : IDisposable
     private void OnHistoryChanged(object? sender, EventArgs e)
     {
         // Der Verlauf meldet sich auf dem Thread, der ihn geändert hat
-        var dispatcher = System.Windows.Application.Current?.Dispatcher;
-        if (dispatcher is null || dispatcher.CheckAccess()) OnHistoryChangedUi();
-        else dispatcher.BeginInvoke(OnHistoryChangedUi);
+        if (Dispatcher.UIThread.CheckAccess()) OnHistoryChangedUi();
+        else Dispatcher.UIThread.Post(OnHistoryChangedUi);
     }
 
     private void OnHistoryChangedUi()

@@ -1,23 +1,26 @@
+using Avalonia;
+using Avalonia.Headless;
+using Avalonia.Threading;
 using Lupe.Cli;
 using Lupe.Core.Platform;
-using Lupe.Platform.Windows;
 using Lupe.Services;
 
 namespace Lupe;
 
 /// <summary>
-/// Einstieg. Mit Befehl (lesen, --hilfe) läuft Lupe als Befehlszeilenprogramm ganz ohne WPF, sonst startet die
-/// Oberfläche – normal, nur im Infobereich (Autostart), mit Demo-Daten oder zum Erzeugen der Screenshots.
+/// Einstieg. Mit Befehl (lesen, --hilfe) läuft Lupe als Befehlszeilenprogramm ganz ohne Oberfläche, sonst startet
+/// Avalonia – normal, nur im Infobereich (Autostart), mit Demo-Daten oder (ohne Bildschirm) zum Erzeugen der Screenshots.
 /// </summary>
 internal static class Program
 {
     [STAThread]
     public static int Main(string[] args)
     {
-        // Systemfunktionen (Kamera, Bildschirm, Tippen, Tastenkürzel …) über die Windows-Anbindung
-        LupePlatform.Use(new WindowsPlatform());
+        // Systemfunktionen (Kamera, Bildschirm, Tippen, Tastenkürzel …) über die Anbindung des laufenden Systems
+        LupePlatform.Use(CreatePlatform());
         var options = StartOptions.Parse(args);
         if (options.Mode == AppMode.CommandLine) return CommandLine.Run(args);
+        if (options.Mode == AppMode.Screenshots) return RunScreenshots(options);
 
         // Nur eine Lupe je Sitzung (Tastenkürzel und Infobereich gibt es einmal). Demo und Screenshots laufen daneben.
         SingleInstance? instance = null;
@@ -34,14 +37,64 @@ internal static class Program
 
         try
         {
-            var app = new App(options, instance);
-            app.InitializeComponent();
-            return app.Run();
+            return BuildApp(options, instance).UsePlatformDetect().StartWithClassicDesktopLifetime(args, Avalonia.Controls.ShutdownMode.OnExplicitShutdown);
         }
         finally
         {
             instance?.Dispose();
         }
+    }
+
+    /// <summary>Die Anbindung für dieses System; die Windows-Ausgabe bringt Lupe.Platform.Windows mit, die andere Linux und macOS.</summary>
+    internal static IPlatform CreatePlatform()
+    {
+#if LUPE_WINDOWS
+        if (OperatingSystem.IsWindows()) return new Lupe.Platform.Windows.WindowsPlatform();
+#else
+        if (OperatingSystem.IsLinux()) return new Lupe.Platform.Linux.LinuxPlatform();
+        if (OperatingSystem.IsMacOS()) return new Lupe.Platform.MacOS.MacOSPlatform();
+#endif
+        return new UnsupportedPlatform(OperatingSystem.IsWindows() ? "Windows (Ausgabe ohne Windows-Anbindung)" : "diesem System");
+    }
+
+    private static AppBuilder BuildApp(StartOptions options, SingleInstance? instance) =>
+        AppBuilder.Configure(() => new App(options, instance))
+            .WithInterFont()
+            .LogToTrace();
+
+    /// <summary>
+    /// <c>--screenshots</c>: ohne Bildschirm (Avalonia.Headless mit Skia) – geht auch in einer Dienst-Sitzung und unter
+    /// Linux ohne X-Server. Gezeichnet wird genauso wie im Fenster.
+    /// </summary>
+    private static int RunScreenshots(StartOptions options)
+    {
+        ConsoleSession.Attach();
+        BuildApp(options, null)
+            .UseSkia()
+            .UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false })
+            .SetupWithoutStarting();
+
+        int code = CommandLine.ExitError;
+        using var done = new CancellationTokenSource();
+        Dispatcher.UIThread.Post(async () =>
+        {
+            try
+            {
+                code = await UI.Screenshots.RunAsync(options.ScreenshotFolder, options.Theme);
+            }
+            catch (Exception ex)
+            {
+                // Bewusst nicht verschluckt: Fehler sichtbar melden und mit 3 enden
+                Console.Error.WriteLine($"Screenshots fehlgeschlagen: {ex}");
+                code = CommandLine.ExitError;
+            }
+            finally
+            {
+                done.Cancel();
+            }
+        });
+        Dispatcher.UIThread.MainLoop(done.Token);
+        return code;
     }
 }
 

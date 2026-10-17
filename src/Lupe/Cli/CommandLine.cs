@@ -107,7 +107,7 @@ internal static class CommandLine
                     IReadOnlyList<DecodedCode> codes;
                     try
                     {
-                        // Laden auf einem Pool-Thread: Main ist (für WPF) ein STA-Thread, und WinRT-Aufrufe sollen nicht
+                        // Laden auf einem Pool-Thread: Main ist ein STA-Thread, und WinRT-Aufrufe (Windows) sollen nicht
                         // auf einen blockierten STA-Thread zurückmüssen
                         var image = Task.Run(() => ImageFile.LoadAsync(path, cts.Token), cts.Token).GetAwaiter().GetResult();
                         decoder ??= new BarcodeDecoder(formats);

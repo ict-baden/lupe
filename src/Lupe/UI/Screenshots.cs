@@ -1,22 +1,20 @@
-using System.Runtime.InteropServices;
-using System.Windows;
-using System.Windows.Interop;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Media.Imaging;
 using Lupe.Core.Model;
-using Lupe.Core.Screen;
 using Lupe.Demo;
-using Lupe.Interop;
 using Lupe.Services;
 using Lupe.UI.Theme;
+using CorePixelRect = Lupe.Core.Screen.PixelRect;
+using MonitorArea = Lupe.Core.Screen.MonitorArea;
 
 namespace Lupe.UI;
 
 /// <summary>
 /// <c>Lupe.exe --screenshots &lt;ordner&gt;</c>: Demo laden, jede Seite in einen festen Zustand bringen und als PNG
-/// speichern (144 dpi), dazu das Auswahl-Overlay und den Ergebnis-Hinweis. Die Fenster liegen außerhalb des
-/// Bildschirms und werden nie aktiviert – das funktioniert auch ohne sichtbaren Desktop (Dienst-Sitzung). Mica gibt
-/// es in Bildern nicht, deshalb normaler Hintergrund aus dem Theme.
+/// speichern (144 dpi), dazu das Auswahl-Overlay und den Ergebnis-Hinweis. Läuft ohne Bildschirm (Avalonia.Headless mit
+/// Skia, siehe <see cref="Program"/>) – auch in einer Dienst-Sitzung oder unter Linux ohne X-Server. Mica gibt es in
+/// Bildern nicht, deshalb normaler Hintergrund aus dem Theme; Akzentfarbe fest (Windows-Standardblau).
 /// </summary>
 internal static class Screenshots
 {
@@ -42,17 +40,17 @@ internal static class Screenshots
         foreach (var dark in variants)
         {
             string suffix = dark ? "dunkel" : "hell";
-            ThemeManager.Initialize(forceDark: dark);
-            var window = CreateWindow(new MainWindow(state, screenshotMode: true), Width, Height);
+            ThemeManager.Force(dark);
+            var window = Open(new MainWindow(state, screenshotMode: true), Width, Height);
             try
             {
                 foreach (var slug in MainWindow.PageSlugs)
                 {
                     await window.PrepareScreenshotAsync(slug);
-                    // Fluent-Animationen (Knöpfe, Listen) zu Ende laufen lassen
+                    // Fluent-Übergänge (Knöpfe, Listen) zu Ende laufen lassen
                     await Task.Delay(300);
                     await Ui.IdleAsync();
-                    written += Save(window, Path.Combine(folder, $"{slug}-{suffix}.png"), Width, Height);
+                    written += Save(window, Path.Combine(folder, $"{slug}-{suffix}.png"), Width, Height, Scale);
                 }
             }
             finally
@@ -72,22 +70,19 @@ internal static class Screenshots
     {
         const int w = 1600, h = 900;
         var (desktop, code) = DemoData.DesktopImage(w, h);
-        var monitors = new[] { new MonitorArea(new PixelRect(0, 0, w, h), new PixelRect(0, 0, w, h - 44), 1, true, "Demo") };
-        var overlay = new SelectionOverlay(desktop, new PixelRect(0, 0, w, h), monitors, screenshot: true);
-        CreateWindow(overlay, w, h);
+        var monitor = new MonitorArea(new CorePixelRect(0, 0, w, h), new CorePixelRect(0, 0, w, h - 44), 1, true, "Demo");
+        var overlay = Open(new OverlayWindow(desktop, monitor.Bounds, monitor, primary: true, screenshot: true), w, h);
         try
         {
             overlay.Relayout();
-            var selection = code;
-            selection.Inflate(26, 22);
-            overlay.ShowSelection(selection);
+            overlay.ShowSelection(code.Inflate(new Thickness(26, 22)));
             await Task.Delay(100);
             await Ui.IdleAsync();
-            return SaveElement(overlay.Surface, file, w, h, scale: 1);
+            return SaveControl(overlay.Surface, file, w, h, scale: 1);
         }
         finally
         {
-            overlay.Close();
+            overlay.CloseOverlay();
         }
     }
 
@@ -97,13 +92,13 @@ internal static class Screenshots
         var code = new DecodedCode { Text = DemoData.InvoiceUrl, Format = "QR_CODE" };
         var item = new CodeItem(code, ScanSource.Bildschirm, DemoData.ScreenshotTime, state.LinkFor(code.Text));
         var toast = new ResultToast(state, item, "QR-Code erkannt", Labels.Actions(ResultActions.Kopieren | ResultActions.Eintippen), "", null, screenshot: true);
-        var window = CreateWindow(toast, 420, double.NaN);
+        var window = Open(toast, 420, double.NaN);
         try
         {
             await Task.Delay(100);
             await Ui.IdleAsync();
-            // Das ganze (durchsichtige) Fenster samt Schattenrand, auf dem Hintergrund der App
-            return SaveElement(window, file, window.ActualWidth, window.ActualHeight, Scale, background: true);
+            // Das ganze Fenster samt Schattenrand, auf dem Hintergrund der App
+            return Save(window, file, window.Bounds.Width, window.Bounds.Height, Scale);
         }
         finally
         {
@@ -111,70 +106,41 @@ internal static class Screenshots
         }
     }
 
-    /// <summary>
-    /// Fenster außerhalb des Bildschirms in fester Größe, ohne Aktivierung und ohne Mica.
-    /// <paramref name="height"/> NaN = Höhe nach Inhalt.
-    /// </summary>
-    internal static T CreateWindow<T>(T window, double width, double height) where T : Window
+    /// <summary>Fenster in fester Größe (ohne Bildschirm), <paramref name="height"/> NaN = Höhe nach Inhalt.</summary>
+    private static T Open<T>(T window, double width, double height) where T : Window
     {
-        window.WindowStyle = WindowStyle.None;
-        window.ResizeMode = ResizeMode.NoResize;
-        window.ShowInTaskbar = false;
+        window.WindowDecorations = WindowDecorations.None;
         window.ShowActivated = false;
         window.Topmost = false;
         window.WindowStartupLocation = WindowStartupLocation.Manual;
-        window.Left = -20000;
-        window.Top = -20000;
-        // Zuerst klein anlegen: Die Größengrenze fragt Windows schon beim Erzeugen ab, der Haken dagegen greift erst
-        // danach – die endgültige Größe kommt deshalb nach Show()
-        window.Width = 800;
-        if (!double.IsNaN(height)) window.Height = 600;
-        window.SourceInitialized += (_, _) =>
-            HwndSource.FromHwnd(new WindowInteropHelper(window).Handle)?.AddHook(AllowLargerThanScreen);
-        window.Show();
+        window.SizeToContent = SizeToContent.Manual;
         window.Width = width;
-        if (!double.IsNaN(height)) window.Height = height;
+        if (double.IsNaN(height) && window.Content is Control content)
+        {
+            // Höhe nach Inhalt: vorher selbst messen – ohne Bildschirm passt SizeToContent die Fenstergröße nicht an,
+            // und eine spätere Größenänderung zeichnet der Headless-Renderer verzerrt
+            content.Measure(new Size(width, double.PositiveInfinity));
+            height = Math.Ceiling(content.DesiredSize.Height);
+        }
+        window.Height = height;
+        window.Show();
         window.UpdateLayout();
         return window;
     }
 
-    /// <summary>Ohne sichtbaren Desktop ist der „Bildschirm“ oft nur 1024×768 groß – Fenster dürfen hier größer sein.</summary>
-    private static nint AllowLargerThanScreen(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
-    {
-        if (msg != Native.WM_GETMINMAXINFO) return 0;
-        var info = Marshal.PtrToStructure<Native.MINMAXINFO>(lParam);
-        info.ptMaxSize = info.ptMaxTrackSize = new Native.POINT { X = 16_000, Y = 16_000 };
-        Marshal.StructureToPtr(info, lParam, false);
-        return 0;
-    }
-
-    private static int Save(Window window, string file, double width, double height)
+    private static int Save(Window window, string file, double width, double height, double scale)
     {
         window.UpdateLayout();
-        var root = (FrameworkElement)window.Content;
-        if (Math.Abs(root.ActualWidth - width) > 1 || Math.Abs(root.ActualHeight - height) > 1)
-            throw new InvalidOperationException($"Das Fenster hat {root.ActualWidth:0}×{root.ActualHeight:0} statt {width:0}×{height:0} Punkte – die Bilder wären verzerrt.");
-        return SaveElement(root, file, width, height, Scale, background: true);
+        if (Math.Abs(window.Bounds.Width - width) > 1 || Math.Abs(window.Bounds.Height - height) > 1)
+            throw new InvalidOperationException($"Das Fenster hat {window.Bounds.Width:0}×{window.Bounds.Height:0} statt {width:0}×{height:0} Punkte – die Bilder wären verzerrt.");
+        return SaveControl(window, file, width, height, scale);
     }
 
-    private static int SaveElement(FrameworkElement root, string file, double width, double height, double scale, bool background = false)
+    private static int SaveControl(Visual root, string file, double width, double height, double scale)
     {
-        root.UpdateLayout();
-        var bitmap = new RenderTargetBitmap((int)Math.Round(width * scale), (int)Math.Round(height * scale), 96 * scale, 96 * scale, PixelFormats.Pbgra32);
-        if (background)
-        {
-            // Den Hintergrund zeichnet das Fenster selbst, nicht sein Inhalt – deshalb zuerst eine Fläche darunter
-            var brush = Application.Current.TryFindResource("ApplicationBackgroundBrush") as Brush ?? Brushes.White;
-            var under = new DrawingVisual();
-            using (var dc = under.RenderOpen())
-                dc.DrawRectangle(brush, null, new Rect(0, 0, width, height));
-            bitmap.Render(under);
-        }
+        using var bitmap = new RenderTargetBitmap(new PixelSize((int)Math.Round(width * scale), (int)Math.Round(height * scale)), new Vector(96 * scale, 96 * scale));
         bitmap.Render(root);
-
-        var encoder = new PngBitmapEncoder();
-        encoder.Frames.Add(BitmapFrame.Create(bitmap));
-        using (var stream = File.Create(file)) encoder.Save(stream);
+        bitmap.Save(file, PngBitmapEncoderOptions.Default);
         Console.WriteLine($"  {Path.GetFileName(file)}");
         return 1;
     }

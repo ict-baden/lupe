@@ -1,0 +1,53 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:svc="clr-namespace:Lupe.Services"
+        x:Class="Lupe.UI.CodeChoiceWindow"
+        Title="Lupe – Code wählen" WindowDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent"
+        CanResize="False" ShowInTaskbar="False" Topmost="True" SizeToContent="Height" Width="520"
+        WindowStartupLocation="Manual" FontFamily="{DynamicResource UiFont}" UseLayoutRounding="True"
+        Foreground="{DynamicResource TextFillColorPrimaryBrush}">
+    <Border x:Name="Card" Margin="16" CornerRadius="10" Background="{DynamicResource FlyoutBackground}"
+            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" BorderThickness="1" BoxShadow="0 6 28 0 #59000000">
+        <StackPanel Margin="18,14,14,16">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Image Source="avares://Lupe/Assets/lupe.png" Width="20" Height="20" RenderOptions.BitmapInterpolationMode="HighQuality"/>
+                <TextBlock x:Name="TitleText" Grid.Column="1" Text="Mehrere Codes gefunden" Classes="bodyStrong" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                <Button Grid.Column="2" Classes="ghost" Click="Cancel_Click" ToolTip.Tip="Abbrechen (Esc)" AutomationProperties.Name="Abbrechen">
+                    <TextBlock Text="&#xE711;" Classes="icon" FontSize="11"/>
+                </Button>
+            </Grid>
+            <TextBlock x:Name="ExplainText" Classes="caption" FontSize="13" Margin="0,6,4,0"/>
+
+            <ListBox x:Name="List" Classes="choice" Margin="-4,12,0,0" MaxHeight="330" BorderThickness="0" Background="Transparent"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" DoubleTapped="List_DoubleTapped"
+                     AutomationProperties.Name="Gefundene Codes">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="svc:CodeItem">
+                        <Grid Margin="0,4" ColumnDefinitions="Auto,*">
+                            <Border Classes="number" Margin="0,0,12,0" VerticalAlignment="Top">
+                                <TextBlock Classes="number" Text="{Binding NumberText}"/>
+                            </Border>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="{Binding FormatLabel}" Classes="caption"/>
+                                <TextBlock Text="{Binding OneLine}" Classes="code" ToolTip.Tip="{Binding ToolTipText}"/>
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <Grid Margin="0,14,0,0" ColumnDefinitions="Auto,*,Auto,Auto">
+                <Button Click="CopyAll_Click" ToolTip.Tip="Alle Codes zeilenweise in die Zwischenablage">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8C8;" Classes="glyph"/>
+                        <TextBlock Text="Alle kopieren" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <Button Grid.Column="2" Content="Abbrechen" Click="Cancel_Click" IsCancel="True" MinWidth="96"/>
+                <Button Grid.Column="3" Classes="accent" Click="Take_Click" IsDefault="True" Margin="8,0,0,0" MinWidth="120">
+                    <TextBlock x:Name="TakeText" Text="Übernehmen"/>
+                </Button>
+            </Grid>
+        </StackPanel>
+    </Border>
+</Window>

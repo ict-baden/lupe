@@ -123,7 +123,7 @@ internal sealed class Hits(AppState state)
 
         if (wanted.HasFlag(ResultActions.Kopieren))
         {
-            if (Shell.Copy(code.Text) is { } error) problems.Add(error);
+            if (await Shell.CopyAsync(code.Text) is { } error) problems.Add(error);
             else done |= ResultActions.Kopieren;
         }
         if (wanted.HasFlag(ResultActions.Eintippen))
@@ -143,20 +143,20 @@ internal sealed class Hits(AppState state)
     }
 
     /// <summary>Alle Codes zeilenweise kopieren. Fehlermeldung oder null.</summary>
-    public string? CopyAll(IEnumerable<DecodedCode> codes) => Shell.Copy(string.Join(Environment.NewLine, codes.Select(c => c.Text)));
+    public Task<string?> CopyAllAsync(IEnumerable<DecodedCode> codes) => Shell.CopyAsync(string.Join(Environment.NewLine, codes.Select(c => c.Text)));
 
     /// <summary>Alle Codes einer Ergebnisliste zeilenweise kopieren und das in ihren Verlaufseinträgen vermerken. Fehlermeldung oder null.</summary>
-    public string? CopyAll(IReadOnlyList<CodeItem> items)
+    public async Task<string?> CopyAllAsync(IReadOnlyList<CodeItem> items)
     {
-        var error = CopyAll(items.Select(i => i.Code));
+        var error = await CopyAllAsync(items.Select(i => i.Code));
         if (error is null) foreach (var item in items) Record(item, ResultActions.Kopieren);
         return error;
     }
 
     /// <summary>Alle Codes einer Meldung zeilenweise kopieren (Auswahlfenster) und das im Verlauf vermerken. Fehlermeldung oder null.</summary>
-    public string? CopyAll(HitReport report)
+    public async Task<string?> CopyAllAsync(HitReport report)
     {
-        var error = CopyAll(report.Codes);
+        var error = await CopyAllAsync(report.Codes);
         if (error is null)
             for (int i = 0; i < report.Entries.Length; i++)
                 if (report.Entries[i] is { } entry && Record(entry, ResultActions.Kopieren) is { } updated) report.Entries[i] = updated;

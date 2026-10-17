@@ -1,5 +1,6 @@
-using System.Windows;
+using Avalonia.Controls;
 using Lupe.Core.Model;
+using Lupe.Core.Platform;
 using Lupe.Core.Screen;
 using Lupe.Interop;
 using Lupe.Services;
@@ -30,8 +31,10 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
     private async Task RunCoreAsync()
     {
         var main = mainWindow();
-        var foreground = Native.GetForegroundWindow();
-        bool fromLupe = Native.IsOwnWindow(foreground);
+        var active = LupePlatform.Current.ActiveWindow;
+        var foreground = active.Foreground();
+        // Weiß das System nicht, welches Fenster vorn ist (Wayland): Kam der Scan aus Lupe, ist ihr Fenster aktiv
+        bool fromLupe = foreground == 0 ? main is { IsActive: true } : active.IsOwnWindow(foreground);
         nint typeTarget = fromLupe ? 0 : foreground;
         bool hidden = false;
         try
@@ -45,10 +48,8 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
             }
             if (hidden || toastClosed)
             {
-                // Ausblenden ohne Animation (MainWindow), trotzdem ein Bild abwarten, bis DWM es wirklich entfernt hat
-                await Task.Delay(40);
-                Native.DwmFlush();
-                await Task.Delay(40);
+                // Ausblenden ohne Animation (MainWindow), trotzdem ein Bild abwarten, bis es wirklich weg ist
+                await Native.WaitForHiddenAsync();
             }
             await ScanAsync(main, hidden, fromLupe, typeTarget);
         }
@@ -145,7 +146,7 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
             {
                 if (result == CodeChoiceWindow.Outcome.CopyAll)
                 {
-                    var error = state.Hits.CopyAll(report);
+                    var error = await state.Hits.CopyAllAsync(report);
                     AddRecent(report);
                     Finish(inWindow, typeTarget, monitor, null, $"{codes.Count} Codes zeilenweise kopiert", error is null ? ResultActions.Kopieren : ResultActions.Keine, error ?? "");
                 }
@@ -225,7 +226,8 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
 
     private static void ReturnFocus(nint target)
     {
-        if (target != 0 && Native.IsWindow(target)) Native.SetForegroundWindow(target);
+        if (target == 0) return;
+        _ = LupePlatform.Current.ActiveWindow.ActivateAsync(target);
     }
 
     private static MonitorArea? MonitorAt(IReadOnlyList<MonitorArea> monitors, int x, int y) =>
