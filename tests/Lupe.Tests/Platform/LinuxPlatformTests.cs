@@ -140,6 +140,22 @@ public sealed class LinuxLogicTests
         Assert.Contains(expected, FlashCapFrameSource.Describe(new ArgumentException(message), "USB-Kamera"));
     }
 
+    [Fact]
+    public async Task Ohne_Kamera_leere_Liste_und_Start_meldet_nicht_angeschlossen()
+    {
+        // Testrechner und Container haben keine Webcam (unter Windows/macOS listet die Linux-Anbindung ohnehin nichts)
+        var provider = new LinuxCameraProvider();
+        var cameras = await provider.ListAsync();
+        if (cameras.Count > 0) return; // echte Kamera vorhanden: dieser Test ist nur für den Fall ohne
+
+        await using var source = provider.Open(new Lupe.Core.Camera.CameraInfo("/dev/video97", "Gibt es nicht"));
+        string? failure = null;
+        source.Failed += (_, message) => failure = message;
+        await source.StartAsync();
+        Assert.Equal("Die Kamera „Gibt es nicht“ ist nicht angeschlossen.", failure);
+        await source.StopAsync();
+    }
+
     // ---------- Keysyms ----------
 
     [Theory]
