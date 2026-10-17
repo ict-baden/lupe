@@ -11,7 +11,7 @@ macOS backends can be built in parallel without stepping on each other.
 | `src/Lupe.Core` | `net10.0` | Decoding (zxing-cpp), model, settings, history, link rules, scan loop, repeat filter, hotkey text, typing logic (`KeyboardTyper`) and the **platform interfaces** (`Lupe.Core.Platform`). No P/Invoke, no WinRT. |
 | `src/Lupe.Platform.Windows` | `net10.0-windows10.0.19041.0` | Today's Windows code, behaviour unchanged: MediaCapture camera, camera privacy, GDI capture with per-monitor DPI, SendInput + high-resolution waitable timer, UIPI/elevation check, RegisterHotKey + AltGr guard, WIC image decoding, HKCU `Run` autostart. |
 | `src/Lupe.Platform.Linux` | `net10.0` | X11 and Wayland: FlashCap/V4L2 camera, X11 `XGetImage` / Screenshot portal, XTest / RemoteDesktop portal, `XGrabKey` / GlobalShortcuts portal, SkiaSharp image files, `~/.config/autostart/lupe.desktop`. Details in [platform-linux.md](platform-linux.md). |
-| `src/Lupe.Platform.MacOS` | `net10.0` | Skeleton. To be filled: FlashCap/AVFoundation, `screencapture -x`, CGEvent typing, Carbon `RegisterEventHotKey`, LaunchAgent autostart, permission hints. |
+| `src/Lupe.Platform.MacOS` | `net10.0` | FlashCap/AVFoundation camera, `screencapture -x` + ImageIO, CGEvent Unicode typing, Carbon `RegisterEventHotKey`, NSWorkspace foreground app, LaunchAgent autostart, ImageIO image files, permission hints. See [macOS backend](#macos-backend). |
 | `src/Lupe` | `net10.0;net10.0-windows10.0.19041.0` | The Avalonia 12 app. The Windows target references `Lupe.Platform.Windows`, the `net10.0` target `Lupe.Platform.Linux` and `Lupe.Platform.MacOS`; `Program.CreatePlatform()` picks one with `OperatingSystem.IsXxx()` and calls `LupePlatform.Use(...)`. A runtime identifier selects the target (`-r win-x64` → Windows, anything else → `net10.0`). |
 | `tests/Lupe.Tests` | `net10.0-windows10.0.19041.0;net10.0` | Windows TFM: all tests (core, Windows backend, the app as a process, headless UI). `net10.0`: platform-neutral tests plus the headless UI tests (`Ui/`), runs on every OS. References the app and the Linux/macOS backends in both TFMs. |
 
@@ -79,6 +79,29 @@ macOS key code.
 | macOS | `~/Library/Application Support/Lupe` | `~/Library/Application Support/Lupe` |
 
 Backends that keep files of their own (the Linux RemoteDesktop restore token) put them next to the settings.
+
+## macOS backend
+
+`src/Lupe.Platform.MacOS` talks to the system through P/Invoke only (no Xamarin/Microsoft.macOS workload), so it builds
+on every OS. Created on another OS (tests), every part reports "nicht verfügbar" without calling native code. The
+signatures in `Native/Native.cs` follow the macOS 14 SDK headers (each C declaration is quoted above its import); none
+of it has run on a Mac yet.
+
+| Part | Implementation | Notes |
+| --- | --- | --- |
+| Camera | FlashCap 1.12.0 `AVFoundationDevices`; YUV is transcoded by FlashCap and arrives as BMP (`DibConverter`), MJPEG is decoded with ImageIO | Format chosen with `FormatChooser` (~1280×720). Denied permission → German hint before opening. Unplugging is not detected (FlashCap has no event). |
+| Screen | `CGGetActiveDisplayList` / `CGDisplayBounds` / `CGDisplayModeGetPixelWidth`; one `screencapture -x -t png -D n` per touched display, decoded with ImageIO | Pixel space = points × the largest display scale, so mixed Retina/non-Retina layouts don't overlap; captures from a lower-scale display are upscaled (nearest). `WorkArea` = `Bounds` (menu bar/Dock not subtracted). `CGDisplayCreateImage` is obsolete from macOS 15. |
+| Typing | `CGEventCreateKeyboardEvent(key 0)` + `CGEventKeyboardSetUnicodeString`, posted at `kCGHIDEventTap`, flags cleared | Layout-independent. Surrogate pairs are joined into one event. Needs the Accessibility permission (`AXIsProcessTrusted`), otherwise macOS drops the events silently – `ForegroundProblem` reports it and shows the system prompt once. |
+| Layout | `TISCopyCurrentKeyboardLayoutInputSource` + `UCKeyTranslate` | TIS is only called on the main thread (`pthread_main_np`), the table is cached. Letters/digits keep their VK; OEM keys map by US position (`MacKeyCodes`). |
+| Hotkey | Carbon `RegisterEventHotKey` + `InstallEventHandler` on the application target | Win → ⌘, Alt → ⌥. Events need the app's Cocoa run loop (Avalonia). No permission needed. Note: the default Win+Shift+Q becomes ⌘⇧Q, which is "Log Out" in the Apple menu – the UI should offer a different default on macOS. |
+| Active window | `NSWorkspace.frontmostApplication.processIdentifier`, `NSRunningApplication.activateWithOptions:` | The handle is a PID. |
+| Autostart | `~/Library/LaunchAgents/de.ict-baden.lupe.plist` (`RunAtLoad`, `--hintergrund`) | Not loaded with `launchctl` (it would start a second instance now). Refused when running through `dotnet`. |
+| Image files | ImageIO (`CGImageSourceCreateThumbnailAtIndex` with transform for EXIF), drawn onto white in a BGRA bitmap context | PNG, JPEG, GIF, BMP, TIFF, HEIC/HEIF, WebP, ICO (largest frame). |
+| Problems | `authorizationStatusForMediaType:`, `CGPreflightScreenCaptureAccess`, `AXIsProcessTrusted` | Links: `x-apple.systempreferences:com.apple.preference.security?Privacy_Camera` / `Privacy_ScreenCapture` / `Privacy_Accessibility`. |
+| Paths | `MacOSPaths.ApplicationSupport` = `~/Library/Application Support/Lupe` | .NET 8+ already maps `LocalApplicationData` there on macOS, so `SettingsStore`/`HistoryStore` need no change (checked by a macOS-only test). |
+
+Packaging notes for the app bundle: `Info.plist` needs `NSCameraUsageDescription` (without it macOS kills the
+process on camera access). Permissions are granted per bundle; an unsigned app loses them when its binary changes.
 
 ## Working in parallel
 
