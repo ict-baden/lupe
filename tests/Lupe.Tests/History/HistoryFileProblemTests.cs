@@ -306,7 +306,8 @@ public sealed class HistoryFileProblemTests : IDisposable
         var reads = 0;
         var lastCount = 0;
 
-        var reader = Task.Run(() =>
+        // Eigener Thread: Der Leser läuft bis zum Ende des Tests und belegte sonst einen Pool-Thread
+        var reader = OwnThreads.Start(() =>
         {
             while (!stop.IsCancellationRequested)
             {
@@ -337,7 +338,7 @@ public sealed class HistoryFileProblemTests : IDisposable
             }
         });
 
-        // Erst schreiben, wenn der Leser läuft – im parallelen Gesamtlauf kommt ein Pool-Thread sonst womöglich erst danach dran
+        // Erst schreiben, wenn der Leser läuft
         Assert.True(firstRead.Wait(TimeSpan.FromSeconds(30)), "Der Leser kam nicht zum Zug.");
         for (var i = 1; i <= 150; i++) store.Add(Make(longText + i, i));
         stop.Cancel();

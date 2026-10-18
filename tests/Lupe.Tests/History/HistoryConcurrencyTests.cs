@@ -1,5 +1,6 @@
 using Lupe.Core.History;
 using Lupe.Core.Model;
+using Lupe.Tests.TestSupport;
 using static Lupe.Tests.History.TestEntries;
 
 namespace Lupe.Tests.History;
@@ -23,7 +24,8 @@ public sealed class HistoryConcurrencyTests : IDisposable
         store.Changed += (_, _) => Interlocked.Increment(ref changed);
         using var start = new Barrier(threads);
 
-        Parallel.For(0, threads, new ParallelOptions { MaxDegreeOfParallelism = threads }, t =>
+        // Eigene Threads: Im Pool warteten die ersten an der Barriere, bis der Pool auf 8 Threads gewachsen ist
+        OwnThreads.Run(threads, t =>
         {
             start.SignalAndWait();
             for (var i = 0; i < perThread; i++)
@@ -82,10 +84,11 @@ public sealed class HistoryConcurrencyTests : IDisposable
             }
         }
 
+        // Die Leser laufen bis zum Ende des Tests – auf eigenen Threads, nicht im Pool
         var readers = new[]
         {
             // Oberfläche: Liste aufzählen, Reihenfolge muss in jeder Momentaufnahme stimmen
-            Task.Run(() => Guard(() =>
+            OwnThreads.Start(() => Guard(() =>
             {
                 var snapshot = store.Entries;
                 AssertNewestFirst(snapshot);
@@ -93,14 +96,14 @@ public sealed class HistoryConcurrencyTests : IDisposable
                 foreach (var entry in snapshot) Assert.NotNull(entry.Text);
             })),
             // Benutzer löscht Einträge
-            Task.Run(() => Guard(() =>
+            OwnThreads.Start(() => Guard(() =>
             {
                 var snapshot = store.Entries;
                 if (snapshot.Count > 10) store.Remove(snapshot[snapshot.Count / 2]);
                 Thread.Sleep(1);
             })),
             // Export läuft nebenher
-            Task.Run(() => Guard(() =>
+            OwnThreads.Start(() => Guard(() =>
             {
                 var csv = _temp.File("export.csv");
                 store.ExportCsv(csv);

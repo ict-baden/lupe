@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Lupe.Core.Camera;
 using Lupe.Core.Model;
+using Lupe.Tests.TestSupport;
 using static Lupe.Tests.Camera.CameraTestSupport;
 
 namespace Lupe.Tests.Camera;
@@ -9,7 +10,9 @@ namespace Lupe.Tests.Camera;
 /// Synchrones Starten/Anhalten aus den Ereignissen der Schleife heraus (der schlimmste Fall für Verklemmungen), mit
 /// fernsteuerbarer Quelle und mit der Demo-Kamera. Vorher verklemmten sich ein synchroner Neustart aus Failed während
 /// des Starts und einer aus dem Frame-Ereignis (Aufräumer hielt die Sperre und wartete auf genau dieses Ereignis).
+/// Die Demo-Kamera taktet über den Thread-Pool, daher in der Sammlung „Echtzeit“ (siehe dort).
 /// </summary>
+[Collection(EchtzeitCollection.Name)]
 public sealed class ScanLoopReentrancyTests
 {
     [Fact]

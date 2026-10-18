@@ -1,14 +1,17 @@
 using System.Collections.Concurrent;
 using Lupe.Core.Camera;
 using Lupe.Core.Model;
+using Lupe.Tests.TestSupport;
 using static Lupe.Tests.Camera.CameraTestSupport;
 
 namespace Lupe.Tests.Camera;
 
 /// <summary>
 /// <see cref="ScanLoop"/> mit fernsteuerbarer Quelle und Zeit: jedes Bild und jede Millisekunde kommt dann, wenn der
-/// Test es will – Sperre, Drosselung, Fehler und Lebenszyklus genau prüfbar.
+/// Test es will – Sperre, Drosselung, Fehler und Lebenszyklus genau prüfbar. Die Erkennung und das Warten der Tests laufen
+/// trotzdem über den Thread-Pool, daher in der Sammlung „Echtzeit“ (siehe dort).
 /// </summary>
+[Collection(EchtzeitCollection.Name)]
 public sealed class ScanLoopTests
 {
     private readonly ManualFrameSource _source = new();
@@ -403,20 +406,29 @@ public sealed class ScanLoopTests
     {
         using var entered = new ManualResetEventSlim(false);
         using var gate = new ManualResetEventSlim(false);
+        // Die Erkennung endet erst mit gate.Set() (kein eigenes Zeitlimit): Kommt Task.Delay auf einem ausgelasteten
+        // Runner spät dran, dauert der Test nur länger, statt dass die Erkennung inzwischen von selbst endet
         await using var loop = CreateLoop(decode: _ =>
         {
             entered.Set();
-            gate.Wait(TimeSpan.FromSeconds(10));
+            gate.Wait();
             return [Code("zu spät")];
         });
         await loop.StartAsync();
-        _source.Push(Marker(1));
-        Assert.True(entered.Wait(TimeSpan.FromSeconds(5)));
+        Task stop;
+        try
+        {
+            _source.Push(Marker(1));
+            Assert.True(entered.Wait(TimeSpan.FromSeconds(5)));
 
-        var stop = loop.StopAsync();
-        await Task.Delay(100);
-        Assert.False(stop.IsCompleted, "StopAsync muss die laufende Erkennung abwarten");
-        gate.Set();
+            stop = loop.StopAsync();
+            await Task.Delay(100);
+            Assert.False(stop.IsCompleted, "StopAsync muss die laufende Erkennung abwarten");
+        }
+        finally
+        {
+            gate.Set();
+        }
         await WithTimeout(stop, what: "Stopp");
 
         Assert.Empty(_detected);

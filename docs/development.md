@@ -68,7 +68,9 @@ The Wayland tests need a compositor and the portals, e.g. `sway` headless (`WLR_
 inside `dbus-run-session`. Tests that change `LinuxSession.Environment` or talk to the X server share the collection
 `Linux-Sitzung` and do not run in parallel.
 
-The camera tests that run in real time (`Camera/ScanLoopRealtimeTests` and `Camera/FakeFrameSourceTests`: frame rate, repeat suppression) belong to the xUnit collection `Echtzeit`, which xUnit runs on its own after all parallel tests have finished. On runners with few cores, the other tests otherwise slowed recognition down so much that time windows were missed.
+The camera tests that run in real time (`Camera/ScanLoopRealtimeTests` and `Camera/FakeFrameSourceTests`: frame rate, repeat suppression) and the scan loop tests (`Camera/ScanLoopTests`, `Camera/ScanLoopReentrancyTests`) belong to the xUnit collection `Echtzeit`, which xUnit runs on its own after all parallel tests have finished. On runners with few cores, the other tests otherwise slowed recognition down so much that time windows were missed. The scan loop tests also depend on the thread pool: while the decoding tests filled it, timers (`Task.Delay`, the demo camera's frame clock) waited more than 10 s on the 3-core macOS runner.
+
+Tests that occupy threads for a long time (a barrier, a loop until the test ends) use their own threads (`TestSupport/OwnThreads`) instead of `Parallel.For` or `Task.Run`, so they don't starve the thread pool shared by all tests.
 
 | Tests | Check |
 |---|---|
