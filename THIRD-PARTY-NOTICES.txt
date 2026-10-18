@@ -67,7 +67,7 @@ Lupe contains the following third-party software. Each part keeps its own licenc
    Copyright (c) 2020 Microsoft Corporation
    Licence: MIT (section D)
 
-9. FlashCap 1.12.0 - webcam access on Linux (V4L2) and macOS (AVFoundation)
+9. FlashCap 1.12.0 - webcam access on Linux (V4L2)
    Files: FlashCap.dll, FlashCap.Core.dll (NuGet package "FlashCap")
    Source: https://github.com/kekyo/FlashCap
    Copyright (c) Kouji Matsui (@kozy_kekyo, @kekyo@mi.kekyo.net)

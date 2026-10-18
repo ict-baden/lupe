@@ -83,13 +83,15 @@ Backends that keep files of their own (the Linux RemoteDesktop restore token) pu
 ## macOS backend
 
 `src/Lupe.Platform.MacOS` talks to the system through P/Invoke only (no Xamarin/Microsoft.macOS workload), so it builds
-on every OS. Created on another OS (tests), every part reports "nicht verfügbar" without calling native code. The
+on every OS. The one exception is the camera: `Native/LupeCamera.swift` is compiled into `libLupeCamera.dylib` (arm64 +
+x86_64, macOS 12+) when building on a Mac (needs Xcode or the Command Line Tools); built elsewhere, the library is missing
+and macOS reports no camera. Created on another OS (tests), every part reports "nicht verfügbar" without calling native code. The
 signatures in `Native/Native.cs` follow the macOS 14 SDK headers (each C declaration is quoted above its import); none
 of it has run on a Mac yet.
 
 | Part | Implementation | Notes |
 | --- | --- | --- |
-| Camera | FlashCap 1.12.0 `AVFoundationDevices`; YUV is transcoded by FlashCap and arrives as BMP (`DibConverter`), MJPEG is decoded with ImageIO | Format chosen with `FormatChooser` (~1280×720). Denied permission → German hint before opening. Unplugging is not detected (FlashCap has no event). |
+| Camera | `libLupeCamera.dylib` from `Native/LupeCamera.swift`: `AVCaptureSession` + `AVCaptureVideoDataOutput` with `kCVPixelFormatType_32BGRA`, frames copied in `AVFoundationFrameSource` (C ABI, `[UnmanagedCallersOnly]` callbacks) | Size chosen with `FormatChooser` (~1280×720) from the device's formats. Asks for the camera permission on first start, denied → German hint. Unplugging (`AVCaptureDeviceWasDisconnected`) and session errors are reported. Replaces FlashCap, whose AVFoundation backend (1.12.0) swaps YUYV/UYVY and over-releases Objective-C objects (wrong colours, crash when a thread's autorelease pool drains). |
 | Screen | `CGGetActiveDisplayList` / `CGDisplayBounds` / `CGDisplayModeGetPixelWidth`; one `screencapture -x -t png -D n` per touched display, decoded with ImageIO | Pixel space = points × the largest display scale, so mixed Retina/non-Retina layouts don't overlap; captures from a lower-scale display are upscaled (nearest). `WorkArea` = `Bounds` (menu bar/Dock not subtracted). `CGDisplayCreateImage` is obsolete from macOS 15. |
 | Typing | `CGEventCreateKeyboardEvent(key 0)` + `CGEventKeyboardSetUnicodeString`, posted at `kCGHIDEventTap`, flags cleared | Layout-independent. Surrogate pairs are joined into one event. Needs the Accessibility permission (`AXIsProcessTrusted`), otherwise macOS drops the events silently – `ForegroundProblem` reports it and shows the system prompt once. |
 | Layout | `TISCopyCurrentKeyboardLayoutInputSource` + `UCKeyTranslate` | TIS is only called on the main thread (`pthread_main_np`), the table is cached. Letters/digits keep their VK; OEM keys map by US position (`MacKeyCodes`). |

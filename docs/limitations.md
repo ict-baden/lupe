@@ -80,7 +80,6 @@ What Lupe cannot do, what was not tested the way it will be used, and the pitfal
 - **Linux tray icon.** GNOME shows no tray icon without the AppIndicator extension. Lupe cannot detect that; closing the window then leaves Lupe running in the background without a visible icon.
 - **Linux camera.** Needs the group `video`. Unplugging is detected by a watchdog (no frames for a while), not by a system event.
 - **macOS permissions.** Camera, Screen Recording and Accessibility must be allowed in *System Settings › Privacy & Security*; after allowing Screen Recording, Lupe has to be restarted. The shortcut only works while Lupe runs (also in the background).
-- **macOS camera unplugging** is not detected; the picture just stops.
 - **macOS screen capture** uses `screencapture` per display. The work area is the full screen (menu bar and Dock are not subtracted). With displays of different scale, the screenshot of a lower-scale display is enlarged.
 - **Not notarised.** Gatekeeper asks once (*right-click › Öffnen*), see [Installation › macOS](installation.md#macos).
 

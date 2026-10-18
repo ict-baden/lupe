@@ -16,7 +16,26 @@
     <InternalsVisibleTo Include="Lupe.Tests" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="FlashCap" Version="1.12.0" />
+  <!--
+    Kamera: Native/LupeCamera.swift → libLupeCamera.dylib (arm64 + x86_64 in einer Datei, ab macOS 12). Nur auf einem
+    Mac mit Xcode bzw. den Command Line Tools; auf Windows und Linux fehlt die Bibliothek, dann meldet Lupe unter macOS
+    keine Kamera (NativeCamera fängt das ab).
+  -->
+  <PropertyGroup>
+    <LupeCameraSource>$(MSBuildThisFileDirectory)Native/LupeCamera.swift</LupeCameraSource>
+    <LupeCameraDir>$(MSBuildThisFileDirectory)$(BaseIntermediateOutputPath)swift/</LupeCameraDir>
+    <LupeCameraLib>$(LupeCameraDir)libLupeCamera.dylib</LupeCameraLib>
+  </PropertyGroup>
+
+  <Target Name="BuildLupeCamera" BeforeTargets="AssignTargetPaths" Condition="$([MSBuild]::IsOSPlatform('OSX'))"
+          Inputs="$(LupeCameraSource)" Outputs="$(LupeCameraLib)">
+    <MakeDir Directories="$(LupeCameraDir)" />
+    <Exec Command="xcrun swiftc -emit-library -O -module-name LupeCamera -target %(Arch.Identity)-apple-macos12 -Xlinker -install_name -Xlinker @rpath/libLupeCamera.dylib -o &quot;$(LupeCameraDir)libLupeCamera-%(Arch.Identity).dylib&quot; &quot;$(LupeCameraSource)&quot;" />
+    <Exec Command="lipo -create &quot;$(LupeCameraDir)libLupeCamera-arm64.dylib&quot; &quot;$(LupeCameraDir)libLupeCamera-x86_64.dylib&quot; -output &quot;$(LupeCameraLib)&quot;" />
+  </Target>
+
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <Arch Include="arm64;x86_64" />
+    <None Include="$(LupeCameraLib)" Link="libLupeCamera.dylib" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" Visible="false" />
   </ItemGroup>
 </Project>

@@ -1,6 +1,3 @@
-using System.Buffers.Binary;
-using FlashCap;
-using FlashCap.Utilities;
 using Lupe.Core.Input;
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
@@ -125,97 +122,37 @@ public sealed class MacOSLogicTests
         Assert.False(keyboard.IsDown(0x10));
     }
 
-    // --- BMP aus FlashCap ---
-
-    private static byte[] Bmp(int width, int height, int bits, byte[] pixelRows, bool topDown, uint[]? masks = null)
-    {
-        int infoSize = 40 + (masks is null ? 0 : 12);
-        int off = 14 + infoSize;
-        var data = new byte[off + pixelRows.Length];
-        data[0] = (byte)'B';
-        data[1] = (byte)'M';
-        BinaryPrimitives.WriteInt32LittleEndian(data.AsSpan(2), data.Length);
-        BinaryPrimitives.WriteInt32LittleEndian(data.AsSpan(10), off);
-        BinaryPrimitives.WriteInt32LittleEndian(data.AsSpan(14), 40);
-        BinaryPrimitives.WriteInt32LittleEndian(data.AsSpan(18), width);
-        BinaryPrimitives.WriteInt32LittleEndian(data.AsSpan(22), topDown ? -height : height);
-        BinaryPrimitives.WriteInt16LittleEndian(data.AsSpan(26), 1);
-        BinaryPrimitives.WriteInt16LittleEndian(data.AsSpan(28), (short)bits);
-        BinaryPrimitives.WriteInt32LittleEndian(data.AsSpan(30), masks is null ? 0 : 3);
-        if (masks is not null)
-            for (int i = 0; i < 3; i++) BinaryPrimitives.WriteUInt32LittleEndian(data.AsSpan(54 + i * 4), masks[i]);
-        pixelRows.CopyTo(data, off);
-        return data;
-    }
+    // --- Kamera (libLupeCamera) ---
 
     [Fact]
-    public void Bmp_24_Bit_von_unten_nach_oben()
+    public void Kamerabild_mit_Zeilenabstand_wird_dicht_und_deckend()
     {
-        // 2×2, Zeilen auf 4 Bytes aufgefüllt (6 + 2). Untere Zeile zuerst: Blau, Grün; obere: Rot, Weiß
-        byte[] rows =
+        // 2×2 BGRA, 12 Bytes je Zeile (4 Bytes Füllung), Alpha 0 in der Quelle
+        byte[] source =
         [
-            255, 0, 0, 0, 255, 0, 0, 0,
-            0, 0, 255, 255, 255, 255, 0, 0,
+            1, 2, 3, 0, 4, 5, 6, 0, 99, 99, 99, 99,
+            7, 8, 9, 0, 10, 11, 12, 0, 99, 99, 99, 99,
         ];
-        var image = DibConverter.Convert(Bmp(2, 2, 24, rows, topDown: false));
+        var image = AVFoundationFrameSource.Copy(source, 2, 2, 12);
 
         Assert.Equal((2, 2, 8), (image.Width, image.Height, image.Stride));
-        Assert.Equal(new byte[] { 0, 0, 255, 255, 255, 255, 255, 255, 255, 0, 0, 255, 0, 255, 0, 255 }, image.Bgra);
+        Assert.Equal(new byte[] { 1, 2, 3, 255, 4, 5, 6, 255, 7, 8, 9, 255, 10, 11, 12, 255 }, image.Bgra);
     }
 
     [Fact]
-    public void Bmp_32_Bit_von_oben_nach_unten_mit_RGBA_Masken()
+    public void Kameraliste_aus_Kennung_und_Name()
     {
-        // Speicher je Pixel: R, G, B, X (Masken R=0xFF, G=0xFF00, B=0xFF0000)
-        byte[] rows = [10, 20, 30, 0, 40, 50, 60, 0];
-        var image = DibConverter.Convert(Bmp(2, 1, 32, rows, topDown: true, [0x000000FF, 0x0000FF00, 0x00FF0000]));
-        Assert.Equal(new byte[] { 30, 20, 10, 255, 60, 50, 40, 255 }, image.Bgra);
+        var list = NativeCamera.ParseList("0x1420000005ac8600\tFaceTime HD Camera\n\nkaputt\nABC\t  \n");
+        Assert.Equal([("0x1420000005ac8600", "FaceTime HD Camera"), ("ABC", "ABC")], list);
+        Assert.Empty(NativeCamera.ParseList(""));
     }
 
     [Fact]
-    public void Bmp_32_Bit_BGRX_setzt_Alpha()
+    public void Kamerafehler_haben_deutsche_Texte()
     {
-        byte[] rows = [1, 2, 3, 0];
-        var image = DibConverter.Convert(Bmp(1, 1, 32, rows, topDown: true));
-        Assert.Equal(new byte[] { 1, 2, 3, 255 }, image.Bgra);
-    }
-
-    [Fact]
-    public void Kaputtes_Bmp_wirft_InvalidData()
-    {
-        var full = Bmp(4, 4, 24, new byte[48], topDown: false);
-        Assert.Throws<InvalidDataException>(() => DibConverter.Convert(full.AsSpan(0, full.Length - 5)));
-        Assert.Throws<InvalidDataException>(() => DibConverter.Convert([1, 2, 3]));
-        Assert.Throws<InvalidDataException>(() => DibConverter.Convert(Bmp(1, 1, 16, new byte[4], topDown: true)));
-        Assert.True(DibConverter.IsJpeg([0xFF, 0xD8, 0xFF, 0xE0]));
-        Assert.False(DibConverter.IsBitmap([0xFF, 0xD8]));
-    }
-
-    // --- Kameraformat ---
-
-    private static VideoCharacteristics Format(PixelFormats f, int w, int h, int fps) => new(f, w, h, Fraction.Create(fps, 1));
-
-    [Fact]
-    public void Kameraformat_etwa_720p_unkomprimiert()
-    {
-        var chosen = CameraFormats.Choose(
-        [
-            Format(PixelFormats.JPEG, 1280, 720, 30),
-            Format(PixelFormats.NV12, 1920, 1080, 30),
-            Format(PixelFormats.NV12, 1280, 720, 30),
-            Format(PixelFormats.NV12, 640, 480, 30),
-        ]);
-        Assert.NotNull(chosen);
-        Assert.Equal((PixelFormats.NV12, 1280, 720), (chosen.PixelFormat, chosen.Width, chosen.Height));
-    }
-
-    [Fact]
-    public void Kameraformat_ohne_brauchbares_Format_ist_null()
-    {
-        Assert.Null(CameraFormats.Choose([Format(PixelFormats.PNG, 1280, 720, 30), Format(PixelFormats.RGB8, 640, 480, 30)]));
-        Assert.Null(CameraFormats.Choose([]));
-        Assert.Equal("YUY2", CameraFormats.Subtype(PixelFormats.YUYV));
-        Assert.Equal("MJPG", CameraFormats.Subtype(PixelFormats.JPEG));
+        Assert.Equal(MacOSPermissions.CameraDenied, NativeCamera.Describe(NativeCamera.Denied, "X"));
+        Assert.Contains("nicht angeschlossen", NativeCamera.Describe(NativeCamera.Disconnected, "X"));
+        Assert.Contains("„X“", NativeCamera.Describe(NativeCamera.OpenFailed, "X"));
     }
 
     // --- Bildschirme ---
