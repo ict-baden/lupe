@@ -76,11 +76,14 @@ jobs:
 
       - name: Testergebnisse
         if: always()
+        # Ein Upload-Problem (z. B. voller Artifact-Speicher) soll Publish und Release nicht blockieren
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: Testergebnisse-windows
           path: TestResults/*.trx
           if-no-files-found: ignore
+          retention-days: 3
 
       - name: Publish
         shell: pwsh
@@ -115,6 +118,8 @@ jobs:
           name: Pakete-windows
           path: dist/*
           if-no-files-found: error
+          # Der Release-Job holt sie sofort ab; länger aufbewahrt sprengen sie den Artifact-Speicher (Free-Plan: 500 MB)
+          retention-days: 1
 
   linux:
     needs: version
@@ -140,11 +145,14 @@ jobs:
 
       - name: Testergebnisse
         if: always()
+        # Ein Upload-Problem (z. B. voller Artifact-Speicher) soll Publish und Release nicht blockieren
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: Testergebnisse-linux
           path: TestResults/*.trx
           if-no-files-found: ignore
+          retention-days: 3
 
       - name: Publish und Pakete
         run: |
@@ -167,6 +175,8 @@ jobs:
           name: Pakete-linux
           path: dist/*
           if-no-files-found: error
+          # Der Release-Job holt sie sofort ab; länger aufbewahrt sprengen sie den Artifact-Speicher (Free-Plan: 500 MB)
+          retention-days: 1
 
   macos:
     needs: version
@@ -188,11 +198,14 @@ jobs:
 
       - name: Testergebnisse
         if: always()
+        # Ein Upload-Problem (z. B. voller Artifact-Speicher) soll Publish und Release nicht blockieren
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: Testergebnisse-macos
           path: TestResults/*.trx
           if-no-files-found: ignore
+          retention-days: 3
 
       - name: Publish und Lupe.app
         run: |
@@ -214,6 +227,8 @@ jobs:
           name: Pakete-macos
           path: dist/*
           if-no-files-found: error
+          # Der Release-Job holt sie sofort ab; länger aufbewahrt sprengen sie den Artifact-Speicher (Free-Plan: 500 MB)
+          retention-days: 1
 
   release:
     needs: [version, windows, linux, macos]
