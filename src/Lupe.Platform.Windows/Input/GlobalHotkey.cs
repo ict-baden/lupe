@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using Lupe.Core.Input;
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 
 namespace Lupe.Platform.Windows.Input;
 
@@ -60,7 +61,7 @@ public sealed class GlobalHotkey : IGlobalHotkey
                 // Der Thread meldet ein später doch noch angemeldetes Kürzel selbst wieder ab (siehe Run).
                 _disposed = true;
                 _registered = false;
-                _error = $"Das Tastenkürzel {HotkeyText.Format(hotkey)} ließ sich nicht rechtzeitig anmelden.";
+                _error = string.Format(Strings.Win_Hotkey_RegisterTimeout, HotkeyText.Format(hotkey));
             }
         }
     }
@@ -168,12 +169,12 @@ public sealed class GlobalHotkey : IGlobalHotkey
         string text = HotkeyText.Format(hotkey);
         return win32Error switch
         {
-            Native.ERROR_HOTKEY_ALREADY_REGISTERED => $"{text} ist schon von einem anderen Programm belegt.",
+            Native.ERROR_HOTKEY_ALREADY_REGISTERED => string.Format(Strings.Win_Hotkey_AlreadyRegistered, text),
             Native.ERROR_REQUIRES_INTERACTIVE_WINDOWSTATION =>
-                $"Das Tastenkürzel {text} geht hier nicht – Lupe läuft ohne sichtbaren Desktop (z. B. als Dienst oder in Sitzung 0).",
-            Native.ERROR_INVALID_PARAMETER => $"{text} ist kein gültiges Tastenkürzel.",
-            <= 0 => $"Das Tastenkürzel {text} konnte nicht angemeldet werden.", // Windows nannte keinen Grund
-            _ => $"Das Tastenkürzel {text} konnte nicht angemeldet werden ({new Win32Exception(win32Error).Message}).",
+                string.Format(Strings.Win_Hotkey_NoInteractiveDesktop, text),
+            Native.ERROR_INVALID_PARAMETER => string.Format(Strings.Win_Hotkey_Invalid, text),
+            <= 0 => string.Format(Strings.Win_Hotkey_RegisterFailed, text), // Windows nannte keinen Grund
+            _ => string.Format(Strings.Win_Hotkey_RegisterFailedReason, text, new Win32Exception(win32Error).Message),
         };
     }
 }

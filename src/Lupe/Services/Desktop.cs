@@ -10,6 +10,7 @@ using Avalonia.Platform.Storage;
 using Lupe.Core.Decoding;
 using Lupe.Core.Input;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 using Lupe.Core.Platform;
 using Lupe.Interop;
 
@@ -118,7 +119,7 @@ internal static class Shell
         if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime { Windows: { Count: > 0 } windows }
             && windows.FirstOrDefault(w => w.IsVisible) is { Clipboard: { } visible })
             return visible;
-        _clipboardHost ??= new Window { ShowInTaskbar = false, Title = "Lupe – Zwischenablage" };
+        _clipboardHost ??= new Window { ShowInTaskbar = false, Title = Strings.App_Shell_ClipboardWindowTitle };
         return _clipboardHost.Clipboard;
     }
 
@@ -130,13 +131,13 @@ internal static class Shell
         {
             try
             {
-                if (Clipboard() is not { } clipboard) return "Die Zwischenablage ist nicht erreichbar.";
+                if (Clipboard() is not { } clipboard) return Strings.App_Shell_ClipboardUnavailable;
                 await clipboard.SetTextAsync(text);
                 return null;
             }
             catch (Exception ex) when (ex is ExternalException or InvalidOperationException or IOException or UnauthorizedAccessException or TimeoutException)
             {
-                if (attempt >= 1) return $"Die Zwischenablage ist belegt ({ex.Message}).";
+                if (attempt >= 1) return string.Format(Strings.App_Shell_ClipboardBusy, ex.Message);
                 await Task.Delay(40);
             }
         }
@@ -147,7 +148,7 @@ internal static class Shell
     {
         // LinkRules liefert nur http(s) – hier zur Sicherheit noch einmal geprüft, bevor die Shell etwas startet
         if (!link.IsAbsoluteUri || (link.Scheme != Uri.UriSchemeHttps && link.Scheme != Uri.UriSchemeHttp) || link.IsUnc)
-            return "Nur http- und https-Links werden geöffnet.";
+            return Strings.App_Shell_OnlyHttpLinks;
         try
         {
             Process.Start(new ProcessStartInfo(link.AbsoluteUri) { UseShellExecute = true })?.Dispose();
@@ -155,7 +156,7 @@ internal static class Shell
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException)
         {
-            return $"Der Browser ließ sich nicht öffnen: {ex.Message}";
+            return string.Format(Strings.App_Shell_BrowserFailed, ex.Message);
         }
     }
 
@@ -187,7 +188,7 @@ internal static class Shell
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException)
         {
-            return $"Der Ordner ließ sich nicht öffnen: {ex.Message}";
+            return string.Format(Strings.App_Shell_FolderFailed, ex.Message);
         }
     }
 
@@ -218,11 +219,11 @@ internal static class Typing
         {
             // Wartet im Core, bis Strg/Alt des Tastenkürzels losgelassen sind – nicht auf dem Oberflächen-Thread. TryType statt
             // Type: Verwirft das System die Eingabe (Zielfenster mit höheren Rechten, gesperrter Desktop), steht der Grund in der Meldung.
-            return await Task.Run(() => KeyboardTyper.TryType(text, suffix, delayMs, out string? error) ? null : error ?? "Eintippen fehlgeschlagen.");
+            return await Task.Run(() => KeyboardTyper.TryType(text, suffix, delayMs, out string? error) ? null : error ?? Strings.App_Shell_TypingFailed);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            return $"Eintippen fehlgeschlagen: {ex.Message}";
+            return string.Format(Strings.App_Shell_TypingFailedWithMessage, ex.Message);
         }
     }
 }

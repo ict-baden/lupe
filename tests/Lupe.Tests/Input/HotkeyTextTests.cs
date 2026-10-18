@@ -216,9 +216,12 @@ public sealed class HotkeyTextTests
             for (int mods = 0; mods < 16; mods++)
             {
                 var hotkey = new Hotkey((mods & 1) != 0, (mods & 2) != 0, (mods & 4) != 0, (mods & 8) != 0, vk);
-                string text = HotkeyText.Format(hotkey);
-                Assert.True(HotkeyText.TryParse(text, out var parsed), $"„{text}“ (0x{vk:X2}) lässt sich nicht einlesen");
-                Assert.Equal(hotkey, parsed);
+                foreach (bool mac in new[] { false, true })
+                {
+                    string text = HotkeyText.Format(hotkey, mac);
+                    Assert.True(HotkeyText.TryParse(text, out var parsed), $"„{text}“ (0x{vk:X2}) lässt sich nicht einlesen");
+                    Assert.Equal(hotkey, parsed);
+                }
             }
         }
     }
@@ -279,4 +282,31 @@ public sealed class HotkeyTextTests
     [InlineData(true, false, false, 300, "Kein gültiges")]
     public void Ungeeignete_Kuerzel_mit_deutscher_Begruendung(bool ctrl, bool shift, bool win, int vk, string part)
         => Assert.Contains(part, HotkeyText.Problem(new Hotkey(ctrl, false, shift, win, vk)));
+
+    // --- macOS-Schreibweise ---
+
+    [Theory]
+    [InlineData(false, true, false, true, 0x51, "⌥⌘Q")]   // Standard unter macOS
+    [InlineData(false, false, true, true, 0x51, "⇧⌘Q")]
+    [InlineData(true, true, true, true, 0x70, "⌃⌥⇧⌘F1")]  // Apples Reihenfolge
+    [InlineData(true, false, false, false, 0x41, "⌃A")]
+    public void Mac_Schreibweise_mit_Symbolen(bool ctrl, bool alt, bool shift, bool win, int vk, string expected)
+        => Assert.Equal(expected, HotkeyText.Format(new Hotkey(ctrl, alt, shift, win, vk), mac: true));
+
+    [Theory]
+    [InlineData("⌥⌘Q")]
+    [InlineData("⌘⌥Q")]
+    [InlineData("⌘+Alt+Q")]
+    [InlineData("Cmd+Option+Q")]
+    [InlineData("Befehl+Wahltaste+Q")]
+    [InlineData("Win+Alt+Q")]
+    public void Mac_Schreibweisen_werden_eingelesen(string text)
+    {
+        Assert.True(HotkeyText.TryParse(text, out var hotkey), text);
+        Assert.Equal(Hotkey.MacDefault, hotkey);
+    }
+
+    [Fact]
+    public void Nur_Mac_Symbole_ohne_Taste_sind_ungueltig()
+        => Assert.False(HotkeyText.TryParse("⌥⌘", out _));
 }

@@ -1,4 +1,5 @@
 using System.Reflection;
+using Lupe.Core.Resources;
 
 namespace Lupe.Services;
 
@@ -29,7 +30,7 @@ internal static class ThirdPartyNotices
             if (!File.Exists(path))
             {
                 var text = Text();
-                if (text is null) return "Die Lizenztexte fehlen in dieser Ausgabe von Lupe.";
+                if (text is null) return Strings.App_Notices_Missing;
                 var folder = Path.Combine(Path.GetTempPath(), "Lupe");
                 Directory.CreateDirectory(folder);
                 path = Path.Combine(folder, FileName);
@@ -40,7 +41,7 @@ internal static class ThirdPartyNotices
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException or UnauthorizedAccessException)
         {
-            return $"Die Lizenztexte ließen sich nicht öffnen: {ex.Message}";
+            return string.Format(Strings.App_Notices_OpenFailed, ex.Message);
         }
     }
 }

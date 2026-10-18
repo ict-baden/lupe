@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using Lupe.Core.Resources;
 
 namespace Lupe.UI;
 
@@ -23,11 +24,11 @@ internal sealed class AppTray : IDisposable
     public AppTray(Application app, string tooltip)
     {
         _app = app;
-        _scan = new NativeMenuItem("Ausschnitt scannen");
+        _scan = new NativeMenuItem(Strings.App_Tray_Scan);
         _scan.Click += (_, _) => Dispatcher.UIThread.Post(() => ScanRequested?.Invoke());
-        var open = new NativeMenuItem("Lupe öffnen");
+        var open = new NativeMenuItem(Strings.App_Tray_Open);
         open.Click += (_, _) => Dispatcher.UIThread.Post(() => OpenRequested?.Invoke());
-        var exit = new NativeMenuItem("Beenden");
+        var exit = new NativeMenuItem(Strings.App_Tray_Quit);
         exit.Click += (_, _) => Dispatcher.UIThread.Post(() => ExitRequested?.Invoke());
 
         _icon = new TrayIcon

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 
 namespace Lupe.Core.Camera;
 
@@ -145,7 +146,7 @@ public sealed class ScanLoop : IAsyncDisposable
                 failure = _startFailure;
                 _startFailure = null;
                 if (startError is not null && _accepting)
-                    failure = $"Die Kamera „{CameraList.CleanName(SafeName())}“ lässt sich nicht starten: {startError.Message}";
+                    failure = string.Format(Strings.Core_Camera_CannotStart, CameraList.CleanName(SafeName()), startError.Message);
                 if (startError is not null) _accepting = false;
                 running = _accepting;
             }
@@ -347,8 +348,7 @@ public sealed class ScanLoop : IAsyncDisposable
             }
             catch (Exception ex)
             {
-                Fail(generation, $"Die Erkennung im Kamerabild ist fehlgeschlagen ({ex.GetType().Name}: {ex.Message}). " +
-                    "Starten Sie die Kamera neu; wiederholt sich der Fehler, melden Sie ihn bitte.");
+                Fail(generation, string.Format(Strings.Core_Camera_DecodeFailed, ex.GetType().Name, ex.Message));
                 return;
             }
             if (codes is null || codes.Count == 0) return;
@@ -376,7 +376,7 @@ public sealed class ScanLoop : IAsyncDisposable
             int generation;
             lock (_sync) generation = _generation;
             Fail(generation, string.IsNullOrWhiteSpace(message)
-                ? $"Die Kamera „{CameraList.CleanName(SafeName())}“ ist ausgefallen. Starten Sie sie erneut."
+                ? string.Format(Strings.Core_Camera_Failed, CameraList.CleanName(SafeName()))
                 : message);
         }
         finally

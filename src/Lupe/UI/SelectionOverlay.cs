@@ -8,6 +8,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using Path = Avalonia.Controls.Shapes.Path;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 using Lupe.Interop;
 using Lupe.Services;
 using CorePixelRect = Lupe.Core.Screen.PixelRect;
@@ -114,7 +115,7 @@ internal sealed class OverlayWindow : Window
         _screenshot = screenshot;
         IsPrimary = primary;
 
-        Title = "Lupe – Ausschnitt wählen";
+        Title = Strings.App_Overlay_Title;
         WindowDecorations = WindowDecorations.None;
         CanResize = false;
         ShowInTaskbar = false;
@@ -325,7 +326,7 @@ internal sealed class OverlayWindow : Window
     {
         var text = new TextBlock
         {
-            Text = "Rechteck um den Code aufziehen  ·  Klick: ganzer Bildschirm  ·  Esc: abbrechen",
+            Text = Strings.App_Overlay_Hint,
             FontSize = 14, Foreground = Brushes.White, VerticalAlignment = VerticalAlignment.Center,
         };
         var icon = new TextBlock { Text = "\uE7A8", FontSize = 16, Foreground = Brushes.White, Margin = new Thickness(0, 0, 12, 0), VerticalAlignment = VerticalAlignment.Center };

@@ -127,7 +127,18 @@ flowchart TB
 | `tools/screenshots` | Generator for the documentation images |
 | `tools/icons` | `make-lupe-icons.py` builds `src/Lupe/Assets/LupeIcons.ttf` (fontTools): the Fluent UI System Icons Lupe uses, scaled to fill the em square and mapped to the Segoe Fluent Icons code points, so XAML keeps one set of glyph codes on every OS |
 
-The only NuGet dependency of the core is `ZXingCpp` 0.5.3 (Apache-2.0): the .NET wrapper of zxing-cpp 3.1.1 with the native `ZXing.dll` (x64 and arm64, here `runtimes/win-x64/native`), which also contains libzint and libzueci (BSD-3-Clause). A publish for `win-x64` puts `ZXing.dll` next to `Lupe.exe`; the single-file `Lupe.exe` carries it inside and extracts it on first start (`IncludeNativeLibrariesForSelfExtract`). Licence texts of all third-party components: [`THIRD-PARTY-NOTICES.txt`](../THIRD-PARTY-NOTICES.txt) – copied next to `Lupe.exe` and embedded for the *Info* page; update it together with the package. Code comments, some identifiers and all user-facing text are in German.
+The only NuGet dependency of the core is `ZXingCpp` 0.5.3 (Apache-2.0): the .NET wrapper of zxing-cpp 3.1.1 with the native `ZXing.dll` (x64 and arm64, here `runtimes/win-x64/native`), which also contains libzint and libzueci (BSD-3-Clause). A publish for `win-x64` puts `ZXing.dll` next to `Lupe.exe`; the single-file `Lupe.exe` carries it inside and extracts it on first start (`IncludeNativeLibrariesForSelfExtract`). Licence texts of all third-party components: [`THIRD-PARTY-NOTICES.txt`](../THIRD-PARTY-NOTICES.txt) – copied next to `Lupe.exe` and embedded for the *Info* page; update it together with the package. Code comments and some identifiers are in German; user-facing text is in the resource files (next section).
+
+## Languages
+
+Following ICT-Baden guideline 13 (multilingual UI), no user-visible text is hard-coded:
+
+- `src/Lupe.Core/Resources/Strings.resx` holds the English texts (neutral and fallback language), `Strings.de.resx` the German ones. The build generates the class `Lupe.Core.Resources.Strings` (no designer file in the repository); XAML uses `{x:Static l:Strings.Key}` with `xmlns:l="clr-namespace:Lupe.Core.Resources;assembly=Lupe.Core"`.
+- Keys are prefixed by area: `Core_`, `Win_`, `Linux_`, `Mac_`, `Page_`, `App_`. Texts with values use numbered placeholders (`string.Format(Strings.Key, …)`), never glued pieces; plurals use `_One`/`_Other` keys.
+- `UiLanguage.Apply` sets the UI culture at the very start of `Main`: the environment variable `LUPE_LANGUAGE`, then the setting `Language` (*Settings › Language*, `""` = system), then the system language; anything without its own file falls back to English. Number and date formats follow the system's regional settings.
+- Trace/log messages, comments, command-line keywords (`lesen`, `--hilfe`, `hell|dunkel|beide`) and file names stay German.
+- The tests run in German (`tests/Lupe.Tests/TestCulture.cs`, also sets `LUPE_LANGUAGE=de` for child processes). `LocalizationTests` checks that every language has the same keys and placeholders as English and no empty texts.
+- Adding a language: add `Strings.<code>.resx`, the code to `UiLanguage.Supported` and to `SatelliteResourceLanguages` in `src/Lupe/Lupe.csproj`.
 
 ## MSI
 

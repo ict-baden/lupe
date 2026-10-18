@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Lupe.Core.Camera;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 using Windows.Graphics.Imaging;
 using Windows.Media.Capture.Frames;
 using Windows.Media.Capture;
@@ -430,7 +431,7 @@ internal sealed class CaptureSession : IAsyncDisposable
         Trace.TraceWarning($"Lupe: Kamera „{_name}“ ausgefallen: {problem}");
         string message;
         try { message = CameraProblems.Describe(problem, _name); }
-        catch (Exception) { message = $"Die Kamera „{_name}“ ist ausgefallen. Starten Sie sie erneut."; }
+        catch (Exception) { message = string.Format(Strings.Win_Camera_Failed, _name); }
         lock (_openLock)
         {
             // Während des Starts gibt OpenAsync die Meldung zurück (der Aufrufer hält gerade seine Sperre)

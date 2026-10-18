@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:l="clr-namespace:Lupe.Core.Resources;assembly=Lupe.Core"
         x:Class="Lupe.UI.ResultToast"
-        Title="Lupe – Ergebnis" WindowDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent"
+        Title="{x:Static l:Strings.App_Toast_WindowTitle}" WindowDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent"
         CanResize="False" ShowInTaskbar="False" Topmost="True" ShowActivated="False" SizeToContent="Height" Width="420"
         WindowStartupLocation="Manual" FontFamily="{DynamicResource UiFont}" UseLayoutRounding="True"
         Foreground="{DynamicResource TextFillColorPrimaryBrush}">
@@ -14,11 +15,11 @@
                                Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}"/>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                    <TextBlock x:Name="TitleText" Text="QR-Code erkannt" Classes="bodyStrong" TextTrimming="CharacterEllipsis"/>
-                    <TextBlock x:Name="SubtitleText" Text="Lupe · Bildschirm" Classes="caption"/>
+                    <TextBlock x:Name="TitleText" Classes="bodyStrong" TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="SubtitleText" Text="Lupe" Classes="caption"/>
                 </StackPanel>
-                <Button Grid.Column="2" Classes="ghost" Click="Close_Click" VerticalAlignment="Top" ToolTip.Tip="Schließen"
-                        AutomationProperties.Name="Schließen">
+                <Button Grid.Column="2" Classes="ghost" Click="Close_Click" VerticalAlignment="Top" ToolTip.Tip="{x:Static l:Strings.App_Toast_Close}"
+                        AutomationProperties.Name="{x:Static l:Strings.App_Toast_Close}">
                     <TextBlock Text="&#xE711;" Classes="icon" FontSize="11"/>
                 </Button>
             </Grid>
@@ -35,17 +36,17 @@
                 <Button x:Name="CopyButton" Click="Copy_Click">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE8C8;" Classes="glyph"/>
-                        <TextBlock Text="Kopieren" VerticalAlignment="Center"/>
+                        <TextBlock Text="{x:Static l:Strings.App_Code_Copy}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Button x:Name="LinkButton" Click="Link_Click" Margin="6,0,0,0">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE8A7;" Classes="glyph"/>
-                        <TextBlock Text="Link öffnen" VerticalAlignment="Center"/>
+                        <TextBlock Text="{x:Static l:Strings.App_Code_OpenLink}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
                 <Button Click="Open_Click" Margin="6,0,0,0" Classes="ghost">
-                    <TextBlock x:Name="OpenText" Text="In Lupe zeigen" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="OpenText" Text="{x:Static l:Strings.App_Toast_ShowInLupe}" VerticalAlignment="Center"/>
                 </Button>
             </StackPanel>
         </StackPanel>

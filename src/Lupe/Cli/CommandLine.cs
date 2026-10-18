@@ -2,6 +2,7 @@ using System.Text;
 using Lupe.Core.Decoding;
 using Lupe.Core.Input;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 
 namespace Lupe.Cli;
 
@@ -31,27 +32,27 @@ internal static class CommandLine
             return command.ToLowerInvariant() switch
             {
                 "lesen" => Read(args.Skip(1).ToArray()),
-                "--screenshots" => throw new UsageException("Aufruf: Lupe.exe --screenshots <ordner> [--theme hell|dunkel|beide]"),
-                "--demo" => throw new UsageException("„--demo“ steht allein: Lupe.exe --demo"),
-                "--hintergrund" => throw new UsageException("„--hintergrund“ steht allein: Lupe.exe --hintergrund"),
-                "--bildschirm" => throw new UsageException("„--bildschirm“ steht allein: Lupe.exe --bildschirm"),
-                _ => throw new UsageException($"Unbekannter Befehl „{command}“."),
+                "--screenshots" => throw new UsageException(Strings.App_Cli_UsageScreenshots),
+                "--demo" => throw new UsageException(string.Format(Strings.App_Cli_StandsAlone, "--demo")),
+                "--hintergrund" => throw new UsageException(string.Format(Strings.App_Cli_StandsAlone, "--hintergrund")),
+                "--bildschirm" => throw new UsageException(string.Format(Strings.App_Cli_StandsAlone, "--bildschirm")),
+                _ => throw new UsageException(string.Format(Strings.App_Cli_UnknownCommand, command)),
             };
         }
         catch (UsageException ex)
         {
-            Console.Error.WriteLine($"Fehler: {ex.Message}");
-            Console.Error.WriteLine("Hilfe: Lupe.exe --hilfe");
+            Console.Error.WriteLine(string.Format(Strings.App_Cli_Error, ex.Message));
+            Console.Error.WriteLine(Strings.App_Cli_HelpHint);
             return ExitError;
         }
         catch (OperationCanceledException)
         {
-            Console.Error.WriteLine("Abgebrochen.");
+            Console.Error.WriteLine(Strings.App_Cli_Cancelled);
             return ExitError;
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Fehler: {ex.Message}");
+            Console.Error.WriteLine(string.Format(Strings.App_Cli_Error, ex.Message));
             return ExitError;
         }
     }
@@ -69,14 +70,14 @@ internal static class CommandLine
             if (arg.Equals("--format", StringComparison.OrdinalIgnoreCase))
             {
                 if (i + 1 >= args.Length || args[i + 1].TrimStart().StartsWith("--", StringComparison.Ordinal))
-                    throw new UsageException("„--format“ braucht einen Wert, z. B. --format QR_CODE.");
+                    throw new UsageException(Strings.App_Cli_FormatNeedsValue);
                 formatArgs.Add(args[++i]);
             }
             else if (arg.StartsWith("--format=", StringComparison.OrdinalIgnoreCase)) formatArgs.Add(arg["--format=".Length..]);
-            else if (arg.StartsWith("--", StringComparison.Ordinal)) throw new UsageException($"Unbekannte Option „{arg}“.");
+            else if (arg.StartsWith("--", StringComparison.Ordinal)) throw new UsageException(string.Format(Strings.App_Cli_UnknownOption, arg));
             else inputs.Add(arg);
         }
-        if (inputs.Count == 0) throw new UsageException("Bitte mindestens ein Bild angeben, z. B. Lupe.exe lesen etikett.png");
+        if (inputs.Count == 0) throw new UsageException(Strings.App_Cli_NoImage);
 
         // Formate vor den Dateien prüfen: ein Tippfehler soll nicht erst nach dem Lesen vieler Bilder auffallen
         var formats = ResolveFormats(formatArgs);
@@ -120,13 +121,13 @@ internal static class CommandLine
                     }
                     catch (Exception ex)
                     {
-                        Console.Error.WriteLine($"„{path}“ ließ sich nicht lesen: {ex.Message}");
+                        Console.Error.WriteLine(string.Format(Strings.App_Cli_ReadFailed, path, ex.Message));
                         failed = true;
                         continue;
                     }
                     // Ausgabe außerhalb: Bricht die Pipe ab (… | Select-Object -First 1), ist das kein Fehler dieses Bildes
                     foreach (var code in codes) Console.Out.WriteLine(CodeLine.Format(code));
-                    if (codes.Count == 0) Console.Error.WriteLine($"Kein Code gefunden: {(IsPattern(input) ? Path.GetFileName(path) : input)}");
+                    if (codes.Count == 0) Console.Error.WriteLine(string.Format(Strings.App_Cli_NoCodeFound, IsPattern(input) ? Path.GetFileName(path) : input));
                     found += codes.Count;
                 }
             }
@@ -156,7 +157,7 @@ internal static class CommandLine
             var key = Simplify(w);
             if (key is "QR" or "MICROQR" or "RMQR") key += "CODE";
             var match = all.FirstOrDefault(f => Simplify(f) == key)
-                ?? throw new UsageException($"Unbekanntes Format „{w}“. Möglich: {string.Join(", ", all)}.");
+                ?? throw new UsageException(string.Format(Strings.App_Cli_UnknownFormat, w, string.Join(", ", all)));
             if (!result.Contains(match)) result.Add(match);
         }
         return result;
@@ -171,18 +172,18 @@ internal static class CommandLine
         try { full = Path.GetFullPath(Environment.ExpandEnvironmentVariables(input)); }
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
         {
-            return [("", $"„{input}“ ist kein gültiger Pfad.")];
+            return [("", string.Format(Strings.App_Cli_InvalidPath, input))];
         }
 
         var name = Path.GetFileName(full);
         if (!IsPattern(name))
-            return [File.Exists(full) ? (full, null) : ("", Directory.Exists(full) ? $"„{input}“ ist ein Ordner – bitte Bilder angeben, z. B. {Path.Combine(input, "*.png")}" : $"Datei nicht gefunden: {input}")];
+            return [File.Exists(full) ? (full, null) : ("", Directory.Exists(full) ? string.Format(Strings.App_Cli_IsFolder, input, Path.Combine(input, "*.png")) : string.Format(Strings.App_Cli_FileNotFound, input))];
 
         var folder = Path.GetDirectoryName(full);
-        if (folder is null || !Directory.Exists(folder)) return [("", $"Ordner nicht gefunden: {Path.GetDirectoryName(input)}")];
+        if (folder is null || !Directory.Exists(folder)) return [("", string.Format(Strings.App_Cli_FolderNotFound, Path.GetDirectoryName(input)))];
         var options = new EnumerationOptions { MatchType = MatchType.Simple, IgnoreInaccessible = true, RecurseSubdirectories = false };
         var files = Directory.GetFiles(folder, name, options).Order(StringComparer.OrdinalIgnoreCase).ToList();
-        return files.Count == 0 ? [("", $"Keine Datei passt zu „{input}“.")] : files.Select(f => (f, (string?)null));
+        return files.Count == 0 ? [("", string.Format(Strings.App_Cli_NoMatch, input))] : files.Select(f => (f, (string?)null));
     }
 
     private static bool IsPattern(string input) => Path.GetFileName(input).IndexOfAny(['*', '?']) >= 0;
@@ -191,57 +192,10 @@ internal static class CommandLine
     {
         string formats;
         try { formats = string.Join(", ", BarcodeDecoder.AllFormats); }
-        catch (Exception) { formats = "QR_CODE, DATA_MATRIX, AZTEC, PDF_417, EAN_13, CODE_128 und weitere"; }
+        catch (Exception) { formats = Strings.App_Cli_FormatsFallback; }
         var hotkey = HotkeyText.Format(Hotkey.PlatformDefault);
 
-        Console.WriteLine($$"""
-            Lupe {{AppInfo.Version}} – QR- und Barcodes lesen
-
-            Aufruf:
-              Lupe.exe                              Oberfläche starten
-              Lupe.exe lesen <bild> [<bild> …] [--format <format>]
-              Lupe.exe --hintergrund                nur im Infobereich starten (für den Autostart)
-              Lupe.exe --bildschirm                 gleich einen Ausschnitt scannen (läuft Lupe schon,
-                                                    scannt diese) – für ein eigenes Tastenkürzel
-              Lupe.exe --demo                       Oberfläche mit Demo-Kamera und Beispielverlauf
-                                                    (speichert nichts, ohne globales Tastenkürzel)
-              Lupe.exe --screenshots <ordner> [--theme hell|dunkel|beide]
-              Lupe.exe --hilfe
-
-            Bildschirm-Scan: {{hotkey}} (Standard, in den Einstellungen änderbar) liest einen
-            Ausschnitt des Bildschirms – aus jedem Programm, solange Lupe läuft.
-
-            „lesen“ sucht in jedem Bild alle Codes und schreibt je Code eine Zeile:
-              FORMAT<Tab>Inhalt                     z. B. QR_CODE<Tab>https://example.org
-            Steuerzeichen im Inhalt erscheinen maskiert: \n (Zeilenumbruch), \r, \t (Tabulator),
-            andere als \xHH – etwa \x1D, das Trennzeichen in GS1-Codes. Hinweise („Kein Code
-            gefunden“) und Fehler gehen nach stderr, die Ausgabe bleibt so gut weiterzuverarbeiten.
-
-            Bilder: PNG, JPEG, BMP, GIF, TIFF und was Windows sonst lesen kann. Platzhalter im
-            Dateinamen sind erlaubt, z. B. C:\Scans\*.jpg.
-
-            Optionen für „lesen“:
-              --format <format>   nur diese Formate suchen (mehrfach oder mit Komma getrennt),
-                                  z. B. --format QR_CODE,EAN_13 (auch kurz: qr, ean13).
-                                  Ohne Angabe: alle.
-            Formate: {{formats}}
-
-            Exitcodes:
-              0  mindestens ein Code gefunden
-              1  kein Code gefunden
-              3  Fehler (Bild fehlt oder ist nicht lesbar, falscher Aufruf, Abbruch) – auch
-                 wenn in anderen Bildern Codes gefunden wurden
-
-            Beispiele:
-              Lupe.exe lesen etikett.png
-              Lupe.exe lesen C:\Scans\*.jpg --format QR_CODE > codes.txt     (cmd: UTF-8 mit BOM)
-
-            Lupe.exe ist ein Fensterprogramm; damit die Eingabeaufforderung auf das Ende wartet:
-              start /wait Lupe.exe lesen …        (cmd, Ausgabe in der Konsole)
-              Lupe.exe lesen … | Out-Default      (PowerShell)
-            Mit Umleitung (> codes.txt) ohne „start“ aufrufen – „start“ gibt die Umleitung nicht
-            an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.
-            """);
+        Console.WriteLine(string.Format(Strings.App_Cli_Help, AppInfo.Version, hotkey, formats));
     }
 
     private sealed class UsageException(string message) : Exception(message);

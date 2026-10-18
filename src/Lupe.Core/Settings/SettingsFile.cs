@@ -1,5 +1,6 @@
 using System.Globalization;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 
 namespace Lupe.Core.Settings;
 
@@ -89,9 +90,9 @@ public sealed class SettingsFile
     private string? Describe(string? problem, SettingsFileState state) => problem is null ? null : state switch
     {
         SettingsFileState.Broken or SettingsFileState.Repaired =>
-            $"{problem} Vor dem nächsten Speichern wird sie unverändert als „{Path.GetFileName(FilePath)}.defekt-…“ daneben gesichert.",
+            string.Format(Strings.Core_Settings_BackupBeforeSave, problem, Path.GetFileName(FilePath)),
         SettingsFileState.Unreadable =>
-            $"{problem} Gespeichert wird erst, wenn die Datei wieder lesbar ist – sie wird nicht mit Standardwerten überschrieben.",
+            string.Format(Strings.Core_Settings_SaveWhenReadable, problem),
         _ => problem,
     };
 
@@ -129,9 +130,9 @@ public sealed class SettingsFile
             if (state == SettingsFileState.Unreadable)
             {
                 Current = next;
-                Problem = $"Die Einstellungsdatei „{FilePath}“ ist noch immer nicht lesbar – die Änderung gilt, bis Lupe beendet wird, und wird "
-                    + "gespeichert, sobald die Datei wieder lesbar ist. So wird nichts mit Standardwerten überschrieben."
-                    + (problem is null ? "" : $" ({problem})");
+                Problem = problem is null
+                    ? string.Format(Strings.Core_Settings_StillUnreadable, FilePath)
+                    : string.Format(Strings.Core_Settings_StillUnreadableReason, FilePath, problem);
                 return new(SettingsSaveStatus.Deferred, Current, Problem);
             }
             State = state;
@@ -139,8 +140,7 @@ public sealed class SettingsFile
             {
                 // Was in der Datei steht, bleibt – nur was in dieser Sitzung geändert wurde, kommt darüber
                 var merged = SettingsStore.ApplyChanges(file, _baseline, next);
-                return Write(merged, SettingsSaveStatus.Merged,
-                    "Die Einstellungsdatei ist wieder lesbar: Ihre Änderungen wurden mit den gespeicherten Einstellungen zusammengeführt.");
+                return Write(merged, SettingsSaveStatus.Merged, Strings.Core_Settings_ReadableAgainMerged);
             }
         }
         return Write(next, SettingsSaveStatus.Saved, null);
@@ -174,11 +174,10 @@ public sealed class SettingsFile
             Current = file;
             _baseline = file;
             return new(SettingsSaveStatus.Unchanged, Current,
-                state == SettingsFileState.Missing ? null : "Die Einstellungsdatei ist wieder lesbar – ihre Einstellungen gelten jetzt.");
+                state == SettingsFileState.Missing ? null : Strings.Core_Settings_ReadableAgain);
         }
         if (state == SettingsFileState.Missing) return Write(Current, SettingsSaveStatus.Saved, null);
-        return Write(merged, SettingsSaveStatus.Merged,
-            "Die Einstellungsdatei ist wieder lesbar: Ihre Änderungen wurden mit den gespeicherten Einstellungen zusammengeführt.");
+        return Write(merged, SettingsSaveStatus.Merged, Strings.Core_Settings_ReadableAgainMerged);
     }
 
     private SettingsSaveResult Write(LupeSettings settings, SettingsSaveStatus success, string? message)
@@ -189,15 +188,14 @@ public sealed class SettingsFile
         {
             if (!TryBackup(out backup, out var backupError))
             {
-                Problem = $"Die beschädigte Einstellungsdatei ließ sich nicht sichern ({backupError}). Damit nichts verloren geht, wurde sie "
-                    + "nicht überschrieben – die Änderung gilt, bis Lupe beendet wird.";
+                Problem = string.Format(Strings.Core_Settings_BackupFailed, backupError);
                 return new(SettingsSaveStatus.Failed, Current, Problem);
             }
         }
 
         if (!SettingsStore.TrySave(settings, out var error, FilePath))
         {
-            Problem = $"{error} Die Änderung gilt, bis Lupe beendet wird.";
+            Problem = string.Format(Strings.Core_Settings_SaveFailedUntilExit, error);
             return new(SettingsSaveStatus.Failed, Current, Problem);
         }
 
@@ -207,8 +205,8 @@ public sealed class SettingsFile
         if (backup is not null)
         {
             BackupPath = backup;
-            var note = $"Die alte, beschädigte Einstellungsdatei wurde als „{Path.GetFileName(backup)}“ gesichert.";
-            message = message is null ? note : $"{message} {note}";
+            var note = string.Format(Strings.Core_Settings_BackupCreated, Path.GetFileName(backup));
+            message = message is null ? note : string.Format(Strings.Core_Settings_MessageAndNote, message, note);
         }
         return new(success, Current, message);
     }
@@ -241,7 +239,7 @@ public sealed class SettingsFile
                 return false;
             }
         }
-        error ??= "kein freier Dateiname";
+        error ??= Strings.Core_Settings_NoFreeFileName;
         return false;
     }
 }

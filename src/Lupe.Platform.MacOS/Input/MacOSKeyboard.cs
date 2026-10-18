@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Lupe.Core.Input;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Platform.MacOS.Native;
 
 namespace Lupe.Platform.MacOS.Input;
@@ -97,7 +98,7 @@ public sealed class MacOSKeyboard : IKeyboardOutput
 
     public string? ForegroundProblem()
     {
-        if (!OperatingSystem.IsMacOS()) return MacOS.NotHere("Eintippen") + " Den Text stattdessen kopieren.";
+        if (!OperatingSystem.IsMacOS()) return Strings.Mac_NotHere_Typing;
         if (MacOSPermissions.Accessibility()) return null;
         // Beim ersten Versuch den Systemdialog zeigen – er führt direkt zur richtigen Einstellung
         MacOSPermissions.RequestAccessibility();
@@ -106,8 +107,8 @@ public sealed class MacOSKeyboard : IKeyboardOutput
 
     public string DescribeRejection(int errorCode) => errorCode switch
     {
-        ErrorNotMac => MacOS.NotHere("Eintippen") + " Den Text stattdessen kopieren.",
+        ErrorNotMac => Strings.Mac_NotHere_Typing,
         ErrorNotTrusted => MacOSPermissions.AccessibilityDenied,
-        _ => "macOS hat die Tastatureingaben nicht angenommen – den Text stattdessen kopieren.",
+        _ => Strings.Mac_Typing_Rejected,
     };
 }

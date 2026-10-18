@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Lupe.Core.Input;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 
 namespace Lupe.Platform.Windows.Input;
 
@@ -54,10 +55,10 @@ public sealed unsafe class WindowsKeyboard : IKeyboardOutput
     internal static string Rejection(int errorCode) => errorCode switch
     {
         Native.ERROR_ACCESS_DENIED =>
-            "Eintippen nicht möglich – Windows nimmt gerade keine Tastatureingaben an (gesperrter Bildschirm, Anmeldedialog oder keine sichtbare Sitzung).",
+            Strings.Win_Typing_InputNotAccepted,
         // SendInput liefert 0 ohne Fehlercode, wenn ein anderes Programm die Eingabe gerade sperrt (BlockInput).
-        0 => "Eintippen nicht möglich – Windows hat die Tastatureingabe nicht angenommen (gerade von einem anderen Programm gesperrt?).",
-        _ => $"Eintippen nicht möglich (Windows-Fehler {errorCode}).",
+        0 => Strings.Win_Typing_InputBlocked,
+        _ => string.Format(Strings.Win_Typing_Error, errorCode),
     };
 
     public bool IsDown(int virtualKey) => Native.GetAsyncKeyState(virtualKey) < 0;

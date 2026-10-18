@@ -1,0 +1,2804 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="App_Action_Copied" xml:space="preserve">
+    <value>Copied</value>
+    <comment>Action done, joined with ' · '</comment>
+  </data>
+  <data name="App_Action_LinkOpened" xml:space="preserve">
+    <value>Link opened</value>
+    <comment>Action done, joined with ' · '</comment>
+  </data>
+  <data name="App_Action_Typed" xml:space="preserve">
+    <value>Typed</value>
+    <comment>Action done, joined with ' · '</comment>
+  </data>
+  <data name="App_Choice_ActionCopied" xml:space="preserve">
+    <value>copied</value>
+    <comment>List item inserted into App_Choice_Explain ('The selected one will be {0}.')</comment>
+  </data>
+  <data name="App_Choice_ActionLinkOpened" xml:space="preserve">
+    <value>opened as a link (if a rule matches)</value>
+    <comment>List item inserted into App_Choice_Explain</comment>
+  </data>
+  <data name="App_Choice_ActionTyped" xml:space="preserve">
+    <value>typed into the previous window</value>
+    <comment>List item inserted into App_Choice_Explain</comment>
+  </data>
+  <data name="App_Choice_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="App_Choice_CancelTip" xml:space="preserve">
+    <value>Cancel (Esc)</value>
+  </data>
+  <data name="App_Choice_CopyAll" xml:space="preserve">
+    <value>Copy all</value>
+  </data>
+  <data name="App_Choice_CopyAllTip" xml:space="preserve">
+    <value>Copy all codes to the clipboard, one per line</value>
+  </data>
+  <data name="App_Choice_Explain" xml:space="preserve">
+    <value>The selected one will be {0}. All are already in the history.</value>
+    <comment>{0} = list of actions, e.g. 'copied and typed into the previous window'</comment>
+  </data>
+  <data name="App_Choice_ExplainNoActions" xml:space="preserve">
+    <value>The selected one goes into the result; all are already in the history.</value>
+  </data>
+  <data name="App_Choice_ListName" xml:space="preserve">
+    <value>Codes found</value>
+    <comment>Accessible name of the list</comment>
+  </data>
+  <data name="App_Choice_Take" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="App_Choice_Title" xml:space="preserve">
+    <value>{0} codes found – which one?</value>
+    <comment>{0} is always 2 or more</comment>
+  </data>
+  <data name="App_Choice_WindowTitle" xml:space="preserve">
+    <value>Lupe – Choose code</value>
+  </data>
+  <data name="App_Cli_Cancelled" xml:space="preserve">
+    <value>Cancelled.</value>
+  </data>
+  <data name="App_Cli_Error" xml:space="preserve">
+    <value>Error: {0}</value>
+  </data>
+  <data name="App_Cli_FileNotFound" xml:space="preserve">
+    <value>File not found: {0}</value>
+  </data>
+  <data name="App_Cli_FolderNotFound" xml:space="preserve">
+    <value>Folder not found: {0}</value>
+  </data>
+  <data name="App_Cli_FormatNeedsValue" xml:space="preserve">
+    <value>“--format” needs a value, e.g. --format QR_CODE.</value>
+  </data>
+  <data name="App_Cli_FormatsFallback" xml:space="preserve">
+    <value>QR_CODE, DATA_MATRIX, AZTEC, PDF_417, EAN_13, CODE_128 and more</value>
+    <comment>Format list in the help when the recognizer is unavailable</comment>
+  </data>
+  <data name="App_Cli_Help" xml:space="preserve">
+    <value>Lupe {0} – read QR codes and barcodes
+
+Usage:
+  Lupe.exe                              start the user interface
+  Lupe.exe lesen &lt;image&gt; [&lt;image&gt; …] [--format &lt;format&gt;]
+  Lupe.exe --hintergrund                start in the notification area only (for autostart)
+  Lupe.exe --bildschirm                 scan a screen region right away (if Lupe is already
+                                        running, it scans) – for a custom keyboard shortcut
+  Lupe.exe --demo                       user interface with demo camera and sample history
+                                        (saves nothing, no global keyboard shortcut)
+  Lupe.exe --screenshots &lt;folder&gt; [--theme hell|dunkel|beide]
+  Lupe.exe --hilfe
+
+Screen scan: {1} (default, can be changed in the settings) reads a region
+of the screen – from any program, as long as Lupe is running.
+
+"lesen" finds all codes in each image and writes one line per code:
+  FORMAT&lt;Tab&gt;content                    e.g. QR_CODE&lt;Tab&gt;https://example.org
+Control characters in the content are escaped: \n (line break), \r, \t (tab),
+others as \xHH – such as \x1D, the separator in GS1 codes. Notes ("No code
+found") and errors go to stderr, so the output stays easy to process further.
+
+Images: PNG, JPEG, BMP, GIF, TIFF and whatever else Windows can read. Wildcards are
+allowed in the file name, e.g. C:\Scans\*.jpg.
+
+Options for "lesen":
+  --format &lt;format&gt;   only look for these formats (repeat or separate with commas),
+                      e.g. --format QR_CODE,EAN_13 (also short: qr, ean13).
+                      Default: all.
+Formats: {2}
+
+Exit codes:
+  0  at least one code found
+  1  no code found
+  3  error (image missing or unreadable, wrong usage, cancelled) – even
+     if codes were found in other images
+
+Examples:
+  Lupe.exe lesen label.png
+  Lupe.exe lesen C:\Scans\*.jpg --format QR_CODE &gt; codes.txt     (cmd: UTF-8 with BOM)
+
+Lupe.exe is a GUI program; to make the command prompt wait for it to finish:
+  start /wait Lupe.exe lesen …        (cmd, output in the console)
+  Lupe.exe lesen … | Out-Default      (PowerShell)
+With redirection (&gt; codes.txt), call it without "start" – "start" does not pass the
+redirection on to Lupe, the file would stay empty. In .cmd files cmd waits by itself.</value>
+    <comment>Output of --hilfe. {0} = version, {1} = default screen-scan shortcut, {2} = list of formats. Keep command words (lesen, --hintergrund, --format, hell|dunkel|beide …) unchanged; plain ASCII quotes because console code pages may lack typographic ones.</comment>
+  </data>
+  <data name="App_Cli_HelpHint" xml:space="preserve">
+    <value>Help: Lupe.exe --hilfe</value>
+  </data>
+  <data name="App_Cli_InvalidPath" xml:space="preserve">
+    <value>“{0}” is not a valid path.</value>
+  </data>
+  <data name="App_Cli_IsFolder" xml:space="preserve">
+    <value>“{0}” is a folder – please specify images, e.g. {1}</value>
+    <comment>{1} = example pattern like folder/*.png</comment>
+  </data>
+  <data name="App_Cli_NoCodeFound" xml:space="preserve">
+    <value>No code found: {0}</value>
+    <comment>{0} = file</comment>
+  </data>
+  <data name="App_Cli_NoImage" xml:space="preserve">
+    <value>Please specify at least one image, e.g. Lupe.exe lesen label.png</value>
+  </data>
+  <data name="App_Cli_NoMatch" xml:space="preserve">
+    <value>No file matches “{0}”.</value>
+  </data>
+  <data name="App_Cli_ReadFailed" xml:space="preserve">
+    <value>“{0}” could not be read: {1}</value>
+    <comment>{0} = path, {1} = error message</comment>
+  </data>
+  <data name="App_Cli_StandsAlone" xml:space="preserve">
+    <value>“{0}” takes no further arguments: Lupe.exe {0}</value>
+    <comment>{0} = switch such as --demo</comment>
+  </data>
+  <data name="App_Cli_UnknownCommand" xml:space="preserve">
+    <value>Unknown command “{0}”.</value>
+  </data>
+  <data name="App_Cli_UnknownFormat" xml:space="preserve">
+    <value>Unknown format “{0}”. Possible: {1}.</value>
+    <comment>{1} = comma-separated format names</comment>
+  </data>
+  <data name="App_Cli_UnknownOption" xml:space="preserve">
+    <value>Unknown option “{0}”.</value>
+  </data>
+  <data name="App_Cli_UsageScreenshots" xml:space="preserve">
+    <value>Usage: Lupe.exe --screenshots &lt;folder&gt; [--theme hell|dunkel|beide]</value>
+    <comment>hell|dunkel|beide are command-line keywords, do not translate</comment>
+  </data>
+  <data name="App_Code_Copy" xml:space="preserve">
+    <value>Copy</value>
+    <comment>Button in a result row</comment>
+  </data>
+  <data name="App_Code_CopyTip" xml:space="preserve">
+    <value>Copy content to the clipboard</value>
+  </data>
+  <data name="App_Code_OpenLink" xml:space="preserve">
+    <value>Open link</value>
+    <comment>Button in a result row</comment>
+  </data>
+  <data name="App_Demo_Camera" xml:space="preserve">
+    <value>Demo camera</value>
+    <comment>Name of the simulated camera in demo mode</comment>
+  </data>
+  <data name="App_Dialog_No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="App_Dialog_Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="App_Format_DxFilmEdge" xml:space="preserve">
+    <value>DX film edge</value>
+    <comment>Barcode format name</comment>
+  </data>
+  <data name="App_Format_MicroQrCode" xml:space="preserve">
+    <value>Micro QR code</value>
+    <comment>Barcode format name</comment>
+  </data>
+  <data name="App_Format_QrCode" xml:space="preserve">
+    <value>QR code</value>
+    <comment>Barcode format name</comment>
+  </data>
+  <data name="App_Format_RmqrCode" xml:space="preserve">
+    <value>rMQR code</value>
+    <comment>Barcode format name</comment>
+  </data>
+  <data name="App_Format_UpcEanExtension" xml:space="preserve">
+    <value>UPC/EAN add-on</value>
+    <comment>Barcode format name (2/5-digit supplement)</comment>
+  </data>
+  <data name="App_Hits_HistoryError" xml:space="preserve">
+    <value>History: {0}</value>
+    <comment>{0} = error message when adding to the history failed</comment>
+  </data>
+  <data name="App_Hits_NotTypedFromLupe" xml:space="preserve">
+    <value>Not typed: the scan came from Lupe itself – typing works via the keyboard shortcut from another program.</value>
+  </data>
+  <data name="App_Hits_NotTypedLupeActive" xml:space="preserve">
+    <value>Not typed: Lupe is currently the active window – click the target program first; Lupe can keep running behind it or minimized.</value>
+  </data>
+  <data name="App_Hotkey_Fallback" xml:space="preserve">
+    <value>The keyboard shortcut</value>
+    <comment>Stands in for the shortcut name when it cannot be formatted, e.g. in '{0} is not available.'</comment>
+  </data>
+  <data name="App_Hotkey_RegisterFailed" xml:space="preserve">
+    <value>The keyboard shortcut {0} could not be registered: {1}</value>
+    <comment>{0} = shortcut, {1} = error message</comment>
+  </data>
+  <data name="App_Hotkey_Unavailable" xml:space="preserve">
+    <value>{0} is not available.</value>
+    <comment>{0} = keyboard shortcut</comment>
+  </data>
+  <data name="App_List_And" xml:space="preserve">
+    <value>{0} and {1}</value>
+    <comment>Joins the last item of a list: {0} = earlier items, {1} = last item</comment>
+  </data>
+  <data name="App_List_Separator" xml:space="preserve">
+    <value>, </value>
+    <comment>Separator between list items (with trailing space)</comment>
+  </data>
+  <data name="App_Main_CloseNotice" xml:space="preserve">
+    <value>Close message</value>
+  </data>
+  <data name="App_Main_HotkeyFallback" xml:space="preserve">
+    <value>Keyboard shortcut</value>
+    <comment>Status card title when the shortcut cannot be formatted</comment>
+  </data>
+  <data name="App_Main_StatusDemoOff" xml:space="preserve">
+    <value>off in the demo</value>
+    <comment>Status card below the keyboard shortcut</comment>
+  </data>
+  <data name="App_Main_StatusDemoOffTip" xml:space="preserve">
+    <value>In the demo the keyboard shortcut is not registered – “Scan region” on the Screen page works anyway.</value>
+  </data>
+  <data name="App_Main_StatusNotRegistered" xml:space="preserve">
+    <value>not registered yet</value>
+    <comment>Status card below the keyboard shortcut</comment>
+  </data>
+  <data name="App_Main_StatusReady" xml:space="preserve">
+    <value>scans a screen region</value>
+    <comment>Status card below the keyboard shortcut (e.g. 'Win+Shift+Q' / 'scans a screen region')</comment>
+  </data>
+  <data name="App_Main_StatusReadyTip" xml:space="preserve">
+    <value>{0} scans a region of the screen – from any program.</value>
+    <comment>{0} = keyboard shortcut</comment>
+  </data>
+  <data name="App_Main_StatusUnavailable" xml:space="preserve">
+    <value>not available – see Settings</value>
+    <comment>Status card below the keyboard shortcut</comment>
+  </data>
+  <data name="App_Main_Tagline" xml:space="preserve">
+    <value>Read QR codes and barcodes</value>
+    <comment>Below the app name in the navigation</comment>
+  </data>
+  <data name="App_Nav_Camera" xml:space="preserve">
+    <value>Camera</value>
+    <comment>Navigation entry and page title; also the scan source name</comment>
+  </data>
+  <data name="App_Nav_File" xml:space="preserve">
+    <value>File</value>
+    <comment>Navigation entry and page title; also the scan source name</comment>
+  </data>
+  <data name="App_Nav_History" xml:space="preserve">
+    <value>History</value>
+    <comment>Navigation entry and page title</comment>
+  </data>
+  <data name="App_Nav_Info" xml:space="preserve">
+    <value>About</value>
+    <comment>Navigation entry and page title of the about page</comment>
+  </data>
+  <data name="App_Nav_Screen" xml:space="preserve">
+    <value>Screen</value>
+    <comment>Navigation entry and page title; also the scan source name</comment>
+  </data>
+  <data name="App_Nav_Settings" xml:space="preserve">
+    <value>Settings</value>
+    <comment>Navigation entry and page title</comment>
+  </data>
+  <data name="App_NoDisplay_HintSession" xml:space="preserve">
+    <value>Start Lupe in a graphical session.</value>
+  </data>
+  <data name="App_NoDisplay_HintWayland" xml:space="preserve">
+    <value>Under Wayland the window needs XWayland – turn it on in the desktop session (sway: “xwayland enable”).</value>
+  </data>
+  <data name="App_NoDisplay_Message" xml:space="preserve">
+    <value>Lupe cannot open a window: no X server ({0}). {1} Reading images also works without a window: lupe lesen &lt;file&gt;</value>
+    <comment>Linux without X server. {0} = App_NoDisplay_NotSet/Unreachable, {1} = App_NoDisplay_Hint* sentence. 'lupe lesen' is a command, keep.</comment>
+  </data>
+  <data name="App_NoDisplay_NotSet" xml:space="preserve">
+    <value>DISPLAY is not set</value>
+  </data>
+  <data name="App_NoDisplay_Unreachable" xml:space="preserve">
+    <value>DISPLAY={0} cannot be reached</value>
+    <comment>{0} = value of the DISPLAY variable</comment>
+  </data>
+  <data name="App_Notice_Copied" xml:space="preserve">
+    <value>Copied: {0}</value>
+    <comment>{0} = copied content (one line)</comment>
+  </data>
+  <data name="App_Notices_Missing" xml:space="preserve">
+    <value>The license texts are missing from this build of Lupe.</value>
+  </data>
+  <data name="App_Notices_OpenFailed" xml:space="preserve">
+    <value>The license texts could not be opened: {0}</value>
+  </data>
+  <data name="App_Overlay_Hint" xml:space="preserve">
+    <value>Drag a rectangle around the code  ·  Click: whole screen  ·  Esc: cancel</value>
+    <comment>Hint on the selection overlay; keep the double spaces around the dots</comment>
+  </data>
+  <data name="App_Overlay_Title" xml:space="preserve">
+    <value>Lupe – Select region</value>
+    <comment>Window title of the full-screen selection overlay</comment>
+  </data>
+  <data name="App_Page_CameraSubtitle" xml:space="preserve">
+    <value>Hold a code in front of the webcam – Lupe recognizes it by itself</value>
+  </data>
+  <data name="App_Page_FileSubtitle" xml:space="preserve">
+    <value>Open an image, drag it here or paste it from the clipboard</value>
+  </data>
+  <data name="App_Page_HistorySubtitle" xml:space="preserve">
+    <value>Everything Lupe has recognized – newest first</value>
+  </data>
+  <data name="App_Page_InfoSubtitle" xml:space="preserve">
+    <value>About Lupe</value>
+  </data>
+  <data name="App_Page_ScreenSubtitle" xml:space="preserve">
+    <value>Read a region of the screen – with a keyboard shortcut from any program</value>
+  </data>
+  <data name="App_Page_SettingsSubtitle" xml:space="preserve">
+    <value>What happens with results – changes apply and are saved immediately</value>
+  </data>
+  <data name="App_Platform_ThisSystem" xml:space="preserve">
+    <value>this system</value>
+    <comment>System name inserted into messages like 'not available on {0}' (German dative: 'auf diesem System')</comment>
+  </data>
+  <data name="App_Platform_WindowsWithoutSupport" xml:space="preserve">
+    <value>Windows (build without Windows support)</value>
+    <comment>System name inserted into messages like 'not available on {0}'</comment>
+  </data>
+  <data name="App_Scan_CaptureFailed" xml:space="preserve">
+    <value>The screenshot failed: {0}</value>
+  </data>
+  <data name="App_Scan_CaptureNotPossible" xml:space="preserve">
+    <value>Screenshot not possible.</value>
+  </data>
+  <data name="App_Scan_Chosen" xml:space="preserve">
+    <value>{0} selected ({1} found)</value>
+    <comment>{0} = format name (e.g. QR code), {1} = number of codes found (2 or more)</comment>
+  </data>
+  <data name="App_Scan_CopiedAll" xml:space="preserve">
+    <value>{0} codes copied line by line</value>
+    <comment>{0} is always 2 or more</comment>
+  </data>
+  <data name="App_Scan_Failed" xml:space="preserve">
+    <value>The screen scan failed: {0}</value>
+  </data>
+  <data name="App_Scan_NoCode" xml:space="preserve">
+    <value>No code found</value>
+    <comment>Toast title</comment>
+  </data>
+  <data name="App_Scan_NoCodeDetail" xml:space="preserve">
+    <value>Lupe did not recognize a QR code or barcode in the region.</value>
+  </data>
+  <data name="App_Scan_NoCodeTip" xml:space="preserve">
+    <value>{0} Tip: drag the rectangle a little larger or zoom in.</value>
+    <comment>{0} = App_Scan_NoCodeDetail or App_Scan_RecognitionFailed</comment>
+  </data>
+  <data name="App_Scan_NotPossible" xml:space="preserve">
+    <value>Screen scan not possible</value>
+    <comment>Toast title</comment>
+  </data>
+  <data name="App_Scan_RecognitionFailed" xml:space="preserve">
+    <value>Recognition failed: {0}</value>
+  </data>
+  <data name="App_Scan_Recognized" xml:space="preserve">
+    <value>{0} recognized</value>
+    <comment>{0} = format name, e.g. 'QR code recognized'</comment>
+  </data>
+  <data name="App_Scan_ResultWithContent" xml:space="preserve">
+    <value>{0}: {1}</value>
+    <comment>Message after a screen scan: {0} = title (e.g. 'QR code recognized'), {1} = content</comment>
+  </data>
+  <data name="App_Scan_ResultWithDone" xml:space="preserve">
+    <value>{0} – {1}</value>
+    <comment>{0} = message so far, {1} = actions done (e.g. 'Copied · Typed')</comment>
+  </data>
+  <data name="App_Scan_ResultWithProblems" xml:space="preserve">
+    <value>{0}. {1}</value>
+    <comment>{0} = message so far, {1} = problem sentences</comment>
+  </data>
+  <data name="App_ScreenScan_Name" xml:space="preserve">
+    <value>Screen scan</value>
+    <comment>Used as '{0}: error message' when the screen scan fails</comment>
+  </data>
+  <data name="App_Screenshots_Failed" xml:space="preserve">
+    <value>Screenshots failed: {0}</value>
+    <comment>{0} = exception details</comment>
+  </data>
+  <data name="App_Screenshots_Start" xml:space="preserve">
+    <value>Lupe {0} – screenshots to {1}</value>
+    <comment>Console output of --screenshots. {0} = version, {1} = folder</comment>
+  </data>
+  <data name="App_Screenshots_Written" xml:space="preserve">
+    <value>{0} images written.</value>
+    <comment>Console output of --screenshots; {0} is always several</comment>
+  </data>
+  <data name="App_Screenshots_WrongSize" xml:space="preserve">
+    <value>The window is {0:0}×{1:0} instead of {2:0}×{3:0} points – the images would be distorted.</value>
+    <comment>{0}×{1} = actual size, {2}×{3} = expected size</comment>
+  </data>
+  <data name="App_Shell_BrowserFailed" xml:space="preserve">
+    <value>The browser could not be opened: {0}</value>
+  </data>
+  <data name="App_Shell_ClipboardBusy" xml:space="preserve">
+    <value>The clipboard is in use ({0}).</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="App_Shell_ClipboardUnavailable" xml:space="preserve">
+    <value>The clipboard cannot be reached.</value>
+  </data>
+  <data name="App_Shell_ClipboardWindowTitle" xml:space="preserve">
+    <value>Lupe – Clipboard</value>
+    <comment>Title of an invisible helper window</comment>
+  </data>
+  <data name="App_Shell_FolderFailed" xml:space="preserve">
+    <value>The folder could not be opened: {0}</value>
+  </data>
+  <data name="App_Shell_OnlyHttpLinks" xml:space="preserve">
+    <value>Only http and https links are opened.</value>
+  </data>
+  <data name="App_Shell_TypingFailed" xml:space="preserve">
+    <value>Typing failed.</value>
+  </data>
+  <data name="App_Shell_TypingFailedWithMessage" xml:space="preserve">
+    <value>Typing failed: {0}</value>
+  </data>
+  <data name="App_Source_Clipboard" xml:space="preserve">
+    <value>Clipboard</value>
+    <comment>Scan source name</comment>
+  </data>
+  <data name="App_Source_CommandLine" xml:space="preserve">
+    <value>Command line</value>
+    <comment>Scan source name</comment>
+  </data>
+  <data name="App_State_HistoryDeleteManually" xml:space="preserve">
+    <value>{0} Please delete the file manually – it may contain confidential content.</value>
+    <comment>{0} = sentence describing why the history file could not be deleted</comment>
+  </data>
+  <data name="App_State_HistoryDeleteManuallyOff" xml:space="preserve">
+    <value>{0} “Save history” is off – please delete the file manually, it may contain confidential content.</value>
+    <comment>{0} = sentence describing why the history file could not be deleted. “Save history” = name of the setting</comment>
+  </data>
+  <data name="App_State_HistoryInMemorySession" xml:space="preserve">
+    <value>The history is kept in memory only for this session.</value>
+  </data>
+  <data name="App_State_HistoryInMemoryUntil" xml:space="preserve">
+    <value>Until then, the history is kept in memory only.</value>
+    <comment>Follows a sentence saying the settings file will be read again later</comment>
+  </data>
+  <data name="App_State_HistoryNoLongerSaved" xml:space="preserve">
+    <value>The history is no longer saved – the file verlauf.json has been deleted. The entries here remain until you quit.</value>
+    <comment>verlauf.json is a file name, keep</comment>
+  </data>
+  <data name="App_State_HistoryOpenFailed" xml:space="preserve">
+    <value>The history could not be opened ({0}). It will not be saved.</value>
+  </data>
+  <data name="App_State_HistoryOpenFailedSession" xml:space="preserve">
+    <value>The history could not be opened ({0}). It will not be saved in this session.</value>
+  </data>
+  <data name="App_State_SettingsSaveFailed" xml:space="preserve">
+    <value>The settings could not be saved: {0}</value>
+  </data>
+  <data name="App_State_SettingsUnreadable" xml:space="preserve">
+    <value>The settings could not be read ({0}). Default values apply; nothing is saved in this session.</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="App_Time_DateShortTime" xml:space="preserve">
+    <value>MM-dd HH:mm</value>
+    <comment>.NET custom format pattern for earlier days (day, month, time without year)</comment>
+  </data>
+  <data name="App_Time_DateTime" xml:space="preserve">
+    <value>yyyy-MM-dd HH:mm:ss</value>
+    <comment>.NET custom date/time format pattern (date and time), not a text – keep the format letters</comment>
+  </data>
+  <data name="App_Time_Time" xml:space="preserve">
+    <value>HH:mm:ss</value>
+    <comment>.NET custom time format pattern for today's entries</comment>
+  </data>
+  <data name="App_Toast_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="App_Toast_NoCodeTip" xml:space="preserve">
+    <value>Tip: drag the rectangle a little larger so it fully encloses the code – or zoom in.</value>
+  </data>
+  <data name="App_Toast_ShowInLupe" xml:space="preserve">
+    <value>Show in Lupe</value>
+  </data>
+  <data name="App_Toast_WindowTitle" xml:space="preserve">
+    <value>Lupe – Result</value>
+  </data>
+  <data name="App_Toggle_Off" xml:space="preserve">
+    <value>Off</value>
+    <comment>State text left of a toggle switch</comment>
+  </data>
+  <data name="App_Toggle_On" xml:space="preserve">
+    <value>On</value>
+    <comment>State text left of a toggle switch</comment>
+  </data>
+  <data name="App_Tray_Open" xml:space="preserve">
+    <value>Open Lupe</value>
+    <comment>Tray menu item</comment>
+  </data>
+  <data name="App_Tray_Quit" xml:space="preserve">
+    <value>Quit</value>
+    <comment>Tray menu item</comment>
+  </data>
+  <data name="App_Tray_Scan" xml:space="preserve">
+    <value>Scan region</value>
+    <comment>Tray menu item</comment>
+  </data>
+  <data name="App_Tray_ScanWithHotkey" xml:space="preserve">
+    <value>Scan region ({0})</value>
+    <comment>Tray menu item, {0} = keyboard shortcut</comment>
+  </data>
+  <data name="App_Tray_TooltipNoHotkey" xml:space="preserve">
+    <value>Lupe – keyboard shortcut not available</value>
+    <comment>Tray tooltip</comment>
+  </data>
+  <data name="App_Tray_TooltipReady" xml:space="preserve">
+    <value>Lupe – {0} scans a screen region</value>
+    <comment>Tray tooltip, {0} = keyboard shortcut</comment>
+  </data>
+  <data name="App_TrayHint_Text" xml:space="preserve">
+    <value>{0} scans a screen region. Quit via the Lupe icon in the notification area.</value>
+    <comment>{0} = keyboard shortcut, e.g. Win+Shift+Q</comment>
+  </data>
+  <data name="App_TrayHint_Title" xml:space="preserve">
+    <value>Lupe is still running</value>
+    <comment>Toast title after closing the window while Lupe keeps running in the notification area</comment>
+  </data>
+  <data name="App_Ui_Failure" xml:space="preserve">
+    <value>{0}: {1}</value>
+    <comment>{0} = what failed (e.g. 'Screen scan'), {1} = error message</comment>
+  </data>
+  <data name="App_UnexpectedError" xml:space="preserve">
+    <value>Unexpected error: {0}</value>
+  </data>
+  <data name="Core_Camera_CannotStart" xml:space="preserve">
+    <value>The camera “{0}” cannot be started: {1}</value>
+    <comment>{0} = camera name; {1} = error message</comment>
+  </data>
+  <data name="Core_Camera_DecodeFailed" xml:space="preserve">
+    <value>Detection in the camera image failed ({0}: {1}). Restart the camera; if the error happens again, please report it.</value>
+    <comment>{0} = technical error type; {1} = error message</comment>
+  </data>
+  <data name="Core_Camera_DemoName" xml:space="preserve">
+    <value>Demo camera</value>
+    <comment>Name of the simulated camera used in demo mode</comment>
+  </data>
+  <data name="Core_Camera_Failed" xml:space="preserve">
+    <value>The camera “{0}” has failed. Please start it again.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Core_Camera_FailedWithReason" xml:space="preserve">
+    <value>The camera “{0}” has failed ({1}). Please start it again.</value>
+    <comment>{0} = camera name; {1} = error message</comment>
+  </data>
+  <data name="Core_Camera_FallbackName" xml:space="preserve">
+    <value>Camera</value>
+    <comment>Name for a camera that reports no usable name</comment>
+  </data>
+  <data name="Core_File_AccessDenied" xml:space="preserve">
+    <value>Access denied – no permission, file is read-only or open in another program</value>
+    <comment>Short reason</comment>
+  </data>
+  <data name="Core_File_DiskFull" xml:space="preserve">
+    <value>No space left on the drive</value>
+    <comment>Short reason</comment>
+  </data>
+  <data name="Core_File_DriveNotFound" xml:space="preserve">
+    <value>Drive not found</value>
+    <comment>Short reason</comment>
+  </data>
+  <data name="Core_File_DriveNotReady" xml:space="preserve">
+    <value>The drive is not ready (e.g. USB stick unplugged)</value>
+    <comment>Short reason</comment>
+  </data>
+  <data name="Core_File_FolderNotFound" xml:space="preserve">
+    <value>Folder not found</value>
+    <comment>Short reason</comment>
+  </data>
+  <data name="Core_File_InvalidName" xml:space="preserve">
+    <value>Invalid file or folder name</value>
+    <comment>Short reason</comment>
+  </data>
+  <data name="Core_File_InvalidPath" xml:space="preserve">
+    <value>Invalid path</value>
+    <comment>Short reason</comment>
+  </data>
+  <data name="Core_File_NetworkPathUnreachable" xml:space="preserve">
+    <value>Network path not reachable</value>
+    <comment>Short reason</comment>
+  </data>
+  <data name="Core_File_NoFolder" xml:space="preserve">
+    <value>“{0}” has no folder.</value>
+    <comment>{0} = file path</comment>
+  </data>
+  <data name="Core_File_NotFound" xml:space="preserve">
+    <value>File not found</value>
+    <comment>Short reason, shown in parentheses inside other messages</comment>
+  </data>
+  <data name="Core_File_OpenElsewhere" xml:space="preserve">
+    <value>The file is open in another program</value>
+    <comment>Short reason</comment>
+  </data>
+  <data name="Core_File_PathTooLong" xml:space="preserve">
+    <value>Path too long</value>
+    <comment>Short reason</comment>
+  </data>
+  <data name="Core_File_TooLarge" xml:space="preserve">
+    <value>The file is unusually large ({0} MB).</value>
+    <comment>{0} = size in megabytes</comment>
+  </data>
+  <data name="Core_File_Truncated" xml:space="preserve">
+    <value>The file got shorter while being read – another program is probably writing to it</value>
+    <comment>Short reason</comment>
+  </data>
+  <data name="Core_File_WriteProtected" xml:space="preserve">
+    <value>The drive is write-protected</value>
+    <comment>Short reason</comment>
+  </data>
+  <data name="Core_History_Broken" xml:space="preserve">
+    <value>The saved history “{0}” is damaged and was not loaded. The file stays unchanged until a new entry is added – then the history starts over.</value>
+    <comment>{0} = path of the history file</comment>
+  </data>
+  <data name="Core_History_BrokenAtLine" xml:space="preserve">
+    <value>The saved history “{0}” is damaged (error in line {1}) and was not loaded. The file stays unchanged until a new entry is added – then the history starts over.</value>
+    <comment>{0} = path of the history file; {1} = line number</comment>
+  </data>
+  <data name="Core_History_DeleteError" xml:space="preserve">
+    <value>The history file “{0}” could not be deleted ({1}).</value>
+    <comment>{0} = path; {1} = short reason</comment>
+  </data>
+  <data name="Core_History_EntriesSkipped_One" xml:space="preserve">
+    <value>One entry in the saved history was unreadable and was skipped.</value>
+  </data>
+  <data name="Core_History_EntriesSkipped_Other" xml:space="preserve">
+    <value>{0} entries in the saved history were unreadable and were skipped.</value>
+    <comment>{0} = number of entries (2 or more)</comment>
+  </data>
+  <data name="Core_History_ExportError" xml:space="preserve">
+    <value>The history could not be exported to “{0}” ({1}).</value>
+    <comment>{0} = path; {1} = short reason</comment>
+  </data>
+  <data name="Core_History_ReadError" xml:space="preserve">
+    <value>The saved history “{0}” could not be read ({1}). New entries will only be saved once the file is readable again.</value>
+    <comment>{0} = path of the history file; {1} = short reason</comment>
+  </data>
+  <data name="Core_History_SaveError" xml:space="preserve">
+    <value>The history could not be saved to “{0}” ({1}). The entries are kept as long as Lupe is running; saving will be retried with the next entry.</value>
+    <comment>{0} = path; {1} = short reason</comment>
+  </data>
+  <data name="Core_Hotkey_AltGrWarning" xml:space="preserve">
+    <value>{0} may collide with AltGr characters on German keyboards – Windows reports AltGr as Ctrl+Alt. Lupe then types the character itself; a shortcut with Win is safer, e.g. Win+Shift+Q.</value>
+    <comment>{0} = keyboard shortcut, e.g. “Ctrl+Alt+Q”</comment>
+  </data>
+  <data name="Core_Hotkey_AltGrWarningCharacter" xml:space="preserve">
+    <value>{0} may collide with AltGr characters on German keyboards ({1} types “{2}”) – Windows reports AltGr as Ctrl+Alt. Lupe then types the character itself; a shortcut with Win is safer, e.g. Win+Shift+Q.</value>
+    <comment>{0} = keyboard shortcut, e.g. “Ctrl+Alt+Q”; {1} = AltGr key combination, e.g. “AltGr+Q”; {2} = character it types, e.g. “@”</comment>
+  </data>
+  <data name="Core_Hotkey_DisturbsTyping" xml:space="preserve">
+    <value>“{0}” would interfere with normal typing – please add Ctrl, Alt or Win.</value>
+    <comment>{0} = keyboard shortcut, e.g. “Shift+Q”</comment>
+  </data>
+  <data name="Core_Hotkey_InvalidKeyCode" xml:space="preserve">
+    <value>Not a valid keyboard shortcut (key code {0}).</value>
+    <comment>{0} = numeric key code</comment>
+  </data>
+  <data name="Core_Hotkey_ModifierOnly" xml:space="preserve">
+    <value>Ctrl, Alt, Shift and Win do not work on their own – please add another key.</value>
+  </data>
+  <data name="Core_Hotkey_MouseButton" xml:space="preserve">
+    <value>Mouse buttons cannot be used as keyboard shortcuts.</value>
+  </data>
+  <data name="Core_Image_AccessDenied" xml:space="preserve">
+    <value>No access to “{0}” – missing read permission, or is it a folder?</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Core_Image_CannotRead" xml:space="preserve">
+    <value>“{0}” cannot be read: {1}</value>
+    <comment>{0} = file name; {1} = reason (full sentence)</comment>
+  </data>
+  <data name="Core_Image_DefaultName" xml:space="preserve">
+    <value>Image</value>
+    <comment>Used as {0} in image error messages when the image has no file name (e.g. from the clipboard)</comment>
+  </data>
+  <data name="Core_Image_Empty" xml:space="preserve">
+    <value>“{0}” is empty.</value>
+    <comment>{0} = file name or “Image”</comment>
+  </data>
+  <data name="Core_Image_EndsMidImage" xml:space="preserve">
+    <value>the file ends in the middle of the image</value>
+    <comment>Inserted into Core_Image_Incomplete (lowercase, no final period)</comment>
+  </data>
+  <data name="Core_Image_FileEmpty" xml:space="preserve">
+    <value>The file “{0}” is empty.</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Core_Image_FileNotFound" xml:space="preserve">
+    <value>The file “{0}” was not found.</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Core_Image_Incomplete" xml:space="preserve">
+    <value>“{0}” is incomplete – {1} (interrupted download or copy?).</value>
+    <comment>{0} = file name; {1} = reason, e.g. Core_Image_EndsMidImage (lowercase)</comment>
+  </data>
+  <data name="Core_Image_InUse" xml:space="preserve">
+    <value>“{0}” is currently being used by another program and cannot be read.</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Core_Image_InvalidPath" xml:space="preserve">
+    <value>“{0}” is not a valid file path.</value>
+    <comment>{0} = path</comment>
+  </data>
+  <data name="Core_Image_NotAnImage" xml:space="preserve">
+    <value>“{0}” could not be read as an image ({1}).</value>
+    <comment>{0} = file name; {1} = error message from the system</comment>
+  </data>
+  <data name="Core_Image_NotAnImageFile" xml:space="preserve">
+    <value>“{0}” is not an image file.</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Core_Image_OpenError" xml:space="preserve">
+    <value>“{0}” could not be opened: {1}</value>
+    <comment>{0} = file name; {1} = system error message</comment>
+  </data>
+  <data name="Core_Image_TooLarge" xml:space="preserve">
+    <value>“{0}” is too large to be loaded.</value>
+    <comment>{0} = file name or “Image”</comment>
+  </data>
+  <data name="Core_Key_Alt" xml:space="preserve">
+    <value>Alt</value>
+    <comment>Modifier key in keyboard shortcuts</comment>
+  </data>
+  <data name="Core_Key_App1" xml:space="preserve">
+    <value>App 1</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_App2" xml:space="preserve">
+    <value>App 2</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Backspace" xml:space="preserve">
+    <value>Backspace</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_BrowserBack" xml:space="preserve">
+    <value>Browser Back</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_BrowserFavorites" xml:space="preserve">
+    <value>Browser Favorites</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_BrowserForward" xml:space="preserve">
+    <value>Browser Forward</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_BrowserHome" xml:space="preserve">
+    <value>Browser Home</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_BrowserRefresh" xml:space="preserve">
+    <value>Browser Refresh</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_BrowserSearch" xml:space="preserve">
+    <value>Browser Search</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_BrowserStop" xml:space="preserve">
+    <value>Browser Stop</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_CapsLock" xml:space="preserve">
+    <value>Caps Lock</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Comma" xml:space="preserve">
+    <value>Comma</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Ctrl" xml:space="preserve">
+    <value>Ctrl</value>
+    <comment>Modifier key in keyboard shortcuts</comment>
+  </data>
+  <data name="Core_Key_Delete" xml:space="preserve">
+    <value>Delete</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Down" xml:space="preserve">
+    <value>Down</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_End" xml:space="preserve">
+    <value>End</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Enter" xml:space="preserve">
+    <value>Enter</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Esc" xml:space="preserve">
+    <value>Esc</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Home" xml:space="preserve">
+    <value>Home</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Insert" xml:space="preserve">
+    <value>Insert</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Left" xml:space="preserve">
+    <value>Left</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Mail" xml:space="preserve">
+    <value>Mail</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_MediaSelect" xml:space="preserve">
+    <value>Media Select</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_MediaStop" xml:space="preserve">
+    <value>Media Stop</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Menu" xml:space="preserve">
+    <value>Menu</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Minus" xml:space="preserve">
+    <value>Minus</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_NextTrack" xml:space="preserve">
+    <value>Next Track</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_NumDecimal" xml:space="preserve">
+    <value>Num Decimal</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_NumDivide" xml:space="preserve">
+    <value>Num Divide</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_NumLock" xml:space="preserve">
+    <value>Num Lock</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_NumMinus" xml:space="preserve">
+    <value>Num Subtract</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_NumMultiply" xml:space="preserve">
+    <value>Num Multiply</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_NumPad" xml:space="preserve">
+    <value>Num {0}</value>
+    <comment>Digit key on the numeric keypad; {0} = digit 0–9</comment>
+  </data>
+  <data name="Core_Key_NumPlus" xml:space="preserve">
+    <value>Num Add</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_PageDown" xml:space="preserve">
+    <value>Page Down</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_PageUp" xml:space="preserve">
+    <value>Page Up</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Pause" xml:space="preserve">
+    <value>Pause</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Period" xml:space="preserve">
+    <value>Period</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_PlayPause" xml:space="preserve">
+    <value>Play Pause</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Plus" xml:space="preserve">
+    <value>Plus</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_PreviousTrack" xml:space="preserve">
+    <value>Previous Track</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_PrintScreen" xml:space="preserve">
+    <value>Print Screen</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Right" xml:space="preserve">
+    <value>Right</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_ScrollLock" xml:space="preserve">
+    <value>Scroll Lock</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Shift" xml:space="preserve">
+    <value>Shift</value>
+    <comment>Modifier key in keyboard shortcuts</comment>
+  </data>
+  <data name="Core_Key_Sleep" xml:space="preserve">
+    <value>Sleep</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Space" xml:space="preserve">
+    <value>Space</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Tab" xml:space="preserve">
+    <value>Tab</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Unknown" xml:space="preserve">
+    <value>Key 0x{0}</value>
+    <comment>Key without a name; {0} = two-digit hexadecimal key code. Lupe can read back “Key 0x..” and “Taste 0x..”.</comment>
+  </data>
+  <data name="Core_Key_Up" xml:space="preserve">
+    <value>Up</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_VolumeDown" xml:space="preserve">
+    <value>Volume Down</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_VolumeMute" xml:space="preserve">
+    <value>Mute</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_VolumeUp" xml:space="preserve">
+    <value>Volume Up</value>
+    <comment>Name of a keyboard key, shown in keyboard shortcuts like “Ctrl+…”; must not contain “+”</comment>
+  </data>
+  <data name="Core_Key_Win" xml:space="preserve">
+    <value>Win</value>
+    <comment>Modifier key (Windows/Super key) in keyboard shortcuts like “Win+Shift+Q”</comment>
+  </data>
+  <data name="Core_LinkRule_InvalidRegex" xml:space="preserve">
+    <value>The pattern is not a valid regular expression: {0}</value>
+    <comment>{0} = error message from .NET</comment>
+  </data>
+  <data name="Core_LinkRule_InvalidRegexAt" xml:space="preserve">
+    <value>The pattern is not a valid regular expression: {0} (at character {1}).</value>
+    <comment>{0} = description of the error (Core_Regex_*); {1} = character position</comment>
+  </data>
+  <data name="Core_LinkRule_PatternMissing" xml:space="preserve">
+    <value>Please enter a pattern (regular expression).</value>
+  </data>
+  <data name="Core_LinkRule_PrefixBadCharacters" xml:space="preserve">
+    <value>The prefix must not contain control characters or a backslash (\).</value>
+  </data>
+  <data name="Core_LinkRule_PrefixHostNotClosed" xml:space="preserve">
+    <value>A “/” is missing after the host name – e.g. https://example.com/ instead of https://example.com.</value>
+  </data>
+  <data name="Core_LinkRule_PrefixInvalid" xml:space="preserve">
+    <value>The prefix is not a valid start of a link.</value>
+  </data>
+  <data name="Core_LinkRule_PrefixNotHttp" xml:space="preserve">
+    <value>The prefix must be empty or start with http:// or https:// (e.g. https://example.com/search?q=).</value>
+  </data>
+  <data name="Core_LinkRule_PrefixUserInfo" xml:space="preserve">
+    <value>The prefix must not contain a user name or password.</value>
+  </data>
+  <data name="Core_Platform_NoActivate" xml:space="preserve">
+    <value>The previous window cannot be brought to the front on this system – nothing was typed.</value>
+  </data>
+  <data name="Core_Platform_NoAutostart" xml:space="preserve">
+    <value>Autostart is not available on {0} (yet).</value>
+    <comment>{0} = operating system name</comment>
+  </data>
+  <data name="Core_Platform_NoCameras" xml:space="preserve">
+    <value>Cameras are not available on this system (yet).</value>
+  </data>
+  <data name="Core_Platform_NoHotkeys" xml:space="preserve">
+    <value>Global keyboard shortcuts are not available on {0} (yet) – open Lupe from the icon in the notification area or from the menu.</value>
+    <comment>{0} = operating system name</comment>
+  </data>
+  <data name="Core_Platform_NoImageFiles" xml:space="preserve">
+    <value>Image files cannot be read on {0} (yet).</value>
+    <comment>{0} = operating system name</comment>
+  </data>
+  <data name="Core_Platform_NoScreenshots" xml:space="preserve">
+    <value>Screenshots are not available on {0} (yet).</value>
+    <comment>{0} = operating system name, e.g. “Linux”</comment>
+  </data>
+  <data name="Core_Platform_NoTyping" xml:space="preserve">
+    <value>Typing is not available on {0} (yet) – copy the text instead.</value>
+    <comment>{0} = operating system name</comment>
+  </data>
+  <data name="Core_Platform_UnknownSystem" xml:space="preserve">
+    <value>unknown system</value>
+    <comment>Operating system name used in the Core_Platform_No* messages when it is unknown (lowercase, inserted mid-sentence)</comment>
+  </data>
+  <data name="Core_Regex_EndingBackslash" xml:space="preserve">
+    <value>“\” at the end of the pattern</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt</comment>
+  </data>
+  <data name="Core_Regex_ExclusionGroupNotLast" xml:space="preserve">
+    <value>exclusion group not at the end of the character class</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt</comment>
+  </data>
+  <data name="Core_Regex_InvalidControlCharacter" xml:space="preserve">
+    <value>invalid control character at \c</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt</comment>
+  </data>
+  <data name="Core_Regex_InvalidGroup" xml:space="preserve">
+    <value>invalid group “(?…)”</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt</comment>
+  </data>
+  <data name="Core_Regex_InvalidGroupName" xml:space="preserve">
+    <value>invalid group name</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt</comment>
+  </data>
+  <data name="Core_Regex_InvalidHexDigits" xml:space="preserve">
+    <value>invalid hex digits (at \x or \u)</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt</comment>
+  </data>
+  <data name="Core_Regex_MissingClosingParenthesis" xml:space="preserve">
+    <value>a closing parenthesis “)” is missing</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt after a colon (lowercase start)</comment>
+  </data>
+  <data name="Core_Regex_NestedQuantifiers" xml:space="preserve">
+    <value>two repetition characters in a row (e.g. a**)</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt</comment>
+  </data>
+  <data name="Core_Regex_NumberTooLarge" xml:space="preserve">
+    <value>number too large</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt</comment>
+  </data>
+  <data name="Core_Regex_QuantifierAfterNothing" xml:space="preserve">
+    <value>repetition character (*, +, ?, {…}) with nothing before it</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt; not a format string</comment>
+  </data>
+  <data name="Core_Regex_ReversedCharacterRange" xml:space="preserve">
+    <value>character range reversed (e.g. [z-a])</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt</comment>
+  </data>
+  <data name="Core_Regex_ReversedQuantifierRange" xml:space="preserve">
+    <value>repetition range reversed (e.g. {3,1})</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt; not a format string</comment>
+  </data>
+  <data name="Core_Regex_ShorthandInRange" xml:space="preserve">
+    <value>shorthand class like \d used as a range bound in […]</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt</comment>
+  </data>
+  <data name="Core_Regex_SyntaxError" xml:space="preserve">
+    <value>syntax error</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt</comment>
+  </data>
+  <data name="Core_Regex_TooManyClosingParentheses" xml:space="preserve">
+    <value>too many closing parentheses “)”</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt</comment>
+  </data>
+  <data name="Core_Regex_UndefinedReference" xml:space="preserve">
+    <value>reference to a group that does not exist</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt</comment>
+  </data>
+  <data name="Core_Regex_UnknownUnicodeCategory" xml:space="preserve">
+    <value>unknown Unicode category at \p{…}</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt; not a format string</comment>
+  </data>
+  <data name="Core_Regex_UnrecognizedEscape" xml:space="preserve">
+    <value>unknown escape sequence with “\”</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt</comment>
+  </data>
+  <data name="Core_Regex_UnterminatedBracket" xml:space="preserve">
+    <value>square bracket “[” not closed</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt</comment>
+  </data>
+  <data name="Core_Regex_UnterminatedComment" xml:space="preserve">
+    <value>comment “(?#…)” not closed</value>
+    <comment>Inserted into Core_LinkRule_InvalidRegexAt</comment>
+  </data>
+  <data name="Core_Screen_Monitor" xml:space="preserve">
+    <value>Screen {0}</value>
+    <comment>Monitor name; {0} = number</comment>
+  </data>
+  <data name="Core_Screen_MonitorNamed" xml:space="preserve">
+    <value>Screen {0} ({1})</value>
+    <comment>Monitor name; {0} = number; {1} = model name, e.g. “DELL U2720Q”</comment>
+  </data>
+  <data name="Core_Settings_BackupBeforeSave" xml:space="preserve">
+    <value>{0} Before the next save, it will be backed up unchanged next to it as “{1}.defekt-…”.</value>
+    <comment>{0} = problem found while loading (full sentence); {1} = file name of the settings file. Keep “.defekt-…” as is (it is part of the backup file name).</comment>
+  </data>
+  <data name="Core_Settings_BackupCreated" xml:space="preserve">
+    <value>The old, damaged settings file was backed up as “{0}”.</value>
+    <comment>{0} = backup file name</comment>
+  </data>
+  <data name="Core_Settings_BackupFailed" xml:space="preserve">
+    <value>The damaged settings file could not be backed up ({0}). To make sure nothing is lost, it was not overwritten – the change applies until Lupe is closed.</value>
+    <comment>{0} = short reason, e.g. “Access denied”</comment>
+  </data>
+  <data name="Core_Settings_Broken" xml:space="preserve">
+    <value>The settings file “{0}” is damaged and was not loaded. Default values apply; the file will only be replaced the next time settings are saved.</value>
+    <comment>{0} = path of the settings file</comment>
+  </data>
+  <data name="Core_Settings_BrokenAtLine" xml:space="preserve">
+    <value>The settings file “{0}” is damaged (error in line {1}) and was not loaded. Default values apply; the file will only be replaced the next time settings are saved.</value>
+    <comment>{0} = path of the settings file; {1} = line number</comment>
+  </data>
+  <data name="Core_Settings_DefaultUsedFor" xml:space="preserve">
+    <value>Default value used for: {0}.</value>
+    <comment>{0} = comma-separated list of setting names</comment>
+  </data>
+  <data name="Core_Settings_EntriesRemovedFrom" xml:space="preserve">
+    <value>Unusable entries removed from: {0}.</value>
+    <comment>{0} = comma-separated list of setting names</comment>
+  </data>
+  <data name="Core_Settings_Field_Actions" xml:space="preserve">
+    <value>Actions (camera/file)</value>
+    <comment>Name of a setting, as in the settings window</comment>
+  </data>
+  <data name="Core_Settings_Field_AimHelp" xml:space="preserve">
+    <value>Aim guide</value>
+    <comment>Name of a setting</comment>
+  </data>
+  <data name="Core_Settings_Field_Camera" xml:space="preserve">
+    <value>Camera</value>
+    <comment>Name of a setting</comment>
+  </data>
+  <data name="Core_Settings_Field_Formats" xml:space="preserve">
+    <value>Formats</value>
+    <comment>Name of a setting (barcode formats)</comment>
+  </data>
+  <data name="Core_Settings_Field_HistoryLimit" xml:space="preserve">
+    <value>History size</value>
+    <comment>Name of a setting</comment>
+  </data>
+  <data name="Core_Settings_Field_KeepHistory" xml:space="preserve">
+    <value>Save history</value>
+    <comment>Name of a setting</comment>
+  </data>
+  <data name="Core_Settings_Field_KeepRunningInTray" xml:space="preserve">
+    <value>Keep running in the notification area</value>
+    <comment>Name of a setting</comment>
+  </data>
+  <data name="Core_Settings_Field_Language" xml:space="preserve">
+    <value>Language</value>
+    <comment>Name of a setting</comment>
+  </data>
+  <data name="Core_Settings_Field_LinkRules" xml:space="preserve">
+    <value>Link rules</value>
+    <comment>Name of a setting</comment>
+  </data>
+  <data name="Core_Settings_Field_RepeatSuppress" xml:space="preserve">
+    <value>Repeat lock</value>
+    <comment>Name of a setting: time during which the same code is not reported again</comment>
+  </data>
+  <data name="Core_Settings_Field_ScreenActions" xml:space="preserve">
+    <value>Actions (screen)</value>
+    <comment>Name of a setting</comment>
+  </data>
+  <data name="Core_Settings_Field_ScreenHotkey" xml:space="preserve">
+    <value>Keyboard shortcut</value>
+    <comment>Name of a setting</comment>
+  </data>
+  <data name="Core_Settings_Field_Sound" xml:space="preserve">
+    <value>Sound</value>
+    <comment>Name of a setting</comment>
+  </data>
+  <data name="Core_Settings_Field_TrayHintShown" xml:space="preserve">
+    <value>Notification area hint</value>
+    <comment>Name of a setting</comment>
+  </data>
+  <data name="Core_Settings_Field_TypeDelay" xml:space="preserve">
+    <value>Typing speed</value>
+    <comment>Name of a setting</comment>
+  </data>
+  <data name="Core_Settings_Field_TypeSuffix" xml:space="preserve">
+    <value>Key after typing</value>
+    <comment>Name of a setting</comment>
+  </data>
+  <data name="Core_Settings_MessageAndNote" xml:space="preserve">
+    <value>{0} {1}</value>
+    <comment>Two complete sentences shown one after the other: {0} = message, {1} = note about the backup</comment>
+  </data>
+  <data name="Core_Settings_NoFreeFileName" xml:space="preserve">
+    <value>no free file name</value>
+    <comment>Reason inside parentheses of Core_Settings_BackupFailed</comment>
+  </data>
+  <data name="Core_Settings_ReadableAgain" xml:space="preserve">
+    <value>The settings file is readable again – its settings now apply.</value>
+  </data>
+  <data name="Core_Settings_ReadableAgainMerged" xml:space="preserve">
+    <value>The settings file is readable again: your changes have been merged with the saved settings.</value>
+  </data>
+  <data name="Core_Settings_ReadError" xml:space="preserve">
+    <value>The settings in “{0}” could not be read ({1}). Default values apply.</value>
+    <comment>{0} = path of the settings file; {1} = short reason</comment>
+  </data>
+  <data name="Core_Settings_SaveError" xml:space="preserve">
+    <value>The settings could not be saved to “{0}” ({1}).</value>
+    <comment>{0} = path of the settings file; {1} = short reason</comment>
+  </data>
+  <data name="Core_Settings_SaveFailedUntilExit" xml:space="preserve">
+    <value>{0} The change applies until Lupe is closed.</value>
+    <comment>{0} = save error (full sentence)</comment>
+  </data>
+  <data name="Core_Settings_SaveWhenReadable" xml:space="preserve">
+    <value>{0} Nothing will be saved until the file is readable again – it will not be overwritten with default values.</value>
+    <comment>{0} = problem found while loading (full sentence)</comment>
+  </data>
+  <data name="Core_Settings_SomeInvalid" xml:space="preserve">
+    <value>Some settings in “{0}” were invalid.</value>
+    <comment>{0} = path of the settings file</comment>
+  </data>
+  <data name="Core_Settings_StillUnreadable" xml:space="preserve">
+    <value>The settings file “{0}” is still not readable – the change applies until Lupe is closed and will be saved as soon as the file is readable again. This way nothing is overwritten with default values.</value>
+    <comment>{0} = path of the settings file</comment>
+  </data>
+  <data name="Core_Settings_StillUnreadableReason" xml:space="preserve">
+    <value>The settings file “{0}” is still not readable – the change applies until Lupe is closed and will be saved as soon as the file is readable again. This way nothing is overwritten with default values. ({1})</value>
+    <comment>{0} = path of the settings file; {1} = detailed problem description</comment>
+  </data>
+  <data name="Core_Typing_Interrupted" xml:space="preserve">
+    <value>Typing was interrupted – only part of the text arrived.</value>
+  </data>
+  <data name="Language_System" xml:space="preserve">
+    <value>System language</value>
+  </data>
+  <data name="Linux_ActiveWindow_ActivateFailed" xml:space="preserve">
+    <value>The previous window could not be brought to the front – nothing was typed.</value>
+  </data>
+  <data name="Linux_ActiveWindow_Gone" xml:space="preserve">
+    <value>The previous window no longer exists – nothing was typed.</value>
+  </data>
+  <data name="Linux_ActiveWindow_None" xml:space="preserve">
+    <value>No window was in front – nothing was typed.</value>
+  </data>
+  <data name="Linux_ActiveWindow_NoXServer" xml:space="preserve">
+    <value>No connection to the X server – nothing was typed.</value>
+  </data>
+  <data name="Linux_Autostart_Comment" xml:space="preserve">
+    <value>Read QR codes and barcodes from camera, screen and files</value>
+    <comment>Comment line of the autostart .desktop file; single line</comment>
+  </data>
+  <data name="Linux_Autostart_DisableFailed" xml:space="preserve">
+    <value>Could not remove autostart: {0}</value>
+    <comment>{0} = system error message</comment>
+  </data>
+  <data name="Linux_Autostart_EnableFailed" xml:space="preserve">
+    <value>Could not set up autostart: {0}</value>
+    <comment>{0} = system error message</comment>
+  </data>
+  <data name="Linux_Autostart_PathUnknown" xml:space="preserve">
+    <value>The path of Lupe is unknown – autostart was not set up.</value>
+  </data>
+  <data name="Linux_Camera_AccessDenied" xml:space="preserve">
+    <value>No access to the camera “{0}” – the user must be in the “video” group (then sign in again).</value>
+    <comment>{0} = camera name; “video” is a Linux group name, do not translate</comment>
+  </data>
+  <data name="Linux_Camera_Disconnected" xml:space="preserve">
+    <value>The camera “{0}” was disconnected.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Linux_Camera_InUse" xml:space="preserve">
+    <value>The camera “{0}” is being used by another program.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Linux_Camera_NotConnected" xml:space="preserve">
+    <value>The camera “{0}” is not connected.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Linux_Camera_Stalled" xml:space="preserve">
+    <value>The camera “{0}” is no longer delivering images – maybe it was disconnected or another program is using it.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Linux_Camera_StartFailed" xml:space="preserve">
+    <value>The camera “{0}” could not be started ({1}).</value>
+    <comment>{0} = camera name, {1} = technical error message</comment>
+  </data>
+  <data name="Linux_Hotkey_AlreadyRegistered" xml:space="preserve">
+    <value>{0} is already in use by another program.</value>
+    <comment>{0} = shortcut</comment>
+  </data>
+  <data name="Linux_Hotkey_Description" xml:space="preserve">
+    <value>Scan screen region</value>
+    <comment>Description of the global shortcut shown in the desktop's shortcut settings</comment>
+  </data>
+  <data name="Linux_Hotkey_KeyNotInLayout" xml:space="preserve">
+    <value>The key of {0} does not exist in the current keyboard layout.</value>
+    <comment>{0} = shortcut</comment>
+  </data>
+  <data name="Linux_Hotkey_NoPortalSession" xml:space="preserve">
+    <value>The desktop portal did not open a session for shortcuts.</value>
+  </data>
+  <data name="Linux_Hotkey_NoSession" xml:space="preserve">
+    <value>Without a graphical session there are no global shortcuts.</value>
+  </data>
+  <data name="Linux_Hotkey_NotAccepted" xml:space="preserve">
+    <value>The desktop did not accept the shortcut.</value>
+  </data>
+  <data name="Linux_Hotkey_PortalRegisterFailed" xml:space="preserve">
+    <value>The shortcut could not be registered with the desktop ({0}).</value>
+    <comment>{0} = technical error message</comment>
+  </data>
+  <data name="Linux_Hotkey_RegisterFailedReason" xml:space="preserve">
+    <value>The shortcut {0} could not be registered: {1}</value>
+    <comment>{0} = shortcut, {1} = reason</comment>
+  </data>
+  <data name="Linux_Hotkey_RegisterFailedX11" xml:space="preserve">
+    <value>The shortcut {0} could not be registered (X error {1}).</value>
+    <comment>{0} = shortcut, {1} = X11 error code</comment>
+  </data>
+  <data name="Linux_Hotkey_Rejected" xml:space="preserve">
+    <value>The shortcut was rejected in the desktop's dialog.</value>
+  </data>
+  <data name="Linux_Hotkey_Unregistered" xml:space="preserve">
+    <value>The shortcut was unregistered.</value>
+  </data>
+  <data name="Linux_Hotkey_WaylandUnsupported" xml:space="preserve">
+    <value>This Wayland desktop does not allow programs to use global shortcuts (no GlobalShortcuts portal) – open Lupe via the tray icon or the menu, or create your own shortcut for “lupe --bildschirm” in the system settings.</value>
+    <comment>“lupe --bildschirm” is a command line, do not translate</comment>
+  </data>
+  <data name="Linux_Image_Corrupt" xml:space="preserve">
+    <value>“{0}” is damaged or not a supported image ({1}).</value>
+    <comment>{0} = file name, {1} = decoder result code</comment>
+  </data>
+  <data name="Linux_Image_Empty" xml:space="preserve">
+    <value>“{0}” contains no image (0 pixels).</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Linux_Image_NotReadable" xml:space="preserve">
+    <value>“{0}” could not be read as an image ({1}).</value>
+    <comment>{0} = file name, {1} = technical error message</comment>
+  </data>
+  <data name="Linux_Image_TooLarge" xml:space="preserve">
+    <value>“{0}” is too large to open.</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Linux_Image_Unsupported" xml:space="preserve">
+    <value>“{0}” is not a supported image ({1}).</value>
+    <comment>{0} = file name, {1} = decoder result code</comment>
+  </data>
+  <data name="Linux_Portal_BusConnectFailed" xml:space="preserve">
+    <value>No connection to the session bus ({0}).</value>
+    <comment>{0} = technical error message</comment>
+  </data>
+  <data name="Linux_Portal_ConnectionDisturbed" xml:space="preserve">
+    <value>The connection to the desktop portal is disturbed ({0}).</value>
+    <comment>{0} = technical error message</comment>
+  </data>
+  <data name="Linux_Portal_ConnectionLost" xml:space="preserve">
+    <value>The connection to the desktop portal was lost.</value>
+  </data>
+  <data name="Linux_Portal_Denied" xml:space="preserve">
+    <value>The desktop portal denied “{0}”.</value>
+    <comment>{0} = portal interface name, e.g. Screenshot</comment>
+  </data>
+  <data name="Linux_Portal_Error" xml:space="preserve">
+    <value>The desktop portal reports an error for “{0}”: {1}</value>
+    <comment>{0} = portal interface name, {1} = error message from the portal</comment>
+  </data>
+  <data name="Linux_Portal_NoScreenshot" xml:space="preserve">
+    <value>The desktop portal did not deliver a screenshot.</value>
+  </data>
+  <data name="Linux_Portal_NoSessionBus" xml:space="preserve">
+    <value>No session bus (DBUS_SESSION_BUS_ADDRESS is missing) – the desktop portals cannot be reached.</value>
+  </data>
+  <data name="Linux_Portal_NotOffered" xml:space="preserve">
+    <value>The desktop portal of this session does not offer “{0}”.</value>
+    <comment>{0} = portal interface name, e.g. Screenshot</comment>
+  </data>
+  <data name="Linux_Portal_NotRunning" xml:space="preserve">
+    <value>xdg-desktop-portal is not running – under Wayland, screenshots, typing and shortcuts need the desktop portals.</value>
+  </data>
+  <data name="Linux_Portal_ScreenshotDenied" xml:space="preserve">
+    <value>The screenshot was denied – allow Lupe in the system settings (Privacy → Screenshots).</value>
+  </data>
+  <data name="Linux_Portal_ScreenshotUnreadable" xml:space="preserve">
+    <value>The desktop portal's screenshot could not be read.</value>
+  </data>
+  <data name="Linux_Portal_Timeout" xml:space="preserve">
+    <value>The desktop portal did not respond in time.</value>
+  </data>
+  <data name="Linux_Problem_NoCameraAccess" xml:space="preserve">
+    <value>No access to the cameras (/dev/video*) – the user must be in the “video” group: “sudo usermod -aG video $USER”, then sign in again.</value>
+  </data>
+  <data name="Linux_Problem_NoSession" xml:space="preserve">
+    <value>No graphical session (neither X11 nor Wayland) – screenshots, typing and shortcuts do not work.</value>
+  </data>
+  <data name="Linux_Problem_NoSessionBus" xml:space="preserve">
+    <value>No session bus – under Wayland, screenshots, typing and shortcuts need the desktop portals (xdg-desktop-portal).</value>
+  </data>
+  <data name="Linux_Problem_NoXTest" xml:space="preserve">
+    <value>The X server lacks the XTest extension (package libxtst6) – typing does not work, copying does.</value>
+  </data>
+  <data name="Linux_Problem_WaylandActiveWindow" xml:space="preserve">
+    <value>Under Wayland, Lupe cannot see which window is in front – after the scan, text is typed into whichever window has the focus then.</value>
+  </data>
+  <data name="Linux_Problem_X11Unavailable" xml:space="preserve">
+    <value>Screenshots, typing and shortcuts do not work: {0}</value>
+    <comment>{0} = reason, e.g. no connection to the X server</comment>
+  </data>
+  <data name="Linux_Screen_DepthUnsupported" xml:space="preserve">
+    <value>The screen's color depth ({0} bits) is not supported.</value>
+    <comment>{0} = color depth in bits</comment>
+  </data>
+  <data name="Linux_Screen_Monitor" xml:space="preserve">
+    <value>Display</value>
+    <comment>Fallback name of the only monitor</comment>
+  </data>
+  <data name="Linux_Screen_MonitorNumbered" xml:space="preserve">
+    <value>Display {0}</value>
+    <comment>Fallback name of a monitor; {0} = number starting at 1</comment>
+  </data>
+  <data name="Linux_Screen_Unavailable" xml:space="preserve">
+    <value>Screenshots do not work: {0}</value>
+    <comment>{0} = reason, e.g. no connection to the X server</comment>
+  </data>
+  <data name="Linux_Screen_XNoScreenshot" xml:space="preserve">
+    <value>The X server did not deliver a screenshot.</value>
+  </data>
+  <data name="Linux_Screen_XRejected" xml:space="preserve">
+    <value>The X server rejected the screenshot (error {0}).</value>
+    <comment>{0} = X11 error code</comment>
+  </data>
+  <data name="Linux_Typing_Failed" xml:space="preserve">
+    <value>Cannot type: {0}</value>
+    <comment>{0} = reason</comment>
+  </data>
+  <data name="Linux_Typing_KeyboardNotGranted" xml:space="preserve">
+    <value>The desktop portal did not grant access to the keyboard.</value>
+  </data>
+  <data name="Linux_Typing_NoPortalSession" xml:space="preserve">
+    <value>The desktop portal did not open a session for the keyboard.</value>
+  </data>
+  <data name="Linux_Typing_NoRemoteDesktop" xml:space="preserve">
+    <value>The desktop portal of this session does not offer keyboard remote control (RemoteDesktop) – copy the text instead.</value>
+  </data>
+  <data name="Linux_Typing_NoSession" xml:space="preserve">
+    <value>Cannot type: no graphical session (neither X11 nor Wayland) – copy the text instead.</value>
+  </data>
+  <data name="Linux_Typing_NoSpareKey" xml:space="preserve">
+    <value>Cannot type: no key code is free in the keyboard layout for this character.</value>
+  </data>
+  <data name="Linux_Typing_NoXServer" xml:space="preserve">
+    <value>Cannot type: no connection to the X server.</value>
+  </data>
+  <data name="Linux_Typing_NoXTest" xml:space="preserve">
+    <value>Cannot type: the X server lacks the XTest extension.</value>
+  </data>
+  <data name="Linux_Typing_PortalRejected" xml:space="preserve">
+    <value>The desktop portal did not accept the keyboard input.</value>
+  </data>
+  <data name="Linux_Typing_Rejected" xml:space="preserve">
+    <value>The X server did not accept the keyboard input.</value>
+  </data>
+  <data name="Linux_Typing_RemoteControlCancelled" xml:space="preserve">
+    <value>The desktop portal cancelled keyboard remote control.</value>
+  </data>
+  <data name="Linux_Typing_RemoteControlDenied" xml:space="preserve">
+    <value>Keyboard remote control was denied – choose “Allow” next time to type.</value>
+    <comment>“Allow” is the button label in the desktop's permission dialog</comment>
+  </data>
+  <data name="Linux_X11_ConnectFailed" xml:space="preserve">
+    <value>No connection to the X server “{0}”.</value>
+    <comment>{0} = display name, e.g. :0</comment>
+  </data>
+  <data name="Linux_X11_LibraryMissing" xml:space="preserve">
+    <value>The X11 library (libX11) is missing.</value>
+  </data>
+  <data name="Linux_X11_NoDisplay" xml:space="preserve">
+    <value>No X server (DISPLAY is not set).</value>
+  </data>
+  <data name="Mac_ActiveWindow_ActivateFailed" xml:space="preserve">
+    <value>The previous program could not be brought to the front – nothing was typed.</value>
+  </data>
+  <data name="Mac_ActiveWindow_AppKitMissing" xml:space="preserve">
+    <value>The previous program could not be brought to the front (AppKit is missing) – nothing was typed.</value>
+  </data>
+  <data name="Mac_ActiveWindow_Gone" xml:space="preserve">
+    <value>The previous program is no longer running – nothing was typed.</value>
+  </data>
+  <data name="Mac_ActiveWindow_NotHere" xml:space="preserve">
+    <value>The previous window cannot be brought to the front here (macOS only) – nothing was typed.</value>
+  </data>
+  <data name="Mac_ActiveWindow_Unknown" xml:space="preserve">
+    <value>It is not known which program was in front before – nothing was typed.</value>
+  </data>
+  <data name="Mac_Autostart_DisableFailed" xml:space="preserve">
+    <value>Autostart could not be removed: {0}</value>
+    <comment>{0} = system error message</comment>
+  </data>
+  <data name="Mac_Autostart_DotnetHost" xml:space="preserve">
+    <value>Autostart can only be set up for the published Lupe, not when started via “dotnet”.</value>
+  </data>
+  <data name="Mac_Autostart_EnableFailed" xml:space="preserve">
+    <value>Autostart could not be set up: {0}</value>
+    <comment>{0} = system error message</comment>
+  </data>
+  <data name="Mac_Camera_Denied" xml:space="preserve">
+    <value>Lupe is not allowed to use the camera. Please allow Lupe in System Settings under “Privacy &amp; Security → Camera” and then restart Lupe.</value>
+    <comment>Use the macOS System Settings names of your language</comment>
+  </data>
+  <data name="Mac_Camera_Failed" xml:space="preserve">
+    <value>The camera “{0}” has failed – maybe another program is using it.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Mac_Camera_LibraryMissing" xml:space="preserve">
+    <value>The camera “{0}” is not available – libLupeCamera.dylib is missing.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Mac_Camera_NoFormat" xml:space="preserve">
+    <value>The camera “{0}” does not offer an image format Lupe can read.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Mac_Camera_NotConnected" xml:space="preserve">
+    <value>The camera “{0}” is not connected.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Mac_Camera_Restricted" xml:space="preserve">
+    <value>The camera is blocked on this Mac (Screen Time or device management) – please contact your IT department.</value>
+  </data>
+  <data name="Mac_Camera_StartFailed" xml:space="preserve">
+    <value>The camera “{0}” could not be started – maybe another program is using it.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Mac_Hotkey_AlreadyRegistered" xml:space="preserve">
+    <value>{0} is already in use by another program – please choose another shortcut.</value>
+    <comment>{0} = shortcut</comment>
+  </data>
+  <data name="Mac_Hotkey_CarbonMissing" xml:space="preserve">
+    <value>Global shortcuts are not available on this Mac (Carbon is missing).</value>
+  </data>
+  <data name="Mac_Hotkey_HandlerFailed" xml:space="preserve">
+    <value>Global shortcuts could not be set up (macOS error {0}).</value>
+    <comment>{0} = macOS status code</comment>
+  </data>
+  <data name="Mac_Hotkey_Invalid" xml:space="preserve">
+    <value>{0} cannot be registered on macOS – please choose another shortcut.</value>
+    <comment>{0} = shortcut</comment>
+  </data>
+  <data name="Mac_Hotkey_KeyMissing" xml:space="preserve">
+    <value>The key of {0} does not exist on macOS – please choose another shortcut.</value>
+    <comment>{0} = shortcut</comment>
+  </data>
+  <data name="Mac_Hotkey_NeedsModifier" xml:space="preserve">
+    <value>On macOS a shortcut needs at least one modifier key (⌘, ⌥, ⌃ or ⇧).</value>
+  </data>
+  <data name="Mac_Hotkey_RegisterFailed" xml:space="preserve">
+    <value>{0} could not be registered (macOS error {1}).</value>
+    <comment>{0} = shortcut, {1} = macOS status code</comment>
+  </data>
+  <data name="Mac_Image_ConvertFailed" xml:space="preserve">
+    <value>The image could not be converted (CoreGraphics).</value>
+  </data>
+  <data name="Mac_Image_Corrupt" xml:space="preserve">
+    <value>“{0}” is damaged or not a valid image.</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Mac_Image_Empty" xml:space="preserve">
+    <value>“{0}” contains no image (0 pixels).</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Mac_Image_EmptyFile" xml:space="preserve">
+    <value>“{0}” is empty.</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Mac_Image_ImageIOMissing" xml:space="preserve">
+    <value>“{0}” cannot be read: ImageIO is not available on this Mac.</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Mac_Image_NotReadable" xml:space="preserve">
+    <value>“{0}” could not be read as an image ({1}).</value>
+    <comment>{0} = file name, {1} = technical error message</comment>
+  </data>
+  <data name="Mac_Image_TooLarge" xml:space="preserve">
+    <value>“{0}” is too large to load.</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Mac_Image_Unsupported" xml:space="preserve">
+    <value>“{0}” is not a supported image format (PNG, JPEG, BMP, GIF, TIFF, HEIC …) or is damaged.</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Mac_NotHere_Autostart" xml:space="preserve">
+    <value>Autostart is not available here (macOS only).</value>
+  </data>
+  <data name="Mac_NotHere_Camera" xml:space="preserve">
+    <value>The camera is not available here (macOS only).</value>
+  </data>
+  <data name="Mac_NotHere_Hotkeys" xml:space="preserve">
+    <value>Global shortcuts are not available here (macOS only).</value>
+  </data>
+  <data name="Mac_NotHere_Image" xml:space="preserve">
+    <value>“{0}” cannot be read: image files are not available here (macOS only).</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Mac_NotHere_Screenshots" xml:space="preserve">
+    <value>Screenshots are not available here (macOS only).</value>
+  </data>
+  <data name="Mac_NotHere_Typing" xml:space="preserve">
+    <value>Typing is not available here (macOS only). Copy the text instead.</value>
+  </data>
+  <data name="Mac_Screen_CoreGraphicsMissing" xml:space="preserve">
+    <value>The displays could not be queried (CoreGraphics is missing).</value>
+  </data>
+  <data name="Mac_Screen_Denied" xml:space="preserve">
+    <value>Lupe is not allowed to record the screen. Please allow Lupe in System Settings under “Privacy &amp; Security → Screen &amp; System Audio Recording” and then restart Lupe.</value>
+    <comment>Use the macOS System Settings names of your language</comment>
+  </data>
+  <data name="Mac_Screen_ExitCode" xml:space="preserve">
+    <value>code {0}</value>
+    <comment>Exit code of screencapture; {0} = number</comment>
+  </data>
+  <data name="Mac_Screen_Failed" xml:space="preserve">
+    <value>The screenshot failed: {0}</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="Mac_Screen_MainMonitorNumbered" xml:space="preserve">
+    <value>Display {0} (main display)</value>
+    <comment>Name of the main monitor; {0} = number starting at 1</comment>
+  </data>
+  <data name="Mac_Screen_MonitorNumbered" xml:space="preserve">
+    <value>Display {0}</value>
+    <comment>Name of a monitor; {0} = number starting at 1</comment>
+  </data>
+  <data name="Mac_Screen_NoDisplay" xml:space="preserve">
+    <value>macOS reports no display.</value>
+  </data>
+  <data name="Mac_Screen_ScreenshotName" xml:space="preserve">
+    <value>Screenshot</value>
+    <comment>Used as the name in image error messages, e.g. “Screenshot” is damaged</comment>
+  </data>
+  <data name="Mac_Screen_ToolFailed" xml:space="preserve">
+    <value>The screenshot failed (screencapture: {0}).</value>
+    <comment>{0} = error output of screencapture or the exit code text</comment>
+  </data>
+  <data name="Mac_Screen_ToolStartFailed" xml:space="preserve">
+    <value>screencapture could not be started.</value>
+    <comment>screencapture is a program name, do not translate</comment>
+  </data>
+  <data name="Mac_Screen_ToolTimeout" xml:space="preserve">
+    <value>The screenshot took too long (screencapture is not responding).</value>
+  </data>
+  <data name="Mac_Typing_AccessibilityDenied" xml:space="preserve">
+    <value>Lupe is not yet allowed to send keyboard input on macOS. Please allow Lupe in System Settings under “Privacy &amp; Security → Accessibility” – until then, copy the text instead.</value>
+    <comment>Use the macOS System Settings names of your language</comment>
+  </data>
+  <data name="Mac_Typing_Rejected" xml:space="preserve">
+    <value>macOS did not accept the keyboard input – copy the text instead.</value>
+  </data>
+  <data name="Page_Camera_AimHelpTip" xml:space="preserve">
+    <value>Corner marks in the middle of the image – hold the code inside them</value>
+  </data>
+  <data name="Page_Camera_CodesDetectedAt" xml:space="preserve">
+    <value>{0} codes detected · {1}</value>
+    <comment>{0} = number of codes (always 2 or more), {1} = time</comment>
+  </data>
+  <data name="Page_Camera_GoFile" xml:space="preserve">
+    <value>File</value>
+    <comment>Button that switches to the File page</comment>
+  </data>
+  <data name="Page_Camera_GoScreen" xml:space="preserve">
+    <value>Screen</value>
+    <comment>Button that switches to the Screen page</comment>
+  </data>
+  <data name="Page_Camera_LastDetected" xml:space="preserve">
+    <value>Last detected</value>
+  </data>
+  <data name="Page_Camera_LastDetectedAt" xml:space="preserve">
+    <value>Last detected · {0}</value>
+    <comment>{0} = time</comment>
+  </data>
+  <data name="Page_Camera_MultipleCodes" xml:space="preserve">
+    <value>Several codes in the image – all of them are in the history. Copy or open the one you need.</value>
+  </data>
+  <data name="Page_Camera_NoCameraText" xml:space="preserve">
+    <value>“Scan region” reads codes on the screen, the “File” page reads photos and scans. Connect a webcam and click “Search for cameras again” above.</value>
+    <comment>Quoted names must match the button labels</comment>
+  </data>
+  <data name="Page_Camera_NoCameraTextWithDetail" xml:space="preserve">
+    <value>“Scan region” reads codes on the screen, the “File” page reads photos and scans. Connect a webcam and click “Search for cameras again” above.
+({0})</value>
+    <comment>{0} = technical error detail</comment>
+  </data>
+  <data name="Page_Camera_NoCameraTitle" xml:space="preserve">
+    <value>No camera found – use Screen or File</value>
+  </data>
+  <data name="Page_Camera_NothingYet" xml:space="preserve">
+    <value>Nothing detected yet.</value>
+  </data>
+  <data name="Page_Camera_Off" xml:space="preserve">
+    <value>Camera is off</value>
+  </data>
+  <data name="Page_Camera_OffText" xml:space="preserve">
+    <value>Hold the code in the middle of the image – Lupe recognizes it by itself, announces it with a sound and adds it to the history.</value>
+  </data>
+  <data name="Page_Camera_ProcessHit" xml:space="preserve">
+    <value>Process detected code</value>
+    <comment>Prefix of an error message</comment>
+  </data>
+  <data name="Page_Camera_RefreshCameras" xml:space="preserve">
+    <value>Search for cameras again</value>
+  </data>
+  <data name="Page_Camera_ReleaseCameraFailed" xml:space="preserve">
+    <value>Release camera: {0}</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="Page_Camera_SearchCameras" xml:space="preserve">
+    <value>Search for cameras</value>
+    <comment>Prefix of an error message when listing cameras fails</comment>
+  </data>
+  <data name="Page_Camera_Start" xml:space="preserve">
+    <value>Start</value>
+  </data>
+  <data name="Page_Camera_StartCamera" xml:space="preserve">
+    <value>Start camera</value>
+    <comment>Button; also prefix of an error message when starting fails</comment>
+  </data>
+  <data name="Page_Camera_StartFailed" xml:space="preserve">
+    <value>The camera could not be started.</value>
+  </data>
+  <data name="Page_Camera_Starting" xml:space="preserve">
+    <value>Starting camera …</value>
+  </data>
+  <data name="Page_Camera_Stop" xml:space="preserve">
+    <value>Stop</value>
+  </data>
+  <data name="Page_Camera_StopCamera" xml:space="preserve">
+    <value>Stop camera</value>
+    <comment>Prefix of an error message when stopping fails</comment>
+  </data>
+  <data name="Page_Camera_StopCameraFailed" xml:space="preserve">
+    <value>Stop camera: {0}</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="Page_Camera_TryAgain" xml:space="preserve">
+    <value>Try again</value>
+  </data>
+  <data name="Page_Camera_TypeOffHint" xml:space="preserve">
+    <value>Type is off. To write into other programs like a handheld scanner: Settings › On a detected code › Type. Or copy the code.</value>
+    <comment>The path must match the settings page labels</comment>
+  </data>
+  <data name="Page_Camera_TypeOnHint" xml:space="preserve">
+    <value>Type is on: like a handheld scanner, Lupe writes detected codes into the program in front – click the target program; Lupe can keep running behind it or minimized.</value>
+  </data>
+  <data name="Page_Camera_UnavailableTitle" xml:space="preserve">
+    <value>Camera not available</value>
+  </data>
+  <data name="Page_File_AllCodesInHistory" xml:space="preserve">
+    <value>All codes are in the history. Copy or open the one you need – or copy all of them, one per line.</value>
+  </data>
+  <data name="Page_File_ClipboardImageFailed" xml:space="preserve">
+    <value>The image from the clipboard could not be read: {0}</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="Page_File_ClipboardImageName" xml:space="preserve">
+    <value>Image from the clipboard</value>
+    <comment>Shown as the source name of a pasted image</comment>
+  </data>
+  <data name="Page_File_ClipboardReadFailed" xml:space="preserve">
+    <value>The clipboard could not be read: {0}</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="Page_File_CodesFound_One" xml:space="preserve">
+    <value>1 code found</value>
+  </data>
+  <data name="Page_File_CodesFound_Other" xml:space="preserve">
+    <value>{0} codes found</value>
+    <comment>{0} = number of codes (2 or more)</comment>
+  </data>
+  <data name="Page_File_CodesFound_Zero" xml:space="preserve">
+    <value>No code found</value>
+  </data>
+  <data name="Page_File_DropHere" xml:space="preserve">
+    <value>Drag an image here</value>
+  </data>
+  <data name="Page_File_DropHintText" xml:space="preserve">
+    <value>Photos, scans and screenshots – PNG, JPEG, BMP, GIF, TIFF and whatever else the system can read. Several codes in one image, too.</value>
+  </data>
+  <data name="Page_File_DropHintTextWindows" xml:space="preserve">
+    <value>Photos, scans and screenshots – PNG, JPEG, BMP, GIF, TIFF and whatever else Windows can read. Several codes in one image, too.</value>
+  </data>
+  <data name="Page_File_DroppedImageName" xml:space="preserve">
+    <value>dropped image</value>
+    <comment>Shown as the source name of a dropped image</comment>
+  </data>
+  <data name="Page_File_FileReadFailed" xml:space="preserve">
+    <value>“{0}” could not be read: {1}</value>
+    <comment>{0} = file name, {1} = error message</comment>
+  </data>
+  <data name="Page_File_FoundCodes" xml:space="preserve">
+    <value>Codes found</value>
+    <comment>Heading of the result list</comment>
+  </data>
+  <data name="Page_File_FromClipboard" xml:space="preserve">
+    <value>From clipboard</value>
+  </data>
+  <data name="Page_File_ImagesFilter" xml:space="preserve">
+    <value>Images ({0} …)</value>
+    <comment>File type filter in the open dialog; {0} = list of extensions</comment>
+  </data>
+  <data name="Page_File_LoadingImage" xml:space="preserve">
+    <value>Loading image …</value>
+  </data>
+  <data name="Page_File_MultipleFilesDropped" xml:space="preserve">
+    <value>Several files dropped – reading “{0}”.</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Page_File_NoCodeInImage" xml:space="preserve">
+    <value>Lupe found no QR code or barcode in this image.</value>
+  </data>
+  <data name="Page_File_NoCodeTip" xml:space="preserve">
+    <value>Tip: capture the code as large and sharp as possible; for screenshots, “Scan region” works better.</value>
+  </data>
+  <data name="Page_File_NoImageInClipboard" xml:space="preserve">
+    <value>There is no image on the clipboard. Tip: take a screenshot to the clipboard – or use “Scan region” right away.</value>
+    <comment>“Scan area” must match the button label</comment>
+  </data>
+  <data name="Page_File_NoImageInClipboardWindows" xml:space="preserve">
+    <value>There is no image on the clipboard. Tip: take a screenshot with Win+Shift+S – or use “Scan region” right away.</value>
+    <comment>“Scan area” must match the button label</comment>
+  </data>
+  <data name="Page_File_NoImageYet" xml:space="preserve">
+    <value>No image read yet.</value>
+  </data>
+  <data name="Page_File_NotAnImage" xml:space="preserve">
+    <value>This is not an image Lupe can read.</value>
+  </data>
+  <data name="Page_File_OpenDialogFailed" xml:space="preserve">
+    <value>The open dialog could not be shown: {0}</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="Page_File_OpenDialogTitle" xml:space="preserve">
+    <value>Open image with code</value>
+    <comment>Title of the open file dialog</comment>
+  </data>
+  <data name="Page_File_OpenImage" xml:space="preserve">
+    <value>Open image …</value>
+  </data>
+  <data name="Page_File_OpenImageName" xml:space="preserve">
+    <value>Open image</value>
+    <comment>Screen-reader name of the open button</comment>
+  </data>
+  <data name="Page_File_PasteShortcut" xml:space="preserve">
+    <value>Ctrl+V</value>
+    <comment>Keyboard shortcut for paste (Windows/Linux key name)</comment>
+  </data>
+  <data name="Page_File_ReadClipboard" xml:space="preserve">
+    <value>Read clipboard</value>
+    <comment>Prefix of an error message</comment>
+  </data>
+  <data name="Page_File_ReadImage" xml:space="preserve">
+    <value>Read image</value>
+    <comment>Prefix of an error message</comment>
+  </data>
+  <data name="Page_File_SearchingCodes" xml:space="preserve">
+    <value>Searching for codes …</value>
+  </data>
+  <data name="Page_File_SourceHint" xml:space="preserve">
+    <value>or Ctrl+V · or drag an image here</value>
+  </data>
+  <data name="Page_File_SourceInfo" xml:space="preserve">
+    <value>{0} · {1} × {2} pixels</value>
+    <comment>{0} = image name, {1} = width, {2} = height</comment>
+  </data>
+  <data name="Page_History_ClearAll" xml:space="preserve">
+    <value>Delete all</value>
+  </data>
+  <data name="Page_History_Cleared" xml:space="preserve">
+    <value>History deleted.</value>
+  </data>
+  <data name="Page_History_ClearFailed" xml:space="preserve">
+    <value>The history could not be deleted: {0}</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="Page_History_ClearQuestion_One" xml:space="preserve">
+    <value>Delete the entire history (1 entry)? This cannot be undone.</value>
+  </data>
+  <data name="Page_History_ClearQuestion_Other" xml:space="preserve">
+    <value>Delete the entire history ({0} entries)? This cannot be undone.</value>
+    <comment>{0} = number of entries</comment>
+  </data>
+  <data name="Page_History_ClearTitle" xml:space="preserve">
+    <value>Delete history</value>
+    <comment>Dialog title</comment>
+  </data>
+  <data name="Page_History_ColumnContent" xml:space="preserve">
+    <value>Content</value>
+    <comment>Column header</comment>
+  </data>
+  <data name="Page_History_ColumnFormat" xml:space="preserve">
+    <value>Format</value>
+    <comment>Column header (barcode format)</comment>
+  </data>
+  <data name="Page_History_ColumnSource" xml:space="preserve">
+    <value>Source</value>
+    <comment>Column header</comment>
+  </data>
+  <data name="Page_History_ColumnTime" xml:space="preserve">
+    <value>Time</value>
+    <comment>Column header</comment>
+  </data>
+  <data name="Page_History_CsvFileType" xml:space="preserve">
+    <value>CSV for Excel (*.csv)</value>
+    <comment>File type in the save dialog</comment>
+  </data>
+  <data name="Page_History_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Page_History_DeleteEntry" xml:space="preserve">
+    <value>Delete entry</value>
+  </data>
+  <data name="Page_History_DeleteEntryTip" xml:space="preserve">
+    <value>Delete entry (Del)</value>
+    <comment>Del = name of the Delete key</comment>
+  </data>
+  <data name="Page_History_DeleteFailed" xml:space="preserve">
+    <value>The entry could not be deleted: {0}</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="Page_History_EmptyText" xml:space="preserve">
+    <value>Everything Lupe reads from the camera, the screen or a file appears here.</value>
+  </data>
+  <data name="Page_History_EmptyTitle" xml:space="preserve">
+    <value>Nothing detected yet</value>
+  </data>
+  <data name="Page_History_EntryCount_One" xml:space="preserve">
+    <value>1 entry</value>
+  </data>
+  <data name="Page_History_EntryCount_Other" xml:space="preserve">
+    <value>{0} entries</value>
+    <comment>{0} = number of entries (0 or 2 and more)</comment>
+  </data>
+  <data name="Page_History_ExportCsv" xml:space="preserve">
+    <value>Export as CSV …</value>
+  </data>
+  <data name="Page_History_ExportDialogTitle" xml:space="preserve">
+    <value>Export history as CSV</value>
+    <comment>Title of the save dialog</comment>
+  </data>
+  <data name="Page_History_Exported" xml:space="preserve">
+    <value>Exported: {0}</value>
+    <comment>{0} = file path</comment>
+  </data>
+  <data name="Page_History_ExportFailed" xml:space="preserve">
+    <value>The export failed: {0}</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="Page_History_ExportFileName" xml:space="preserve">
+    <value>Lupe-History-{0}.csv</value>
+    <comment>Suggested file name; {0} = date yyyy-MM-dd; no characters that are invalid in file names</comment>
+  </data>
+  <data name="Page_History_FilteredCount_One" xml:space="preserve">
+    <value>{0} of 1 entry</value>
+    <comment>{0} = number of matching entries</comment>
+  </data>
+  <data name="Page_History_FilteredCount_Other" xml:space="preserve">
+    <value>{0} of {1} entries</value>
+    <comment>{0} = number of matching entries, {1} = total (0 or 2 and more)</comment>
+  </data>
+  <data name="Page_History_GoSettings" xml:space="preserve">
+    <value>Settings</value>
+    <comment>Button that opens the Settings page</comment>
+  </data>
+  <data name="Page_History_LinkTip" xml:space="preserve">
+    <value>Link: {0}</value>
+    <comment>{0} = URL</comment>
+  </data>
+  <data name="Page_History_NoLinkRule" xml:space="preserve">
+    <value>No link rule matches this content</value>
+  </data>
+  <data name="Page_History_NoMatch" xml:space="preserve">
+    <value>No entry contains “{0}”.</value>
+    <comment>{0} = search text</comment>
+  </data>
+  <data name="Page_History_NoSelection" xml:space="preserve">
+    <value>No entry selected</value>
+  </data>
+  <data name="Page_History_NoSelectionHint" xml:space="preserve">
+    <value>Click an entry to copy it, open its link or delete it. Double-click copies.</value>
+  </data>
+  <data name="Page_History_NothingFound" xml:space="preserve">
+    <value>Nothing found</value>
+  </data>
+  <data name="Page_History_OffText" xml:space="preserve">
+    <value>The entries here only exist until Lupe is closed – nothing is stored on disk.</value>
+  </data>
+  <data name="Page_History_OffTitle" xml:space="preserve">
+    <value>The history is not being saved</value>
+  </data>
+  <data name="Page_History_ProblemTitle" xml:space="preserve">
+    <value>Problem with the history file</value>
+  </data>
+  <data name="Page_History_SaveDialogFailed" xml:space="preserve">
+    <value>The save dialog could not be shown: {0}</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="Page_History_SearchName" xml:space="preserve">
+    <value>Search history</value>
+    <comment>Screen-reader name of the search box</comment>
+  </data>
+  <data name="Page_History_SearchPlaceholder" xml:space="preserve">
+    <value>Content, format or source</value>
+    <comment>Placeholder of the search box</comment>
+  </data>
+  <data name="Page_History_SortedAscending" xml:space="preserve">
+    <value>{0}, sorted ascending</value>
+    <comment>Screen-reader name of a column header; {0} = column title</comment>
+  </data>
+  <data name="Page_History_SortedDescending" xml:space="preserve">
+    <value>{0}, sorted descending</value>
+    <comment>Screen-reader name of a column header; {0} = column title</comment>
+  </data>
+  <data name="Page_Info_CommandExampleName" xml:space="preserve">
+    <value>Command line example</value>
+    <comment>Screen-reader name</comment>
+  </data>
+  <data name="Page_Info_CommandHelp" xml:space="preserve">
+    <value>All commands and options: {0}</value>
+    <comment>{0} = help command, e.g. lupe --hilfe</comment>
+  </data>
+  <data name="Page_Info_CommandIntro" xml:space="preserve">
+    <value>The same program also reads images without a window – one line “FORMAT⇥content” per code, for scripts and scheduled tasks:</value>
+    <comment>⇥ stands for a tab character</comment>
+  </data>
+  <data name="Page_Info_CommandIntroWindows" xml:space="preserve">
+    <value>The same Lupe.exe also reads images without a window – one line “FORMAT⇥content” per code, for scripts and scheduled tasks:</value>
+    <comment>⇥ stands for a tab character</comment>
+  </data>
+  <data name="Page_Info_CommandLine" xml:space="preserve">
+    <value>Command line</value>
+    <comment>Section heading</comment>
+  </data>
+  <data name="Page_Info_Components" xml:space="preserve">
+    <value>Recognition and user interface</value>
+  </data>
+  <data name="Page_Info_ComponentsText" xml:space="preserve">
+    <value>zxing-cpp 3.1.1 (Apache-2.0) with libzint and libzueci (BSD-3-Clause) – QR and Micro QR, Data Matrix, Aztec, PDF417, MaxiCode, EAN, UPC, Code 128/39/93, ITF, Codabar, GS1 DataBar and more. User interface built with Avalonia (MIT).</value>
+    <comment>Keep library names, versions and license names unchanged</comment>
+  </data>
+  <data name="Page_Info_CtrlPrefix" xml:space="preserve">
+    <value>Ctrl+</value>
+    <comment>Prefix of keyboard shortcuts on Windows/Linux</comment>
+  </data>
+  <data name="Page_Info_DataDemo" xml:space="preserve">
+    <value>Demo: settings and history are kept in memory only and disappear when Lupe is closed.</value>
+  </data>
+  <data name="Page_Info_DataText" xml:space="preserve">
+    <value>Settings and history are stored in {0} – only for you. Lupe sends nothing to the internet; links are only opened in the browser if you set it up that way.</value>
+    <comment>{0} = folder</comment>
+  </data>
+  <data name="Page_Info_DataTextSplit" xml:space="preserve">
+    <value>Settings are stored in {0}, the history in {1} – only for you. Lupe sends nothing to the internet; links are only opened in the browser if you set it up that way.</value>
+    <comment>{0} = settings folder, {1} = history folder</comment>
+  </data>
+  <data name="Page_Info_ExitCode0" xml:space="preserve">
+    <value>Exit code 0</value>
+  </data>
+  <data name="Page_Info_ExitCode0Text" xml:space="preserve">
+    <value>at least one code found</value>
+  </data>
+  <data name="Page_Info_ExitCode1" xml:space="preserve">
+    <value>Exit code 1</value>
+  </data>
+  <data name="Page_Info_ExitCode1Text" xml:space="preserve">
+    <value>no code found</value>
+  </data>
+  <data name="Page_Info_ExitCode3" xml:space="preserve">
+    <value>Exit code 3</value>
+  </data>
+  <data name="Page_Info_ExitCode3Text" xml:space="preserve">
+    <value>Error – image missing or unreadable, invalid call</value>
+  </data>
+  <data name="Page_Info_Keyboard" xml:space="preserve">
+    <value>Keyboard</value>
+    <comment>Section heading</comment>
+  </data>
+  <data name="Page_Info_Keys" xml:space="preserve">
+    <value>{0} scans a screen region – from any program · {1}1 to {1}6 switch pages · {1}V reads an image from the clipboard · in the history: {1}C copies, Enter opens the link, Del deletes</value>
+    <comment>{0} = screen-scan shortcut, {1} = Ctrl prefix (Ctrl+ or ⌘)</comment>
+  </data>
+  <data name="Page_Info_License" xml:space="preserve">
+    <value>License</value>
+  </data>
+  <data name="Page_Info_LicenseMit" xml:space="preserve">
+    <value>MIT licence – © 2026 ICT-Baden GmbH</value>
+  </data>
+  <data name="Page_Info_LicenseTexts" xml:space="preserve">
+    <value>License texts</value>
+  </data>
+  <data name="Page_Info_LicenseTextsName" xml:space="preserve">
+    <value>Show the license texts of the included libraries</value>
+    <comment>Screen-reader name of the button</comment>
+  </data>
+  <data name="Page_Info_OpenInBrowser" xml:space="preserve">
+    <value>Open in browser</value>
+  </data>
+  <data name="Page_Info_Publisher" xml:space="preserve">
+    <value>Publisher</value>
+  </data>
+  <data name="Page_Info_SourceCode" xml:space="preserve">
+    <value>Source code and questions</value>
+  </data>
+  <data name="Page_Info_Tagline" xml:space="preserve">
+    <value>Reads QR codes and barcodes from the webcam, a screen region, a file and the clipboard.</value>
+  </data>
+  <data name="Page_Info_TheHotkey" xml:space="preserve">
+    <value>The keyboard shortcut</value>
+    <comment>Used when the configured shortcut cannot be shown</comment>
+  </data>
+  <data name="Page_Info_Version" xml:space="preserve">
+    <value>Version {0} · .NET {1}</value>
+    <comment>{0} = Lupe version, {1} = .NET version</comment>
+  </data>
+  <data name="Page_Info_YourData" xml:space="preserve">
+    <value>Your data</value>
+  </data>
+  <data name="Page_Screen_ActionCopy" xml:space="preserve">
+    <value>copy to the clipboard</value>
+    <comment>List item, starts lowercase; the first item is capitalized automatically</comment>
+  </data>
+  <data name="Page_Screen_ActionOpenLink" xml:space="preserve">
+    <value>open link if a rule matches</value>
+    <comment>List item</comment>
+  </data>
+  <data name="Page_Screen_ActionSeparator" xml:space="preserve">
+    <value>, </value>
+    <comment>Separator between list items (keep the trailing space)</comment>
+  </data>
+  <data name="Page_Screen_ActionsNone" xml:space="preserve">
+    <value>Only show and add to the history – no action set.</value>
+  </data>
+  <data name="Page_Screen_ActionsSentence" xml:space="preserve">
+    <value>{0}.</value>
+    <comment>{0} = list of actions</comment>
+  </data>
+  <data name="Page_Screen_ActionsSentenceWithType" xml:space="preserve">
+    <value>{0}. Typing only happens when the scan comes from another program via the keyboard shortcut.</value>
+    <comment>{0} = list of actions</comment>
+  </data>
+  <data name="Page_Screen_ActionType" xml:space="preserve">
+    <value>type into the previous window</value>
+    <comment>List item, starts lowercase</comment>
+  </data>
+  <data name="Page_Screen_ActionTypeThen" xml:space="preserve">
+    <value>type into the previous window (then {0})</value>
+    <comment>List item; {0} = key name Enter or Tab</comment>
+  </data>
+  <data name="Page_Screen_Change" xml:space="preserve">
+    <value>Change</value>
+  </data>
+  <data name="Page_Screen_ChangeLink" xml:space="preserve">
+    <value>change</value>
+    <comment>Link button after the shortcut</comment>
+  </data>
+  <data name="Page_Screen_ChooseOther" xml:space="preserve">
+    <value>Choose another</value>
+    <comment>Button: choose a different shortcut</comment>
+  </data>
+  <data name="Page_Screen_HotkeyFromAnyProgram" xml:space="preserve">
+    <value>from any program</value>
+    <comment>Shown after the shortcut keys</comment>
+  </data>
+  <data name="Page_Screen_HotkeyNotAvailableNow" xml:space="preserve">
+    <value>currently not available</value>
+    <comment>Shown after the shortcut keys</comment>
+  </data>
+  <data name="Page_Screen_HotkeyOffInDemo" xml:space="preserve">
+    <value>off in the demo – use the button here</value>
+    <comment>Shown after the shortcut keys</comment>
+  </data>
+  <data name="Page_Screen_HotkeyUnavailable" xml:space="preserve">
+    <value>Keyboard shortcut not available</value>
+  </data>
+  <data name="Page_Screen_HowTo" xml:space="preserve">
+    <value>How it works</value>
+    <comment>Section heading</comment>
+  </data>
+  <data name="Page_Screen_Intro" xml:space="preserve">
+    <value>Lupe hides briefly, you drag a rectangle around the code – done. Works across all monitors, with invoices, web pages, video calls and photos.</value>
+  </data>
+  <data name="Page_Screen_NothingYet" xml:space="preserve">
+    <value>Nothing scanned yet.</value>
+  </data>
+  <data name="Page_Screen_Recent" xml:space="preserve">
+    <value>Recently from the screen</value>
+    <comment>Section heading</comment>
+  </data>
+  <data name="Page_Screen_ScanArea" xml:space="preserve">
+    <value>Scan region</value>
+    <comment>Main button: select a screen area and scan it</comment>
+  </data>
+  <data name="Page_Screen_Step1" xml:space="preserve">
+    <value>1  Press the shortcut</value>
+    <comment>Keep the number and two spaces</comment>
+  </data>
+  <data name="Page_Screen_Step1Text" xml:space="preserve">
+    <value>In any program – even when Lupe only runs in the notification area. Or click the button here.</value>
+  </data>
+  <data name="Page_Screen_Step2" xml:space="preserve">
+    <value>2  Drag a rectangle</value>
+    <comment>Keep the number and two spaces</comment>
+  </data>
+  <data name="Page_Screen_Step2Text" xml:space="preserve">
+    <value>With the mouse, around the code. A click without dragging takes the whole screen, Esc cancels.</value>
+  </data>
+  <data name="Page_Screen_Step3" xml:space="preserve">
+    <value>3  Use the result</value>
+    <comment>Keep the number and two spaces</comment>
+  </data>
+  <data name="Page_Screen_Step3Text" xml:space="preserve">
+    <value>Copied, typed into the previous window or opened as a link, depending on the settings. Several codes: you choose.</value>
+  </data>
+  <data name="Page_Screen_Title" xml:space="preserve">
+    <value>Code on the screen?</value>
+  </data>
+  <data name="Page_Settings_AfterTyping" xml:space="preserve">
+    <value>After typing</value>
+  </data>
+  <data name="Page_Settings_AfterTypingName" xml:space="preserve">
+    <value>Key after typing</value>
+    <comment>Screen-reader name</comment>
+  </data>
+  <data name="Page_Settings_AfterTypingText" xml:space="preserve">
+    <value>One more key afterwards – e.g. Enter to submit a search box or form right away.</value>
+  </data>
+  <data name="Page_Settings_AimHelpText" xml:space="preserve">
+    <value>Show corner marks in the middle of the image where the code belongs.</value>
+  </data>
+  <data name="Page_Settings_AllFormats" xml:space="preserve">
+    <value>Recognize all formats</value>
+  </data>
+  <data name="Page_Settings_AllFormatsText" xml:space="preserve">
+    <value>Only certain formats: faster and fewer false detections in images with a lot of text.</value>
+  </data>
+  <data name="Page_Settings_AutostartLinux" xml:space="preserve">
+    <value>Start with the session</value>
+  </data>
+  <data name="Page_Settings_AutostartMac" xml:space="preserve">
+    <value>Start at login</value>
+  </data>
+  <data name="Page_Settings_AutostartName" xml:space="preserve">
+    <value>Start with the system</value>
+    <comment>Screen-reader name</comment>
+  </data>
+  <data name="Page_Settings_AutostartText" xml:space="preserve">
+    <value>Lupe starts invisibly in the notification area when you sign in – the keyboard shortcut is ready right away.</value>
+  </data>
+  <data name="Page_Settings_AutostartWindows" xml:space="preserve">
+    <value>Start with Windows</value>
+  </data>
+  <data name="Page_Settings_CameraActions" xml:space="preserve">
+    <value>Camera, file and clipboard</value>
+  </data>
+  <data name="Page_Settings_CameraActionsText" xml:space="preserve">
+    <value>Type (camera only) writes the code into the program in front, e.g. Notepad, like a handheld scanner. Lupe keeps running behind it or minimized.</value>
+    <comment>“Type” must match the checkbox label</comment>
+  </data>
+  <data name="Page_Settings_DelayFast" xml:space="preserve">
+    <value>Fast (10 ms)</value>
+  </data>
+  <data name="Page_Settings_DelayNone" xml:space="preserve">
+    <value>Instant</value>
+  </data>
+  <data name="Page_Settings_DelayNormal" xml:space="preserve">
+    <value>Normal (20 ms)</value>
+  </data>
+  <data name="Page_Settings_DelaySlow" xml:space="preserve">
+    <value>Slow (40 ms)</value>
+  </data>
+  <data name="Page_Settings_Entries" xml:space="preserve">
+    <value>entries</value>
+    <comment>Unit after the number box</comment>
+  </data>
+  <data name="Page_Settings_FeatureActiveWindow" xml:space="preserve">
+    <value>Foreground window</value>
+    <comment>Name of a system feature</comment>
+  </data>
+  <data name="Page_Settings_FeatureAutostart" xml:space="preserve">
+    <value>Autostart</value>
+    <comment>Name of a system feature</comment>
+  </data>
+  <data name="Page_Settings_FeatureScreen" xml:space="preserve">
+    <value>Screen recording</value>
+    <comment>Name of a system permission</comment>
+  </data>
+  <data name="Page_Settings_Formats" xml:space="preserve">
+    <value>Formats</value>
+    <comment>Section heading</comment>
+  </data>
+  <data name="Page_Settings_FormatsAtLeastOne" xml:space="preserve">
+    <value>At least one format must remain. For all formats, turn on “Recognize all formats” above.</value>
+    <comment>Quoted name must match Page_Settings_AllFormats</comment>
+  </data>
+  <data name="Page_Settings_HistoryLimit" xml:space="preserve">
+    <value>At most</value>
+    <comment>Maximum number of history entries</comment>
+  </data>
+  <data name="Page_Settings_HistoryLimitInvalid" xml:space="preserve">
+    <value>Please enter a number from {0} to {1}.</value>
+    <comment>{0} = minimum, {1} = maximum</comment>
+  </data>
+  <data name="Page_Settings_HistoryLimitName" xml:space="preserve">
+    <value>Maximum number of history entries</value>
+    <comment>Screen-reader name</comment>
+  </data>
+  <data name="Page_Settings_HistoryLimitText" xml:space="preserve">
+    <value>Older entries are removed (10 to 10,000).</value>
+  </data>
+  <data name="Page_Settings_HistoryOffQuestion" xml:space="preserve">
+    <value>Stop saving the history?
+
+The file {0} will be deleted so that scanned content does not remain on disk. This cannot be undone.
+
+The entries stay visible here until Lupe is closed. If you want to keep them, export them first (History → Export as CSV …).</value>
+    <comment>{0} = file path; the path in parentheses must match the History page labels</comment>
+  </data>
+  <data name="Page_Settings_HistoryOffQuestion_One" xml:space="preserve">
+    <value>Stop saving the history?
+
+The file {0} with 1 entry will be deleted so that scanned content does not remain on disk. This cannot be undone.
+
+The entries stay visible here until Lupe is closed. If you want to keep them, export them first (History → Export as CSV …).</value>
+    <comment>{0} = file path</comment>
+  </data>
+  <data name="Page_Settings_HistoryOffQuestion_Other" xml:space="preserve">
+    <value>Stop saving the history?
+
+The file {0} with {1} entries will be deleted so that scanned content does not remain on disk. This cannot be undone.
+
+The entries stay visible here until Lupe is closed. If you want to keep them, export them first (History → Export as CSV …).</value>
+    <comment>{0} = file path, {1} = number of entries</comment>
+  </data>
+  <data name="Page_Settings_HistoryOffTitle" xml:space="preserve">
+    <value>Stop saving history</value>
+    <comment>Dialog title</comment>
+  </data>
+  <data name="Page_Settings_HotkeyDefault" xml:space="preserve">
+    <value>Default</value>
+    <comment>Button: reset the shortcut to the default</comment>
+  </data>
+  <data name="Page_Settings_HotkeyKeyUnsupported" xml:space="preserve">
+    <value>This key doesn’t work – please choose another</value>
+  </data>
+  <data name="Page_Settings_HotkeyName" xml:space="preserve">
+    <value>Keyboard shortcut for the screen scan</value>
+    <comment>Screen-reader name</comment>
+  </data>
+  <data name="Page_Settings_HotkeyNeedModifierLinux" xml:space="preserve">
+    <value>Please use Ctrl, Alt or Super</value>
+  </data>
+  <data name="Page_Settings_HotkeyNeedModifierMac" xml:space="preserve">
+    <value>Please use ⌃, ⌥ or ⌘</value>
+  </data>
+  <data name="Page_Settings_HotkeyNeedModifierWindows" xml:space="preserve">
+    <value>Please use Ctrl, Alt or Win</value>
+  </data>
+  <data name="Page_Settings_HotkeyNotRegistered" xml:space="preserve">
+    <value>The keyboard shortcut is not registered yet.</value>
+  </data>
+  <data name="Page_Settings_HotkeyOffInDemo" xml:space="preserve">
+    <value>In the demo the keyboard shortcut is not registered – so it doesn’t get in the way of a real Lupe.</value>
+  </data>
+  <data name="Page_Settings_HotkeyPress" xml:space="preserve">
+    <value>Press the combination …</value>
+  </data>
+  <data name="Page_Settings_HotkeyReady" xml:space="preserve">
+    <value>{0} is ready – even when the window is closed.</value>
+    <comment>{0} = keyboard shortcut</comment>
+  </data>
+  <data name="Page_Settings_HotkeyRecording" xml:space="preserve">
+    <value>While recording, the keyboard shortcut is unregistered – the combination goes into this field. Esc cancels.</value>
+  </data>
+  <data name="Page_Settings_HotkeyTextLinux" xml:space="preserve">
+    <value>Click the field and press the combination (with Ctrl, Alt or Super; function keys also on their own).</value>
+  </data>
+  <data name="Page_Settings_HotkeyTextMac" xml:space="preserve">
+    <value>Click the field and press the combination (with ⌃, ⌥ or ⌘; function keys also on their own).</value>
+  </data>
+  <data name="Page_Settings_HotkeyTextWindows" xml:space="preserve">
+    <value>Click the field and press the combination (with Ctrl, Alt or Win; function keys also on their own).</value>
+  </data>
+  <data name="Page_Settings_KeepHistory" xml:space="preserve">
+    <value>Save history</value>
+  </data>
+  <data name="Page_Settings_KeepHistoryText" xml:space="preserve">
+    <value>Only for you, in {0}. Off: only until Lupe is closed – the saved file is deleted after confirmation.</value>
+    <comment>{0} = file path</comment>
+  </data>
+  <data name="Page_Settings_KeepInTray" xml:space="preserve">
+    <value>Keep running in the notification area when closed</value>
+  </data>
+  <data name="Page_Settings_KeepInTrayName" xml:space="preserve">
+    <value>Keep running in the notification area</value>
+    <comment>Screen-reader name</comment>
+  </data>
+  <data name="Page_Settings_KeepInTrayText" xml:space="preserve">
+    <value>The window closes, Lupe stays available for the keyboard shortcut. Quit via the icon in the notification area.</value>
+  </data>
+  <data name="Page_Settings_Language" xml:space="preserve">
+    <value>Language</value>
+    <comment>User interface language setting</comment>
+  </data>
+  <data name="Page_Settings_LanguageHint" xml:space="preserve">
+    <value>Takes effect the next time Lupe starts.</value>
+  </data>
+  <data name="Page_Settings_LinkRules" xml:space="preserve">
+    <value>Link rules</value>
+    <comment>Section heading</comment>
+  </data>
+  <data name="Page_Settings_LinkRulesText" xml:space="preserve">
+    <value>If a code matches the regular expression, “Open link” opens prefix + code in the browser (empty prefix: the code itself is the link). The first matching active rule applies. Only http and https links are opened.</value>
+    <comment>“Open link” must match the action label</comment>
+  </data>
+  <data name="Page_Settings_Milliseconds" xml:space="preserve">
+    <value>{0} ms</value>
+    <comment>{0} = number of milliseconds</comment>
+  </data>
+  <data name="Page_Settings_NotInDemo" xml:space="preserve">
+    <value>Not available in the demo</value>
+  </data>
+  <data name="Page_Settings_NotOnThisSystem" xml:space="preserve">
+    <value>Not available on this system</value>
+  </data>
+  <data name="Page_Settings_OneMinute" xml:space="preserve">
+    <value>1 minute</value>
+  </data>
+  <data name="Page_Settings_ProblemTitle" xml:space="preserve">
+    <value>Problem with the settings file</value>
+  </data>
+  <data name="Page_Settings_RepeatSuppress" xml:space="preserve">
+    <value>Repeat lock</value>
+    <comment>Time during which the same code is not reported again</comment>
+  </data>
+  <data name="Page_Settings_RepeatSuppressText" xml:space="preserve">
+    <value>For this long the camera does not report the same code again – counted from when it was last seen.</value>
+  </data>
+  <data name="Page_Settings_RuleActive" xml:space="preserve">
+    <value>Active</value>
+    <comment>Column header</comment>
+  </data>
+  <data name="Page_Settings_RuleActiveName" xml:space="preserve">
+    <value>Rule active</value>
+    <comment>Screen-reader name</comment>
+  </data>
+  <data name="Page_Settings_RuleAdd" xml:space="preserve">
+    <value>Add rule</value>
+  </data>
+  <data name="Page_Settings_RuleDelete" xml:space="preserve">
+    <value>Delete rule</value>
+  </data>
+  <data name="Page_Settings_RuleDown" xml:space="preserve">
+    <value>Move down</value>
+  </data>
+  <data name="Page_Settings_RulePattern" xml:space="preserve">
+    <value>Regular expression</value>
+    <comment>Column header and screen-reader name</comment>
+  </data>
+  <data name="Page_Settings_RulePatternMissing" xml:space="preserve">
+    <value>Please enter a regular expression.</value>
+  </data>
+  <data name="Page_Settings_RulePrefix" xml:space="preserve">
+    <value>Prefix</value>
+    <comment>Screen-reader name</comment>
+  </data>
+  <data name="Page_Settings_RulePrefixHeader" xml:space="preserve">
+    <value>Prefix (empty = code is the link)</value>
+    <comment>Column header</comment>
+  </data>
+  <data name="Page_Settings_RuleTest" xml:space="preserve">
+    <value>Code to try out</value>
+    <comment>Placeholder and screen-reader name of the test box</comment>
+  </data>
+  <data name="Page_Settings_RuleTestNoMatch" xml:space="preserve">
+    <value>No rule matches – no link.</value>
+  </data>
+  <data name="Page_Settings_RuleUp" xml:space="preserve">
+    <value>Move up</value>
+  </data>
+  <data name="Page_Settings_RuleUpTip" xml:space="preserve">
+    <value>Move up (checked earlier)</value>
+  </data>
+  <data name="Page_Settings_ScreenActions" xml:space="preserve">
+    <value>Screen region</value>
+  </data>
+  <data name="Page_Settings_ScreenActionsText" xml:space="preserve">
+    <value>Type writes the content like a keyboard into the window that was in front before the scan (scan via keyboard shortcut).</value>
+  </data>
+  <data name="Page_Settings_ScreenScan" xml:space="preserve">
+    <value>Screen scan</value>
+    <comment>Section heading</comment>
+  </data>
+  <data name="Page_Settings_Seconds_One" xml:space="preserve">
+    <value>1 second</value>
+  </data>
+  <data name="Page_Settings_Seconds_Other" xml:space="preserve">
+    <value>{0} seconds</value>
+    <comment>{0} = number of seconds</comment>
+  </data>
+  <data name="Page_Settings_Sound" xml:space="preserve">
+    <value>Sound on detection</value>
+  </data>
+  <data name="Page_Settings_SoundTest" xml:space="preserve">
+    <value>Play sound</value>
+  </data>
+  <data name="Page_Settings_SoundText" xml:space="preserve">
+    <value>A short beep as soon as Lupe has recognized a code.</value>
+  </data>
+  <data name="Page_Settings_StartSection" xml:space="preserve">
+    <value>Startup and notification area</value>
+    <comment>Section heading</comment>
+  </data>
+  <data name="Page_Settings_StoreDemo" xml:space="preserve">
+    <value>Demo: changes only apply until Lupe is closed and are not saved.</value>
+  </data>
+  <data name="Page_Settings_StoredIn" xml:space="preserve">
+    <value>Saved in {0}</value>
+    <comment>{0} = file path</comment>
+  </data>
+  <data name="Page_Settings_SuffixNone" xml:space="preserve">
+    <value>Nothing</value>
+    <comment>No key after typing</comment>
+  </data>
+  <data name="Page_Settings_SystemSettings" xml:space="preserve">
+    <value>System Settings</value>
+    <comment>Button that opens the operating system settings</comment>
+  </data>
+  <data name="Page_Settings_SystemSettingsFailed" xml:space="preserve">
+    <value>The system settings could not be opened: {0}</value>
+    <comment>{0} = error message</comment>
+  </data>
+  <data name="Page_Settings_Type" xml:space="preserve">
+    <value>Type</value>
+    <comment>Action: type the code into another program like a keyboard</comment>
+  </data>
+  <data name="Page_Settings_TypeDelay" xml:space="preserve">
+    <value>Typing speed</value>
+  </data>
+  <data name="Page_Settings_TypeDelayText" xml:space="preserve">
+    <value>Pause between characters, like a handheld scanner. Some programs – e.g. Notepad on Windows 11 – lose characters when they come too fast.</value>
+  </data>
+  <data name="Page_Shared_AimHelp" xml:space="preserve">
+    <value>Aim guide</value>
+  </data>
+  <data name="Page_Shared_Camera" xml:space="preserve">
+    <value>Camera</value>
+    <comment>screen-reader name of the camera list, section heading, permission name</comment>
+  </data>
+  <data name="Page_Shared_CopiedAll" xml:space="preserve">
+    <value>{0} codes copied, one per line.</value>
+    <comment>{0} = number of codes (always 2 or more)</comment>
+  </data>
+  <data name="Page_Shared_Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Page_Shared_CopyAll" xml:space="preserve">
+    <value>Copy all</value>
+  </data>
+  <data name="Page_Shared_CopyAllTip" xml:space="preserve">
+    <value>Copy all codes, one per line</value>
+  </data>
+  <data name="Page_Shared_FolderMissing" xml:space="preserve">
+    <value>The folder does not exist yet – Lupe creates it the first time it saves.</value>
+  </data>
+  <data name="Page_Shared_History" xml:space="preserve">
+    <value>History</value>
+    <comment>screen-reader name of the list, section heading</comment>
+  </data>
+  <data name="Page_Shared_Hotkey" xml:space="preserve">
+    <value>Keyboard shortcut</value>
+    <comment>label, settings card, permission name</comment>
+  </data>
+  <data name="Page_Shared_OnHit" xml:space="preserve">
+    <value>On a detected code</value>
+    <comment>Must match the settings section of the same name</comment>
+  </data>
+  <data name="Page_Shared_OpenFolder" xml:space="preserve">
+    <value>Open folder</value>
+  </data>
+  <data name="Page_Shared_OpenLink" xml:space="preserve">
+    <value>Open link</value>
+  </data>
+  <data name="Win_ActiveWindow_ActivateFailed" xml:space="preserve">
+    <value>Could not activate the previous window – nothing was typed.</value>
+  </data>
+  <data name="Win_ActiveWindow_Gone" xml:space="preserve">
+    <value>The previous window no longer exists.</value>
+  </data>
+  <data name="Win_Autostart_DisableFailed" xml:space="preserve">
+    <value>Could not remove autostart: {0}</value>
+    <comment>{0} = system error message</comment>
+  </data>
+  <data name="Win_Autostart_EnableFailed" xml:space="preserve">
+    <value>Could not set up autostart: {0}</value>
+    <comment>{0} = system error message</comment>
+  </data>
+  <data name="Win_Autostart_PathUnknown" xml:space="preserve">
+    <value>The path of Lupe.exe is unknown – autostart was not set up.</value>
+  </data>
+  <data name="Win_Camera_AccessDenied" xml:space="preserve">
+    <value>Windows denies access to the camera “{0}”. Check under Settings → Privacy &amp; security → Camera whether camera access is allowed for desktop apps, and whether a camera switch or cover on the device is active.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Win_Camera_AppsOff" xml:space="preserve">
+    <value>Camera access for apps is turned off. Turn on access for apps and for desktop apps under Settings → Privacy &amp; security → Camera and start the camera again.</value>
+  </data>
+  <data name="Win_Camera_DesktopAppsOff" xml:space="preserve">
+    <value>Windows does not allow desktop apps to access the camera. Turn on “Let desktop apps access your camera” under Settings → Privacy &amp; security → Camera and start the camera again.</value>
+  </data>
+  <data name="Win_Camera_DeviceOff" xml:space="preserve">
+    <value>Camera access is turned off for this device. Turn on “Camera access” under Settings → Privacy &amp; security → Camera (this requires administrator rights).</value>
+  </data>
+  <data name="Win_Camera_Disconnected" xml:space="preserve">
+    <value>The camera “{0}” can no longer be reached – was it unplugged? Plug it back in and start the camera again.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Win_Camera_ErrorCode" xml:space="preserve">
+    <value>error 0x{0:X8}</value>
+    <comment>{0} = HRESULT, formatted as 8 hex digits</comment>
+  </data>
+  <data name="Win_Camera_Failed" xml:space="preserve">
+    <value>The camera “{0}” has failed. Start it again.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Win_Camera_FormatNotSupported" xml:space="preserve">
+    <value>The camera “{0}” does not deliver an image format Lupe can read. Choose another camera or update the camera driver.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Win_Camera_FrameEmpty" xml:space="preserve">
+    <value>The camera image is empty.</value>
+  </data>
+  <data name="Win_Camera_FrameMemoryUnreadable" xml:space="preserve">
+    <value>The camera image memory cannot be read.</value>
+  </data>
+  <data name="Win_Camera_FrameUnexpectedLayout" xml:space="preserve">
+    <value>The camera image has an unexpected memory layout.</value>
+  </data>
+  <data name="Win_Camera_InUse" xml:space="preserve">
+    <value>The camera “{0}” is being used by another program (e.g. Teams, Zoom or the Camera app). Close that program and start the camera again.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Win_Camera_MediaFeaturesMissing" xml:space="preserve">
+    <value>This Windows lacks the media features (Windows “N” edition). Install the “Media Feature Pack” under Settings → System → Optional features and restart Lupe.</value>
+  </data>
+  <data name="Win_Camera_NoCamera" xml:space="preserve">
+    <value>No camera found. Connect a camera or scan a screen region or an image file instead.</value>
+  </data>
+  <data name="Win_Camera_NoColorStream" xml:space="preserve">
+    <value>The camera “{0}” does not deliver a color image (e.g. an infrared-only camera for Windows Hello). Choose another camera.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Win_Camera_NotFound" xml:space="preserve">
+    <value>The camera “{0}” was not found. Is it connected and switched on? Otherwise choose another camera.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Win_Camera_PolicyBlocked" xml:space="preserve">
+    <value>The camera is blocked on this device by policy. Contact your IT department.</value>
+  </data>
+  <data name="Win_Camera_Preempted" xml:space="preserve">
+    <value>The camera “{0}” was taken over by another program. Close the other program and start the camera again.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Win_Camera_StreamShutdown" xml:space="preserve">
+    <value>The camera “{0}” was stopped by Windows – another program took it over or it was unplugged. Check this and start the camera again.</value>
+    <comment>{0} = camera name</comment>
+  </data>
+  <data name="Win_Camera_ThisAppOff" xml:space="preserve">
+    <value>Windows has revoked Lupe's camera access. Allow Lupe access again under Settings → Privacy &amp; security → Camera (list of desktop apps) and start the camera again.</value>
+  </data>
+  <data name="Win_Camera_Unknown" xml:space="preserve">
+    <value>The camera “{0}” cannot be used ({1}). Unplug the camera and plug it back in or restart Windows; if that does not help, choose another camera.</value>
+    <comment>{0} = camera name, {1} = error code and detail</comment>
+  </data>
+  <data name="Win_Camera_UnknownError" xml:space="preserve">
+    <value>unknown error</value>
+  </data>
+  <data name="Win_Hotkey_AlreadyRegistered" xml:space="preserve">
+    <value>{0} is already in use by another program.</value>
+    <comment>{0} = shortcut</comment>
+  </data>
+  <data name="Win_Hotkey_Invalid" xml:space="preserve">
+    <value>{0} is not a valid shortcut.</value>
+    <comment>{0} = shortcut</comment>
+  </data>
+  <data name="Win_Hotkey_NoInteractiveDesktop" xml:space="preserve">
+    <value>The shortcut {0} does not work here – Lupe is running without a visible desktop (e.g. as a service or in session 0).</value>
+    <comment>{0} = shortcut</comment>
+  </data>
+  <data name="Win_Hotkey_RegisterFailed" xml:space="preserve">
+    <value>The shortcut {0} could not be registered.</value>
+    <comment>{0} = shortcut</comment>
+  </data>
+  <data name="Win_Hotkey_RegisterFailedReason" xml:space="preserve">
+    <value>The shortcut {0} could not be registered ({1}).</value>
+    <comment>{0} = shortcut, {1} = Windows error message</comment>
+  </data>
+  <data name="Win_Hotkey_RegisterTimeout" xml:space="preserve">
+    <value>The shortcut {0} could not be registered in time.</value>
+    <comment>{0} = shortcut, e.g. Ctrl+Alt+L</comment>
+  </data>
+  <data name="Win_Image_CodecMissing" xml:space="preserve">
+    <value>“{0}” cannot be read: Windows lacks the codec for {1} (image extension from the Microsoft Store, e.g. “HEIF Image Extensions” or “Webp Image Extensions”).</value>
+    <comment>{0} = file name, {1} = file format, e.g. HEIC</comment>
+  </data>
+  <data name="Win_Image_Corrupt" xml:space="preserve">
+    <value>“{0}” is damaged or not a valid image.</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Win_Image_Empty" xml:space="preserve">
+    <value>“{0}” contains no image (0 pixels).</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Win_Image_NotReadable" xml:space="preserve">
+    <value>“{0}” could not be read as an image ({1}).</value>
+    <comment>{0} = file name, {1} = system error message</comment>
+  </data>
+  <data name="Win_Image_ReadFailed" xml:space="preserve">
+    <value>“{0}” could not be read: {1}</value>
+    <comment>{0} = file name, {1} = system error message</comment>
+  </data>
+  <data name="Win_Image_TooLarge" xml:space="preserve">
+    <value>“{0}” is too large to load.</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Win_Image_UnexpectedPixelCount" xml:space="preserve">
+    <value>“{0}” could not be read: the image decoder returned an unexpected number of pixels.</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Win_Image_Unsupported" xml:space="preserve">
+    <value>“{0}” is not a supported image format (PNG, JPEG, BMP, GIF, TIFF …) or is damaged.</value>
+    <comment>{0} = file name</comment>
+  </data>
+  <data name="Win_Screen_DesktopUnreadable" xml:space="preserve">
+    <value>Cannot take a screenshot – Windows does not allow reading the desktop right now (locked, sign-in screen or no visible session).</value>
+  </data>
+  <data name="Win_Screen_DesktopUnreadableCode" xml:space="preserve">
+    <value>Cannot take a screenshot – Windows does not allow reading the desktop right now (locked, sign-in screen or no visible session, Windows error {0}).</value>
+    <comment>{0} = Win32 error code</comment>
+  </data>
+  <data name="Win_Screen_GdiError" xml:space="preserve">
+    <value>Cannot take a screenshot (GDI error {0}).</value>
+    <comment>{0} = Win32 error code</comment>
+  </data>
+  <data name="Win_Screen_OutOfMemory" xml:space="preserve">
+    <value>Not enough memory is free for a screenshot of {0} × {1} pixels.</value>
+    <comment>{0} = width, {1} = height</comment>
+  </data>
+  <data name="Win_Screen_Unreadable" xml:space="preserve">
+    <value>Cannot take a screenshot – the screen cannot be read right now.</value>
+  </data>
+  <data name="Win_Typing_Error" xml:space="preserve">
+    <value>Cannot type (Windows error {0}).</value>
+    <comment>{0} = Win32 error code</comment>
+  </data>
+  <data name="Win_Typing_ForegroundElevated" xml:space="preserve">
+    <value>Cannot type – the window in the foreground runs with higher privileges than Lupe (e.g. as administrator), and Windows does not allow keyboard input there. Copy the text instead or start Lupe as administrator too.</value>
+  </data>
+  <data name="Win_Typing_InputBlocked" xml:space="preserve">
+    <value>Cannot type – Windows did not accept the keyboard input (currently blocked by another program?).</value>
+  </data>
+  <data name="Win_Typing_InputNotAccepted" xml:space="preserve">
+    <value>Cannot type – Windows is not accepting keyboard input right now (locked screen, sign-in dialog or no visible session).</value>
+  </data>
+</root>

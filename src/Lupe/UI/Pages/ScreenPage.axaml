@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="clr-namespace:Lupe.UI"
+             xmlns:l="clr-namespace:Lupe.Core.Resources;assembly=Lupe.Core"
              x:Class="Lupe.UI.Pages.ScreenPage">
     <ScrollViewer Classes="page">
         <StackPanel MaxWidth="1000">
@@ -8,11 +9,11 @@
             <Border Classes="hero" Margin="0,0,0,4">
                 <Grid ColumnDefinitions="*,Auto">
                     <StackPanel VerticalAlignment="Center" Margin="0,0,24,0">
-                        <TextBlock Text="Code auf dem Bildschirm?" Classes="subtitle"/>
+                        <TextBlock Text="{x:Static l:Strings.Page_Screen_Title}" Classes="subtitle"/>
                         <TextBlock Classes="body" Margin="0,6,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                   Text="Lupe blendet sich kurz aus, Sie ziehen ein Rechteck um den Code – fertig. Funktioniert über alle Monitore, mit Rechnungen, Webseiten, Videokonferenzen und Fotos."/>
+                                   Text="{x:Static l:Strings.Page_Screen_Intro}"/>
                         <WrapPanel Orientation="Horizontal" Margin="0,16,0,0">
-                            <TextBlock Text="Tastenkürzel" Classes="caption" FontSize="13" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="{x:Static l:Strings.Page_Shared_Hotkey}" Classes="caption" FontSize="13" VerticalAlignment="Center" Margin="0,0,10,0"/>
                             <ItemsControl x:Name="HotkeyKeys" Focusable="False" VerticalAlignment="Center">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
@@ -29,16 +30,16 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                            <TextBlock x:Name="HotkeyNote" Text="aus jedem Programm" Classes="caption" FontSize="13" VerticalAlignment="Center" Margin="6,0,0,0"/>
-                            <Button Classes="link" Content="ändern" Margin="10,0,0,0" VerticalAlignment="Center" Click="GoSettings_Click"/>
+                            <TextBlock x:Name="HotkeyNote" Text="{x:Static l:Strings.Page_Screen_HotkeyFromAnyProgram}" Classes="caption" FontSize="13" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                            <Button Classes="link" Content="{x:Static l:Strings.Page_Screen_ChangeLink}" Margin="10,0,0,0" VerticalAlignment="Center" Click="GoSettings_Click"/>
                         </WrapPanel>
                     </StackPanel>
                     <Button x:Name="ScanButton" Grid.Column="1" Classes="accent" Height="52" MinWidth="230" Padding="22,0"
                             VerticalAlignment="Center" VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
-                            Click="Scan_Click" AutomationProperties.Name="Ausschnitt scannen">
+                            Click="Scan_Click" AutomationProperties.Name="{x:Static l:Strings.Page_Screen_ScanArea}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE7A8;" FontFamily="{DynamicResource IconFont}" FontSize="18" VerticalAlignment="Center" Margin="0,0,12,0"/>
-                            <TextBlock Text="Ausschnitt scannen" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <TextBlock Text="{x:Static l:Strings.Page_Screen_ScanArea}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </Grid>
@@ -49,48 +50,48 @@
                 <Grid ColumnDefinitions="Auto,*,Auto">
                     <TextBlock Text="&#xE7BA;" Classes="icon" Foreground="{DynamicResource SystemFillColorCautionBrush}" Margin="0,0,14,0"/>
                     <StackPanel Grid.Column="1">
-                        <TextBlock Text="Tastenkürzel nicht verfügbar" Classes="bodyStrong"/>
+                        <TextBlock Text="{x:Static l:Strings.Page_Screen_HotkeyUnavailable}" Classes="bodyStrong"/>
                         <TextBlock x:Name="HotkeyWarningText" Classes="caption" FontSize="13" Margin="0,2,0,0"/>
                     </StackPanel>
-                    <Button Grid.Column="2" Content="Anderes wählen" Click="GoSettings_Click" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                    <Button Grid.Column="2" Content="{x:Static l:Strings.Page_Screen_ChooseOther}" Click="GoSettings_Click" VerticalAlignment="Center" Margin="12,0,0,0"/>
                 </Grid>
             </Border>
 
             <!-- ========== So geht's ========== -->
-            <TextBlock Text="So geht’s" Classes="section"/>
+            <TextBlock Text="{x:Static l:Strings.Page_Screen_HowTo}" Classes="section"/>
             <UniformGrid Columns="3" Margin="-4,0,-4,0">
                 <Border Classes="card" Margin="4,0">
                     <StackPanel>
-                        <TextBlock Text="1  Tastenkürzel drücken" Classes="bodyStrong"/>
+                        <TextBlock Text="{x:Static l:Strings.Page_Screen_Step1}" Classes="bodyStrong"/>
                         <TextBlock Classes="caption" FontSize="13" Margin="0,4,0,0"
-                                   Text="In jedem Programm – auch wenn Lupe nur im Infobereich läuft. Oder hier auf den Knopf."/>
+                                   Text="{x:Static l:Strings.Page_Screen_Step1Text}"/>
                     </StackPanel>
                 </Border>
                 <Border Classes="card" Margin="4,0">
                     <StackPanel>
-                        <TextBlock Text="2  Rechteck aufziehen" Classes="bodyStrong"/>
+                        <TextBlock Text="{x:Static l:Strings.Page_Screen_Step2}" Classes="bodyStrong"/>
                         <TextBlock Classes="caption" FontSize="13" Margin="0,4,0,0"
-                                   Text="Mit der Maus um den Code. Ein Klick ohne Ziehen nimmt den ganzen Bildschirm, Esc bricht ab."/>
+                                   Text="{x:Static l:Strings.Page_Screen_Step2Text}"/>
                     </StackPanel>
                 </Border>
                 <Border Classes="card" Margin="4,0">
                     <StackPanel>
-                        <TextBlock Text="3  Ergebnis verwenden" Classes="bodyStrong"/>
+                        <TextBlock Text="{x:Static l:Strings.Page_Screen_Step3}" Classes="bodyStrong"/>
                         <TextBlock Classes="caption" FontSize="13" Margin="0,4,0,0"
-                                   Text="Laut Einstellungen kopiert, in das vorherige Fenster getippt oder als Link geöffnet. Mehrere Codes: Auswahl."/>
+                                   Text="{x:Static l:Strings.Page_Screen_Step3Text}"/>
                     </StackPanel>
                 </Border>
             </UniformGrid>
 
-            <ui:SettingCard Glyph="&#xE945;" Header="Bei einem Treffer" x:Name="ActionsCard" Margin="0,8,0,4">
-                <Button Content="Ändern" Click="GoSettings_Click"/>
+            <ui:SettingCard Glyph="&#xE945;" Header="{x:Static l:Strings.Page_Shared_OnHit}" x:Name="ActionsCard" Margin="0,8,0,4">
+                <Button Content="{x:Static l:Strings.Page_Screen_Change}" Click="GoSettings_Click"/>
             </ui:SettingCard>
 
             <!-- ========== Zuletzt erkannt ========== -->
-            <TextBlock Text="Zuletzt vom Bildschirm" Classes="section"/>
+            <TextBlock Text="{x:Static l:Strings.Page_Screen_Recent}" Classes="section"/>
             <Border Classes="card" Padding="16,10">
                 <StackPanel>
-                    <TextBlock x:Name="ResultsEmpty" Text="Noch nichts gescannt." Classes="body" Margin="0,4"
+                    <TextBlock x:Name="ResultsEmpty" Text="{x:Static l:Strings.Page_Screen_NothingYet}" Classes="body" Margin="0,4"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                     <ItemsControl x:Name="ResultList" ItemTemplate="{StaticResource CodeRow}" Focusable="False"/>
                 </StackPanel>

@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Platform.MacOS.Native;
 
 namespace Lupe.Platform.MacOS.Input;
@@ -36,23 +37,23 @@ public sealed class MacOSActiveWindow : IActiveWindow
     public async Task<string?> ActivateAsync(nint window, CancellationToken ct = default)
     {
         if (!OperatingSystem.IsMacOS())
-            return "Das Fenster von vorher lässt sich hier nicht nach vorn holen (nur unter macOS) – nichts eingetippt.";
-        if (window == 0) return "Es ist nicht bekannt, welches Programm vorher vorn war – nichts eingetippt.";
+            return Strings.Mac_ActiveWindow_NotHere;
+        if (window == 0) return Strings.Mac_ActiveWindow_Unknown;
         try
         {
             if (FrontmostPid() == window) return null;
-            if (!Activate((int)window)) return "Das Programm von vorher läuft nicht mehr – nichts eingetippt.";
+            if (!Activate((int)window)) return Strings.Mac_ActiveWindow_Gone;
             var watch = Stopwatch.StartNew();
             while (watch.Elapsed < FocusTimeout)
             {
                 await Task.Delay(30, ct).ConfigureAwait(false);
                 if (FrontmostPid() == window) return null;
             }
-            return "Das Programm von vorher ließ sich nicht nach vorn holen – nichts eingetippt.";
+            return Strings.Mac_ActiveWindow_ActivateFailed;
         }
         catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
         {
-            return "Das Programm von vorher ließ sich nicht nach vorn holen (AppKit fehlt) – nichts eingetippt.";
+            return Strings.Mac_ActiveWindow_AppKitMissing;
         }
     }
 

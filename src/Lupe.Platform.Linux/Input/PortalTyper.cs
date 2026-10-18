@@ -1,5 +1,6 @@
 using Lupe.Core.Input;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Platform.Linux.Portal;
 using Tmds.DBus.Protocol;
 
@@ -37,7 +38,7 @@ internal sealed class PortalTyper : IDisposable
             }
             catch (PortalException ex)
             {
-                _lastError = $"Eintippen geht nicht: {ex.Message}";
+                _lastError = string.Format(Strings.Linux_Typing_Failed, ex.Message);
                 return _lastError;
             }
         }
@@ -89,7 +90,7 @@ internal sealed class PortalTyper : IDisposable
             }
             catch (PortalException ex)
             {
-                _lastError = $"Eintippen geht nicht: {ex.Message}";
+                _lastError = string.Format(Strings.Linux_Typing_Failed, ex.Message);
                 DropSession();
                 errorCode = 1;
                 return accepted;
@@ -97,7 +98,7 @@ internal sealed class PortalTyper : IDisposable
         }
     }
 
-    public string DescribeRejection() => _lastError ?? "Das Desktop-Portal hat die Tastatureingabe nicht angenommen.";
+    public string DescribeRejection() => _lastError ?? Strings.Linux_Typing_PortalRejected;
 
     private async Task NotifyAsync(int keysym, bool up)
     {
@@ -115,13 +116,13 @@ internal sealed class PortalTyper : IDisposable
         _portal ??= await PortalConnection.ConnectAsync().ConfigureAwait(false);
         uint version = await _portal.GetVersionAsync(Iface).ConfigureAwait(false);
         if (version == 0)
-            throw new PortalException("Das Desktop-Portal dieser Sitzung bietet keine Fernsteuerung der Tastatur (RemoteDesktop) an – den Text stattdessen kopieren.");
+            throw new PortalException(Strings.Linux_Typing_NoRemoteDesktop);
 
         var created = await _portal.RequestAsync(Iface, "CreateSession", "a{sv}", null,
             new Dictionary<string, VariantValue> { ["session_handle_token"] = VariantValue.String(PortalConnection.NewToken()) },
             TimeSpan.FromSeconds(30)).ConfigureAwait(false);
         string session = created.GetString("session_handle")
-            ?? throw new PortalException("Das Desktop-Portal hat keine Sitzung für die Tastatur geöffnet.");
+            ?? throw new PortalException(Strings.Linux_Typing_NoPortalSession);
 
         var select = new Dictionary<string, VariantValue> { ["types"] = VariantValue.UInt32(DeviceKeyboard) };
         if (version >= 2)
@@ -131,7 +132,7 @@ internal sealed class PortalTyper : IDisposable
         }
         var selected = await _portal.RequestAsync(Iface, "SelectDevices", "oa{sv}", (ref MessageWriter w) => w.WriteObjectPath(session),
             select, TimeSpan.FromSeconds(30)).ConfigureAwait(false);
-        if (!selected.Ok) throw new PortalException("Das Desktop-Portal hat die Tastatur nicht freigegeben.");
+        if (!selected.Ok) throw new PortalException(Strings.Linux_Typing_KeyboardNotGranted);
 
         // Start zeigt beim ersten Mal den Dialog „Fernsteuerung erlauben?“ – dem Benutzer Zeit lassen
         var started = await _portal.RequestAsync(Iface, "Start", "osa{sv}", (ref MessageWriter w) =>
@@ -143,8 +144,8 @@ internal sealed class PortalTyper : IDisposable
         {
             await _portal.CloseSessionAsync(session).ConfigureAwait(false);
             throw new PortalException(started.Code == 1
-                ? "Die Fernsteuerung der Tastatur wurde abgelehnt – zum Eintippen beim nächsten Mal „Erlauben“ wählen."
-                : "Das Desktop-Portal hat die Fernsteuerung der Tastatur abgebrochen.");
+                ? Strings.Linux_Typing_RemoteControlDenied
+                : Strings.Linux_Typing_RemoteControlCancelled);
         }
         if (started.GetString("restore_token") is { Length: > 0 } restore) SaveToken(restore);
         _session = session;
@@ -190,7 +191,7 @@ internal sealed class PortalTyper : IDisposable
         }
         catch (Exception ex) when (ex is DBusExceptionBase or IOException or ObjectDisposedException or InvalidOperationException)
         {
-            throw new PortalException($"Die Verbindung zum Desktop-Portal ist gestört ({ex.Message.Trim()}).", ex);
+            throw new PortalException(string.Format(Strings.Linux_Portal_ConnectionDisturbed, ex.Message.Trim()), ex);
         }
     }
 

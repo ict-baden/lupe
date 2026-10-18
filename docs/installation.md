@@ -17,7 +17,7 @@ Which file to download, what it needs, how to let Lupe use the camera, and how t
 | **.NET** | None for the MSI and for `Lupe.exe` – both carry the .NET 10 runtime. The ZIP variant needs the **.NET 10 Runtime**. |
 | **Camera** (optional) | Any webcam that Windows offers to apps through `Windows.Media.Capture` with a colour image. Pure infrared cameras (Windows Hello) are not listed. Windows editions “N” and “KN” need the **Media Feature Pack** for the camera. |
 | **Image formats** | PNG, JPEG, BMP, GIF, TIFF, ICO and JPEG XR work out of the box. WebP, HEIC/HEIF, AVIF and JPEG XL work when the matching image extension from the Microsoft Store is installed. |
-| **Language** | The user interface and the command-line output are German, regardless of the Windows display language. |
+| **Language** | English or German: follows the display language of the system (English for any other language), switchable under *Settings › Language* or preset with `"Language": "de"` in a distributed `einstellungen.json`. |
 
 ## Downloads
 
@@ -89,7 +89,7 @@ When you close the window, Lupe keeps running in the notification area so that t
 
 ## Camera access in Windows
 
-Windows decides whether desktop programs may use the camera. If access is blocked, Lupe does not show a generic error but names the switch that is off – in German, with the path *Einstellungen → Datenschutz und Sicherheit → Kamera*. In English Windows that is *Settings › Privacy & security › Camera*:
+Windows decides whether desktop programs may use the camera. If access is blocked, Lupe does not show a generic error but names the switch that is off, with the path *Einstellungen → Datenschutz und Sicherheit → Kamera*. In English Windows that is *Settings › Privacy & security › Camera*:
 
 | Switch in Windows (English / German) | Needed | Lupe's message when it is off |
 |---|---|---|
@@ -153,7 +153,7 @@ Tagged releases name the package `lupe_1.2.3_amd64.deb`. The libraries Lupe need
 Lupe runs on macOS 12 or later. Download [`Lupe-macos-arm64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-arm64.zip) for Apple Silicon (M1 and later) or [`Lupe-macos-x64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-x64.zip) for Intel Macs, unzip it and move `Lupe.app` to *Programme* (*Applications*). .NET is included.
 
 - **Gatekeeper:** the app is only ad-hoc signed, not signed with a developer certificate and not notarised. The first time, **right-click `Lupe.app` → *Öffnen* (*Open*)** and confirm. On macOS 15 and later, where that button may be missing, allow it under *System Settings › Privacy & Security* (*Trotzdem öffnen* / *Open Anyway*), or run `xattr -dr com.apple.quarantine /Applications/Lupe.app`.
-- **Permissions** – macOS asks for each one the first time Lupe needs it; when one is missing, Lupe shows a German hint with a button to the right page in *System Settings › Privacy & Security*:
+- **Permissions** – macOS asks for each one the first time Lupe needs it; when one is missing, Lupe shows a hint with a button to the right page in *System Settings › Privacy & Security*:
   - *Kamera* (Camera) for the page *Kamera*,
   - *Bildschirmaufnahme* (Screen Recording) for the screen scan – after allowing it, quit and start Lupe again,
   - *Bedienungshilfen* (Accessibility) for typing.

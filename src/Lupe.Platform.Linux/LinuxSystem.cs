@@ -1,5 +1,6 @@
 using System.Text;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Platform.Linux.Camera;
 using Lupe.Platform.Linux.Input;
 using Lupe.Platform.Linux.Native;
@@ -43,14 +44,14 @@ public sealed class LinuxAutostart : IAutostart
                 return null;
             }
             var command = ExecutablePath();
-            if (string.IsNullOrEmpty(command)) return "Der Pfad von Lupe ist nicht bekannt – Autostart nicht eingerichtet.";
+            if (string.IsNullOrEmpty(command)) return Strings.Linux_Autostart_PathUnknown;
             Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
             File.WriteAllText(FilePath, DesktopEntry(command), new UTF8Encoding(false));
             return null;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return $"Autostart ließ sich nicht {(enabled ? "einrichten" : "entfernen")}: {ex.Message}";
+            return string.Format(enabled ? Strings.Linux_Autostart_EnableFailed : Strings.Linux_Autostart_DisableFailed, ex.Message);
         }
     }
 
@@ -59,7 +60,7 @@ public sealed class LinuxAutostart : IAutostart
         "[Desktop Entry]\n" +
         "Type=Application\n" +
         "Name=Lupe\n" +
-        "Comment=QR- und Strichcodes von Kamera, Bildschirm und Dateien lesen\n" +
+        $"Comment={Strings.Linux_Autostart_Comment}\n" +
         $"Exec={command} --hintergrund\n" +
         "Icon=lupe\n" +
         "Terminal=false\n" +
@@ -104,19 +105,19 @@ public sealed class LinuxProblems : IPlatformProblems
         switch (LinuxSession.Kind)
         {
             case SessionKind.None:
-                list.Add(new(PlatformFeature.Screen, "Keine grafische Sitzung (weder X11 noch Wayland) – Bildschirmfotos, Eintippen und Tastenkürzel gehen nicht."));
+                list.Add(new(PlatformFeature.Screen, Strings.Linux_Problem_NoSession));
                 break;
             case SessionKind.X11:
                 nint display = X11.TryOpen(out string? error);
                 if (display == 0)
                 {
-                    list.Add(new(PlatformFeature.Screen, $"Bildschirmfotos, Eintippen und Tastenkürzel gehen nicht: {error}"));
+                    list.Add(new(PlatformFeature.Screen, string.Format(Strings.Linux_Problem_X11Unavailable, error)));
                     break;
                 }
                 try
                 {
                     if (!X11.HasXTest(display))
-                        list.Add(new(PlatformFeature.Typing, "Der X-Server hat die XTest-Erweiterung nicht (Paket libxtst6) – Eintippen geht nicht, kopieren schon."));
+                        list.Add(new(PlatformFeature.Typing, Strings.Linux_Problem_NoXTest));
                 }
                 finally
                 {
@@ -125,9 +126,8 @@ public sealed class LinuxProblems : IPlatformProblems
                 break;
             case SessionKind.Wayland:
                 if (string.IsNullOrWhiteSpace(Tmds.DBus.Protocol.DBusAddress.Session))
-                    list.Add(new(PlatformFeature.Screen, "Kein Sitzungsbus – unter Wayland brauchen Bildschirmfotos, Eintippen und Tastenkürzel die Desktop-Portale (xdg-desktop-portal)."));
-                list.Add(new(PlatformFeature.ActiveWindow,
-                    "Unter Wayland kann Lupe nicht sehen, welches Fenster vorn ist – nach dem Scan wird in das Fenster getippt, das dann den Fokus hat."));
+                    list.Add(new(PlatformFeature.Screen, Strings.Linux_Problem_NoSessionBus));
+                list.Add(new(PlatformFeature.ActiveWindow, Strings.Linux_Problem_WaylandActiveWindow));
                 break;
         }
         return list;
@@ -143,8 +143,7 @@ public sealed class LinuxProblems : IPlatformProblems
             if (devices.Length == 0) return;
             bool anyAccess = devices.Any(d => Libc2.access(d, Libc2.R_OK | Libc2.W_OK) == 0);
             if (!anyAccess)
-                list.Add(new(PlatformFeature.Camera,
-                    "Kein Zugriff auf die Kameras (/dev/video*) – der Benutzer muss zur Gruppe „video“ gehören: „sudo usermod -aG video $USER“, danach neu anmelden."));
+                list.Add(new(PlatformFeature.Camera, Strings.Linux_Problem_NoCameraAccess));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

@@ -1,13 +1,14 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:pages="clr-namespace:Lupe.UI.Pages"
+             xmlns:l="clr-namespace:Lupe.Core.Resources;assembly=Lupe.Core"
              x:Class="Lupe.UI.Pages.HistoryPage">
     <Grid Margin="36,0,36,20" RowDefinitions="Auto,Auto,*,Auto">
 
         <!-- ========== Suche und Export ========== -->
         <Grid Margin="0,0,0,12" ColumnDefinitions="280,*,Auto,Auto">
-            <TextBox x:Name="SearchBox" VerticalAlignment="Center" TextChanged="Search_TextChanged" PlaceholderText="Inhalt, Format oder Quelle"
-                     AutomationProperties.Name="Verlauf durchsuchen">
+            <TextBox x:Name="SearchBox" VerticalAlignment="Center" TextChanged="Search_TextChanged" PlaceholderText="{x:Static l:Strings.Page_History_SearchPlaceholder}"
+                     AutomationProperties.Name="{x:Static l:Strings.Page_History_SearchName}">
                 <TextBox.InnerRightContent>
                     <TextBlock Text="&#xE721;" Classes="icon" FontSize="13" Margin="0,0,11,0"
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" IsHitTestVisible="False"/>
@@ -17,13 +18,13 @@
             <Button x:Name="ExportButton" Grid.Column="2" Click="Export_Click" Margin="8,0,0,0">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="&#xE74E;" Classes="glyph"/>
-                    <TextBlock Text="Als CSV exportieren …" VerticalAlignment="Center"/>
+                    <TextBlock Text="{x:Static l:Strings.Page_History_ExportCsv}" VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>
             <Button x:Name="ClearButton" Grid.Column="3" Click="Clear_Click" Margin="8,0,0,0">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="&#xE74D;" Classes="glyph"/>
-                    <TextBlock Text="Alles löschen" VerticalAlignment="Center"/>
+                    <TextBlock Text="{x:Static l:Strings.Page_History_ClearAll}" VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>
         </Grid>
@@ -34,7 +35,7 @@
                 <Grid ColumnDefinitions="Auto,*">
                     <TextBlock Text="&#xE7BA;" Classes="icon" Foreground="{DynamicResource SystemFillColorCautionBrush}" Margin="0,0,14,0"/>
                     <StackPanel Grid.Column="1">
-                        <TextBlock Text="Problem mit der Verlaufsdatei" Classes="bodyStrong"/>
+                        <TextBlock Text="{x:Static l:Strings.Page_History_ProblemTitle}" Classes="bodyStrong"/>
                         <TextBlock x:Name="ProblemText" Classes="caption" FontSize="13" Margin="0,2,0,0"/>
                     </StackPanel>
                 </Grid>
@@ -45,11 +46,11 @@
                 <Grid ColumnDefinitions="Auto,*,Auto">
                     <TextBlock Text="&#xE946;" Classes="icon" Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" Margin="0,0,14,0"/>
                     <StackPanel Grid.Column="1">
-                        <TextBlock Text="Der Verlauf wird nicht gespeichert" Classes="bodyStrong"/>
+                        <TextBlock Text="{x:Static l:Strings.Page_History_OffTitle}" Classes="bodyStrong"/>
                         <TextBlock Classes="caption" FontSize="13" Margin="0,2,0,0"
-                                   Text="Die Einträge hier gibt es nur, bis Lupe beendet wird – auf der Platte liegt nichts."/>
+                                   Text="{x:Static l:Strings.Page_History_OffText}"/>
                     </StackPanel>
-                    <Button Grid.Column="2" Content="Einstellungen" Click="GoSettings_Click" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                    <Button Grid.Column="2" Content="{x:Static l:Strings.Page_History_GoSettings}" Click="GoSettings_Click" VerticalAlignment="Center" Margin="12,0,0,0"/>
                 </Grid>
             </Border>
         </StackPanel>
@@ -60,21 +61,21 @@
                 <!-- Spaltenköpfe: Klick sortiert, zweiter Klick dreht um -->
                 <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Padding="4,0">
                     <Grid x:Name="HeaderGrid" ColumnDefinitions="150,150,120,*" Height="34">
-                        <Button x:Name="SortTime" Classes="header" Tag="Time" Click="Sort_Click" Content="Zeit"/>
-                        <Button x:Name="SortSource" Grid.Column="1" Classes="header" Tag="SourceLabel" Click="Sort_Click" Content="Quelle"/>
-                        <Button x:Name="SortFormat" Grid.Column="2" Classes="header" Tag="FormatLabel" Click="Sort_Click" Content="Format"/>
-                        <Button x:Name="SortText" Grid.Column="3" Classes="header" Tag="OneLine" Click="Sort_Click" Content="Inhalt"/>
+                        <Button x:Name="SortTime" Classes="header" Tag="Time" Click="Sort_Click" Content="{x:Static l:Strings.Page_History_ColumnTime}"/>
+                        <Button x:Name="SortSource" Grid.Column="1" Classes="header" Tag="SourceLabel" Click="Sort_Click" Content="{x:Static l:Strings.Page_History_ColumnSource}"/>
+                        <Button x:Name="SortFormat" Grid.Column="2" Classes="header" Tag="FormatLabel" Click="Sort_Click" Content="{x:Static l:Strings.Page_History_ColumnFormat}"/>
+                        <Button x:Name="SortText" Grid.Column="3" Classes="header" Tag="OneLine" Click="Sort_Click" Content="{x:Static l:Strings.Page_History_ColumnContent}"/>
                     </Grid>
                 </Border>
                 <ListBox x:Name="HistoryList" Grid.Row="1" Classes="table" SelectionMode="Single" SelectionChanged="List_SelectionChanged"
-                         DoubleTapped="List_DoubleTapped" KeyDown="List_KeyDown" AutomationProperties.Name="Verlauf"
+                         DoubleTapped="List_DoubleTapped" KeyDown="List_KeyDown" AutomationProperties.Name="{x:Static l:Strings.Page_Shared_History}"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListBox.ContextMenu>
                         <ContextMenu>
-                            <MenuItem Header="Kopieren" Click="Copy_Click" InputGesture="Ctrl+C"/>
-                            <MenuItem x:Name="MenuOpenLink" Header="Link öffnen" Click="OpenLink_Click"/>
+                            <MenuItem Header="{x:Static l:Strings.Page_Shared_Copy}" Click="Copy_Click" InputGesture="Ctrl+C"/>
+                            <MenuItem x:Name="MenuOpenLink" Header="{x:Static l:Strings.Page_Shared_OpenLink}" Click="OpenLink_Click"/>
                             <Separator/>
-                            <MenuItem Header="Eintrag löschen" Click="Delete_Click" InputGesture="Delete"/>
+                            <MenuItem Header="{x:Static l:Strings.Page_History_DeleteEntry}" Click="Delete_Click" InputGesture="Delete"/>
                         </ContextMenu>
                     </ListBox.ContextMenu>
                     <ListBox.ItemTemplate>
@@ -100,9 +101,9 @@
                 <StackPanel x:Name="EmptyHint" Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24" IsVisible="False">
                     <TextBlock Text="&#xE81C;" FontFamily="{DynamicResource IconFont}" FontSize="36" HorizontalAlignment="Center"
                                Foreground="{DynamicResource TextFillColorTertiaryBrush}"/>
-                    <TextBlock x:Name="EmptyTitle" Text="Noch nichts erkannt" Classes="subtitle" HorizontalAlignment="Center" Margin="0,12,0,0"/>
+                    <TextBlock x:Name="EmptyTitle" Text="{x:Static l:Strings.Page_History_EmptyTitle}" Classes="subtitle" HorizontalAlignment="Center" Margin="0,12,0,0"/>
                     <TextBlock x:Name="EmptyText" Classes="caption" FontSize="13" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,6,0,0"
-                               Text="Alles, was Lupe per Kamera, Bildschirm oder Datei liest, steht hier."/>
+                               Text="{x:Static l:Strings.Page_History_EmptyText}"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -111,26 +112,26 @@
         <Border x:Name="DetailBar" Grid.Row="3" Classes="card" Margin="0,12,0,0" Padding="16,12" IsEnabled="False">
             <Grid ColumnDefinitions="*,Auto">
                 <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
-                    <TextBlock x:Name="DetailTitle" Text="Kein Eintrag gewählt" Classes="bodyStrong" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                    <TextBlock x:Name="DetailTitle" Text="{x:Static l:Strings.Page_History_NoSelection}" Classes="bodyStrong" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
                     <TextBlock x:Name="DetailText" Classes="caption" FontSize="13" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Click="Copy_Click" AutomationProperties.Name="Kopieren">
+                    <Button Click="Copy_Click" AutomationProperties.Name="{x:Static l:Strings.Page_Shared_Copy}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE8C8;" Classes="glyph"/>
-                            <TextBlock Text="Kopieren" VerticalAlignment="Center"/>
+                            <TextBlock Text="{x:Static l:Strings.Page_Shared_Copy}" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-                    <Button x:Name="OpenLinkButton" Click="OpenLink_Click" Margin="6,0,0,0" AutomationProperties.Name="Link öffnen">
+                    <Button x:Name="OpenLinkButton" Click="OpenLink_Click" Margin="6,0,0,0" AutomationProperties.Name="{x:Static l:Strings.Page_Shared_OpenLink}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE8A7;" Classes="glyph"/>
-                            <TextBlock Text="Link öffnen" VerticalAlignment="Center"/>
+                            <TextBlock Text="{x:Static l:Strings.Page_Shared_OpenLink}" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
-                    <Button Click="Delete_Click" Margin="6,0,0,0" ToolTip.Tip="Eintrag löschen (Entf)" AutomationProperties.Name="Eintrag löschen">
+                    <Button Click="Delete_Click" Margin="6,0,0,0" ToolTip.Tip="{x:Static l:Strings.Page_History_DeleteEntryTip}" AutomationProperties.Name="{x:Static l:Strings.Page_History_DeleteEntry}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE74D;" Classes="glyph"/>
-                            <TextBlock Text="Löschen" VerticalAlignment="Center"/>
+                            <TextBlock Text="{x:Static l:Strings.Page_History_Delete}" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>

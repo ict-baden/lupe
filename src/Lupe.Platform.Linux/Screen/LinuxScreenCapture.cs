@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Core.Screen;
 using Lupe.Platform.Linux.Native;
 using Lupe.Platform.Linux.Portal;
@@ -55,7 +56,7 @@ public sealed class LinuxScreenCapture : IScreenCapture
             if (Display() is not { } d)
             {
                 image = null;
-                error = $"Bildschirmfotos gehen nicht: {_displayError}";
+                error = string.Format(Strings.Linux_Screen_Unavailable, _displayError);
                 return false;
             }
             return TryCaptureX11(d, area, out image, out error);
@@ -92,7 +93,7 @@ public sealed class LinuxScreenCapture : IScreenCapture
                         if (m.width <= 0 || m.height <= 0) continue;
                         var bounds = new PixelRect(m.x, m.y, m.width, m.height);
                         list.Add(new MonitorArea(bounds, Intersect(bounds, work) ?? bounds, 1.0, m.primary != 0,
-                            AtomName(display, m.name) ?? $"Bildschirm {i + 1}"));
+                            AtomName(display, m.name) ?? string.Format(Strings.Linux_Screen_MonitorNumbered, i + 1)));
                     }
                 }
                 finally
@@ -105,7 +106,7 @@ public sealed class LinuxScreenCapture : IScreenCapture
         {
             // Ohne libXrandr: ein Monitor über den ganzen Bildschirm
         }
-        if (list.Count == 0) list.Add(new MonitorArea(rootRect, Intersect(rootRect, work) ?? rootRect, 1.0, true, "Bildschirm"));
+        if (list.Count == 0) list.Add(new MonitorArea(rootRect, Intersect(rootRect, work) ?? rootRect, 1.0, true, Strings.Linux_Screen_Monitor));
         if (!list.Any(m => m.IsPrimary)) list[0] = list[0] with { IsPrimary = true };
         return list.OrderBy(m => m.Bounds.X).ThenBy(m => m.Bounds.Y).ToList();
     }
@@ -146,7 +147,7 @@ public sealed class LinuxScreenCapture : IScreenCapture
             xi = X11.XGetImage(display, X11.XDefaultRootWindow(display), part.X, part.Y, (uint)part.Width, (uint)part.Height, nuint.MaxValue, X11.ZPixmap));
         if (xi == null)
         {
-            error = code != 0 ? $"Der X-Server hat das Bildschirmfoto abgelehnt (Fehler {code})." : "Der X-Server hat kein Bildschirmfoto geliefert.";
+            error = code != 0 ? string.Format(Strings.Linux_Screen_XRejected, code) : Strings.Linux_Screen_XNoScreenshot;
             return false;
         }
         try
@@ -168,7 +169,7 @@ public sealed class LinuxScreenCapture : IScreenCapture
         error = null;
         if (xi.bits_per_pixel != 32 && xi.bits_per_pixel != 24)
         {
-            error = $"Die Farbtiefe des Bildschirms ({xi.depth} Bit) wird nicht unterstützt.";
+            error = string.Format(Strings.Linux_Screen_DepthUnsupported, xi.depth);
             return false;
         }
         int rs = Shift((ulong)xi.red_mask), gs = Shift((ulong)xi.green_mask), bs = Shift((ulong)xi.blue_mask);
@@ -212,7 +213,7 @@ public sealed class LinuxScreenCapture : IScreenCapture
     // ---------- Wayland ----------
 
     private IReadOnlyList<MonitorArea> WaylandFallbackMonitors() =>
-        _lastPortalSize is { } shot ? [new MonitorArea(shot, shot, 1.0, true, "Bildschirm")] : [];
+        _lastPortalSize is { } shot ? [new MonitorArea(shot, shot, 1.0, true, Strings.Linux_Screen_Monitor)] : [];
 
     private bool TryCapturePortal(PixelRect area, [NotNullWhen(true)] out PixelImage? image, out string? error)
     {
@@ -298,16 +299,16 @@ internal static class PortalScreenshot
             (ref MessageWriter w) => w.WriteString(""), options, TimeSpan.FromSeconds(60), ct).ConfigureAwait(false);
         if (!response.Ok)
             throw new PortalException(response.Code == 1
-                ? "Das Bildschirmfoto wurde abgelehnt – in den Systemeinstellungen (Datenschutz → Bildschirmfotos) Lupe erlauben."
-                : "Das Desktop-Portal hat kein Bildschirmfoto geliefert.");
+                ? Strings.Linux_Portal_ScreenshotDenied
+                : Strings.Linux_Portal_NoScreenshot);
         string? uri = response.GetString("uri");
         if (uri is null || !Uri.TryCreate(uri, UriKind.Absolute, out var parsed) || !parsed.IsFile)
-            throw new PortalException("Das Desktop-Portal hat kein Bildschirmfoto geliefert.");
+            throw new PortalException(Strings.Linux_Portal_NoScreenshot);
         string path = parsed.LocalPath;
         try
         {
             var bitmap = SKBitmap.Decode(path, DecodeInfo(path));
-            return bitmap ?? throw new PortalException("Das Bildschirmfoto des Desktop-Portals ließ sich nicht lesen.");
+            return bitmap ?? throw new PortalException(Strings.Linux_Portal_ScreenshotUnreadable);
         }
         finally
         {
@@ -319,7 +320,7 @@ internal static class PortalScreenshot
     private static SKImageInfo DecodeInfo(string path)
     {
         using var codec = SKCodec.Create(path);
-        if (codec is null) throw new PortalException("Das Bildschirmfoto des Desktop-Portals ließ sich nicht lesen.");
+        if (codec is null) throw new PortalException(Strings.Linux_Portal_ScreenshotUnreadable);
         return new SKImageInfo(codec.Info.Width, codec.Info.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
     }
 }

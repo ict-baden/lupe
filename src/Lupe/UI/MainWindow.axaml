@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:Lupe.UI"
+        xmlns:l="clr-namespace:Lupe.Core.Resources;assembly=Lupe.Core"
         x:Class="Lupe.UI.MainWindow"
         Title="Lupe" Width="1100" Height="740" MinWidth="900" MinHeight="600"
         WindowStartupLocation="CenterScreen" FontFamily="{DynamicResource UiFont}" Foreground="{DynamicResource TextFillColorPrimaryBrush}"
@@ -14,7 +15,7 @@
                 <Image Source="avares://Lupe/Assets/lupe.png" Width="34" Height="34" RenderOptions.BitmapInterpolationMode="HighQuality"/>
                 <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
                     <TextBlock x:Name="AppTitle" Text="Lupe" Classes="bodyStrong" FontSize="16"/>
-                    <TextBlock Text="QR- und Barcodes lesen" Classes="caption"/>
+                    <TextBlock Text="{x:Static l:Strings.App_Main_Tagline}" Classes="caption"/>
                 </StackPanel>
             </StackPanel>
 
@@ -27,31 +28,31 @@
                                    Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}"/>
                     </Border>
                     <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
-                        <TextBlock x:Name="StatusTitle" Text="Win+Umschalt+Q" Classes="bodyStrong" FontSize="13"
+                        <TextBlock x:Name="StatusTitle" Classes="bodyStrong" FontSize="13"
                                    TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
-                        <TextBlock x:Name="StatusDetail" Text="scannt einen Ausschnitt" Classes="caption"
+                        <TextBlock x:Name="StatusDetail" Text="{x:Static l:Strings.App_Main_StatusReady}" Classes="caption"
                                    TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
             <StackPanel DockPanel.Dock="Bottom">
-                <ui:NavButton x:Name="NavInfo" Glyph="&#xE946;" Content="Info"/>
+                <ui:NavButton x:Name="NavInfo" Glyph="&#xE946;" Content="{x:Static l:Strings.App_Nav_Info}"/>
             </StackPanel>
 
             <StackPanel>
-                <ui:NavButton x:Name="NavCamera" Glyph="&#xE722;" Content="Kamera"/>
-                <ui:NavButton x:Name="NavScreen" Glyph="&#xE7F4;" Content="Bildschirm"/>
-                <ui:NavButton x:Name="NavFile" Glyph="&#xE8B9;" Content="Datei"/>
-                <ui:NavButton x:Name="NavHistory" Glyph="&#xE81C;" Content="Verlauf"/>
-                <ui:NavButton x:Name="NavSettings" Glyph="&#xE713;" Content="Einstellungen"/>
+                <ui:NavButton x:Name="NavCamera" Glyph="&#xE722;" Content="{x:Static l:Strings.App_Nav_Camera}"/>
+                <ui:NavButton x:Name="NavScreen" Glyph="&#xE7F4;" Content="{x:Static l:Strings.App_Nav_Screen}"/>
+                <ui:NavButton x:Name="NavFile" Glyph="&#xE8B9;" Content="{x:Static l:Strings.App_Nav_File}"/>
+                <ui:NavButton x:Name="NavHistory" Glyph="&#xE81C;" Content="{x:Static l:Strings.App_Nav_History}"/>
+                <ui:NavButton x:Name="NavSettings" Glyph="&#xE713;" Content="{x:Static l:Strings.App_Nav_Settings}"/>
             </StackPanel>
         </DockPanel>
 
         <!-- ===================== Inhalt ===================== -->
         <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
             <StackPanel Margin="36,26,36,14">
-                <TextBlock x:Name="PageTitle" Text="Kamera" Classes="title"/>
+                <TextBlock x:Name="PageTitle" Text="{x:Static l:Strings.App_Nav_Camera}" Classes="title"/>
                 <TextBlock x:Name="PageSubtitle" Classes="caption" FontSize="13" Margin="1,2,0,0"/>
             </StackPanel>
 
@@ -64,7 +65,7 @@
                     <TextBlock x:Name="InfoIcon" Text="&#xE946;" Classes="icon" FontSize="14" Margin="0,2,10,0" VerticalAlignment="Top"/>
                     <TextBlock x:Name="InfoText" Grid.Column="1" Classes="body" FontSize="13" VerticalAlignment="Center"/>
                     <Button Grid.Column="2" Classes="ghost" Click="CloseInfo_Click" Margin="12,0,0,0" VerticalAlignment="Center"
-                            ToolTip.Tip="Meldung schließen" AutomationProperties.Name="Meldung schließen">
+                            ToolTip.Tip="{x:Static l:Strings.App_Main_CloseNotice}" AutomationProperties.Name="{x:Static l:Strings.App_Main_CloseNotice}">
                         <TextBlock Text="&#xE711;" Classes="icon" FontSize="11"/>
                     </Button>
                 </Grid>

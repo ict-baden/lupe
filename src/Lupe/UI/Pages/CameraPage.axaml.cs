@@ -8,6 +8,7 @@ using Lupe.Core.Camera;
 using Lupe.Core.Decoding;
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Demo;
 using Lupe.Services;
 
@@ -71,8 +72,8 @@ public partial class CameraPage : UserControl, IPage
     private bool ScannerMode => _state.Settings.Actions.HasFlag(ResultActions.Eintippen);
 
     private void UpdateTypeHint() => TypeHint.Text = ScannerMode
-        ? "Eintippen ist an: Wie ein Handscanner schreibt Lupe erkannte Codes in das Programm, das gerade vorn ist – das Zielprogramm anklicken, Lupe kann dahinter oder minimiert weiterlaufen."
-        : "Eintippen ist aus. Wie ein Handscanner in andere Programme schreiben: Einstellungen › Bei einem Treffer › Eintippen. Oder den Code kopieren.";
+        ? Strings.Page_Camera_TypeOnHint
+        : Strings.Page_Camera_TypeOffHint;
 
     // ================= Sichtbarkeit =================
 
@@ -81,11 +82,11 @@ public partial class CameraPage : UserControl, IPage
         _keptWhileMinimized = false;
         // Screenshots stellen ihren Zustand selbst her – eine langsame Kamerasuche käme ihnen sonst dazwischen
         if (_state.Strict) return;
-        if (!_listed) Ui.Run(_state, ListCamerasAsync, "Kameras suchen");
+        if (!_listed) Ui.Run(_state, ListCamerasAsync, Strings.Page_Camera_SearchCameras);
         else if (_resumeOnShow)
         {
             _resumeOnShow = false;
-            Ui.Run(_state, StartAsync, "Kamera starten");
+            Ui.Run(_state, StartAsync, Strings.Page_Camera_StartCamera);
         }
     }
 
@@ -102,7 +103,7 @@ public partial class CameraPage : UserControl, IPage
         }
         _keptWhileMinimized = false;
         _resumeOnShow = true;
-        Ui.Run(_state, StopCameraAsync, "Kamera stoppen");
+        Ui.Run(_state, StopCameraAsync, Strings.Page_Camera_StopCamera);
     }
 
     private bool _keptWhileMinimized;
@@ -143,22 +144,22 @@ public partial class CameraPage : UserControl, IPage
         UpdateButtons();
     }
 
-    private void Refresh_Click(object? sender, RoutedEventArgs e) => Ui.Run(_state, ListCamerasAsync, "Kameras suchen");
+    private void Refresh_Click(object? sender, RoutedEventArgs e) => Ui.Run(_state, ListCamerasAsync, Strings.Page_Camera_SearchCameras);
 
     private void CameraBox_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (_suppressSelection || CameraBox.SelectedItem is not CameraInfo info) return;
         if (info.Id != _state.Settings.Camera) _state.UpdateSettings(s => s with { Camera = info.Id });
         // Läuft eine andere Kamera: auf die gewählte umschalten
-        if (_loop is not null) Ui.Run(_state, StartAsync, "Kamera starten");
+        if (_loop is not null) Ui.Run(_state, StartAsync, Strings.Page_Camera_StartCamera);
     }
 
     // ================= Start und Stopp =================
 
     private void StartStop_Click(object? sender, RoutedEventArgs e)
     {
-        if (_loop is not null) Ui.Run(_state, StopCameraAsync, "Kamera stoppen");
-        else Ui.Run(_state, StartAsync, "Kamera starten");
+        if (_loop is not null) Ui.Run(_state, StopCameraAsync, Strings.Page_Camera_StopCamera);
+        else Ui.Run(_state, StartAsync, Strings.Page_Camera_StartCamera);
     }
 
     private async Task StartAsync()
@@ -194,7 +195,7 @@ public partial class CameraPage : UserControl, IPage
             }
             _decoder = decoder;
             loop.Frame += (_, image) => OnFrame(generation, image);
-            loop.Detected += (_, hit) => Dispatcher.UIThread.Post(() => Ui.Run(_state, () => OnDetectedAsync(generation, hit.Codes), "Treffer verarbeiten"));
+            loop.Detected += (_, hit) => Dispatcher.UIThread.Post(() => Ui.Run(_state, () => OnDetectedAsync(generation, hit.Codes), Strings.Page_Camera_ProcessHit));
             loop.Failed += (_, message) => Dispatcher.UIThread.Post(() => OnFailed(generation, message));
             _source = source;
             _loop = loop;
@@ -250,15 +251,15 @@ public partial class CameraPage : UserControl, IPage
         if (loop is not null)
         {
             try { await loop.StopAsync(); }
-            catch (Exception ex) when (ex is not OutOfMemoryException) { _state.Report(NoticeKind.Warning, $"Kamera stoppen: {ex.Message}"); }
+            catch (Exception ex) when (ex is not OutOfMemoryException) { _state.Report(NoticeKind.Warning, string.Format(Strings.Page_Camera_StopCameraFailed, ex.Message)); }
             try { await loop.DisposeAsync(); }
-            catch (Exception ex) when (ex is not OutOfMemoryException) { _state.Report(NoticeKind.Warning, $"Kamera freigeben: {ex.Message}"); }
+            catch (Exception ex) when (ex is not OutOfMemoryException) { _state.Report(NoticeKind.Warning, string.Format(Strings.Page_Camera_ReleaseCameraFailed, ex.Message)); }
         }
         if (source is not null)
         {
             // Die Schleife gibt ihre Quelle nicht zwingend frei – die Kamera gehört der Seite
             try { await source.DisposeAsync(); }
-            catch (Exception ex) when (ex is not OutOfMemoryException) { _state.Report(NoticeKind.Warning, $"Kamera freigeben: {ex.Message}"); }
+            catch (Exception ex) when (ex is not OutOfMemoryException) { _state.Report(NoticeKind.Warning, string.Format(Strings.Page_Camera_ReleaseCameraFailed, ex.Message)); }
         }
         // Letztes Bild nicht stehen lassen: ohne laufende Kamera zeigt der Sucher den Hinweis
         View.Source = null;
@@ -344,10 +345,12 @@ public partial class CameraPage : UserControl, IPage
                 i < entries.Count ? entries[i] : null));
         ResultEmpty.IsVisible = _results.Count == 0;
         CopyAllButton.IsVisible = _results.Count > 1;
-        ResultTitle.Text = codes.Count > 1 ? $"{codes.Count} Codes erkannt · {Labels.ShortTime(time, DateTimeOffset.Now)}" : $"Zuletzt erkannt · {Labels.ShortTime(time, DateTimeOffset.Now)}";
+        ResultTitle.Text = codes.Count > 1
+            ? string.Format(Strings.Page_Camera_CodesDetectedAt, codes.Count, Labels.ShortTime(time, DateTimeOffset.Now))
+            : string.Format(Strings.Page_Camera_LastDetectedAt, Labels.ShortTime(time, DateTimeOffset.Now));
 
         string done = codes.Count > 1
-            ? "Mehrere Codes im Bild – alle stehen im Verlauf. Den gewünschten kopieren oder öffnen."
+            ? Strings.Page_Camera_MultipleCodes
             : outcome is null ? "" : outcome.Summary;
         ResultDone.Text = done;
         ResultDone.IsVisible = done.Length > 0;
@@ -364,7 +367,7 @@ public partial class CameraPage : UserControl, IPage
             finally { _gate.Release(); }
             ShowHint(Hint.Error, message);
             UpdateButtons();
-        }, "Kamera stoppen");
+        }, Strings.Page_Camera_StopCamera);
     }
 
     // ================= Anzeige =================
@@ -376,13 +379,11 @@ public partial class CameraPage : UserControl, IPage
         GoScreen.IsVisible = GoFile.IsVisible = hint is Hint.NoCamera or Hint.Error;
         (PlaceholderGlyph.Text, PlaceholderTitle.Text, PlaceholderText.Text, PlaceholderStartText.Text) = hint switch
         {
-            Hint.Starting => ("\uE722", "Kamera wird gestartet …", "", ""),
-            Hint.NoCamera => ("\uE722", "Keine Kamera gefunden – Bildschirm oder Datei nutzen",
-                "Codes auf dem Bildschirm liest „Ausschnitt scannen“, Fotos und Scans die Seite „Datei“. Eine Webcam anschließen und oben „Kameras neu suchen“ klicken."
-                + (detail is null ? "" : $"\n({detail})"), ""),
-            Hint.Error => ("\uE7BA", "Kamera nicht verfügbar", detail ?? "Die Kamera ließ sich nicht starten.", "Erneut versuchen"),
-            _ => ("\uE722", "Kamera ist aus",
-                "Code in die Mitte des Bildes halten – Lupe erkennt ihn von selbst, meldet ihn mit einem Ton und legt ihn in den Verlauf.", "Kamera starten"),
+            Hint.Starting => ("\uE722", Strings.Page_Camera_Starting, "", ""),
+            Hint.NoCamera => ("\uE722", Strings.Page_Camera_NoCameraTitle,
+                detail is null ? Strings.Page_Camera_NoCameraText : string.Format(Strings.Page_Camera_NoCameraTextWithDetail, detail), ""),
+            Hint.Error => ("\uE7BA", Strings.Page_Camera_UnavailableTitle, detail ?? Strings.Page_Camera_StartFailed, Strings.Page_Camera_TryAgain),
+            _ => ("\uE722", Strings.Page_Camera_Off, Strings.Page_Camera_OffText, Strings.Page_Camera_StartCamera),
         };
         PlaceholderText.IsVisible = PlaceholderText.Text?.Length > 0;
     }
@@ -391,7 +392,7 @@ public partial class CameraPage : UserControl, IPage
     {
         bool running = _loop is not null;
         StartButton.IsEnabled = !starting && CameraBox.SelectedItem is CameraInfo;
-        StartText.Text = running ? "Stoppen" : "Starten";
+        StartText.Text = running ? Strings.Page_Camera_Stop : Strings.Page_Camera_Start;
         StartGlyph.Text = running ? "\uE71A" : "\uE768";
     }
 
@@ -408,7 +409,7 @@ public partial class CameraPage : UserControl, IPage
         if (old.Actions != now.Actions) UpdateTypeHint();
         if (!old.Formats.SequenceEqual(now.Formats) && _loop is not null) _decoder = _state.CreateLiveDecoder();
         // Die Wiederholungssperre gibt der Schleife ihr Konstruktor mit – also neu starten
-        if (old.RepeatSuppressMs != now.RepeatSuppressMs && _loop is not null) Ui.Run(_state, StartAsync, "Kamera starten");
+        if (old.RepeatSuppressMs != now.RepeatSuppressMs && _loop is not null) Ui.Run(_state, StartAsync, Strings.Page_Camera_StartCamera);
         // Link-Regeln geändert: Knöpfe der Ergebnisleiste neu bewerten
         if (!old.LinkRules.SequenceEqual(now.LinkRules) && _results.Count > 0)
             ShowResults([.. _results.Select(r => r.Code)], [.. _results.Select(r => r.Entry)], _results[0].Time, null);
@@ -420,7 +421,7 @@ public partial class CameraPage : UserControl, IPage
     private async void CopyAll_Click(object? sender, RoutedEventArgs e)
     {
         if (await _state.Hits.CopyAllAsync([.. _results]) is { } error) _state.Report(NoticeKind.Error, error);
-        else _state.Report(NoticeKind.Success, $"{_results.Count} Codes zeilenweise kopiert.");
+        else _state.Report(NoticeKind.Success, string.Format(Strings.Page_Shared_CopiedAll, _results.Count));
     }
 
     // ================= Screenshots =================
@@ -448,10 +449,10 @@ public partial class CameraPage : UserControl, IPage
         LiveTag.IsVisible = true;
         // Wie bei laufender Kamera: Knopf bedienbar (StopCameraAsync hat ihn ohne gewählte Kamera ausgegraut)
         UpdateButtons();
-        StartText.Text = "Stoppen";
+        StartText.Text = Strings.Page_Camera_Stop;
         StartGlyph.Text = "\uE71A";
         ShowResults(codes, [], DemoData.ScreenshotTime, new ActionOutcome(ResultActions.Kopieren, []));
-        ResultTitle.Text = "Zuletzt erkannt · 10:42:07";
+        ResultTitle.Text = string.Format(Strings.Page_Camera_LastDetectedAt, "10:42:07");
         await Ui.IdleAsync();
     }
 }

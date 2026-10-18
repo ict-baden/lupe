@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Lupe.Core.Resources;
 
 namespace Lupe.UI;
 
@@ -33,8 +34,8 @@ internal static class Dialogs
         icon.SetResource(TextBlock.ForegroundProperty, warning ? "SystemFillColorCautionBrush" : "AccentTextFillColorPrimaryBrush");
         var message = new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap };
         message.Classes.Add("body");
-        var yes = new Button { Content = "Ja", MinWidth = 96 };
-        var no = new Button { Content = "Nein", MinWidth = 96, Margin = new Thickness(8, 0, 0, 0), IsDefault = true };
+        var yes = new Button { Content = Strings.App_Dialog_Yes, MinWidth = 96 };
+        var no = new Button { Content = Strings.App_Dialog_No, MinWidth = 96, Margin = new Thickness(8, 0, 0, 0), IsDefault = true };
         no.Classes.Add("accent");
         bool answer = false;
         yes.Click += (_, _) =>

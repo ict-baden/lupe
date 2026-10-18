@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 
 namespace Lupe.Core.Input;
 
@@ -23,7 +24,10 @@ public static class HotkeyText
     private const int VK_F24 = 0x87;
     private const int VK_NUMPAD0 = 0x60;
 
-    /// <summary>Tasten mit festem Namen: erster Name zur Anzeige, die übrigen werden beim Einlesen auch erkannt.</summary>
+    /// <summary>
+    /// Tasten mit festem Namen zum Einlesen (deutsch zuerst, dann englische und weitere Schreibweisen). Angezeigt wird der
+    /// Name aus den Sprachdateien (<see cref="KeyResource"/>); er wird beim Einlesen in jeder Sprache ebenfalls erkannt.
+    /// </summary>
     internal static readonly (int Vk, string[] Names)[] NamedKeys =
     [
         (0x08, ["Rücktaste", "Backspace", "Back", "Rück", "Ruecktaste"]),
@@ -78,8 +82,6 @@ public static class HotkeyText
         (0xBE, ["Punkt", ".", "OemPeriod"]),
     ];
 
-    private static readonly Dictionary<int, string> DisplayNames = NamedKeys.ToDictionary(k => k.Vk, k => k.Names[0]);
-
     private static readonly Dictionary<string, int> KeyAliases = BuildAliases();
 
     private static readonly Dictionary<string, Modifier> ModifierAliases = new(StringComparer.Ordinal)
@@ -89,20 +91,44 @@ public static class HotkeyText
         ["altgr"] = Modifier.Ctrl | Modifier.Alt,
         ["umschalt"] = Modifier.Shift, ["shift"] = Modifier.Shift, ["umsch"] = Modifier.Shift, ["hochstell"] = Modifier.Shift, ["hochstelltaste"] = Modifier.Shift,
         ["win"] = Modifier.Win, ["windows"] = Modifier.Win, ["windowstaste"] = Modifier.Win, ["super"] = Modifier.Win, ["meta"] = Modifier.Win,
+        // macOS: Wahltaste = Alt, Befehlstaste = Win (so bildet MacOSHotkeys die Tasten ab)
+        ["option"] = Modifier.Alt, ["opt"] = Modifier.Alt, ["wahltaste"] = Modifier.Alt,
+        ["cmd"] = Modifier.Win, ["command"] = Modifier.Win, ["befehl"] = Modifier.Win, ["befehlstaste"] = Modifier.Win,
     };
+
+    /// <summary>Symbole der Mac-Tasten in Apples Reihenfolge: ⌃ Control (Strg), ⌥ Wahltaste (Alt), ⇧ Umschalt, ⌘ Befehl (Win).</summary>
+    private static readonly (char Symbol, Modifier Modifier)[] MacSymbols =
+        [('⌃', Modifier.Ctrl), ('⌥', Modifier.Alt), ('⇧', Modifier.Shift), ('⌘', Modifier.Win)];
+
+    /// <summary>
+    /// Schreibweise wie unter macOS (⌥⌘Q statt Win+Alt+Q)? Folgt dem System; die Tests schalten sie für die
+    /// Windows-Schreibweise ab, damit sie auf jedem System gleich laufen.
+    /// </summary>
+    internal static bool MacStyle { get; set; } = OperatingSystem.IsMacOS();
 
     [Flags]
     private enum Modifier { None = 0, Ctrl = 1, Alt = 2, Shift = 4, Win = 8 }
 
-    /// <summary>Lesbarer Text wie „Strg+Alt+Q“, „Strg+Umschalt+F9“ oder „Win+Alt+S“.</summary>
-    public static string Format(Hotkey hotkey)
+    /// <summary>
+    /// Lesbarer Text wie „Strg+Alt+Q“, „Strg+Umschalt+F9“ oder „Win+Alt+S“ – unter macOS mit den Symbolen der Mac-Tastatur
+    /// wie in den Menüs: „⌥⌘Q“, „⌃⇧F9“.
+    /// </summary>
+    public static string Format(Hotkey hotkey) => Format(hotkey, MacStyle);
+
+    internal static string Format(Hotkey hotkey, bool mac)
     {
         ArgumentNullException.ThrowIfNull(hotkey);
         var sb = new StringBuilder();
-        if (hotkey.Win) sb.Append("Win+");
-        if (hotkey.Ctrl) sb.Append("Strg+");
-        if (hotkey.Shift) sb.Append("Umschalt+");
-        if (hotkey.Alt) sb.Append("Alt+");
+        if (mac)
+        {
+            foreach (var (symbol, modifier) in MacSymbols)
+                if (Has(hotkey, modifier)) sb.Append(symbol);
+            return sb.Append(KeyName(hotkey.Key)).ToString();
+        }
+        if (hotkey.Win) sb.Append(Strings.Core_Key_Win).Append('+');
+        if (hotkey.Ctrl) sb.Append(Strings.Core_Key_Ctrl).Append('+');
+        if (hotkey.Shift) sb.Append(Strings.Core_Key_Shift).Append('+');
+        if (hotkey.Alt) sb.Append(Strings.Core_Key_Alt).Append('+');
         sb.Append(KeyName(hotkey.Key));
         return sb.ToString();
     }
@@ -112,6 +138,18 @@ public static class HotkeyText
     {
         hotkey = null!;
         if (string.IsNullOrWhiteSpace(text)) return false;
+
+        // Mac-Symbole (⌥⌘Q, auch gemischt: ⌘+Umschalt+Q) stehen ohne „+“ vor der Taste
+        var modifiers = Modifier.None;
+        foreach (var (symbol, modifier) in MacSymbols)
+        {
+            if (!text.Contains(symbol, StringComparison.Ordinal)) continue;
+            modifiers |= modifier;
+            text = text.Replace(symbol.ToString(), "", StringComparison.Ordinal);
+        }
+        text = text.Trim();
+        if (modifiers != Modifier.None && text.Length > 1 && text[0] == '+') text = text[1..].TrimStart(); // „⌘+Umschalt+Q“
+        if (text.Length == 0) return false;
 
         var tokens = text.Split('+').Select(t => t.Trim()).ToList();
         // Ein „+“ am Ende ist die Plus-Taste: „Strg++“ bzw. „Strg+Num +“.
@@ -129,7 +167,6 @@ public static class HotkeyText
             }
         }
 
-        var modifiers = Modifier.None;
         int? key = null;
         foreach (string token in tokens)
         {
@@ -164,12 +201,12 @@ public static class HotkeyText
     {
         ArgumentNullException.ThrowIfNull(hotkey);
         int vk = hotkey.Key;
-        if (vk is < 1 or > 0xFE) return $"Kein gültiges Tastenkürzel (Tastencode {vk}).";
-        if (vk is 0x01 or 0x02 or 0x04 or 0x05 or 0x06) return "Maustasten gehen nicht als Tastenkürzel.";
+        if (vk is < 1 or > 0xFE) return string.Format(Strings.Core_Hotkey_InvalidKeyCode, vk);
+        if (vk is 0x01 or 0x02 or 0x04 or 0x05 or 0x06) return Strings.Core_Hotkey_MouseButton;
         if (vk is 0x10 or 0x11 or 0x12 or 0x5B or 0x5C or (>= 0xA0 and <= 0xA5))
-            return "Strg, Alt, Umschalt und Win allein gehen nicht – bitte noch eine Taste dazunehmen.";
+            return Strings.Core_Hotkey_ModifierOnly;
         if (!hotkey.Ctrl && !hotkey.Alt && !hotkey.Win && !StandsAlone(vk))
-            return $"„{Format(hotkey)}“ würde das normale Tippen stören – bitte Strg, Alt oder Win dazunehmen.";
+            return string.Format(Strings.Core_Hotkey_DisturbsTyping, Format(hotkey));
         return null;
     }
 
@@ -193,13 +230,22 @@ public static class HotkeyText
         if (!AltGrApplies(hotkey)) return null;
         var text = Format(hotkey);
         var character = altGrText(hotkey.Key, hotkey.Shift);
-        var detail = character is null ? "" : $" (AltGr+{(hotkey.Shift ? "Umschalt+" : "")}{KeyName(hotkey.Key)} schreibt „{character}“)";
-        return $"{text} kann auf deutschen Tastaturen mit AltGr-Zeichen kollidieren{detail} – Windows meldet AltGr als Strg+Alt. "
-            + "Lupe tippt das Zeichen dann nach; sicherer ist ein Kürzel mit Win, z. B. Win+Umschalt+Q.";
+        if (character is null) return string.Format(Strings.Core_Hotkey_AltGrWarning, text);
+        var altGr = "AltGr+" + (hotkey.Shift ? Strings.Core_Key_Shift + "+" : "") + KeyName(hotkey.Key);
+        return string.Format(Strings.Core_Hotkey_AltGrWarningCharacter, text, altGr, character);
     }
 
     /// <summary>Nur Kürzel mit Strg und Alt (ohne Win) kollidieren mit AltGr (wo das System AltGr als Strg+Alt meldet).</summary>
     public static bool AltGrApplies(Hotkey hotkey) => hotkey.Ctrl && hotkey.Alt && !hotkey.Win;
+
+    private static bool Has(Hotkey hotkey, Modifier modifier) => modifier switch
+    {
+        Modifier.Ctrl => hotkey.Ctrl,
+        Modifier.Alt => hotkey.Alt,
+        Modifier.Shift => hotkey.Shift,
+        Modifier.Win => hotkey.Win,
+        _ => false,
+    };
 
     private static bool StandsAlone(int vk)
         => vk is (>= VK_F1 and <= VK_F24) or VK_SNAPSHOT or VK_PAUSE or VK_SCROLL or (>= 0xA6 and <= 0xB7);
@@ -209,11 +255,67 @@ public static class HotkeyText
     {
         if (vk is >= 0x30 and <= 0x39 or >= 0x41 and <= 0x5A) return ((char)vk).ToString();
         if (vk is >= VK_F1 and <= VK_F24) return "F" + (vk - VK_F1 + 1).ToString(CultureInfo.InvariantCulture);
-        if (vk is >= VK_NUMPAD0 and <= VK_NUMPAD0 + 9) return "Num " + (vk - VK_NUMPAD0).ToString(CultureInfo.InvariantCulture);
-        if (DisplayNames.TryGetValue(vk, out string? name)) return name;
+        if (vk is >= VK_NUMPAD0 and <= VK_NUMPAD0 + 9)
+            return string.Format(Strings.Core_Key_NumPad, (vk - VK_NUMPAD0).ToString(CultureInfo.InvariantCulture));
+        if (KeyResource(vk) is { } resource) return Strings.ResourceManager.GetString(resource, Strings.Culture) ?? resource;
         if (vk is >= 0xBA and <= 0xF5 && LayoutChar(vk) is { } c) return c;
-        return $"Taste 0x{vk:X2}";
+        return string.Format(Strings.Core_Key_Unknown, vk.ToString("X2", CultureInfo.InvariantCulture));
     }
+
+    /// <summary>Name des Eintrags in den Sprachdateien für eine Taste aus <see cref="NamedKeys"/>, sonst null.</summary>
+    private static string? KeyResource(int vk) => vk switch
+    {
+        0x08 => nameof(Strings.Core_Key_Backspace),
+        0x09 => nameof(Strings.Core_Key_Tab),
+        0x0D => nameof(Strings.Core_Key_Enter),
+        VK_PAUSE => nameof(Strings.Core_Key_Pause),
+        0x14 => nameof(Strings.Core_Key_CapsLock),
+        0x1B => nameof(Strings.Core_Key_Esc),
+        0x20 => nameof(Strings.Core_Key_Space),
+        0x21 => nameof(Strings.Core_Key_PageUp),
+        0x22 => nameof(Strings.Core_Key_PageDown),
+        0x23 => nameof(Strings.Core_Key_End),
+        0x24 => nameof(Strings.Core_Key_Home),
+        0x25 => nameof(Strings.Core_Key_Left),
+        0x26 => nameof(Strings.Core_Key_Up),
+        0x27 => nameof(Strings.Core_Key_Right),
+        0x28 => nameof(Strings.Core_Key_Down),
+        VK_SNAPSHOT => nameof(Strings.Core_Key_PrintScreen),
+        0x2D => nameof(Strings.Core_Key_Insert),
+        0x2E => nameof(Strings.Core_Key_Delete),
+        0x5D => nameof(Strings.Core_Key_Menu),
+        0x6A => nameof(Strings.Core_Key_NumMultiply),
+        0x6B => nameof(Strings.Core_Key_NumPlus),
+        0x6D => nameof(Strings.Core_Key_NumMinus),
+        0x6E => nameof(Strings.Core_Key_NumDecimal),
+        0x6F => nameof(Strings.Core_Key_NumDivide),
+        0x90 => nameof(Strings.Core_Key_NumLock),
+        VK_SCROLL => nameof(Strings.Core_Key_ScrollLock),
+        0x5F => nameof(Strings.Core_Key_Sleep),
+        0xA6 => nameof(Strings.Core_Key_BrowserBack),
+        0xA7 => nameof(Strings.Core_Key_BrowserForward),
+        0xA8 => nameof(Strings.Core_Key_BrowserRefresh),
+        0xA9 => nameof(Strings.Core_Key_BrowserStop),
+        0xAA => nameof(Strings.Core_Key_BrowserSearch),
+        0xAB => nameof(Strings.Core_Key_BrowserFavorites),
+        0xAC => nameof(Strings.Core_Key_BrowserHome),
+        0xAD => nameof(Strings.Core_Key_VolumeMute),
+        0xAE => nameof(Strings.Core_Key_VolumeDown),
+        0xAF => nameof(Strings.Core_Key_VolumeUp),
+        0xB0 => nameof(Strings.Core_Key_NextTrack),
+        0xB1 => nameof(Strings.Core_Key_PreviousTrack),
+        0xB2 => nameof(Strings.Core_Key_MediaStop),
+        0xB3 => nameof(Strings.Core_Key_PlayPause),
+        0xB4 => nameof(Strings.Core_Key_Mail),
+        0xB5 => nameof(Strings.Core_Key_MediaSelect),
+        0xB6 => nameof(Strings.Core_Key_App1),
+        0xB7 => nameof(Strings.Core_Key_App2),
+        0xBB => nameof(Strings.Core_Key_Plus),
+        0xBC => nameof(Strings.Core_Key_Comma),
+        0xBD => nameof(Strings.Core_Key_Minus),
+        0xBE => nameof(Strings.Core_Key_Period),
+        _ => null,
+    };
 
     private static bool TryParseKey(string normalized, out int vk)
     {
@@ -243,6 +345,7 @@ public static class HotkeyText
         // „Taste 0xBA“ (so zeigt Format unbekannte Tasten) oder kurz „0xBA“
         var hex = normalized.AsSpan();
         if (hex.StartsWith("taste")) hex = hex[5..];
+        else if (hex.StartsWith("key")) hex = hex[3..];
         if (hex.StartsWith("0x") && hex.Length is > 2 and <= 6
             && int.TryParse(hex[2..], NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out int code) && code is >= 1 and <= 0xFE)
         {
@@ -275,6 +378,16 @@ public static class HotkeyText
         foreach (var (vk, names) in NamedKeys)
             foreach (string name in names)
                 aliases.TryAdd(Normalize(name), vk);
+        // Die angezeigten Namen jeder Sprache, damit ein angezeigtes Kürzel immer wieder eingelesen werden kann
+        foreach (var (vk, _) in NamedKeys)
+        {
+            if (KeyResource(vk) is not { } resource) continue;
+            foreach (var language in Localization.UiLanguage.Supported)
+            {
+                if (Strings.ResourceManager.GetString(resource, CultureInfo.GetCultureInfo(language)) is { Length: > 0 } name)
+                    aliases.TryAdd(Normalize(name), vk);
+            }
+        }
         return aliases;
     }
 

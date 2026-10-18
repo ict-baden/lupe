@@ -1,4 +1,5 @@
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Platform.Windows.Camera;
 using Microsoft.Win32;
 
@@ -39,7 +40,7 @@ public sealed class WindowsAutostart : IAutostart
                 // Über „dotnet Lupe.dll“ gestartet, wäre der Prozess dotnet.exe – das startete beim Anmelden nicht Lupe
                 if (string.IsNullOrEmpty(exe) || !exe.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
                     || Path.GetFileNameWithoutExtension(exe).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
-                    return "Der Pfad von Lupe.exe ist nicht bekannt – Autostart nicht eingerichtet.";
+                    return Strings.Win_Autostart_PathUnknown;
                 key.SetValue(ValueName, $"\"{exe}\" --hintergrund");
             }
             else key.DeleteValue(ValueName, throwOnMissingValue: false);
@@ -47,7 +48,7 @@ public sealed class WindowsAutostart : IAutostart
         }
         catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
         {
-            return $"Autostart ließ sich nicht {(enabled ? "einrichten" : "entfernen")}: {ex.Message}";
+            return string.Format(enabled ? Strings.Win_Autostart_EnableFailed : Strings.Win_Autostart_DisableFailed, ex.Message);
         }
     }
 }

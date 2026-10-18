@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Lupe.Core.Decoding;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 
 namespace Lupe.Core.Settings;
 
@@ -96,7 +97,7 @@ public static class SettingsStore
         catch (Exception ex) when (FileProblems.IsExpected(ex))
         {
             state = SettingsFileState.Unreadable;
-            problem = $"Die Einstellungen in „{file}“ konnten nicht gelesen werden ({FileProblems.Describe(ex)}). Es gelten die Standardwerte.";
+            problem = string.Format(Strings.Core_Settings_ReadError, file, FileProblems.Describe(ex));
             return new LupeSettings();
         }
 
@@ -112,18 +113,18 @@ public static class SettingsStore
             if (replaced.Count > 0 || filtered.Count > 0)
             {
                 state = SettingsFileState.Repaired;
-                problem = $"Einige Einstellungen in „{file}“ waren ungültig.";
-                if (replaced.Count > 0) problem += $" Standardwert verwendet für: {DisplayNames(replaced)}.";
-                if (filtered.Count > 0) problem += $" Unbrauchbare Einträge entfernt aus: {DisplayNames(filtered)}.";
+                problem = string.Format(Strings.Core_Settings_SomeInvalid, file);
+                if (replaced.Count > 0) problem += " " + string.Format(Strings.Core_Settings_DefaultUsedFor, DisplayNames(replaced));
+                if (filtered.Count > 0) problem += " " + string.Format(Strings.Core_Settings_EntriesRemovedFrom, DisplayNames(filtered));
             }
             return settings;
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException or NotSupportedException or ArgumentException or FormatException)
         {
-            var where = ex is JsonException { LineNumber: { } line } ? $" (Fehler in Zeile {line + 1})" : "";
             state = SettingsFileState.Broken;
-            problem = $"Die Einstellungsdatei „{file}“ ist beschädigt{where} und wurde nicht geladen. "
-                + "Es gelten die Standardwerte; die Datei wird erst beim nächsten Speichern ersetzt.";
+            problem = ex is JsonException { LineNumber: { } line }
+                ? string.Format(Strings.Core_Settings_BrokenAtLine, file, line + 1)
+                : string.Format(Strings.Core_Settings_Broken, file);
             return new LupeSettings();
         }
     }
@@ -187,6 +188,7 @@ public static class SettingsStore
             RepeatSuppressMs = Math.Clamp(settings.RepeatSuppressMs, 0, MaxRepeatSuppressMs),
             Camera = settings.Camera?.Trim() ?? "",
             HistoryLimit = Math.Clamp(settings.HistoryLimit, MinHistoryLimit, MaxHistoryLimit),
+            Language = Localization.UiLanguage.Normalize(settings.Language),
         };
     }
 
@@ -229,7 +231,7 @@ public static class SettingsStore
     }
 
     private static string SaveError(string file, Exception ex) =>
-        $"Die Einstellungen konnten nicht in „{file}“ gespeichert werden ({FileProblems.Describe(ex)}).";
+        string.Format(Strings.Core_Settings_SaveError, file, FileProblems.Describe(ex));
 
     /// <summary>
     /// Legt die Datei feldweise über die Standardwerte: Jedes bekannte Feld wird nur übernommen, wenn es sich in
@@ -270,28 +272,30 @@ public static class SettingsStore
         return Normalize(settings);
     }
 
-    /// <summary>Deutsche Bezeichnungen der Felder für Hinweise (wie in den Einstellungen der App).</summary>
-    private static readonly Dictionary<string, string> FieldNames = new(StringComparer.Ordinal)
+    /// <summary>Bezeichnungen der Felder für Hinweise (wie in den Einstellungen der App), in der Sprache der Oberfläche.</summary>
+    private static string FieldName(string property) => property switch
     {
-        [nameof(LupeSettings.Actions)] = "Aktionen (Kamera/Datei)",
-        [nameof(LupeSettings.ScreenActions)] = "Aktionen (Bildschirm)",
-        [nameof(LupeSettings.TypeSuffix)] = "Taste nach dem Eintippen",
-        [nameof(LupeSettings.TypeDelayMs)] = "Tempo beim Eintippen",
-        [nameof(LupeSettings.LinkRules)] = "Link-Regeln",
-        [nameof(LupeSettings.Formats)] = "Formate",
-        [nameof(LupeSettings.ScreenHotkey)] = "Tastenkürzel",
-        [nameof(LupeSettings.Sound)] = "Ton",
-        [nameof(LupeSettings.AimHelp)] = "Zielhilfe",
-        [nameof(LupeSettings.RepeatSuppressMs)] = "Wiederholungssperre",
-        [nameof(LupeSettings.Camera)] = "Kamera",
-        [nameof(LupeSettings.KeepHistory)] = "Verlauf speichern",
-        [nameof(LupeSettings.HistoryLimit)] = "Größe des Verlaufs",
-        [nameof(LupeSettings.KeepRunningInTray)] = "Im Infobereich weiterlaufen",
-        [nameof(LupeSettings.TrayHintShown)] = "Hinweis zum Infobereich",
+        nameof(LupeSettings.Actions) => Strings.Core_Settings_Field_Actions,
+        nameof(LupeSettings.ScreenActions) => Strings.Core_Settings_Field_ScreenActions,
+        nameof(LupeSettings.TypeSuffix) => Strings.Core_Settings_Field_TypeSuffix,
+        nameof(LupeSettings.TypeDelayMs) => Strings.Core_Settings_Field_TypeDelay,
+        nameof(LupeSettings.LinkRules) => Strings.Core_Settings_Field_LinkRules,
+        nameof(LupeSettings.Formats) => Strings.Core_Settings_Field_Formats,
+        nameof(LupeSettings.ScreenHotkey) => Strings.Core_Settings_Field_ScreenHotkey,
+        nameof(LupeSettings.Sound) => Strings.Core_Settings_Field_Sound,
+        nameof(LupeSettings.AimHelp) => Strings.Core_Settings_Field_AimHelp,
+        nameof(LupeSettings.RepeatSuppressMs) => Strings.Core_Settings_Field_RepeatSuppress,
+        nameof(LupeSettings.Camera) => Strings.Core_Settings_Field_Camera,
+        nameof(LupeSettings.KeepHistory) => Strings.Core_Settings_Field_KeepHistory,
+        nameof(LupeSettings.HistoryLimit) => Strings.Core_Settings_Field_HistoryLimit,
+        nameof(LupeSettings.KeepRunningInTray) => Strings.Core_Settings_Field_KeepRunningInTray,
+        nameof(LupeSettings.Language) => Strings.Core_Settings_Field_Language,
+        nameof(LupeSettings.TrayHintShown) => Strings.Core_Settings_Field_TrayHintShown,
+        _ => property,
     };
 
     private static string DisplayNames(IEnumerable<string> properties) =>
-        string.Join(", ", properties.Select(p => FieldNames.GetValueOrDefault(p, p)));
+        string.Join(", ", properties.Select(FieldName));
 
     private static bool CanRead(JsonNode? value, Type type)
     {

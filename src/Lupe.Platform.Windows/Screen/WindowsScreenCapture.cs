@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Core.Screen;
 
 namespace Lupe.Platform.Windows.Screen;
@@ -90,7 +91,7 @@ public sealed unsafe class WindowsScreenCapture : IScreenCapture
         if (screen == 0)
         {
             image = null;
-            error = "Bildschirmfoto nicht möglich – der Bildschirm lässt sich gerade nicht lesen.";
+            error = Strings.Win_Screen_Unreadable;
             return false;
         }
         try
@@ -116,7 +117,7 @@ public sealed unsafe class WindowsScreenCapture : IScreenCapture
         nint memory = Native.CreateCompatibleDC(source);
         if (memory == 0)
         {
-            error = $"Bildschirmfoto nicht möglich (GDI-Fehler {Marshal.GetLastPInvokeError()}).";
+            error = string.Format(Strings.Win_Screen_GdiError, Marshal.GetLastPInvokeError());
             return false;
         }
         nint bitmap = 0, previous = 0;
@@ -137,16 +138,16 @@ public sealed unsafe class WindowsScreenCapture : IScreenCapture
             bitmap = Native.CreateDIBSection(memory, &info, Native.DIB_RGB_COLORS, out nint bits, 0, 0);
             if (bitmap == 0 || bits == 0)
             {
-                error = $"Für ein Bildschirmfoto mit {width} × {height} Pixeln ist nicht genug Speicher frei.";
+                error = string.Format(Strings.Win_Screen_OutOfMemory, width, height);
                 return false;
             }
             previous = Native.SelectObject(memory, bitmap);
             if (!Native.BitBlt(memory, 0, 0, width, height, source, area.X, area.Y, rop))
             {
                 int code = Marshal.GetLastPInvokeError();
-                error = "Bildschirmfoto nicht möglich – Windows lässt den Desktop gerade nicht lesen "
-                    + "(gesperrt, Anmeldebildschirm oder keine sichtbare Sitzung"
-                    + (code != 0 ? $", Windows-Fehler {code})." : ").");
+                error = code != 0
+                    ? string.Format(Strings.Win_Screen_DesktopUnreadableCode, code)
+                    : Strings.Win_Screen_DesktopUnreadable;
                 return false;
             }
             Native.GdiFlush();

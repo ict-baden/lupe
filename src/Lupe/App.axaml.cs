@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using Lupe.Core.Input;
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Services;
 using Lupe.UI;
 using Lupe.UI.Theme;
@@ -110,7 +111,7 @@ public partial class App : Application
             _window?.Hide();
             if (!_state.Settings.TrayHintShown)
             {
-                ResultToast.ShowHint(_state, "Lupe läuft weiter", $"{HotkeyLabel()} scannt einen Ausschnitt. Beenden über das Lupe-Symbol im Infobereich.");
+                ResultToast.ShowHint(_state, Strings.App_TrayHint_Title, string.Format(Strings.App_TrayHint_Text, HotkeyLabel()));
                 _state.UpdateSettings(s => s with { TrayHintShown = true });
             }
             return;
@@ -153,7 +154,7 @@ public partial class App : Application
     private void StartScreenScan(bool external)
     {
         if (_state is null || _scan is null || _exiting) return;
-        Ui.Run(_state, () => _scan.RunAsync(external), "Bildschirm-Scan");
+        Ui.Run(_state, () => _scan.RunAsync(external), Strings.App_ScreenScan_Name);
     }
 
     private void RegisterHotkey(Hotkey hotkey)
@@ -173,17 +174,17 @@ public partial class App : Application
             }
             else
             {
-                var error = registered.Error ?? $"{label} ist nicht verfügbar.";
+                var error = registered.Error ?? string.Format(Strings.App_Hotkey_Unavailable, label);
                 registered.Dispose();
                 _state.SetHotkeyStatus(false, error);
             }
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            _state.SetHotkeyStatus(false, $"Das Tastenkürzel {label} ließ sich nicht anmelden: {ex.Message}");
+            _state.SetHotkeyStatus(false, string.Format(Strings.App_Hotkey_RegisterFailed, label, ex.Message));
         }
-        _tray?.SetScanLabel($"Ausschnitt scannen ({label})");
-        _tray?.SetTooltip(_state.HotkeyError is null ? $"Lupe – {label} scannt einen Ausschnitt" : "Lupe – Tastenkürzel nicht verfügbar");
+        _tray?.SetScanLabel(string.Format(Strings.App_Tray_ScanWithHotkey, label));
+        _tray?.SetTooltip(_state.HotkeyError is null ? string.Format(Strings.App_Tray_TooltipReady, label) : Strings.App_Tray_TooltipNoHotkey);
     }
 
     private void OnSettingsChanged(LupeSettings old, LupeSettings now)
@@ -210,7 +211,7 @@ public partial class App : Application
     private static string HotkeyLabel(Hotkey hotkey)
     {
         try { return HotkeyText.Format(hotkey); }
-        catch (Exception ex) when (ex is not OutOfMemoryException) { return "Das Tastenkürzel"; }
+        catch (Exception ex) when (ex is not OutOfMemoryException) { return Strings.App_Hotkey_Fallback; }
     }
 
     // ================= Fehler und Aufräumen =================
@@ -220,7 +221,7 @@ public partial class App : Application
         // Niemals wegen eines Fehlers abstürzen – stattdessen freundlich melden (Screenshots: dort bricht der Lauf ab)
         if (_options.Mode == AppMode.Screenshots) return;
         e.Handled = true;
-        _state?.Report(NoticeKind.Error, $"Unerwarteter Fehler: {e.Exception.Message}");
+        _state?.Report(NoticeKind.Error, string.Format(Strings.App_UnexpectedError, e.Exception.Message));
     }
 
     private void Cleanup()

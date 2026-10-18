@@ -2,15 +2,9 @@ using System.Diagnostics;
 using System.Security;
 using System.Text;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 
 namespace Lupe.Platform.MacOS;
-
-/// <summary>Gemeinsames für die macOS-Bausteine.</summary>
-internal static class MacOS
-{
-    /// <summary>Meldung, wenn die macOS-Anbindung auf einem anderen System benutzt wird (z. B. in Tests unter Windows).</summary>
-    public static string NotHere(string what) => $"{what} ist hier nicht verfügbar (nur unter macOS).";
-}
 
 /// <summary>
 /// Wo Lupe unter macOS seine Dateien ablegt: <c>~/Library/Application Support/Lupe</c>. Einstellungen und Verlauf
@@ -62,7 +56,7 @@ public sealed class MacOSAutostart : IAutostart
 
     public string? Set(bool enabled)
     {
-        if (!_supported) return enabled ? MacOS.NotHere("Autostart") : null;
+        if (!_supported) return enabled ? Strings.Mac_NotHere_Autostart : null;
         try
         {
             if (!enabled)
@@ -72,7 +66,7 @@ public sealed class MacOSAutostart : IAutostart
             }
             var exe = _executable();
             if (string.IsNullOrWhiteSpace(exe) || IsDotnetHost(exe))
-                return "Autostart lässt sich nur für das veröffentlichte Lupe einrichten, nicht beim Start über „dotnet“.";
+                return Strings.Mac_Autostart_DotnetHost;
             Directory.CreateDirectory(_agentsDir);
             var temp = PlistPath + ".tmp";
             File.WriteAllText(temp, BuildPlist(exe), new UTF8Encoding(false));
@@ -82,7 +76,7 @@ public sealed class MacOSAutostart : IAutostart
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             Trace.TraceWarning($"Lupe: LaunchAgent nicht schreibbar: {ex}");
-            return $"Autostart konnte nicht {(enabled ? "eingerichtet" : "entfernt")} werden: {ex.Message}";
+            return string.Format(enabled ? Strings.Mac_Autostart_EnableFailed : Strings.Mac_Autostart_DisableFailed, ex.Message);
         }
     }
 

@@ -233,7 +233,7 @@ public sealed class KeyboardTyperInputTests
 public sealed class KeyboardTyperFlowTests
 {
 #if WINDOWS
-    private const string BlockedText = Lupe.Platform.Windows.Input.Elevation.BlockedText;
+    private static readonly string BlockedText = Lupe.Platform.Windows.Input.Elevation.BlockedText;
 #else
     private const string BlockedText = "Eintippen nicht möglich – das Fenster im Vordergrund läuft mit höheren Rechten als Lupe.";
 #endif

@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Lupe.Core.History;
 using Lupe.Core.Input;
+using Lupe.Core.Resources;
 using Lupe.Core.Settings;
 using Lupe.Services;
 
@@ -16,17 +17,21 @@ public partial class InfoPage : UserControl, IPage
     {
         InitializeComponent();
         _state = state;
-        VersionText.Text = $"Version {AppInfo.Version} · .NET {Environment.Version.ToString(3)}";
+        VersionText.Text = string.Format(Strings.Page_Info_Version, AppInfo.Version, Environment.Version.ToString(3));
         if (OperatingSystem.IsWindows())
+        {
             CommandExample.Text = "Lupe.exe lesen C:\\Scans\\etikett.png --format QR_CODE";
+            CommandHelp.Text = string.Format(Strings.Page_Info_CommandHelp, "Lupe.exe --hilfe");
+            DataCard.Description = string.Format(Strings.Page_Info_DataText, "%LocalAppData%\\Lupe");
+        }
         else
         {
-            CommandIntro.Text = "Dasselbe Programm liest Bilder auch ohne Fenster – je Code eine Zeile „FORMAT⇥Inhalt“, für Skripte und geplante Aufgaben:";
+            CommandIntro.Text = Strings.Page_Info_CommandIntro;
             CommandExample.Text = "lupe lesen ~/Scans/etikett.png --format QR_CODE";
-            CommandHelp.Text = "Alle Befehle und Optionen: lupe --hilfe";
-            DataCard.Description = $"{DataFolderText()} – nur für Sie. Lupe schickt nichts ins Internet; Links öffnet nur der Browser, wenn Sie es einstellen.";
+            CommandHelp.Text = string.Format(Strings.Page_Info_CommandHelp, "lupe --hilfe");
+            DataCard.Description = DataFolderText();
         }
-        if (state.IsDemo && !state.Strict) DataCard.Description = "Demo: Einstellungen und Verlauf liegen nur im Speicher und verschwinden beim Beenden.";
+        if (state.IsDemo && !state.Strict) DataCard.Description = Strings.Page_Info_DataDemo;
         DataButton.IsEnabled = !state.IsDemo || state.Strict;
     }
 
@@ -34,10 +39,9 @@ public partial class InfoPage : UserControl, IPage
     {
         string hotkey;
         try { hotkey = HotkeyText.Format(_state.Settings.ScreenHotkey); }
-        catch (Exception ex) when (ex is not OutOfMemoryException) { hotkey = "Das Tastenkürzel"; }
-        var ctrl = OperatingSystem.IsMacOS() ? "⌘" : "Strg+";
-        KeysText.Text = $"{hotkey} scannt einen Bildschirmausschnitt – aus jedem Programm · {ctrl}1 bis {ctrl}6 wechselt die Seiten · "
-            + $"{ctrl}V liest ein Bild aus der Zwischenablage · im Verlauf: {ctrl}C kopiert, Eingabe öffnet den Link, Entf löscht";
+        catch (Exception ex) when (ex is not OutOfMemoryException) { hotkey = Strings.Page_Info_TheHotkey; }
+        var ctrl = OperatingSystem.IsMacOS() ? "⌘" : Strings.Page_Info_CtrlPrefix;
+        KeysText.Text = string.Format(Strings.Page_Info_Keys, hotkey, ctrl);
     }
 
     public void OnHidden() { }
@@ -62,8 +66,8 @@ public partial class InfoPage : UserControl, IPage
         try { history = Shorten(Path.GetDirectoryName(HistoryStore.DefaultPath) ?? ""); }
         catch (Exception ex) when (ex is not OutOfMemoryException) { history = settings; }
         return history == settings || history.Length == 0
-            ? $"Einstellungen und Verlauf liegen unter {settings}"
-            : $"Einstellungen liegen unter {settings}, der Verlauf unter {history}";
+            ? string.Format(Strings.Page_Info_DataText, settings)
+            : string.Format(Strings.Page_Info_DataTextSplit, settings, history);
     }
 
     private static string Shorten(string folder)
@@ -89,7 +93,7 @@ public partial class InfoPage : UserControl, IPage
         var folder = DataFolder();
         if (folder.Length == 0 || !Directory.Exists(folder))
         {
-            _state.Report(NoticeKind.Info, "Der Ordner existiert noch nicht – Lupe legt ihn beim ersten Speichern an.");
+            _state.Report(NoticeKind.Info, Strings.Page_Shared_FolderMissing);
             return;
         }
         if (Shell.ShowInExplorer(folder) is { } error) _state.Report(NoticeKind.Warning, error);

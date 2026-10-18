@@ -1,5 +1,6 @@
 using Lupe.Core.Input;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Platform.Linux.Native;
 
 namespace Lupe.Platform.Linux.Input;
@@ -7,8 +8,7 @@ namespace Lupe.Platform.Linux.Input;
 /// <summary>Tippen unter Linux: X11 über XTest, Wayland über das RemoteDesktop-Portal (siehe <see cref="X11Typer"/>, <see cref="PortalTyper"/>).</summary>
 public sealed class LinuxKeyboard : IKeyboardOutput, IDisposable
 {
-    internal const string NoSession =
-        "Eintippen geht nicht: keine grafische Sitzung (weder X11 noch Wayland) – den Text stattdessen kopieren.";
+    internal static string NoSession => Strings.Linux_Typing_NoSession;
 
     private readonly Lazy<X11Typer> _x11 = new(() => new X11Typer());
     private readonly Lazy<PortalTyper> _portal = new(() => new PortalTyper());
@@ -46,10 +46,10 @@ public sealed class LinuxKeyboard : IKeyboardOutput, IDisposable
         SessionKind.Wayland => _portal.Value.DescribeRejection(),
         SessionKind.X11 => errorCode switch
         {
-            X11Typer.ErrorNoDisplay => "Eintippen geht nicht: keine Verbindung zum X-Server.",
-            X11Typer.ErrorNoXTest => "Eintippen geht nicht: Der X-Server hat die XTest-Erweiterung nicht.",
-            X11Typer.ErrorNoSpareKey => "Eintippen geht nicht: Für dieses Zeichen ist im Tastaturlayout kein Tastencode frei.",
-            _ => "Der X-Server hat die Tastatureingabe nicht angenommen.",
+            X11Typer.ErrorNoDisplay => Strings.Linux_Typing_NoXServer,
+            X11Typer.ErrorNoXTest => Strings.Linux_Typing_NoXTest,
+            X11Typer.ErrorNoSpareKey => Strings.Linux_Typing_NoSpareKey,
+            _ => Strings.Linux_Typing_Rejected,
         },
         _ => NoSession,
     };

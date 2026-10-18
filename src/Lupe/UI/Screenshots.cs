@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 using Lupe.Demo;
 using Lupe.Services;
 using Lupe.UI.Theme;
@@ -31,7 +32,7 @@ internal static class Screenshots
             "dunkel" => [true],
             _ => [false, true],
         };
-        Console.WriteLine($"Lupe {AppInfo.Version} – Screenshots nach {folder}");
+        Console.WriteLine(string.Format(Strings.App_Screenshots_Start, AppInfo.Version, folder));
 
         using var state = AppState.OpenDemo(strict: true, DemoData.ScreenshotTime);
         // Wie im echten Betrieb: Tastenkürzel angemeldet (ohne es hier wirklich anzumelden)
@@ -61,7 +62,7 @@ internal static class Screenshots
             written += await SaveOverlayAsync(Path.Combine(folder, $"auswahl-{suffix}.png"));
             written += await SaveToastAsync(state, Path.Combine(folder, $"treffer-{suffix}.png"));
         }
-        Console.WriteLine($"{written} Bilder geschrieben.");
+        Console.WriteLine(string.Format(Strings.App_Screenshots_Written, written));
         return 0;
     }
 
@@ -91,7 +92,7 @@ internal static class Screenshots
     {
         var code = new DecodedCode { Text = DemoData.InvoiceUrl, Format = "QR_CODE" };
         var item = new CodeItem(code, ScanSource.Bildschirm, DemoData.ScreenshotTime, state.LinkFor(code.Text));
-        var toast = new ResultToast(state, item, "QR-Code erkannt", Labels.Actions(ResultActions.Kopieren | ResultActions.Eintippen), "", null, screenshot: true);
+        var toast = new ResultToast(state, item, string.Format(Strings.App_Scan_Recognized, item.FormatLabel), Labels.Actions(ResultActions.Kopieren | ResultActions.Eintippen), "", null, screenshot: true);
         var window = Open(toast, 420, double.NaN);
         try
         {
@@ -132,7 +133,7 @@ internal static class Screenshots
     {
         window.UpdateLayout();
         if (Math.Abs(window.Bounds.Width - width) > 1 || Math.Abs(window.Bounds.Height - height) > 1)
-            throw new InvalidOperationException($"Das Fenster hat {window.Bounds.Width:0}×{window.Bounds.Height:0} statt {width:0}×{height:0} Punkte – die Bilder wären verzerrt.");
+            throw new InvalidOperationException(string.Format(Strings.App_Screenshots_WrongSize, window.Bounds.Width, window.Bounds.Height, width, height));
         return SaveControl(window, file, width, height, scale);
     }
 

@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Lupe.Core.Decoding;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 using Lupe.Demo;
 using Lupe.Services;
 
@@ -26,7 +27,7 @@ public partial class FilePage : UserControl, IPage
         _state = state;
         ResultList.ItemsSource = _results;
         if (OperatingSystem.IsWindows())
-            DropHintText.Text = "Fotos, Scans und Bildschirmfotos – PNG, JPEG, BMP, GIF, TIFF und was Windows sonst lesen kann. Auch mehrere Codes in einem Bild.";
+            DropHintText.Text = Strings.Page_File_DropHintTextWindows;
         if (OperatingSystem.IsMacOS()) ToolTip.SetTip(PasteButton, "⌘V");
         AddHandler(DragDrop.DragEnterEvent, OnDragOver);
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
@@ -49,7 +50,7 @@ public partial class FilePage : UserControl, IPage
     {
         if (TopLevel.GetTopLevel(this)?.StorageProvider is not { CanOpen: true } storage) return;
         var extensions = Extensions();
-        var images = new FilePickerFileType($"Bilder ({string.Join(", ", extensions.Take(6).Select(x => x.TrimStart('.').ToUpperInvariant()))} …)")
+        var images = new FilePickerFileType(string.Format(Strings.Page_File_ImagesFilter, string.Join(", ", extensions.Take(6).Select(x => x.TrimStart('.').ToUpperInvariant()))))
         {
             Patterns = [.. extensions.Select(x => "*" + x)],
             AppleUniformTypeIdentifiers = ["public.image"],
@@ -60,7 +61,7 @@ public partial class FilePage : UserControl, IPage
         {
             files = await storage.OpenFilePickerAsync(new FilePickerOpenOptions
             {
-                Title = "Bild mit Code öffnen",
+                Title = Strings.Page_File_OpenDialogTitle,
                 AllowMultiple = false,
                 FileTypeFilter = [images, FilePickerFileTypes.All],
                 SuggestedStartLocation = _lastFolder,
@@ -68,20 +69,20 @@ public partial class FilePage : UserControl, IPage
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            _state.Report(NoticeKind.Error, $"Der Dialog zum Öffnen ließ sich nicht zeigen: {ex.Message}");
+            _state.Report(NoticeKind.Error, string.Format(Strings.Page_File_OpenDialogFailed, ex.Message));
             return;
         }
         if (files.Count == 0 || files[0].TryGetLocalPath() is not { } path) return;
         _lastFolder = await files[0].GetParentAsync();
-        Ui.Run(_state, () => LoadFileAsync(path, ScanSource.Datei), "Bild lesen");
+        Ui.Run(_state, () => LoadFileAsync(path, ScanSource.Datei), Strings.Page_File_ReadImage);
     }
 
     private void Paste_Click(object? sender, RoutedEventArgs e) => PasteFromClipboard();
 
-    private const string ClipboardName = "Bild aus der Zwischenablage";
+    private static string ClipboardName => Strings.Page_File_ClipboardImageName;
 
     /// <summary>Strg+V: Bild, PNG-Daten oder kopierte Bilddatei aus der Zwischenablage lesen.</summary>
-    public void PasteFromClipboard() => Ui.Run(_state, PasteAsync, "Zwischenablage lesen");
+    public void PasteFromClipboard() => Ui.Run(_state, PasteAsync, Strings.Page_File_ReadClipboard);
 
     private async Task PasteAsync()
     {
@@ -89,15 +90,15 @@ public partial class FilePage : UserControl, IPage
         try { content = await ClipboardImage.ReadAsync(); }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            _state.Report(NoticeKind.Warning, $"Die Zwischenablage ließ sich nicht lesen: {ex.Message}");
+            _state.Report(NoticeKind.Warning, string.Format(Strings.Page_File_ClipboardReadFailed, ex.Message));
             return;
         }
         if (content.File is { } file) await LoadFileAsync(file, ScanSource.Zwischenablage);
         else if (content.Png is { } png) await LoadPngAsync(png);
         else if (content.Bitmap is { } image) await DecodeAsync(image, ScanSource.Zwischenablage, ClipboardName);
         else _state.Report(NoticeKind.Info, OperatingSystem.IsWindows()
-            ? "In der Zwischenablage ist kein Bild. Tipp: Mit Win+Umschalt+S ein Bildschirmfoto machen – oder gleich „Ausschnitt scannen“."
-            : "In der Zwischenablage ist kein Bild. Tipp: Ein Bildschirmfoto in die Zwischenablage machen – oder gleich „Ausschnitt scannen“.");
+            ? Strings.Page_File_NoImageInClipboardWindows
+            : Strings.Page_File_NoImageInClipboard);
     }
 
     /// <summary>PNG-Daten aus der Zwischenablage – geladen wie eine Datei (Transparenz auf Weiß, Größenschutz); unbrauchbar: die Bitmap.</summary>
@@ -121,7 +122,7 @@ public partial class FilePage : UserControl, IPage
             catch (Exception clipboard) when (clipboard is not OutOfMemoryException) { }
             if (bitmap is null)
             {
-                _state.Report(NoticeKind.Error, $"Das Bild aus der Zwischenablage ließ sich nicht lesen: {ex.Message}");
+                _state.Report(NoticeKind.Error, string.Format(Strings.Page_File_ClipboardImageFailed, ex.Message));
                 return;
             }
             image = bitmap;
@@ -149,17 +150,17 @@ public partial class FilePage : UserControl, IPage
         if (DroppedFile(e.DataTransfer) is { } file)
         {
             if (e.DataTransfer.TryGetFiles() is { Length: > 1 })
-                _state.Report(NoticeKind.Info, $"Mehrere Dateien abgelegt – gelesen wird „{Path.GetFileName(file)}“.");
-            Ui.Run(_state, () => LoadFileAsync(file, ScanSource.Datei), "Bild lesen");
+                _state.Report(NoticeKind.Info, string.Format(Strings.Page_File_MultipleFilesDropped, Path.GetFileName(file)));
+            Ui.Run(_state, () => LoadFileAsync(file, ScanSource.Datei), Strings.Page_File_ReadImage);
         }
         else if (e.DataTransfer.TryGetBitmap() is { } bitmap)
         {
             var image = Images.FromBitmap(bitmap);
             bitmap.Dispose();
-            Ui.Run(_state, () => DecodeAsync(image, ScanSource.Datei, "abgelegtes Bild"), "Bild lesen");
+            Ui.Run(_state, () => DecodeAsync(image, ScanSource.Datei, Strings.Page_File_DroppedImageName), Strings.Page_File_ReadImage);
         }
         else
-            _state.Report(NoticeKind.Info, "Das ist kein Bild, das Lupe lesen kann.");
+            _state.Report(NoticeKind.Info, Strings.Page_File_NotAnImage);
     }
 
     private static string? DroppedFile(IDataTransfer data) =>
@@ -172,7 +173,7 @@ public partial class FilePage : UserControl, IPage
     private async Task LoadFileAsync(string path, ScanSource source)
     {
         var ct = Restart();
-        SetBusy("Bild wird geladen …");
+        SetBusy(Strings.Page_File_LoadingImage);
         PixelImage image;
         try
         {
@@ -185,7 +186,7 @@ public partial class FilePage : UserControl, IPage
         catch (Exception ex) when (ex is not OutOfMemoryException && !_state.Strict)
         {
             SetBusy(null);
-            _state.Report(NoticeKind.Error, $"„{Path.GetFileName(path)}“ ließ sich nicht lesen: {ex.Message}");
+            _state.Report(NoticeKind.Error, string.Format(Strings.Page_File_FileReadFailed, Path.GetFileName(path), ex.Message));
             return;
         }
         await DecodeAsync(image, source, Path.GetFileName(path), ct);
@@ -194,13 +195,13 @@ public partial class FilePage : UserControl, IPage
     private async Task DecodeAsync(PixelImage image, ScanSource source, string name, CancellationToken ct = default)
     {
         if (ct == default) ct = Restart();
-        SourceText.Text = $"{name} · {image.Width} × {image.Height} Pixel";
+        SourceText.Text = string.Format(Strings.Page_File_SourceInfo, name, image.Width, image.Height);
         ToolTip.SetTip(SourceText, name);
         View.Source = Images.ToBitmap(image);
         View.Markers = [];
         DropHint.IsVisible = false;
         _results.Clear();
-        SetBusy("Suche Codes …");
+        SetBusy(Strings.Page_File_SearchingCodes);
 
         IReadOnlyList<DecodedCode> codes;
         var decoder = _state.CreateDecoder();
@@ -223,9 +224,9 @@ public partial class FilePage : UserControl, IPage
         View.Markers = CameraPage.Markers(codes, numbered: true, image);
         ResultDone.Text = codes.Count switch
         {
-            0 => "Tipp: Den Code möglichst groß und scharf aufnehmen; bei Bildschirmfotos besser „Ausschnitt scannen“.",
+            0 => Strings.Page_File_NoCodeTip,
             1 => report.Outcome.Summary,
-            _ => "Alle Codes stehen im Verlauf. Den gewünschten kopieren oder öffnen – oder alle zeilenweise kopieren.",
+            _ => Strings.Page_File_AllCodesInHistory,
         };
         ResultDone.IsVisible = ResultDone.Text.Length > 0;
     }
@@ -239,12 +240,12 @@ public partial class FilePage : UserControl, IPage
                 i < entries.Count ? entries[i] : null));
         ResultTitle.Text = codes.Count switch
         {
-            0 => "Kein Code gefunden",
-            1 => "1 Code gefunden",
-            _ => $"{codes.Count} Codes gefunden",
+            0 => Strings.Page_File_CodesFound_Zero,
+            1 => Strings.Page_File_CodesFound_One,
+            _ => string.Format(Strings.Page_File_CodesFound_Other, codes.Count),
         };
         ResultEmpty.IsVisible = codes.Count == 0;
-        ResultEmpty.Text = codes.Count == 0 ? "In diesem Bild hat Lupe keinen QR- oder Barcode gefunden." : "";
+        ResultEmpty.Text = codes.Count == 0 ? Strings.Page_File_NoCodeInImage : "";
         CopyAllButton.IsVisible = codes.Count > 1;
     }
 
@@ -265,7 +266,7 @@ public partial class FilePage : UserControl, IPage
     private async void CopyAll_Click(object? sender, RoutedEventArgs e)
     {
         if (await _state.Hits.CopyAllAsync([.. _results]) is { } error) _state.Report(NoticeKind.Error, error);
-        else _state.Report(NoticeKind.Success, $"{_results.Count} Codes zeilenweise kopiert.");
+        else _state.Report(NoticeKind.Success, string.Format(Strings.Page_Shared_CopiedAll, _results.Count));
     }
 
     private static IReadOnlyList<string> Extensions()
@@ -288,12 +289,12 @@ public partial class FilePage : UserControl, IPage
         var image = DemoData.DeliveryNoteImage();
         var codes = _state.CreateDecoder().Decode(image);
         if (codes.Count < 2) throw new InvalidOperationException($"Im Demo-Lieferschein wurden nur {codes.Count} Codes erkannt (erwartet: 4).");
-        SourceText.Text = $"lieferschein-4711.png · {image.Width} × {image.Height} Pixel";
+        SourceText.Text = string.Format(Strings.Page_File_SourceInfo, "lieferschein-4711.png", image.Width, image.Height);
         View.Source = Images.ToBitmap(image);
         View.Markers = CameraPage.Markers(codes, numbered: true, image);
         DropHint.IsVisible = false;
         ShowCodes(codes, [], ScanSource.Datei, DemoData.ScreenshotTime);
-        ResultDone.Text = "Alle Codes stehen im Verlauf. Den gewünschten kopieren oder öffnen – oder alle zeilenweise kopieren.";
+        ResultDone.Text = Strings.Page_File_AllCodesInHistory;
         ResultDone.IsVisible = true;
         await Ui.IdleAsync();
     }

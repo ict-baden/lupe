@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Lupe.Core.Camera;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 
 namespace Lupe.Platform.MacOS.Camera;
 
@@ -61,8 +62,8 @@ internal sealed class AVFoundationFrameSource : IFrameSource
 
     private unsafe string? Open()
     {
-        if (!OperatingSystem.IsMacOS()) return MacOS.NotHere("Die Kamera");
-        if (!NativeCamera.Available) return $"Die Kamera „{Name}“ ist nicht verfügbar – libLupeCamera.dylib fehlt.";
+        if (!OperatingSystem.IsMacOS()) return Strings.Mac_NotHere_Camera;
+        if (!NativeCamera.Available) return string.Format(Strings.Mac_Camera_LibraryMissing, Name);
         if (MacOSPermissions.CameraMessage(NativeCamera.RequestAccess()) is { } denied) return denied;
 
         var formats = NativeCamera.Formats(_camera.Id);

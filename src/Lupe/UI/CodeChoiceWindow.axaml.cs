@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 using Lupe.Services;
 using MonitorArea = Lupe.Core.Screen.MonitorArea;
 
@@ -33,10 +34,10 @@ public partial class CodeChoiceWindow : Window
         _monitor = monitor;
         List.ItemsSource = items;
         List.SelectedIndex = 0;
-        TitleText.Text = $"{items.Count} Codes gefunden – welcher?";
+        TitleText.Text = string.Format(Strings.App_Choice_Title, items.Count);
         ExplainText.Text = actions.Length == 0
-            ? "Der gewählte kommt ins Ergebnis; alle stehen schon im Verlauf."
-            : $"Der gewählte wird {actions}. Alle stehen schon im Verlauf.";
+            ? Strings.App_Choice_ExplainNoActions
+            : string.Format(Strings.App_Choice_Explain, actions);
         AddHandler(KeyDownEvent, OnKey, RoutingStrategies.Tunnel);
         Opened += (_, _) =>
         {

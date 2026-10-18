@@ -2,6 +2,7 @@ using System.Diagnostics;
 using FlashCap;
 using Lupe.Core.Camera;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 
 namespace Lupe.Platform.Linux.Camera;
 
@@ -53,7 +54,7 @@ internal sealed class FlashCapFrameSource : IFrameSource
             var format = descriptor is null ? null : LinuxCameraProvider.ChooseFormat(descriptor);
             if (descriptor is null || format is null)
             {
-                failure = $"Die Kamera „{Name}“ ist nicht angeschlossen.";
+                failure = string.Format(Strings.Linux_Camera_NotConnected, Name);
                 return;
             }
 
@@ -208,9 +209,9 @@ internal sealed class FlashCapFrameSource : IFrameSource
         {
             if (generation != _generation || _device is null) return;
             if (_camera.Id.StartsWith("/dev/", StringComparison.Ordinal) && !File.Exists(_camera.Id))
-                problem = $"Die Kamera „{Name}“ wurde getrennt.";
+                problem = string.Format(Strings.Linux_Camera_Disconnected, Name);
             else if (Environment.TickCount64 - Interlocked.Read(ref _lastFrameTicks) > StallTimeout.TotalMilliseconds)
-                problem = $"Die Kamera „{Name}“ liefert keine Bilder mehr – vielleicht wurde sie getrennt oder ein anderes Programm benutzt sie.";
+                problem = string.Format(Strings.Linux_Camera_Stalled, Name);
         }
         if (problem is null) return;
         var device = Detach();
@@ -230,11 +231,11 @@ internal sealed class FlashCapFrameSource : IFrameSource
             if (int.TryParse(digits, out int n)) errno = n;
         }
         if (ex is UnauthorizedAccessException || errno is 13 or 1)
-            return $"Kein Zugriff auf die Kamera „{name}“ – der Benutzer muss zur Gruppe „video“ gehören (danach neu anmelden).";
+            return string.Format(Strings.Linux_Camera_AccessDenied, name);
         if (errno == 16 || text.Contains("busy", StringComparison.OrdinalIgnoreCase))
-            return $"Die Kamera „{name}“ wird gerade von einem anderen Programm benutzt.";
+            return string.Format(Strings.Linux_Camera_InUse, name);
         if (errno is 2 or 19 or 6 || ex is FileNotFoundException or DirectoryNotFoundException)
-            return $"Die Kamera „{name}“ ist nicht angeschlossen.";
-        return $"Die Kamera „{name}“ ließ sich nicht starten ({text.Trim()}).";
+            return string.Format(Strings.Linux_Camera_NotConnected, name);
+        return string.Format(Strings.Linux_Camera_StartFailed, name, text.Trim());
     }
 }

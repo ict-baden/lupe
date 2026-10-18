@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Core.Screen;
 using Lupe.Platform.MacOS.Imaging;
 using Lupe.Platform.MacOS.Native;
@@ -39,7 +40,7 @@ internal static class DisplayLayout
             int x = (int)Math.Round(d.X * scale), y = (int)Math.Round(d.Y * scale);
             int r = (int)Math.Round((d.X + d.Width) * scale), b = (int)Math.Round((d.Y + d.Height) * scale);
             var bounds = new PixelRect(x, y, r - x, b - y);
-            string name = d.IsMain ? $"Bildschirm {d.Index + 1} (Hauptbildschirm)" : $"Bildschirm {d.Index + 1}";
+            string name = string.Format(d.IsMain ? Strings.Mac_Screen_MainMonitorNumbered : Strings.Mac_Screen_MonitorNumbered, d.Index + 1);
             result.Add(new MacMonitor(d, new MonitorArea(bounds, bounds, scale, d.IsMain, name)));
         }
         return result;
@@ -118,7 +119,7 @@ public sealed class MacOSScreenCapture : IScreenCapture
         image = null;
         if (!OperatingSystem.IsMacOS())
         {
-            error = MacOS.NotHere("Bildschirmfotos");
+            error = Strings.Mac_NotHere_Screenshots;
             return false;
         }
         if (!MacOSPermissions.ScreenCapture())
@@ -134,12 +135,12 @@ public sealed class MacOSScreenCapture : IScreenCapture
         }
         catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
         {
-            error = "Die Bildschirme ließen sich nicht abfragen (CoreGraphics fehlt).";
+            error = Strings.Mac_Screen_CoreGraphicsMissing;
             return false;
         }
         if (monitors.Count == 0)
         {
-            error = "macOS meldet keinen Bildschirm.";
+            error = Strings.Mac_Screen_NoDisplay;
             return false;
         }
 
@@ -173,24 +174,24 @@ public sealed class MacOSScreenCapture : IScreenCapture
             using var process = Process.Start(start);
             if (process is null)
             {
-                error = "screencapture ließ sich nicht starten.";
+                error = Strings.Mac_Screen_ToolStartFailed;
                 return false;
             }
             var stderr = process.StandardError.ReadToEndAsync();
             if (!process.WaitForExit(ToolTimeout))
             {
                 try { process.Kill(); } catch (InvalidOperationException) { }
-                error = "Das Bildschirmfoto dauerte zu lange (screencapture antwortet nicht).";
+                error = Strings.Mac_Screen_ToolTimeout;
                 return false;
             }
             if (process.ExitCode != 0 || !File.Exists(file))
             {
                 string detail = stderr.Wait(1000) ? stderr.Result.Trim() : "";
-                error = $"Das Bildschirmfoto ist fehlgeschlagen (screencapture: {(detail.Length > 0 ? detail : $"Code {process.ExitCode}")}).";
+                error = string.Format(Strings.Mac_Screen_ToolFailed, detail.Length > 0 ? detail : string.Format(Strings.Mac_Screen_ExitCode, process.ExitCode));
                 return false;
             }
             var bytes = File.ReadAllBytes(file);
-            shot = ImageIOReader.Decode(bytes, "Bildschirmfoto", int.MaxValue, largestFrame: false);
+            shot = ImageIOReader.Decode(bytes, Strings.Mac_Screen_ScreenshotName, int.MaxValue, largestFrame: false);
             error = null;
             return true;
         }
@@ -198,7 +199,7 @@ public sealed class MacOSScreenCapture : IScreenCapture
             or System.ComponentModel.Win32Exception or DllNotFoundException or EntryPointNotFoundException)
         {
             Trace.TraceWarning($"Lupe: screencapture fehlgeschlagen: {ex}");
-            error = $"Das Bildschirmfoto ist fehlgeschlagen: {ex.Message}";
+            error = string.Format(Strings.Mac_Screen_Failed, ex.Message);
             return false;
         }
         finally

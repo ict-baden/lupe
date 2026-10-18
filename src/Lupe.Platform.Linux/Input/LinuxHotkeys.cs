@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using Lupe.Core.Input;
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Platform.Linux.Native;
 using Lupe.Platform.Linux.Portal;
 using Tmds.DBus.Protocol;
@@ -12,10 +13,8 @@ namespace Lupe.Platform.Linux.Input;
 /// <summary>Globale Tastenkürzel: X11 über <c>XGrabKey</c>, Wayland über das GlobalShortcuts-Portal (KDE, GNOME ab 48 …).</summary>
 public sealed class LinuxHotkeys : IGlobalHotkeyProvider
 {
-    internal const string WaylandUnsupported =
-        "Dieser Wayland-Desktop erlaubt Programmen keine globalen Tastenkürzel (kein GlobalShortcuts-Portal) – Lupe über das Symbol im Infobereich oder das Menü öffnen, oder in den Systemeinstellungen ein eigenes Tastenkürzel für „lupe --bildschirm“ anlegen.";
-    internal const string NoSession =
-        "Ohne grafische Sitzung gibt es keine globalen Tastenkürzel.";
+    internal static string WaylandUnsupported => Strings.Linux_Hotkey_WaylandUnsupported;
+    internal static string NoSession => Strings.Linux_Hotkey_NoSession;
 
     private readonly Lazy<string?> _waylandReason = new(() =>
     {
@@ -99,7 +98,7 @@ internal sealed unsafe class X11Hotkey : IGlobalHotkey
         nint display = X11.TryOpen(out string? openError);
         if (display == 0)
         {
-            _outcome.TrySetResult($"Das Tastenkürzel {HotkeyText.Format(_hotkey)} konnte nicht angemeldet werden: {openError}");
+            _outcome.TrySetResult(string.Format(Strings.Linux_Hotkey_RegisterFailedReason, HotkeyText.Format(_hotkey), openError));
             return;
         }
         nint root = X11.XDefaultRootWindow(display);
@@ -109,7 +108,7 @@ internal sealed unsafe class X11Hotkey : IGlobalHotkey
         {
             if (keycode == 0)
             {
-                _outcome.TrySetResult($"Die Taste von {HotkeyText.Format(_hotkey)} gibt es im aktuellen Tastaturlayout nicht.");
+                _outcome.TrySetResult(string.Format(Strings.Linux_Hotkey_KeyNotInLayout, HotkeyText.Format(_hotkey)));
                 return;
             }
             int error = X11Errors.Trap(display, () =>
@@ -124,8 +123,8 @@ internal sealed unsafe class X11Hotkey : IGlobalHotkey
                     foreach (uint extra in LinuxHotkeys.IgnoredVariants) X11.XUngrabKey(display, keycode, mods | extra, root);
                 });
                 _outcome.TrySetResult(error == X11.BadAccess
-                    ? $"{HotkeyText.Format(_hotkey)} ist schon von einem anderen Programm belegt."
-                    : $"Das Tastenkürzel {HotkeyText.Format(_hotkey)} konnte nicht angemeldet werden (X-Fehler {error}).");
+                    ? string.Format(Strings.Linux_Hotkey_AlreadyRegistered, HotkeyText.Format(_hotkey))
+                    : string.Format(Strings.Linux_Hotkey_RegisterFailedX11, HotkeyText.Format(_hotkey), error));
                 return;
             }
             int* fds = stackalloc int[2];
@@ -146,7 +145,7 @@ internal sealed unsafe class X11Hotkey : IGlobalHotkey
                 });
             X11.XCloseDisplay(display);
             if (_wakeRead >= 0) Libc.close(_wakeRead);
-            _outcome.TrySetResult("Das Tastenkürzel wurde abgemeldet.");
+            _outcome.TrySetResult(Strings.Linux_Hotkey_Unregistered);
         }
     }
 
@@ -224,7 +223,7 @@ internal sealed class PortalHotkey : IGlobalHotkey
         }
         catch (Exception ex) when (ex is PortalException or DBusExceptionBase or IOException)
         {
-            Error = ex is PortalException ? ex.Message : $"Das Tastenkürzel konnte nicht beim Desktop angemeldet werden ({ex.Message.Trim()}).";
+            Error = ex is PortalException ? ex.Message : string.Format(Strings.Linux_Hotkey_PortalRegisterFailed, ex.Message.Trim());
             Dispose();
         }
     }
@@ -240,7 +239,7 @@ internal sealed class PortalHotkey : IGlobalHotkey
             new Dictionary<string, VariantValue> { ["session_handle_token"] = VariantValue.String(PortalConnection.NewToken()) },
             TimeSpan.FromSeconds(30)).ConfigureAwait(false);
         _session = created.GetString("session_handle")
-            ?? throw new PortalException("Das Desktop-Portal hat keine Sitzung für Tastenkürzel geöffnet.");
+            ?? throw new PortalException(Strings.Linux_Hotkey_NoPortalSession);
 
         _watch = await _portal.Connection.WatchSignalAsync(PortalConnection.Bus, PortalConnection.ObjectPath, Iface, "Activated",
             (Message m, object? _) =>
@@ -253,7 +252,7 @@ internal sealed class PortalHotkey : IGlobalHotkey
                 if (n.HasValue && n.Value.Session == _session && n.Value.Id == ShortcutId && Volatile.Read(ref _disposed) == 0) Raise();
             }, ObserverFlags.None, emitOnCapturedContext: false, null).ConfigureAwait(false);
 
-        var props = new Dictionary<string, VariantValue> { ["description"] = VariantValue.String("Bildschirmausschnitt scannen") };
+        var props = new Dictionary<string, VariantValue> { ["description"] = VariantValue.String(Strings.Linux_Hotkey_Description) };
         if (PreferredTrigger(hotkey) is { } trigger) props["preferred_trigger"] = VariantValue.String(trigger);
         var bound = await _portal.RequestAsync(Iface, "BindShortcuts", "oa(sa{sv})sa{sv}", (ref MessageWriter w) =>
         {
@@ -267,8 +266,8 @@ internal sealed class PortalHotkey : IGlobalHotkey
         }, [], TimeSpan.FromMinutes(2)).ConfigureAwait(false);
         if (!bound.Ok)
             throw new PortalException(bound.Code == 1
-                ? "Das Tastenkürzel wurde im Dialog des Desktops abgelehnt."
-                : "Der Desktop hat das Tastenkürzel nicht angenommen.");
+                ? Strings.Linux_Hotkey_Rejected
+                : Strings.Linux_Hotkey_NotAccepted);
     }
 
     /// <summary>Vorschlag im Format der XDG-Spezifikation „shortcuts“, z. B. „LOGO+SHIFT+q“; null, wenn die Taste keinen Namen hat.</summary>

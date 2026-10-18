@@ -9,6 +9,16 @@
     <Description>Erkennung, Verlauf, Einstellungen, Scan-Schleife, Tipp-Logik und Plattform-Schnittstellen für Lupe – ohne Oberfläche und ohne Systemaufrufe.</Description>
   </PropertyGroup>
 
+  <!-- Texte der Oberfläche (Richtlinie 13): Strings.resx = Englisch (Rückfallsprache), Strings.de.resx = Deutsch.
+       Die Klasse Lupe.Core.Resources.Strings erzeugt der Build, keine Designer-Datei im Repo. -->
+  <PropertyGroup>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Resources\Strings.resx" StronglyTypedLanguage="CSharp" StronglyTypedNamespace="Lupe.Core.Resources"
+                      StronglyTypedClassName="Strings" StronglyTypedFileName="$(IntermediateOutputPath)Strings.g.cs" PublicClass="true" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="ZXingCpp" Version="0.5.3" />
   </ItemGroup>

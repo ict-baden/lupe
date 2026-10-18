@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 
 namespace Lupe.Core.Settings;
 
@@ -56,18 +57,18 @@ public static class LinkRules
         ArgumentNullException.ThrowIfNull(rule);
 
         if (string.IsNullOrWhiteSpace(rule.Pattern))
-            return "Bitte ein Muster (regulären Ausdruck) angeben.";
+            return Strings.Core_LinkRule_PatternMissing;
         try
         {
             _ = new Regex(rule.Pattern, PatternOptions, MatchTimeout);
         }
         catch (RegexParseException ex)
         {
-            return $"Das Muster ist kein gültiger regulärer Ausdruck: {Describe(ex.Error)} (bei Zeichen {ex.Offset}).";
+            return string.Format(Strings.Core_LinkRule_InvalidRegexAt, Describe(ex.Error), ex.Offset);
         }
         catch (ArgumentException ex)
         {
-            return $"Das Muster ist kein gültiger regulärer Ausdruck: {ex.Message}";
+            return string.Format(Strings.Core_LinkRule_InvalidRegex, ex.Message);
         }
 
         var prefix = rule.Prefix?.Trim() ?? "";
@@ -75,11 +76,11 @@ public static class LinkRules
         return CheckPrefix(prefix, out _) switch
         {
             PrefixKind.SchemeOnly or PrefixKind.WithHost => null,
-            PrefixKind.NotHttp => "Das Präfix muss leer sein oder mit http:// bzw. https:// beginnen (z. B. https://example.com/suche?q=).",
-            PrefixKind.BadCharacters => "Das Präfix darf keine Steuerzeichen und keinen Backslash (\\) enthalten.",
-            PrefixKind.HostNotClosed => "Nach dem Hostnamen fehlt ein „/“ – z. B. https://example.com/ statt https://example.com.",
-            PrefixKind.UserInfo => "Das Präfix darf keinen Benutzernamen und kein Kennwort enthalten.",
-            _ => "Das Präfix ist kein gültiger Link-Anfang.",
+            PrefixKind.NotHttp => Strings.Core_LinkRule_PrefixNotHttp,
+            PrefixKind.BadCharacters => Strings.Core_LinkRule_PrefixBadCharacters,
+            PrefixKind.HostNotClosed => Strings.Core_LinkRule_PrefixHostNotClosed,
+            PrefixKind.UserInfo => Strings.Core_LinkRule_PrefixUserInfo,
+            _ => Strings.Core_LinkRule_PrefixInvalid,
         };
     }
 
@@ -208,27 +209,27 @@ public static class LinkRules
 
     private static string Describe(RegexParseError error) => error switch
     {
-        RegexParseError.InsufficientClosingParentheses => "es fehlt eine schließende Klammer „)“",
-        RegexParseError.InsufficientOpeningParentheses => "zu viele schließende Klammern „)“",
-        RegexParseError.UnterminatedBracket => "eckige Klammer „[“ nicht geschlossen",
-        RegexParseError.ReversedCharacterRange => "Zeichenbereich verkehrt herum (z. B. [z-a])",
-        RegexParseError.ReversedQuantifierRange => "Wiederholungsbereich verkehrt herum (z. B. {3,1})",
-        RegexParseError.QuantifierAfterNothing => "Wiederholungszeichen (*, +, ?, {…}) ohne etwas davor",
-        RegexParseError.NestedQuantifiersNotParenthesized => "zwei Wiederholungszeichen hintereinander (z. B. a**)",
-        RegexParseError.UnescapedEndingBackslash => "„\\“ am Ende des Musters",
-        RegexParseError.UnrecognizedEscape => "unbekannte Escape-Sequenz mit „\\“",
-        RegexParseError.UnrecognizedControlCharacter or RegexParseError.MissingControlCharacter => "ungültiges Steuerzeichen bei \\c",
-        RegexParseError.InsufficientOrInvalidHexDigits => "ungültige Hex-Ziffern (bei \\x oder \\u)",
-        RegexParseError.InvalidGroupingConstruct => "ungültige Gruppe „(?…)“",
+        RegexParseError.InsufficientClosingParentheses => Strings.Core_Regex_MissingClosingParenthesis,
+        RegexParseError.InsufficientOpeningParentheses => Strings.Core_Regex_TooManyClosingParentheses,
+        RegexParseError.UnterminatedBracket => Strings.Core_Regex_UnterminatedBracket,
+        RegexParseError.ReversedCharacterRange => Strings.Core_Regex_ReversedCharacterRange,
+        RegexParseError.ReversedQuantifierRange => Strings.Core_Regex_ReversedQuantifierRange,
+        RegexParseError.QuantifierAfterNothing => Strings.Core_Regex_QuantifierAfterNothing,
+        RegexParseError.NestedQuantifiersNotParenthesized => Strings.Core_Regex_NestedQuantifiers,
+        RegexParseError.UnescapedEndingBackslash => Strings.Core_Regex_EndingBackslash,
+        RegexParseError.UnrecognizedEscape => Strings.Core_Regex_UnrecognizedEscape,
+        RegexParseError.UnrecognizedControlCharacter or RegexParseError.MissingControlCharacter => Strings.Core_Regex_InvalidControlCharacter,
+        RegexParseError.InsufficientOrInvalidHexDigits => Strings.Core_Regex_InvalidHexDigits,
+        RegexParseError.InvalidGroupingConstruct => Strings.Core_Regex_InvalidGroup,
         RegexParseError.UndefinedNamedReference or RegexParseError.UndefinedNumberedReference
-            or RegexParseError.MalformedNamedReference => "Verweis auf eine nicht vorhandene Gruppe",
-        RegexParseError.CaptureGroupNameInvalid or RegexParseError.CaptureGroupOfZero => "ungültiger Gruppenname",
+            or RegexParseError.MalformedNamedReference => Strings.Core_Regex_UndefinedReference,
+        RegexParseError.CaptureGroupNameInvalid or RegexParseError.CaptureGroupOfZero => Strings.Core_Regex_InvalidGroupName,
         RegexParseError.UnrecognizedUnicodeProperty or RegexParseError.InvalidUnicodePropertyEscape
-            or RegexParseError.MalformedUnicodePropertyEscape => "unbekannte Unicode-Kategorie bei \\p{…}",
-        RegexParseError.UnterminatedComment => "Kommentar „(?#…)“ nicht geschlossen",
-        RegexParseError.QuantifierOrCaptureGroupOutOfRange => "Zahl zu groß",
-        RegexParseError.ShorthandClassInCharacterRange => "Kurzklasse wie \\d als Bereichsgrenze in […]",
-        RegexParseError.ExclusionGroupNotLast => "Ausschluss-Gruppe nicht am Ende der Zeichenklasse",
-        _ => "Fehler im Aufbau",
+            or RegexParseError.MalformedUnicodePropertyEscape => Strings.Core_Regex_UnknownUnicodeCategory,
+        RegexParseError.UnterminatedComment => Strings.Core_Regex_UnterminatedComment,
+        RegexParseError.QuantifierOrCaptureGroupOutOfRange => Strings.Core_Regex_NumberTooLarge,
+        RegexParseError.ShorthandClassInCharacterRange => Strings.Core_Regex_ShorthandInRange,
+        RegexParseError.ExclusionGroupNotLast => Strings.Core_Regex_ExclusionGroupNotLast,
+        _ => Strings.Core_Regex_SyntaxError,
     };
 }

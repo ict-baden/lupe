@@ -1,5 +1,6 @@
 using Lupe.Core.Model;
 using Lupe.Core.Settings;
+using Lupe.Core.Resources;
 
 namespace Lupe.Core.History;
 
@@ -168,7 +169,7 @@ public sealed class HistoryStore
         }
         catch (Exception ex) when (FileProblems.IsExpected(ex))
         {
-            error = $"Die Verlaufsdatei „{file}“ ließ sich nicht löschen ({FileProblems.Describe(ex)}).";
+            error = string.Format(Strings.Core_History_DeleteError, file, FileProblems.Describe(ex));
             return false;
         }
 
@@ -220,7 +221,7 @@ public sealed class HistoryStore
         }
         catch (Exception ex) when (FileProblems.IsExpected(ex) || ex is ArgumentException)
         {
-            throw new IOException($"Der Verlauf konnte nicht nach „{path}“ exportiert werden ({FileProblems.Describe(ex)}).", ex);
+            throw new IOException(string.Format(Strings.Core_History_ExportError, path, FileProblems.Describe(ex)), ex);
         }
     }
 
@@ -261,8 +262,7 @@ public sealed class HistoryStore
         catch (Exception ex) when (FileProblems.IsExpected(ex))
         {
             Volatile.Write(ref _problem,
-                $"Der Verlauf konnte nicht in „{FilePath}“ gespeichert werden ({FileProblems.Describe(ex)}). "
-                + "Die Einträge bleiben erhalten, solange Lupe läuft; beim nächsten Eintrag wird es erneut versucht.");
+                string.Format(Strings.Core_History_SaveError, FilePath, FileProblems.Describe(ex)));
         }
     }
 

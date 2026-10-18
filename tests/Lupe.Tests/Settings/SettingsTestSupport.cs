@@ -59,6 +59,7 @@ internal static class SettingsAssert
         KeepHistory = false,
         HistoryLimit = 250,
         KeepRunningInTray = false,
+        Language = "de",
         TrayHintShown = true,
     };
 }

@@ -1,5 +1,6 @@
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 
 namespace Lupe.Core.Decoding;
 
@@ -40,10 +41,10 @@ public static class ImageFile
     {
         ArgumentNullException.ThrowIfNull(stream);
         if (!stream.CanRead) throw new ArgumentException("Der Datenstrom ist nicht lesbar.", nameof(stream));
-        string display = string.IsNullOrWhiteSpace(name) ? "Bild" : name;
+        string display = string.IsNullOrWhiteSpace(name) ? Strings.Core_Image_DefaultName : name;
         if (stream.CanSeek)
         {
-            if (stream.Length - stream.Position <= 0) throw new InvalidDataException($"„{display}“ ist leer.");
+            if (stream.Length - stream.Position <= 0) throw new InvalidDataException(string.Format(Strings.Core_Image_Empty, display));
             return await LoadAsync(new KeepOpen(stream, stream.Position), display, MaxPixels, ct).ConfigureAwait(false);
         }
 
@@ -52,10 +53,10 @@ public static class ImageFile
         int read;
         while ((read = await stream.ReadAsync(buffer, ct).ConfigureAwait(false)) > 0)
         {
-            if (copy.Length + read > MaxStreamBytes) throw new InvalidDataException($"„{display}“ ist zu groß, um geladen zu werden.");
+            if (copy.Length + read > MaxStreamBytes) throw new InvalidDataException(string.Format(Strings.Core_Image_TooLarge, display));
             copy.Write(buffer, 0, read);
         }
-        if (copy.Length == 0) throw new InvalidDataException($"„{display}“ ist leer.");
+        if (copy.Length == 0) throw new InvalidDataException(string.Format(Strings.Core_Image_Empty, display));
         copy.Position = 0;
         return await LoadAsync(copy, display, MaxPixels, ct).ConfigureAwait(false);
     }
@@ -80,30 +81,30 @@ public static class ImageFile
         }
         catch (Exception ex) when (ex is FileNotFoundException or DirectoryNotFoundException)
         {
-            throw new FileNotFoundException($"Die Datei „{name}“ wurde nicht gefunden.", path, ex);
+            throw new FileNotFoundException(string.Format(Strings.Core_Image_FileNotFound, name), path, ex);
         }
         catch (UnauthorizedAccessException ex)
         {
-            throw new UnauthorizedAccessException($"Kein Zugriff auf „{name}“ – fehlen Leserechte, oder ist es ein Ordner?", ex);
+            throw new UnauthorizedAccessException(string.Format(Strings.Core_Image_AccessDenied, name), ex);
         }
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
         {
-            throw new FileNotFoundException($"„{path}“ ist kein gültiger Dateipfad.", path, ex);
+            throw new FileNotFoundException(string.Format(Strings.Core_Image_InvalidPath, path), path, ex);
         }
         catch (IOException ex) when (ex.HResult is ErrorSharingViolation or ErrorLockViolation)
         {
-            throw new IOException($"„{name}“ wird gerade von einem anderen Programm benutzt und kann nicht gelesen werden.", ex);
+            throw new IOException(string.Format(Strings.Core_Image_InUse, name), ex);
         }
         catch (IOException ex)
         {
-            throw new IOException($"„{name}“ konnte nicht geöffnet werden: {ex.Message}", ex);
+            throw new IOException(string.Format(Strings.Core_Image_OpenError, name, ex.Message), ex);
         }
 
         await using (stream)
         {
             // Geräte und Pipes (CON, \\.\pipe\…) sind keine Bilddateien – und Length würde dort scheitern
-            if (!stream.CanSeek) throw new InvalidDataException($"„{name}“ ist keine Bilddatei.");
-            if (stream.Length == 0) throw new InvalidDataException($"Die Datei „{name}“ ist leer.");
+            if (!stream.CanSeek) throw new InvalidDataException(string.Format(Strings.Core_Image_NotAnImageFile, name));
+            if (stream.Length == 0) throw new InvalidDataException(string.Format(Strings.Core_Image_FileEmpty, name));
             return await LoadAsync(stream, name, maxPixels, ct).ConfigureAwait(false);
         }
     }
@@ -122,7 +123,7 @@ public static class ImageFile
         {
             // Abgeschnittene PNG/JPEG/GIF lesen die Windows-Decoder klaglos (Rest grau oder weiß) – vorher selbst prüfen
             if (await Task.Run(() => ImageIntegrity.Truncation(stream), ct).ConfigureAwait(false) is { } reason)
-                throw new InvalidDataException($"„{name}“ ist unvollständig – {reason} (abgebrochener Download oder Kopiervorgang?).");
+                throw new InvalidDataException(string.Format(Strings.Core_Image_Incomplete, name, reason));
             return await decoder.DecodeAsync(stream, name, maxPixels, ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)

@@ -1,5 +1,6 @@
 using Lupe.Core.Camera;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 using Windows.Media.Capture.Frames;
 
 namespace Lupe.Platform.Windows.Camera;
@@ -70,8 +71,6 @@ internal static class CameraProblems
     private const int MF_E_UNSUPPORTED_CAPTURE_DEVICE_PRESENT = unchecked((int)0xC00DABED);
     private const int MF_E_CAMERA_PRIVACY_NOT_ALLOWED = unchecked((int)0xC00DB798);
 
-    private const string PrivacyPath = "Einstellungen → Datenschutz und Sicherheit → Kamera";
-
     public static CameraProblemKind Classify(int hresult) => hresult switch
     {
         E_ACCESSDENIED or MF_E_CAMERA_PRIVACY_NOT_ALLOWED => CameraProblemKind.AccessDenied,
@@ -115,55 +114,38 @@ internal static class CameraProblems
     public static string Describe(CameraProblem problem, string? cameraName, CameraPrivacyState? privacy = null)
     {
         string name = CameraList.CleanName(cameraName);
-        string cam = $"Die Kamera „{name}“";
         return problem.Kind switch
         {
-            CameraProblemKind.NoCamera =>
-                "Keine Kamera gefunden. Schließen Sie eine Kamera an oder scannen Sie stattdessen einen Bildschirmausschnitt oder eine Bilddatei.",
-            CameraProblemKind.NotFound =>
-                $"{cam} wurde nicht gefunden. Ist sie angeschlossen und eingeschaltet? Wählen Sie sonst eine andere Kamera.",
-            CameraProblemKind.Disconnected =>
-                $"{cam} ist nicht mehr erreichbar – wurde sie abgezogen? Schließen Sie sie wieder an und starten Sie die Kamera erneut.",
-            CameraProblemKind.InUse =>
-                $"{cam} wird gerade von einem anderen Programm benutzt (z. B. Teams, Zoom oder die Kamera-App). Schließen Sie das Programm und starten Sie die Kamera erneut.",
-            CameraProblemKind.Preempted =>
-                $"{cam} wurde von einem anderen Programm übernommen. Schließen Sie das andere Programm und starten Sie die Kamera erneut.",
-            CameraProblemKind.StreamShutdown =>
-                $"{cam} wurde von Windows beendet – ein anderes Programm hat sie übernommen oder sie wurde abgezogen. Prüfen Sie das und starten Sie die Kamera erneut.",
+            CameraProblemKind.NoCamera => Strings.Win_Camera_NoCamera,
+            CameraProblemKind.NotFound => string.Format(Strings.Win_Camera_NotFound, name),
+            CameraProblemKind.Disconnected => string.Format(Strings.Win_Camera_Disconnected, name),
+            CameraProblemKind.InUse => string.Format(Strings.Win_Camera_InUse, name),
+            CameraProblemKind.Preempted => string.Format(Strings.Win_Camera_Preempted, name),
+            CameraProblemKind.StreamShutdown => string.Format(Strings.Win_Camera_StreamShutdown, name),
             CameraProblemKind.AccessDenied => DescribeAccessDenied(name, privacy ?? CameraPrivacy.Read()),
-            CameraProblemKind.NoColorStream =>
-                $"{cam} liefert kein Farbbild (z. B. eine reine Infrarot-Kamera für Windows Hello). Wählen Sie eine andere Kamera.",
-            CameraProblemKind.FormatNotSupported =>
-                $"{cam} liefert kein Bildformat, das Lupe lesen kann. Wählen Sie eine andere Kamera oder aktualisieren Sie den Kameratreiber.",
-            CameraProblemKind.MediaFeaturesMissing =>
-                "Auf diesem Windows fehlen die Medienfunktionen (Windows-Ausgabe „N“). Installieren Sie das „Media Feature Pack“ unter Einstellungen → System → Optionale Features und starten Sie Lupe neu.",
-            _ =>
-                $"{cam} lässt sich nicht verwenden ({Code(problem)}). Ziehen Sie die Kamera ab und wieder an oder starten Sie Windows neu; hilft das nicht, wählen Sie eine andere Kamera.",
+            CameraProblemKind.NoColorStream => string.Format(Strings.Win_Camera_NoColorStream, name),
+            CameraProblemKind.FormatNotSupported => string.Format(Strings.Win_Camera_FormatNotSupported, name),
+            CameraProblemKind.MediaFeaturesMissing => Strings.Win_Camera_MediaFeaturesMissing,
+            _ => string.Format(Strings.Win_Camera_Unknown, name, Code(problem)),
         };
     }
 
     private static string DescribeAccessDenied(string name, CameraPrivacyState privacy) => privacy switch
     {
-        CameraPrivacyState.PolicyBlocked =>
-            "Die Kamera ist auf diesem Gerät per Richtlinie gesperrt. Wenden Sie sich an Ihre IT-Abteilung.",
-        CameraPrivacyState.DeviceOff =>
-            $"Der Kamerazugriff ist für dieses Gerät ausgeschaltet. Schalten Sie unter {PrivacyPath} den „Kamerazugriff“ ein (dafür sind Administratorrechte nötig).",
-        CameraPrivacyState.AppsOff =>
-            $"Der Kamerazugriff für Apps ist ausgeschaltet. Schalten Sie unter {PrivacyPath} den Zugriff für Apps und für Desktop-Apps ein und starten Sie die Kamera erneut.",
-        CameraPrivacyState.DesktopAppsOff =>
-            $"Windows erlaubt Desktop-Apps keinen Kamerazugriff. Schalten Sie unter {PrivacyPath} „Desktop-Apps den Zugriff auf die Kamera erlauben“ ein und starten Sie die Kamera erneut.",
-        CameraPrivacyState.ThisAppOff =>
-            $"Windows hat Lupe den Kamerazugriff entzogen. Erlauben Sie Lupe unter {PrivacyPath} (Liste der Desktop-Apps) wieder den Zugriff und starten Sie die Kamera erneut.",
-        _ =>
-            $"Windows verweigert den Zugriff auf die Kamera „{name}“. Prüfen Sie unter {PrivacyPath}, ob der Kamerazugriff für Desktop-Apps erlaubt ist, und ob ein Kamera-Schalter oder eine Abdeckung am Gerät aktiv ist.",
+        CameraPrivacyState.PolicyBlocked => Strings.Win_Camera_PolicyBlocked,
+        CameraPrivacyState.DeviceOff => Strings.Win_Camera_DeviceOff,
+        CameraPrivacyState.AppsOff => Strings.Win_Camera_AppsOff,
+        CameraPrivacyState.DesktopAppsOff => Strings.Win_Camera_DesktopAppsOff,
+        CameraPrivacyState.ThisAppOff => Strings.Win_Camera_ThisAppOff,
+        _ => string.Format(Strings.Win_Camera_AccessDenied, name),
     };
 
     private static string Code(CameraProblem problem)
     {
         var parts = new List<string>(2);
-        if (problem.HResult != 0) parts.Add($"Fehler 0x{problem.HResult:X8}");
+        if (problem.HResult != 0) parts.Add(string.Format(Strings.Win_Camera_ErrorCode, problem.HResult));
         string? detail = problem.Detail?.Trim();
         if (!string.IsNullOrEmpty(detail)) parts.Add(detail.Length > 160 ? detail[..160] + " …" : detail);
-        return parts.Count == 0 ? "unbekannter Fehler" : string.Join(": ", parts);
+        return parts.Count == 0 ? Strings.Win_Camera_UnknownError : string.Join(": ", parts);
     }
 }

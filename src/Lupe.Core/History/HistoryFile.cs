@@ -4,6 +4,7 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Lupe.Core.Model;
 using Lupe.Core.Settings;
+using Lupe.Core.Resources;
 
 namespace Lupe.Core.History;
 
@@ -64,8 +65,7 @@ internal static class HistoryFile
         catch (Exception ex) when (FileProblems.IsExpected(ex))
         {
             return new HistoryReadResult(HistoryReadStatus.Unreadable, [], 0,
-                $"Der gespeicherte Verlauf „{path}“ konnte nicht gelesen werden ({FileProblems.Describe(ex)}). "
-                + "Neue Einträge werden erst gespeichert, wenn die Datei wieder lesbar ist.");
+                string.Format(Strings.Core_History_ReadError, path, FileProblems.Describe(ex)));
         }
 
         var json = SettingsStore.SkipUtf8Bom(bytes);
@@ -77,17 +77,17 @@ internal static class HistoryFile
             var problem = skipped switch
             {
                 0 => null,
-                1 => "Ein Eintrag im gespeicherten Verlauf war unlesbar und wurde übersprungen.",
-                _ => $"{skipped} Einträge im gespeicherten Verlauf waren unlesbar und wurden übersprungen.",
+                1 => Strings.Core_History_EntriesSkipped_One,
+                _ => string.Format(Strings.Core_History_EntriesSkipped_Other, skipped),
             };
             return new HistoryReadResult(HistoryReadStatus.Loaded, entries, skipped, problem);
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or ArgumentException)
         {
-            var where = ex is JsonException { LineNumber: { } line } ? $" (Fehler in Zeile {line + 1})" : "";
             return new HistoryReadResult(HistoryReadStatus.Broken, [], 0,
-                $"Der gespeicherte Verlauf „{path}“ ist beschädigt{where} und wurde nicht geladen. "
-                + "Die Datei bleibt unverändert, bis ein neuer Eintrag dazukommt – dann beginnt der Verlauf neu.");
+                ex is JsonException { LineNumber: { } line }
+                    ? string.Format(Strings.Core_History_BrokenAtLine, path, line + 1)
+                    : string.Format(Strings.Core_History_Broken, path));
         }
     }
 

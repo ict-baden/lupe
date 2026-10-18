@@ -128,7 +128,7 @@ Lupe shows the picture with every code outlined and numbered, and lists them und
 
 All codes go to the history (source *Datei*, or *Zwischenablage* for the clipboard). With exactly one code, the actions under *Kamera, Datei und Zwischenablage* run; with several, none run – choose yourself.
 
-If nothing is found, the page says *Kein Code gefunden* with a tip. A file that cannot be read gets a German explanation – for example that it is incomplete (*… ist unvollständig – die Datei endet mitten im Bild*), that a codec is missing (*Für WEBP fehlt Windows der passende Codec …*), or that another program has it locked.
+If nothing is found, the page says *Kein Code gefunden* with a tip. A file that cannot be read gets an explanation – for example that it is incomplete (*… ist unvollständig – die Datei endet mitten im Bild*), that a codec is missing (*Für WEBP fehlt Windows der passende Codec …*), or that another program has it locked.
 
 ## Verlauf – history
 
@@ -159,10 +159,10 @@ Changes apply and are saved immediately – there is no *Save* button. The page 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/about-dark.png">
-  <img alt="Info page: Lupe version 0.1.0 and .NET version; publisher ICT-Baden; licence not yet determined; source code link with “Im Browser öffnen”; origin from Barcode-Reader with “Ansehen”; recognition with zxing-cpp and the button “Lizenztexte”; “Ihre Daten” with “Ordner öffnen”; the heading Befehlszeile." src="assets/screenshots/about-light.png" width="900">
+  <img alt="Info page: Lupe version 0.1.0 and .NET version; publisher ICT-Baden; MIT licence; source code link with “Im Browser öffnen”; origin from Barcode-Reader with “Ansehen”; recognition with zxing-cpp and the button “Lizenztexte”; “Ihre Daten” with “Ordner öffnen”; the heading Befehlszeile." src="assets/screenshots/about-light.png" width="900">
 </picture>
 
-Version and .NET version, publisher, *Lizenz: Die Lizenz ist noch nicht festgelegt.* (the licence has not been decided yet), the source code link, the decoding and UI libraries (*Erkennung und Oberfläche*: zxing-cpp, Apache-2.0, with libzint and libzueci, BSD-3-Clause; *Lizenztexte* opens the licence texts of all bundled components), *Ihre Daten* (your data) with *Ordner öffnen* for `%LocalAppData%\Lupe`, a short introduction to the command line with the exit codes, and the keyboard shortcuts (*Tastatur*).
+Version and .NET version, publisher, *Lizenz: MIT-Lizenz – © 2026 ICT-Baden GmbH*, the source code link, the decoding and UI libraries (*Erkennung und Oberfläche*: zxing-cpp, Apache-2.0, with libzint and libzueci, BSD-3-Clause; *Lizenztexte* opens the licence texts of all bundled components), *Ihre Daten* (your data) with *Ordner öffnen* for `%LocalAppData%\Lupe`, a short introduction to the command line with the exit codes, and the keyboard shortcuts (*Tastatur*).
 
 ## Workflows
 

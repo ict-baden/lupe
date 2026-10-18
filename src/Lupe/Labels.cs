@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Reflection;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 
 namespace Lupe;
 
@@ -15,31 +16,29 @@ public static class AppInfo
          ?? typeof(AppInfo).Assembly.GetName().Version?.ToString(3) ?? "0.1.0").Split('+')[0];
 }
 
-/// <summary>Deutsche Bezeichnungen für Formate, Quellen, Aktionen und Zeiten.</summary>
+/// <summary>Bezeichnungen für Formate, Quellen, Aktionen und Zeiten in der Sprache der Oberfläche.</summary>
 public static class Labels
 {
+    /// <summary>Nur noch für Aufrufer, die deutsche Zahlen brauchen; Anzeigen formatieren mit <see cref="CultureInfo.CurrentCulture"/>.</summary>
     public static readonly CultureInfo German = CultureInfo.GetCultureInfo("de-DE");
 
     /// <summary>
     /// Anzeigenamen aller Formate der Erkennung (<c>BarcodeDecoder.AllFormats</c>) und früherer Formate, die noch im
     /// Verlauf stehen können (IMB las nur ZXing.Net; MSI, Plessey, Pharmacode und UPC/EAN-Zusatz las Lupe nie, sie
-    /// konnten aber von Hand in den Einstellungen stehen).
+    /// konnten aber von Hand in den Einstellungen stehen). Namen, die je Sprache anders lauten, liefert
+    /// <see cref="LocalizedFormat"/> – erst beim Aufruf, wenn die Sprache feststeht.
     /// </summary>
     private static readonly Dictionary<string, string> FormatNames = new(StringComparer.OrdinalIgnoreCase)
     {
-        ["QR_CODE"] = "QR-Code",
         ["DATA_MATRIX"] = "Data Matrix",
         ["AZTEC"] = "Aztec",
         ["PDF_417"] = "PDF417",
         ["MAXICODE"] = "MaxiCode",
-        ["MICRO_QR_CODE"] = "Micro-QR-Code",
-        ["RMQR_CODE"] = "rMQR-Code",
         ["MICRO_PDF_417"] = "MicroPDF417",
         ["EAN_13"] = "EAN-13",
         ["EAN_8"] = "EAN-8",
         ["UPC_A"] = "UPC-A",
         ["UPC_E"] = "UPC-E",
-        ["UPC_EAN_EXTENSION"] = "UPC/EAN-Zusatz",
         ["CODE_128"] = "Code 128",
         ["CODE_39"] = "Code 39",
         ["CODE_93"] = "Code 93",
@@ -49,7 +48,6 @@ public static class Labels
         ["RSS_EXPANDED"] = "GS1 DataBar Expanded",
         ["RSS_LIMITED"] = "GS1 DataBar Limited",
         ["TELEPEN"] = "Telepen",
-        ["DX_FILM_EDGE"] = "DX-Filmrand",
         ["MSI"] = "MSI",
         ["PLESSEY"] = "Plessey",
         ["IMB"] = "Intelligent Mail",
@@ -58,7 +56,18 @@ public static class Labels
 
     /// <summary>„QR_CODE“ → „QR-Code“; Unbekanntes mit Leerzeichen statt Unterstrichen.</summary>
     public static string Format(string zxingName) =>
-        FormatNames.TryGetValue(zxingName, out var name) ? name : zxingName.Replace('_', ' ');
+        LocalizedFormat(zxingName) ?? (FormatNames.TryGetValue(zxingName, out var name) ? name : zxingName.Replace('_', ' '));
+
+    /// <summary>Formatnamen, die übersetzt werden; null für die übrigen.</summary>
+    private static string? LocalizedFormat(string zxingName) => zxingName.ToUpperInvariant() switch
+    {
+        "QR_CODE" => Strings.App_Format_QrCode,
+        "MICRO_QR_CODE" => Strings.App_Format_MicroQrCode,
+        "RMQR_CODE" => Strings.App_Format_RmqrCode,
+        "UPC_EAN_EXTENSION" => Strings.App_Format_UpcEanExtension,
+        "DX_FILM_EDGE" => Strings.App_Format_DxFilmEdge,
+        _ => null,
+    };
 
     /// <summary>Zweidimensionale Formate (für die Markierung: Fläche statt Linie).</summary>
     public static bool Is2D(string zxingName) => zxingName.ToUpperInvariant() is "QR_CODE" or "DATA_MATRIX" or "AZTEC" or "PDF_417"
@@ -66,11 +75,11 @@ public static class Labels
 
     public static string Source(ScanSource source) => source switch
     {
-        ScanSource.Kamera => "Kamera",
-        ScanSource.Bildschirm => "Bildschirm",
-        ScanSource.Datei => "Datei",
-        ScanSource.Zwischenablage => "Zwischenablage",
-        ScanSource.Befehlszeile => "Befehlszeile",
+        ScanSource.Kamera => Strings.App_Nav_Camera,
+        ScanSource.Bildschirm => Strings.App_Nav_Screen,
+        ScanSource.Datei => Strings.App_Nav_File,
+        ScanSource.Zwischenablage => Strings.App_Source_Clipboard,
+        ScanSource.Befehlszeile => Strings.App_Source_CommandLine,
         _ => source.ToString(),
     };
 
@@ -87,22 +96,27 @@ public static class Labels
     public static string Actions(ResultActions done)
     {
         var parts = new List<string>(3);
-        if (done.HasFlag(ResultActions.Kopieren)) parts.Add("Kopiert");
-        if (done.HasFlag(ResultActions.Eintippen)) parts.Add("Eingetippt");
-        if (done.HasFlag(ResultActions.LinkOeffnen)) parts.Add("Link geöffnet");
+        if (done.HasFlag(ResultActions.Kopieren)) parts.Add(Strings.App_Action_Copied);
+        if (done.HasFlag(ResultActions.Eintippen)) parts.Add(Strings.App_Action_Typed);
+        if (done.HasFlag(ResultActions.LinkOeffnen)) parts.Add(Strings.App_Action_LinkOpened);
         return string.Join(" · ", parts);
     }
 
-    public static string Time(DateTimeOffset time) => time.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss", German);
+    /// <summary>Datum und Uhrzeit; das Muster steht je Sprache in den Ressourcen (deutsch „dd.MM.yyyy HH:mm:ss“).</summary>
+    public static string Time(DateTimeOffset time) => time.ToLocalTime().ToString(Strings.App_Time_DateTime, CultureInfo.CurrentCulture);
 
     /// <summary>Uhrzeit für heute, sonst Datum und Uhrzeit.</summary>
     public static string ShortTime(DateTimeOffset time, DateTimeOffset now)
     {
         var local = time.ToLocalTime();
-        return local.Date == now.ToLocalTime().Date ? local.ToString("HH:mm:ss", German) : local.ToString("dd.MM. HH:mm", German);
+        return local.ToString(local.Date == now.ToLocalTime().Date ? Strings.App_Time_Time : Strings.App_Time_DateShortTime, CultureInfo.CurrentCulture);
     }
 
-    public static string Count(int n, string one, string many) => n == 1 ? $"1 {one}" : $"{n.ToString("N0", German)} {many}";
+    /// <summary>
+    /// Veraltet: setzt die Anzahl vor ein Wort („5 Codes“) – nur noch für Aufrufer, die noch nicht auf Formattexte
+    /// (…_One/…_Other in Strings.resx) umgestellt sind.
+    /// </summary>
+    public static string Count(int n, string one, string many) => n == 1 ? $"1 {one}" : $"{n.ToString("N0", CultureInfo.CurrentCulture)} {many}";
 
     /// <summary>Inhalt einzeilig für Listen: Zeilenumbrüche als ⏎, Steuerzeichen als ·, gekürzt.</summary>
     public static string OneLine(string text, int max = 400)

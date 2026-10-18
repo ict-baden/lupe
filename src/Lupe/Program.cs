@@ -2,7 +2,10 @@ using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Threading;
 using Lupe.Cli;
+using Lupe.Core.Localization;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
+using Lupe.Core.Settings;
 using Lupe.Services;
 
 namespace Lupe;
@@ -18,6 +21,8 @@ internal static class Program
     {
         // Systemfunktionen (Kamera, Bildschirm, Tippen, Tastenkürzel …) über die Anbindung des laufenden Systems
         LupePlatform.Use(CreatePlatform());
+        // Sprache vor dem ersten Text: eingestellt oder wie das System (Richtlinie 13)
+        UiLanguage.Apply(SettingsStore.Load().Language);
         var options = StartOptions.Parse(args);
         if (options.Mode == AppMode.CommandLine) return CommandLine.Run(args);
         if (options.Mode == AppMode.Screenshots) return RunScreenshots(options);
@@ -58,12 +63,9 @@ internal static class Program
     /// <summary>Meldung, wenn Linux keinen X-Server erreicht (Wayland ohne XWayland, SSH ohne Weiterleitung).</summary>
     internal static string NoDisplayMessage(string? display, string? waylandDisplay)
     {
-        var where = string.IsNullOrEmpty(display) ? "DISPLAY ist nicht gesetzt" : $"DISPLAY={display} ist nicht erreichbar";
-        var hint = string.IsNullOrEmpty(waylandDisplay)
-            ? "Lupe in einer grafischen Sitzung starten."
-            : "Unter Wayland braucht das Fenster XWayland – in der Desktop-Sitzung einschalten (sway: „xwayland enable“).";
-        return $"Lupe kann kein Fenster öffnen: kein X-Server ({where}). {hint} " +
-               "Bilder lesen geht auch ohne Fenster: lupe lesen <Datei>";
+        var where = string.IsNullOrEmpty(display) ? Strings.App_NoDisplay_NotSet : string.Format(Strings.App_NoDisplay_Unreachable, display);
+        var hint = string.IsNullOrEmpty(waylandDisplay) ? Strings.App_NoDisplay_HintSession : Strings.App_NoDisplay_HintWayland;
+        return string.Format(Strings.App_NoDisplay_Message, where, hint);
     }
 
     /// <summary>Die Anbindung für dieses System; die Windows-Ausgabe bringt Lupe.Platform.Windows mit, die andere Linux und macOS.</summary>
@@ -75,7 +77,7 @@ internal static class Program
         if (OperatingSystem.IsLinux()) return new Lupe.Platform.Linux.LinuxPlatform();
         if (OperatingSystem.IsMacOS()) return new Lupe.Platform.MacOS.MacOSPlatform();
 #endif
-        return new UnsupportedPlatform(OperatingSystem.IsWindows() ? "Windows (Ausgabe ohne Windows-Anbindung)" : "diesem System");
+        return new UnsupportedPlatform(OperatingSystem.IsWindows() ? Strings.App_Platform_WindowsWithoutSupport : Strings.App_Platform_ThisSystem);
     }
 
     private static AppBuilder BuildApp(StartOptions options, SingleInstance? instance) =>
@@ -106,7 +108,7 @@ internal static class Program
             catch (Exception ex)
             {
                 // Bewusst nicht verschluckt: Fehler sichtbar melden und mit 3 enden
-                Console.Error.WriteLine($"Screenshots fehlgeschlagen: {ex}");
+                Console.Error.WriteLine(string.Format(Strings.App_Screenshots_Failed, ex));
                 code = CommandLine.ExitError;
             }
             finally

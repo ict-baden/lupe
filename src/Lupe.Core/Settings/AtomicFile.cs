@@ -1,3 +1,5 @@
+using Lupe.Core.Resources;
+
 namespace Lupe.Core.Settings;
 
 /// <summary>
@@ -21,7 +23,7 @@ internal static class AtomicFile
     public static void Write(string path, Action<Stream> writeContent)
     {
         var full = Path.GetFullPath(path);
-        var dir = Path.GetDirectoryName(full) ?? throw new IOException($"„{full}“ hat keinen Ordner.");
+        var dir = Path.GetDirectoryName(full) ?? throw new IOException(string.Format(Strings.Core_File_NoFolder, full));
         Directory.CreateDirectory(dir);
 
         // Eindeutiger Name im selben Ordner (gleiches Volume → Umbenennen statt Kopieren)
@@ -47,7 +49,7 @@ internal static class AtomicFile
     {
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
         var length = stream.Length;
-        if (length > MaxReadBytes) throw new IOException($"Die Datei ist mit {length / (1024 * 1024)} MB ungewöhnlich groß.");
+        if (length > MaxReadBytes) throw new IOException(string.Format(Strings.Core_File_TooLarge, length / (1024 * 1024)));
         var buffer = new byte[length];
         stream.ReadExactly(buffer);
         return buffer;
@@ -96,7 +98,7 @@ internal static class AtomicFile
     }
 }
 
-/// <summary>Einordnung und deutsche Beschreibung typischer Dateifehler.</summary>
+/// <summary>Einordnung und Beschreibung typischer Dateifehler (in der Sprache der Oberfläche).</summary>
 internal static class FileProblems
 {
     private const int ErrorSharingViolation = unchecked((int)0x80070020);
@@ -118,21 +120,20 @@ internal static class FileProblems
     /// <summary>Kurze deutsche Beschreibung, z. B. „Zugriff verweigert“.</summary>
     public static string Describe(Exception ex) => ex switch
     {
-        FileNotFoundException => "Datei nicht gefunden",
-        DirectoryNotFoundException => "Ordner nicht gefunden",
-        DriveNotFoundException => "Laufwerk nicht gefunden",
-        PathTooLongException => "Pfad zu lang",
-        UnauthorizedAccessException =>
-            "Zugriff verweigert – keine Berechtigung, Datei schreibgeschützt oder in einem anderen Programm geöffnet",
-        IOException io when IsSharingViolation(io) => "Die Datei ist in einem anderen Programm geöffnet",
-        IOException io when io.HResult is ErrorDiskFull or ErrorHandleDiskFull => "Kein Platz mehr auf dem Datenträger",
+        FileNotFoundException => Strings.Core_File_NotFound,
+        DirectoryNotFoundException => Strings.Core_File_FolderNotFound,
+        DriveNotFoundException => Strings.Core_File_DriveNotFound,
+        PathTooLongException => Strings.Core_File_PathTooLong,
+        UnauthorizedAccessException => Strings.Core_File_AccessDenied,
+        IOException io when IsSharingViolation(io) => Strings.Core_File_OpenElsewhere,
+        IOException io when io.HResult is ErrorDiskFull or ErrorHandleDiskFull => Strings.Core_File_DiskFull,
         // Typisch beim Export auf USB-Sticks und Netzlaufwerke
-        IOException io when io.HResult is ErrorWriteProtect => "Der Datenträger ist schreibgeschützt",
-        IOException io when io.HResult is ErrorNotReady => "Das Laufwerk ist nicht bereit (z. B. USB-Stick abgezogen)",
-        IOException io when io.HResult is ErrorBadNetPath or ErrorBadNetName => "Netzwerkpfad nicht erreichbar",
-        IOException io when io.HResult is ErrorInvalidName => "Ungültiger Datei- oder Ordnername",
-        EndOfStreamException => "Die Datei wurde beim Lesen kürzer – vermutlich schreibt gerade ein anderes Programm",
-        NotSupportedException => "Ungültiger Pfad",
+        IOException io when io.HResult is ErrorWriteProtect => Strings.Core_File_WriteProtected,
+        IOException io when io.HResult is ErrorNotReady => Strings.Core_File_DriveNotReady,
+        IOException io when io.HResult is ErrorBadNetPath or ErrorBadNetName => Strings.Core_File_NetworkPathUnreachable,
+        IOException io when io.HResult is ErrorInvalidName => Strings.Core_File_InvalidName,
+        EndOfStreamException => Strings.Core_File_Truncated,
+        NotSupportedException => Strings.Core_File_InvalidPath,
         // Seltene Fälle: die Meldung des Systems (kann englisch sein) ist besser als gar keine
         _ => ex.Message,
     };

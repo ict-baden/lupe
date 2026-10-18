@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Lupe.Core.Resources;
 using Tmds.DBus.Protocol;
 
 namespace Lupe.Platform.Linux.Portal;
@@ -35,7 +36,7 @@ internal sealed class PortalConnection : IDisposable
     {
         string? address = DBusAddress.Session;
         if (string.IsNullOrWhiteSpace(address))
-            throw new PortalException("Kein Sitzungsbus (DBUS_SESSION_BUS_ADDRESS fehlt) – die Desktop-Portale sind nicht erreichbar.");
+            throw new PortalException(Strings.Linux_Portal_NoSessionBus);
         var connection = new DBusConnection(address);
         try
         {
@@ -45,7 +46,7 @@ internal sealed class PortalConnection : IDisposable
         catch (Exception ex) when (ex is DBusExceptionBase or TimeoutException or IOException or System.Net.Sockets.SocketException)
         {
             connection.Dispose();
-            throw new PortalException($"Keine Verbindung zum Sitzungsbus ({ex.Message.Trim()}).", ex);
+            throw new PortalException(string.Format(Strings.Linux_Portal_BusConnectFailed, ex.Message.Trim()), ex);
         }
     }
 
@@ -99,7 +100,7 @@ internal sealed class PortalConnection : IDisposable
             {
                 if (n.HasValue) response.TrySetResult(n.Value);
                 else if (n.Type != NotificationType.ObserverDisposed)
-                    response.TrySetException(new PortalException("Die Verbindung zum Desktop-Portal ist abgebrochen.", n.Exception));
+                    response.TrySetException(new PortalException(Strings.Linux_Portal_ConnectionLost, n.Exception));
             }, ObserverFlags.None, emitOnCapturedContext: false, null).ConfigureAwait(false);
 
         string handle;
@@ -190,7 +191,7 @@ internal sealed class PortalConnection : IDisposable
         }
         catch (TimeoutException ex)
         {
-            throw new PortalException("Das Desktop-Portal hat nicht rechtzeitig geantwortet.", ex);
+            throw new PortalException(Strings.Linux_Portal_Timeout, ex);
         }
     }
 
@@ -200,12 +201,12 @@ internal sealed class PortalConnection : IDisposable
         return ex.ErrorName switch
         {
             "org.freedesktop.DBus.Error.ServiceUnknown" =>
-                "xdg-desktop-portal läuft nicht – Bildschirmfotos, Eintippen und Tastenkürzel brauchen unter Wayland die Desktop-Portale.",
+                Strings.Linux_Portal_NotRunning,
             "org.freedesktop.DBus.Error.UnknownMethod" or "org.freedesktop.DBus.Error.UnknownInterface" =>
-                $"Das Desktop-Portal dieser Sitzung bietet „{what}“ nicht an.",
+                string.Format(Strings.Linux_Portal_NotOffered, what),
             "org.freedesktop.DBus.Error.AccessDenied" or "org.freedesktop.portal.Error.NotAllowed" =>
-                $"Das Desktop-Portal hat „{what}“ verweigert.",
-            _ => $"Das Desktop-Portal meldet einen Fehler bei „{what}“: {ex.ErrorMessage}",
+                string.Format(Strings.Linux_Portal_Denied, what),
+            _ => string.Format(Strings.Linux_Portal_Error, what, ex.ErrorMessage),
         };
     }
 

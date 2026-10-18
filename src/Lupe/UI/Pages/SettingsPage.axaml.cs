@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -9,14 +10,19 @@ using Avalonia.VisualTree;
 using Lupe.Core.Decoding;
 using Lupe.Core.History;
 using Lupe.Core.Input;
+using Lupe.Core.Localization;
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Core.Settings;
 using Lupe.Services;
 
 namespace Lupe.UI.Pages;
 
 public sealed record RepeatChoice(int Milliseconds, string Label);
+
+/// <summary>Eintrag der Sprachauswahl: Code ("" = Systemsprache) und angezeigter Name.</summary>
+public sealed record LanguageChoice(string Code, string Label);
 
 /// <summary>Ein Hindernis des Systems (fehlende Berechtigung …) als Hinweiskarte.</summary>
 public sealed record ProblemRow(string Title, string Message, string? Link)
@@ -26,7 +32,7 @@ public sealed record ProblemRow(string Title, string Message, string? Link)
 
 /// <summary>
 /// Einstellungen: Aktionen (getrennt für Kamera/Datei und Bildschirm), Suffix, Tastenkürzel, Link-Regeln, Formate,
-/// Ton, Zielhilfe, Wiederholungssperre, Verlauf, Autostart und Infobereich. Jede Änderung gilt und speichert sofort.
+/// Ton, Zielhilfe, Wiederholungssperre, Verlauf, Autostart, Infobereich und Sprache. Jede Änderung gilt und speichert sofort.
 /// </summary>
 public partial class SettingsPage : UserControl, IPage
 {
@@ -50,6 +56,7 @@ public partial class SettingsPage : UserControl, IPage
         _state = state;
         RulesList.ItemsSource = _rules;
         BuildFormats();
+        BuildLanguages();
         state.HotkeyChanged += UpdateHotkeyState;
         state.SettingsChanged += (_, _) => { if (!_loading && _shown) Load(); };
         state.SettingsProblemChanged += UpdateProblem;
@@ -57,15 +64,15 @@ public partial class SettingsPage : UserControl, IPage
         // Texte, die vom System abhängen
         if (!OperatingSystem.IsWindows())
         {
-            AutostartCard.Header = OperatingSystem.IsMacOS() ? "Bei der Anmeldung starten" : "Mit der Sitzung starten";
+            AutostartCard.Header = OperatingSystem.IsMacOS() ? Strings.Page_Settings_AutostartMac : Strings.Page_Settings_AutostartLinux;
             HotkeyCard.Description = OperatingSystem.IsMacOS()
-                ? "Ins Feld klicken und die Kombination drücken (mit ⌃, ⌥ oder ⌘; F-Tasten auch allein)."
-                : "Ins Feld klicken und die Kombination drücken (mit Strg, Alt oder Super; F-Tasten auch allein).";
+                ? Strings.Page_Settings_HotkeyTextMac
+                : Strings.Page_Settings_HotkeyTextLinux;
         }
-        KeepCard.Description = $"Nur für Sie, unter {DisplayPath(SafeHistoryPath(), "verlauf.json")}. Aus: nur bis zum Beenden – die gespeicherte Datei wird nach einer Rückfrage gelöscht.";
+        KeepCard.Description = string.Format(Strings.Page_Settings_KeepHistoryText, DisplayPath(SafeHistoryPath(), "verlauf.json"));
         StoreText.Text = state.IsDemo && !state.Strict
-            ? "Demo: Änderungen gelten nur bis zum Beenden und werden nicht gespeichert."
-            : $"Gespeichert in {DisplayPath(SafeSettingsPath(), "einstellungen.json")}";
+            ? Strings.Page_Settings_StoreDemo
+            : string.Format(Strings.Page_Settings_StoredIn, DisplayPath(SafeSettingsPath(), "einstellungen.json"));
 
         HotkeyBox.GotFocus += (_, _) => StartRecording();
         HotkeyBox.LostFocus += (_, _) => StopRecording();
@@ -130,14 +137,16 @@ public partial class SettingsPage : UserControl, IPage
             AimToggle.IsChecked = s.AimHelp;
             FillRepeat(s.RepeatSuppressMs);
             KeepToggle.IsChecked = s.KeepHistory;
-            LimitBox.Text = s.HistoryLimit.ToString(Labels.German);
+            LimitBox.Text = s.HistoryLimit.ToString(CultureInfo.CurrentCulture);
 
             var autostart = LupePlatform.Current.Autostart;
             bool canAutostart = !_state.IsDemo && autostart.IsSupported;
             AutostartToggle.IsChecked = canAutostart && autostart.IsEnabled;
             AutostartToggle.IsEnabled = canAutostart;
-            ToolTip.SetTip(AutostartCard, _state.IsDemo ? "In der Demo nicht verfügbar" : autostart.IsSupported ? null : "Auf diesem System nicht verfügbar");
+            ToolTip.SetTip(AutostartCard, _state.IsDemo ? Strings.Page_Settings_NotInDemo : autostart.IsSupported ? null : Strings.Page_Settings_NotOnThisSystem);
             TrayToggle.IsChecked = s.KeepRunningInTray;
+            var language = UiLanguage.Normalize(s.Language);
+            LanguageBox.SelectedItem = LanguageBox.Items.OfType<LanguageChoice>().FirstOrDefault(c => c.Code == language);
             UpdatePlatformProblems();
         }
         finally
@@ -163,12 +172,12 @@ public partial class SettingsPage : UserControl, IPage
         }
         PlatformProblems.ItemsSource = problems.Select(p => new ProblemRow(p.Feature switch
         {
-            PlatformFeature.Camera => "Kamera",
-            PlatformFeature.Screen => "Bildschirmaufnahme",
-            PlatformFeature.Typing => "Eintippen",
-            PlatformFeature.Hotkey => "Tastenkürzel",
-            PlatformFeature.ActiveWindow => "Vordergrundfenster",
-            _ => "Autostart",
+            PlatformFeature.Camera => Strings.Page_Shared_Camera,
+            PlatformFeature.Screen => Strings.Page_Settings_FeatureScreen,
+            PlatformFeature.Typing => Strings.Page_Settings_Type,
+            PlatformFeature.Hotkey => Strings.Page_Shared_Hotkey,
+            PlatformFeature.ActiveWindow => Strings.Page_Settings_FeatureActiveWindow,
+            _ => Strings.Page_Settings_FeatureAutostart,
         }, p.Message, p.SettingsLink)).ToList();
     }
 
@@ -184,7 +193,7 @@ public partial class SettingsPage : UserControl, IPage
         }
         catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException)
         {
-            _state.Report(NoticeKind.Warning, $"Die Systemeinstellungen ließen sich nicht öffnen: {ex.Message}");
+            _state.Report(NoticeKind.Warning, string.Format(Strings.Page_Settings_SystemSettingsFailed, ex.Message));
         }
     }
 
@@ -252,7 +261,7 @@ public partial class SettingsPage : UserControl, IPage
     {
         if (_recording) return;
         _recording = true;
-        HotkeyBox.Text = "Kombination drücken …";
+        HotkeyBox.Text = Strings.Page_Settings_HotkeyPress;
         _state.SuspendHotkey(true);
         UpdateHotkeyState();
     }
@@ -288,12 +297,12 @@ public partial class SettingsPage : UserControl, IPage
         bool standalone = VirtualKeys.IsStandalone(key);
         if (!ctrl && !alt && !win && !standalone)
         {
-            HotkeyBox.Text = OperatingSystem.IsMacOS() ? "Bitte mit ⌃, ⌥ oder ⌘" : OperatingSystem.IsWindows() ? "Bitte mit Strg, Alt oder Win" : "Bitte mit Strg, Alt oder Super";
+            HotkeyBox.Text = OperatingSystem.IsMacOS() ? Strings.Page_Settings_HotkeyNeedModifierMac : OperatingSystem.IsWindows() ? Strings.Page_Settings_HotkeyNeedModifierWindows : Strings.Page_Settings_HotkeyNeedModifierLinux;
             return;
         }
         if (VirtualKeys.From(key) is not { } virtualKey)
         {
-            HotkeyBox.Text = "Diese Taste geht nicht – bitte eine andere";
+            HotkeyBox.Text = Strings.Page_Settings_HotkeyKeyUnsupported;
             return;
         }
         var hotkey = new Hotkey(ctrl, alt, shift, win, virtualKey);
@@ -316,11 +325,11 @@ public partial class SettingsPage : UserControl, IPage
         HotkeyStateIcon.SetResource(TextBlock.ForegroundProperty,
             problem ? "SystemFillColorCautionBrush" : ready ? "SystemFillColorSuccessBrush" : "TextFillColorSecondaryBrush");
         HotkeyStateText.Text = _recording
-            ? "Während der Aufnahme ist das Tastenkürzel abgemeldet – die Kombination landet hier im Feld. Esc bricht ab."
+            ? Strings.Page_Settings_HotkeyRecording
             : _state.HotkeyOffInDemo
-                ? "In der Demo ist das Tastenkürzel nicht angemeldet – so kommt es einer echten Lupe nicht in die Quere."
+                ? Strings.Page_Settings_HotkeyOffInDemo
                 : _state.HotkeyError
-                  ?? (ready ? $"{FormatHotkey(_state.Settings.ScreenHotkey)} ist bereit – auch wenn das Fenster geschlossen ist." : "Das Tastenkürzel ist noch nicht angemeldet.");
+                  ?? (ready ? string.Format(Strings.Page_Settings_HotkeyReady, FormatHotkey(_state.Settings.ScreenHotkey)) : Strings.Page_Settings_HotkeyNotRegistered);
 
         // Strg+Alt+…: auf deutschen Tastaturen unter Windows dieselben Tasten wie AltGr (Strg+Alt+Q = AltGr+Q = „@“)
         string? altGr = null;
@@ -366,7 +375,7 @@ public partial class SettingsPage : UserControl, IPage
         {
             if (row.Pattern.Trim().Length == 0)
             {
-                row.Error = row.Prefix.Trim().Length == 0 ? null : "Bitte einen regulären Ausdruck eingeben.";
+                row.Error = row.Prefix.Trim().Length == 0 ? null : Strings.Page_Settings_RulePatternMissing;
                 continue;
             }
             try { row.Error = LinkRules.Validate(row.ToRule()); }
@@ -417,7 +426,7 @@ public partial class SettingsPage : UserControl, IPage
             return;
         }
         var link = _state.LinkFor(text);
-        RuleTestResult.Text = link is null ? "Keine Regel passt – kein Link." : $"→ {link.AbsoluteUri}";
+        RuleTestResult.Text = link is null ? Strings.Page_Settings_RuleTestNoMatch : $"→ {link.AbsoluteUri}";
         ToolTip.SetTip(RuleTestResult, link?.AbsoluteUri);
     }
 
@@ -463,7 +472,7 @@ public partial class SettingsPage : UserControl, IPage
         {
             // Leer hieße „alle“ – das wäre das Gegenteil dessen, was gemeint ist
             clicked.IsChecked = true;
-            _state.Report(NoticeKind.Info, "Mindestens ein Format muss bleiben. Für alle Formate oben „Alle Formate erkennen“ einschalten.");
+            _state.Report(NoticeKind.Info, Strings.Page_Settings_FormatsAtLeastOne);
             return;
         }
         if (chosen.Count == _formatBoxes.Count) chosen = [];
@@ -498,12 +507,13 @@ public partial class SettingsPage : UserControl, IPage
         if (!fileExists) return true;
 
         int count = _state.History.Entries.Count;
-        return await Dialogs.ConfirmAsync(this, "Verlauf nicht mehr speichern",
-            "Den Verlauf nicht mehr speichern?\n\n"
-            + $"Die Datei {_state.History.FilePath}" + (count > 0 ? $" mit {Labels.Count(count, "Eintrag", "Einträgen")}" : "")
-            + " wird dabei gelöscht, damit gescannte Inhalte nicht auf der Platte bleiben. Das lässt sich nicht rückgängig machen.\n\n"
-            + "Die Einträge bleiben hier sichtbar, bis Lupe beendet wird. Wer sie behalten möchte, exportiert sie vorher "
-            + "(Verlauf → Als CSV exportieren …).", warning: true);
+        var message = count switch
+        {
+            0 => string.Format(Strings.Page_Settings_HistoryOffQuestion, _state.History.FilePath),
+            1 => string.Format(Strings.Page_Settings_HistoryOffQuestion_One, _state.History.FilePath),
+            _ => string.Format(Strings.Page_Settings_HistoryOffQuestion_Other, _state.History.FilePath, count.ToString("N0", CultureInfo.CurrentCulture)),
+        };
+        return await Dialogs.ConfirmAsync(this, Strings.Page_Settings_HistoryOffTitle, message, warning: true);
     }
 
     private void SoundTest_Click(object? sender, RoutedEventArgs e) => Beep.Play();
@@ -512,15 +522,19 @@ public partial class SettingsPage : UserControl, IPage
     {
         var choices = new List<RepeatChoice>
         {
-            new(1000, "1 Sekunde"), new(2000, "2 Sekunden"), new(3000, "3 Sekunden"), new(5000, "5 Sekunden"),
-            new(10_000, "10 Sekunden"), new(30_000, "30 Sekunden"), new(60_000, "1 Minute"),
+            new(1000, Seconds(1)), new(2000, Seconds(2)), new(3000, Seconds(3)), new(5000, Seconds(5)),
+            new(10_000, Seconds(10)), new(30_000, Seconds(30)), new(60_000, Strings.Page_Settings_OneMinute),
         };
         if (choices.All(c => c.Milliseconds != current))
-            choices.Add(new(current, current % 1000 == 0 ? $"{current / 1000} Sekunden" : $"{current.ToString("N0", Labels.German)} ms"));
+            choices.Add(new(current, current % 1000 == 0 ? Seconds(current / 1000) : string.Format(Strings.Page_Settings_Milliseconds, current.ToString("N0", CultureInfo.CurrentCulture))));
         var sorted = choices.OrderBy(c => c.Milliseconds).ToList();
         RepeatBox.ItemsSource = sorted;
         RepeatBox.SelectedItem = sorted.First(c => c.Milliseconds == current);
     }
+
+    private static string Seconds(int seconds) => seconds == 1
+        ? Strings.Page_Settings_Seconds_One
+        : string.Format(Strings.Page_Settings_Seconds_Other, seconds.ToString("N0", CultureInfo.CurrentCulture));
 
     private void Repeat_SelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
@@ -538,14 +552,33 @@ public partial class SettingsPage : UserControl, IPage
     private void ApplyLimit()
     {
         var text = (LimitBox.Text ?? "").Replace(".", "", StringComparison.Ordinal).Replace("’", "", StringComparison.Ordinal).Replace(" ", "", StringComparison.Ordinal);
-        if (!int.TryParse(text, System.Globalization.NumberStyles.Integer, Labels.German, out var limit) || limit < MinLimit || limit > HistoryStore.MaxLimit)
+        if (!int.TryParse(text, NumberStyles.Integer | NumberStyles.AllowThousands, CultureInfo.CurrentCulture, out var limit) || limit < MinLimit || limit > HistoryStore.MaxLimit)
         {
-            _state.Report(NoticeKind.Warning, $"Bitte eine Zahl von {MinLimit} bis {HistoryStore.MaxLimit.ToString("N0", Labels.German)} eingeben.");
-            LimitBox.Text = _state.Settings.HistoryLimit.ToString(Labels.German);
+            _state.Report(NoticeKind.Warning, string.Format(Strings.Page_Settings_HistoryLimitInvalid,
+                MinLimit.ToString("N0", CultureInfo.CurrentCulture), HistoryStore.MaxLimit.ToString("N0", CultureInfo.CurrentCulture)));
+            LimitBox.Text = _state.Settings.HistoryLimit.ToString(CultureInfo.CurrentCulture);
             return;
         }
-        LimitBox.Text = limit.ToString(Labels.German);
+        LimitBox.Text = limit.ToString(CultureInfo.CurrentCulture);
         if (limit != _state.Settings.HistoryLimit) _state.UpdateSettings(s => s with { HistoryLimit = limit });
+    }
+
+    // ================= Sprache =================
+
+    /// <summary>Auswahl: Systemsprache, dann jede Sprache mit eigener Sprachdatei unter ihrem eigenen Namen.</summary>
+    private void BuildLanguages()
+    {
+        var choices = new List<LanguageChoice> { new("", Strings.Language_System) };
+        choices.AddRange(UiLanguage.Supported.Select(code => new LanguageChoice(code, UiLanguage.NativeName(code))));
+        LanguageBox.ItemsSource = choices;
+    }
+
+    /// <summary>Gespeichert wird sofort; die Oberfläche wechselt die Sprache erst beim nächsten Start.</summary>
+    private void Language_SelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_loading || LanguageBox?.SelectedItem is not LanguageChoice choice) return;
+        if (choice.Code == UiLanguage.Normalize(_state.Settings.Language)) return;
+        _state.UpdateSettings(s => s with { Language = choice.Code });
     }
 
     // ================= Start =================
@@ -573,7 +606,7 @@ public partial class SettingsPage : UserControl, IPage
         var folder = Path.GetDirectoryName(SafeSettingsPath()) ?? "";
         if (_state.IsDemo || folder.Length == 0 || !Directory.Exists(folder))
         {
-            _state.Report(NoticeKind.Info, "Der Ordner existiert noch nicht – Lupe legt ihn beim ersten Speichern an.");
+            _state.Report(NoticeKind.Info, Strings.Page_Shared_FolderMissing);
             return;
         }
         if (Shell.ShowInExplorer(folder) is { } error) _state.Report(NoticeKind.Warning, error);

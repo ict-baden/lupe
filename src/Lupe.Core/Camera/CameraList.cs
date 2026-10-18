@@ -1,4 +1,5 @@
 using System.Text;
+using Lupe.Core.Resources;
 
 namespace Lupe.Core.Camera;
 
@@ -15,7 +16,7 @@ internal sealed record CameraCandidate(string Id, string? DisplayName, IReadOnly
 internal static class CameraList
 {
     /// <summary>Name für Kameras ohne (brauchbaren) Namen.</summary>
-    public const string FallbackName = "Kamera";
+    public static string FallbackName => Strings.Core_Camera_FallbackName;
 
     /// <summary>
     /// Nur Gruppen mit Farbvideo; dieselbe Kamera in mehreren Gruppen (z. B. zusätzlich in einer Windows-Hello-Gruppe mit

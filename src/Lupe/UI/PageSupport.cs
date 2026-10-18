@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Threading;
+using Lupe.Core.Resources;
 using Lupe.Services;
 
 namespace Lupe.UI;
@@ -38,7 +39,7 @@ internal static class Ui
         }
         catch (Exception ex) when (!state.Strict)
         {
-            state.Report(NoticeKind.Error, $"{failure}: {ex.Message}");
+            state.Report(NoticeKind.Error, string.Format(Strings.App_Ui_Failure, failure, ex.Message));
         }
     }
 
@@ -104,7 +105,7 @@ internal static class CodeActions
             state.Report(NoticeKind.Error, error);
             return false;
         }
-        state.Report(NoticeKind.Success, $"Kopiert: {Labels.OneLine(text, 90)}");
+        state.Report(NoticeKind.Success, string.Format(Strings.App_Notice_Copied, Labels.OneLine(text, 90)));
         return true;
     }
 

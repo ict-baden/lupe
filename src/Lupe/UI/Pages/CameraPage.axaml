@@ -2,13 +2,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="clr-namespace:Lupe.UI"
              xmlns:cam="clr-namespace:Lupe.Core.Camera;assembly=Lupe.Core"
+             xmlns:l="clr-namespace:Lupe.Core.Resources;assembly=Lupe.Core"
              x:Class="Lupe.UI.Pages.CameraPage">
     <Grid Margin="36,0,36,20" RowDefinitions="Auto,*,Auto">
 
         <!-- ========== Kamera wählen, starten ========== -->
         <Grid Margin="0,0,0,12" ColumnDefinitions="Auto,Auto,Auto,*,Auto">
             <ComboBox x:Name="CameraBox" Width="280" VerticalAlignment="Center" SelectionChanged="CameraBox_SelectionChanged"
-                      AutomationProperties.Name="Kamera">
+                      AutomationProperties.Name="{x:Static l:Strings.Page_Shared_Camera}">
                 <ComboBox.ItemTemplate>
                     <DataTemplate x:DataType="cam:CameraInfo">
                         <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis"/>
@@ -16,18 +17,18 @@
                 </ComboBox.ItemTemplate>
             </ComboBox>
             <Button Grid.Column="1" Classes="ghost" Margin="4,0,0,0" Click="Refresh_Click" VerticalAlignment="Center"
-                    ToolTip.Tip="Kameras neu suchen" AutomationProperties.Name="Kameras neu suchen">
+                    ToolTip.Tip="{x:Static l:Strings.Page_Camera_RefreshCameras}" AutomationProperties.Name="{x:Static l:Strings.Page_Camera_RefreshCameras}">
                 <TextBlock Text="&#xE72C;" Classes="icon" FontSize="14"/>
             </Button>
             <Button x:Name="StartButton" Grid.Column="2" Classes="accent" Margin="8,0,0,0" MinWidth="120"
                     Click="StartStop_Click" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock x:Name="StartGlyph" Text="&#xE768;" Classes="glyph"/>
-                    <TextBlock x:Name="StartText" Text="Starten" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="StartText" Text="{x:Static l:Strings.Page_Camera_Start}" VerticalAlignment="Center"/>
                 </StackPanel>
             </Button>
-            <CheckBox x:Name="AimToggle" Grid.Column="4" Content="Zielhilfe" VerticalAlignment="Center" Click="Aim_Click"
-                      ToolTip.Tip="Winkel in der Bildmitte – dort hinein den Code halten"/>
+            <CheckBox x:Name="AimToggle" Grid.Column="4" Content="{x:Static l:Strings.Page_Shared_AimHelp}" VerticalAlignment="Center" Click="Aim_Click"
+                      ToolTip.Tip="{x:Static l:Strings.Page_Camera_AimHelpTip}"/>
         </Grid>
 
         <!-- ========== Sucher ========== -->
@@ -38,7 +39,7 @@
                 <StackPanel x:Name="Placeholder" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="520" Margin="24">
                     <TextBlock x:Name="PlaceholderGlyph" Text="&#xE722;" FontFamily="{DynamicResource IconFont}" FontSize="40"
                                Foreground="{DynamicResource ViewfinderTextSecondary}" HorizontalAlignment="Center"/>
-                    <TextBlock x:Name="PlaceholderTitle" Text="Kamera ist aus" FontFamily="{DynamicResource DisplayFont}" FontSize="20" FontWeight="SemiBold"
+                    <TextBlock x:Name="PlaceholderTitle" Text="{x:Static l:Strings.Page_Camera_Off}" FontFamily="{DynamicResource DisplayFont}" FontSize="20" FontWeight="SemiBold"
                                Foreground="{DynamicResource ViewfinderText}" TextAlignment="Center" TextWrapping="Wrap" Margin="0,14,0,0"/>
                     <TextBlock x:Name="PlaceholderText" FontSize="13" Foreground="{DynamicResource ViewfinderTextSecondary}" TextAlignment="Center"
                                TextWrapping="Wrap" Margin="0,6,0,0" LineHeight="20"/>
@@ -46,19 +47,19 @@
                         <Button x:Name="PlaceholderStart" Classes="accent" Click="StartStop_Click" Margin="4,0">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE768;" Classes="glyph"/>
-                                <TextBlock x:Name="PlaceholderStartText" Text="Kamera starten" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="PlaceholderStartText" Text="{x:Static l:Strings.Page_Camera_StartCamera}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <Button x:Name="GoScreen" Click="GoScreen_Click" Margin="4,0">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE7F4;" Classes="glyph"/>
-                                <TextBlock Text="Bildschirm" VerticalAlignment="Center"/>
+                                <TextBlock Text="{x:Static l:Strings.Page_Camera_GoScreen}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <Button x:Name="GoFile" Click="GoFile_Click" Margin="4,0">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE8B9;" Classes="glyph"/>
-                                <TextBlock Text="Datei" VerticalAlignment="Center"/>
+                                <TextBlock Text="{x:Static l:Strings.Page_Camera_GoFile}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
@@ -79,16 +80,16 @@
         <Border Grid.Row="2" Classes="card" Margin="0,12,0,0" Padding="16,12">
             <StackPanel>
                 <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock x:Name="ResultTitle" Text="Zuletzt erkannt" Classes="bodyStrong" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="ResultTitle" Text="{x:Static l:Strings.Page_Camera_LastDetected}" Classes="bodyStrong" VerticalAlignment="Center"/>
                     <Button x:Name="CopyAllButton" Grid.Column="1" Classes="ghost" Click="CopyAll_Click" IsVisible="False"
-                            ToolTip.Tip="Alle Codes zeilenweise kopieren">
+                            ToolTip.Tip="{x:Static l:Strings.Page_Shared_CopyAllTip}">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE8C8;" Classes="glyph"/>
-                            <TextBlock Text="Alle kopieren" VerticalAlignment="Center"/>
+                            <TextBlock Text="{x:Static l:Strings.Page_Shared_CopyAll}" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
                 </Grid>
-                <TextBlock x:Name="ResultEmpty" Text="Noch nichts erkannt." Classes="body" Margin="0,8,0,0"
+                <TextBlock x:Name="ResultEmpty" Text="{x:Static l:Strings.Page_Camera_NothingYet}" Classes="body" Margin="0,8,0,0"
                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
                 <ItemsControl x:Name="ResultList" ItemTemplate="{StaticResource CodeRow}" Margin="0,6,0,0" Focusable="False"/>
                 <TextBlock x:Name="ResultDone" Classes="caption" Margin="0,6,0,0" IsVisible="False"/>

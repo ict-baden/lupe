@@ -1,3 +1,5 @@
+using Lupe.Core.Resources;
+
 namespace Lupe.Core.Decoding;
 
 /// <summary>
@@ -42,7 +44,7 @@ internal static class ImageIntegrity
         }
     }
 
-    private const string Cut = "die Datei endet mitten im Bild";
+    private static string Cut => Strings.Core_Image_EndsMidImage;
 
     /// <summary>Blöcke (Länge, Typ, Daten, Prüfsumme) bis IEND.</summary>
     private static string? Png(Reader r)

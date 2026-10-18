@@ -1,6 +1,7 @@
 using Lupe.Core.Decoding;
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using SkiaSharp;
 
 namespace Lupe.Platform.Linux.Imaging;
@@ -20,8 +21,8 @@ public sealed class LinuxImageDecoder : IImageDecoder
     public Exception Translate(Exception ex, string name) => ex switch
     {
         InvalidDataException or IOException => ex,
-        OutOfMemoryException => new InvalidDataException($"„{name}“ ist zu groß zum Öffnen.", ex),
-        _ => new InvalidDataException($"„{name}“ konnte nicht als Bild gelesen werden ({ex.Message.Trim()}).", ex),
+        OutOfMemoryException => new InvalidDataException(string.Format(Strings.Linux_Image_TooLarge, name), ex),
+        _ => new InvalidDataException(string.Format(Strings.Linux_Image_NotReadable, name, ex.Message.Trim()), ex),
     };
 
     internal static PixelImage Decode(Stream stream, string name, int maxPixels)
@@ -29,16 +30,16 @@ public sealed class LinuxImageDecoder : IImageDecoder
         // Skia liest den Strom selbst; schließen darf es ihn nicht
         using var managed = new SKManagedStream(stream, disposeManagedStream: false);
         using var codec = SKCodec.Create(managed, out var result)
-            ?? throw new InvalidDataException($"„{name}“ ist kein unterstütztes Bild ({result}).");
+            ?? throw new InvalidDataException(string.Format(Strings.Linux_Image_Unsupported, name, result));
         var size = codec.Info;
-        if (size.Width <= 0 || size.Height <= 0) throw new InvalidDataException($"„{name}“ enthält kein Bild (0 Pixel).");
+        if (size.Width <= 0 || size.Height <= 0) throw new InvalidDataException(string.Format(Strings.Linux_Image_Empty, name));
 
         var info = new SKImageInfo(size.Width, size.Height, SKColorType.Bgra8888, SKAlphaType.Unpremul);
         using var full = new SKBitmap(info);
         var options = new SKCodecOptions(0);
         var decoded = codec.GetPixels(info, full.GetPixels(), options);
         if (decoded is not (SKCodecResult.Success or SKCodecResult.IncompleteInput))
-            throw new InvalidDataException($"„{name}“ ist beschädigt oder kein unterstütztes Bild ({decoded}).");
+            throw new InvalidDataException(string.Format(Strings.Linux_Image_Corrupt, name, decoded));
 
         using var oriented = Orient(full, codec.EncodedOrigin);
         using var scaled = Scale(oriented ?? full, maxPixels);

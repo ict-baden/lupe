@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 
 namespace Lupe.Core.Input;
 
@@ -251,7 +252,7 @@ public static class KeyboardTyper
             if (dangling.Length > 0) keyboard.Send(dangling, out _);
         }
         error = sent > 0 || typedBefore
-            ? "Eintippen wurde unterbrochen – der Text kam nur teilweise an."
+            ? Strings.Core_Typing_Interrupted
             : keyboard.DescribeRejection(code);
         return false;
     }

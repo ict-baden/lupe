@@ -41,7 +41,7 @@ The static facades in Core keep the old call sites working and route through `Lu
 
 ## Interfaces (`Lupe.Core.Platform`)
 
-All human-readable text returned by a backend is **German**. Expected failures are reported (bool + message,
+All human-readable text returned by a backend comes from `Lupe.Core.Resources.Strings` and is therefore in the UI language (see [Languages](development.md#languages)). Expected failures are reported (bool + message,
 `IsSupported`, `UnsupportedReason`, `Failed` event), not thrown.
 
 | Interface | Members | Notes |

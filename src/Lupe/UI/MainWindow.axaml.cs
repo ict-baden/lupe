@@ -5,6 +5,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Lupe.Core.Input;
+using Lupe.Core.Resources;
 using Lupe.Interop;
 using Lupe.UI.Pages;
 using Lupe.UI.Theme;
@@ -38,12 +39,12 @@ public partial class MainWindow : Window
         _file = new FilePage(state);
         _pages =
         [
-            new(NavCamera, "kamera", "Kamera", "Code vor die Webcam halten – Lupe erkennt ihn von selbst", new CameraPage(state)),
-            new(NavScreen, "bildschirm", "Bildschirm", "Einen Ausschnitt des Bildschirms lesen – per Tastenkürzel aus jedem Programm", new ScreenPage(state)),
-            new(NavFile, "datei", "Datei", "Bild öffnen, hierher ziehen oder aus der Zwischenablage einfügen", _file),
-            new(NavHistory, "verlauf", "Verlauf", "Alles, was Lupe erkannt hat – neueste zuerst", new HistoryPage(state)),
-            new(NavSettings, "einstellungen", "Einstellungen", "Was mit Ergebnissen passiert – Änderungen gelten und speichern sofort", new SettingsPage(state)),
-            new(NavInfo, "info", "Info", "Über Lupe", new InfoPage(state)),
+            new(NavCamera, "kamera", Strings.App_Nav_Camera, Strings.App_Page_CameraSubtitle, new CameraPage(state)),
+            new(NavScreen, "bildschirm", Strings.App_Nav_Screen, Strings.App_Page_ScreenSubtitle, new ScreenPage(state)),
+            new(NavFile, "datei", Strings.App_Nav_File, Strings.App_Page_FileSubtitle, _file),
+            new(NavHistory, "verlauf", Strings.App_Nav_History, Strings.App_Page_HistorySubtitle, new HistoryPage(state)),
+            new(NavSettings, "einstellungen", Strings.App_Nav_Settings, Strings.App_Page_SettingsSubtitle, new SettingsPage(state)),
+            new(NavInfo, "info", Strings.App_Nav_Info, Strings.App_Page_InfoSubtitle, new InfoPage(state)),
         ];
         foreach (var page in _pages) page.Nav.IsCheckedChanged += Nav_Checked;
 
@@ -162,21 +163,21 @@ public partial class MainWindow : Window
     {
         string hotkey;
         try { hotkey = HotkeyText.Format(_state.Settings.ScreenHotkey); }
-        catch (Exception ex) when (ex is not OutOfMemoryException) { hotkey = "Tastenkürzel"; }
+        catch (Exception ex) when (ex is not OutOfMemoryException) { hotkey = Strings.App_Main_HotkeyFallback; }
         StatusTitle.Text = hotkey;
         if (_state.HotkeyOffInDemo)
         {
             // Die Demo meldet kein globales Kürzel an (neben einer echten Lupe wäre es sonst belegt)
-            StatusDetail.Text = "in der Demo aus";
+            StatusDetail.Text = Strings.App_Main_StatusDemoOff;
             StatusCircle.SetResource(Border.BackgroundProperty, "ControlFillColorDefaultBrush");
             StatusGlyph.SetResource(TextBlock.ForegroundProperty, "TextFillColorSecondaryBrush");
             StatusGlyph.Text = "\uE765";
-            ToolTip.SetTip(StatusCircle, "In der Demo ist das Tastenkürzel nicht angemeldet – „Ausschnitt scannen“ auf der Seite Bildschirm geht trotzdem.");
+            ToolTip.SetTip(StatusCircle, Strings.App_Main_StatusDemoOffTip);
             NavScreen.Badge = null;
         }
         else if (_state.HotkeyError is { } error)
         {
-            StatusDetail.Text = "nicht verfügbar – siehe Einstellungen";
+            StatusDetail.Text = Strings.App_Main_StatusUnavailable;
             StatusCircle.SetResource(Border.BackgroundProperty, "SystemFillColorCautionBackgroundBrush");
             StatusGlyph.SetResource(TextBlock.ForegroundProperty, "SystemFillColorCautionBrush");
             StatusGlyph.Text = "\uE7BA";
@@ -186,11 +187,11 @@ public partial class MainWindow : Window
         }
         else
         {
-            StatusDetail.Text = _state.HotkeyActive ? "scannt einen Ausschnitt" : "noch nicht angemeldet";
+            StatusDetail.Text = _state.HotkeyActive ? Strings.App_Main_StatusReady : Strings.App_Main_StatusNotRegistered;
             StatusCircle.SetResource(Border.BackgroundProperty, "AccentFillColorDefaultBrush");
             StatusGlyph.SetResource(TextBlock.ForegroundProperty, "TextOnAccentFillColorPrimaryBrush");
             StatusGlyph.Text = "\uE765";
-            ToolTip.SetTip(StatusCircle, $"{hotkey} scannt einen Bildschirmausschnitt – aus jedem Programm.");
+            ToolTip.SetTip(StatusCircle, string.Format(Strings.App_Main_StatusReadyTip, hotkey));
             NavScreen.Badge = null;
             NavScreen.BadgeWarning = false;
         }
@@ -199,7 +200,7 @@ public partial class MainWindow : Window
     private void UpdateBadges()
     {
         int count = _state.History.Entries.Count;
-        NavHistory.Badge = count == 0 ? null : count > 999 ? "999+" : count.ToString(Labels.German);
+        NavHistory.Badge = count == 0 ? null : count > 999 ? "999+" : count.ToString(System.Globalization.CultureInfo.CurrentCulture);
     }
 
     // ================= Meldungen =================

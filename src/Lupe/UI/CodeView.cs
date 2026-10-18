@@ -229,7 +229,7 @@ public sealed class CodeView : Control
             dc.DrawGeometry(fill, pen, geometry);
 
             if (marker.Label.Length == 0) continue;
-            var text = new FormattedText(marker.Label, Labels.German, FlowDirection.LeftToRight, face, 12.5, AccentText);
+            var text = new FormattedText(marker.Label, System.Globalization.CultureInfo.CurrentCulture, FlowDirection.LeftToRight, face, 12.5, AccentText);
             double left = points.Min(q => q.X), top = points.Min(q => q.Y), bottom = points.Max(q => q.Y);
             double boxW = text.Width + 14, boxH = text.Height + 6;
             double boxX = left, boxY = top - text.Height - 10;

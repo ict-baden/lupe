@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using Lupe.Core.Input;
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Platform.MacOS.Native;
 
 namespace Lupe.Platform.MacOS.Input;
@@ -29,16 +30,16 @@ public sealed class MacOSHotkeys : IGlobalHotkeyProvider
 
     internal MacOSHotkeys(MacOSKeyboardLayout layout) => _layout = layout;
 
-    public string? UnsupportedReason => OperatingSystem.IsMacOS() ? null : MacOS.NotHere("Globale Tastenkürzel");
+    public string? UnsupportedReason => OperatingSystem.IsMacOS() ? null : Strings.Mac_NotHere_Hotkeys;
 
     public IGlobalHotkey Register(Hotkey hotkey)
     {
         ArgumentNullException.ThrowIfNull(hotkey);
         if (UnsupportedReason is { } reason) return new FailedHotkey(reason);
         if (_layout.KeyCodeFor(hotkey.Key) is not { } keyCode)
-            return new FailedHotkey($"Die Taste von {HotkeyText.Format(hotkey)} gibt es unter macOS nicht – bitte ein anderes Kürzel wählen.");
+            return new FailedHotkey(string.Format(Strings.Mac_Hotkey_KeyMissing, HotkeyText.Format(hotkey)));
         if (MacKeyCodes.CarbonModifiers(hotkey) == 0)
-            return new FailedHotkey("Ein Tastenkürzel braucht unter macOS mindestens eine Umschalttaste (⌘, ⌥, ⌃ oder ⇧).");
+            return new FailedHotkey(Strings.Mac_Hotkey_NeedsModifier);
         try
         {
             if (!EnsureHandler(out string? handlerError)) return new FailedHotkey(handlerError!);
@@ -63,16 +64,16 @@ public sealed class MacOSHotkeys : IGlobalHotkeyProvider
         catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException)
         {
             Trace.TraceWarning($"Lupe: Carbon nicht verfügbar: {ex.Message}");
-            return new FailedHotkey("Globale Tastenkürzel sind auf diesem Mac nicht verfügbar (Carbon fehlt).");
+            return new FailedHotkey(Strings.Mac_Hotkey_CarbonMissing);
         }
     }
 
     internal static string DescribeStatus(int status, Hotkey hotkey) => status switch
     {
         Carbon.eventHotKeyExistsErr =>
-            $"{HotkeyText.Format(hotkey)} ist schon von einem anderen Programm belegt – bitte ein anderes Kürzel wählen.",
-        Carbon.eventHotKeyInvalidErr => $"{HotkeyText.Format(hotkey)} lässt sich unter macOS nicht anmelden – bitte ein anderes Kürzel wählen.",
-        _ => $"{HotkeyText.Format(hotkey)} ließ sich nicht anmelden (macOS-Fehler {status}).",
+            string.Format(Strings.Mac_Hotkey_AlreadyRegistered, HotkeyText.Format(hotkey)),
+        Carbon.eventHotKeyInvalidErr => string.Format(Strings.Mac_Hotkey_Invalid, HotkeyText.Format(hotkey)),
+        _ => string.Format(Strings.Mac_Hotkey_RegisterFailed, HotkeyText.Format(hotkey), status),
     };
 
     private static unsafe bool EnsureHandler(out string? error)
@@ -86,7 +87,7 @@ public sealed class MacOSHotkeys : IGlobalHotkeyProvider
             int status = Carbon.InstallEventHandler(Carbon.GetApplicationEventTarget(), &OnHotKeyEvent, 1, &spec, 0, &handlerRef);
             if (status != Carbon.noErr)
             {
-                error = $"Globale Tastenkürzel ließen sich nicht einrichten (macOS-Fehler {status}).";
+                error = string.Format(Strings.Mac_Hotkey_HandlerFailed, status);
                 return false;
             }
             // Der Handler bleibt für die Laufzeit des Programms installiert

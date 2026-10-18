@@ -9,7 +9,8 @@
   <img alt="macOS 12 or later, Apple Silicon and Intel" src="https://img.shields.io/badge/macOS-12%2B-111111?logo=apple&logoColor=white">
   <img alt=".NET 10" src="https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white">
   <img alt="Data stays on this PC" src="https://img.shields.io/badge/Data-stays%20local-2E7D32">
-  <img alt="User interface in German" src="https://img.shields.io/badge/UI-German-6B7280">
+  <img alt="User interface in English and German" src="https://img.shields.io/badge/UI-English%20%7C%20German-6B7280">
+  <a href="LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/badge/Licence-MIT-blue"></a>
   <img alt="Status: pre-release" src="https://img.shields.io/badge/Status-pre--release-E3A008">
   <a href="https://github.com/ict-baden/lupe/actions/workflows/build.yml"><img alt="Build" src="https://github.com/ict-baden/lupe/actions/workflows/build.yml/badge.svg"></a>
 </p>
@@ -36,7 +37,7 @@
 </p>
 
 > [!NOTE]
-> **The application and its command-line output are in German.** This documentation is in English and quotes the German labels where you need to find them, for example *Bildschirm* (screen), *Eintippen* (type) or *Link öffnen* (open link).
+> **The application speaks English and German.** It follows the language of the operating system (English for any other language) and can be switched under *Settings › Language*. This documentation still quotes the German labels with their English meaning, for example *Bildschirm* (Screen), *Eintippen* (Type) or *Link öffnen* (Open link).
 
 ## What Lupe does
 
@@ -252,7 +253,7 @@ Lupe is a rewrite of Till's [Barcode-Reader](https://github.com/pieewiee/Barcode
 - **Command line into a pipe** uses the console's code page; characters outside it are replaced. Redirect into a file for lossless UTF-8.
 - **Linux and macOS are new and less tested than Windows.** On Wayland the screen scan, typing and the shortcut go through the desktop portals, which ask for permission and are not offered by every desktop; Lupe cannot see which window is in front there. The macOS build has not run on a real Mac yet. Details: [Limitations › Linux and macOS](docs/limitations.md#linux-and-macos).
 - **Pre-release 0.1.0, not code-signed.** SmartScreen may warn; macOS Gatekeeper asks once.
-- **No licence yet.** The licence has not been decided; the repository contains no licence file. The licences of the bundled third-party components (zxing-cpp with libzint and libzueci, C#/WinRT, .NET) are in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which ships next to `Lupe.exe` and opens from *Info › Erkennung › Lizenztexte*.
+- **Licence: MIT.** Lupe is under the [MIT licence](LICENSE), like all ICT-Baden software. The licences of the bundled third-party components (zxing-cpp with libzint and libzueci, C#/WinRT, .NET) are in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which ships next to `Lupe.exe` and opens from *Info › Erkennung › Lizenztexte*.
 
 Everything else: **[Limitations →](docs/limitations.md)**
 

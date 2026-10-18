@@ -1,5 +1,6 @@
 using Lupe.Core.Input;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 
 namespace Lupe.Platform.Windows.Input;
 
@@ -11,9 +12,7 @@ namespace Lupe.Platform.Windows.Input;
 /// </summary>
 internal static unsafe class Elevation
 {
-    internal const string BlockedText =
-        "Eintippen nicht möglich – das Fenster im Vordergrund läuft mit höheren Rechten als Lupe (z. B. als Administrator), "
-        + "dorthin lässt Windows keine Tastatureingaben zu. Text stattdessen kopieren oder Lupe ebenfalls als Administrator starten.";
+    internal static string BlockedText => Strings.Win_Typing_ForegroundElevated;
 
     /// <summary>
     /// Der Grund (deutsch), warum Eingaben das Vordergrundfenster nicht erreichen würden, sonst null – auch dann, wenn sich

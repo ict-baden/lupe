@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 
 namespace Lupe.Core.Screen;
 
@@ -51,8 +52,8 @@ public static class ScreenCapture
     /// <summary>Anzeigename eines Monitors: „Bildschirm 2“ oder „Bildschirm 2 (DELL U2720Q)“.</summary>
     public static string MonitorName(int number, string? friendlyName)
         => string.IsNullOrWhiteSpace(friendlyName)
-            ? $"Bildschirm {number}"
-            : $"Bildschirm {number} ({friendlyName.Trim()})";
+            ? string.Format(Strings.Core_Screen_Monitor, number)
+            : string.Format(Strings.Core_Screen_MonitorNamed, number, friendlyName.Trim());
 
     /// <summary>Wirft bei leerer oder zu großer Fläche (siehe <see cref="TryCapture"/>).</summary>
     public static void Validate(PixelRect area)

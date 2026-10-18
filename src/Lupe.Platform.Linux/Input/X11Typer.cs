@@ -1,5 +1,6 @@
 using Lupe.Core.Input;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Platform.Linux.Native;
 
 namespace Lupe.Platform.Linux.Input;
@@ -39,8 +40,8 @@ internal sealed unsafe class X11Typer : IDisposable
     {
         lock (_gate)
         {
-            if (!Open()) return $"Eintippen geht nicht: {_openError}";
-            if (!_hasXTest) return "Eintippen geht nicht: Der X-Server hat die XTest-Erweiterung nicht.";
+            if (!Open()) return string.Format(Strings.Linux_Typing_Failed, _openError);
+            if (!_hasXTest) return Strings.Linux_Typing_NoXTest;
             return null;
         }
     }

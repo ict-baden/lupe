@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Lupe.Core.Camera;
+using Lupe.Core.Resources;
 
 namespace Lupe.Platform.MacOS.Camera;
 
@@ -93,9 +94,9 @@ internal static unsafe partial class NativeCamera
     {
         Denied => MacOSPermissions.CameraDenied,
         Restricted => MacOSPermissions.CameraRestricted,
-        NotFound or Disconnected => $"Die Kamera „{name}“ ist nicht angeschlossen.",
-        NoFormat => $"Die Kamera „{name}“ bietet kein Bildformat an, das Lupe lesen kann.",
-        Runtime => $"Die Kamera „{name}“ ist ausgefallen – vielleicht verwendet sie gerade ein anderes Programm.",
-        _ => $"Die Kamera „{name}“ ließ sich nicht starten – vielleicht verwendet sie gerade ein anderes Programm.",
+        NotFound or Disconnected => string.Format(Strings.Mac_Camera_NotConnected, name),
+        NoFormat => string.Format(Strings.Mac_Camera_NoFormat, name),
+        Runtime => string.Format(Strings.Mac_Camera_Failed, name),
+        _ => string.Format(Strings.Mac_Camera_StartFailed, name),
     };
 }

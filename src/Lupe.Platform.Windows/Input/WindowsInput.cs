@@ -1,5 +1,6 @@
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 
 namespace Lupe.Platform.Windows.Input;
 
@@ -51,7 +52,7 @@ public sealed class WindowsActiveWindow : IActiveWindow
     /// <summary>Wiederherstellen, nach vorn holen und bis zu ~0,5 s auf den Fokus warten (wie bisher in der App).</summary>
     public async Task<string?> ActivateAsync(nint window, CancellationToken ct = default)
     {
-        if (window == 0 || !Native.IsWindow(window)) return "Das Fenster von vorher gibt es nicht mehr.";
+        if (window == 0 || !Native.IsWindow(window)) return Strings.Win_ActiveWindow_Gone;
         if (Native.IsIconic(window)) Native.ShowWindow(window, Native.SW_RESTORE);
         Native.SetForegroundWindow(window);
         for (int i = 0; i < 20 && Native.GetForegroundWindow() != window; i++)
@@ -59,6 +60,6 @@ public sealed class WindowsActiveWindow : IActiveWindow
             await Task.Delay(25, ct).ConfigureAwait(false);
             if (i == 8) Native.SetForegroundWindow(window);
         }
-        return Native.GetForegroundWindow() != window ? "Das Fenster von vorher ließ sich nicht aktivieren – nichts eingetippt." : null;
+        return Native.GetForegroundWindow() != window ? Strings.Win_ActiveWindow_ActivateFailed : null;
     }
 }

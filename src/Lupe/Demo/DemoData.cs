@@ -1,9 +1,11 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Lupe.Core.Camera;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 using Lupe.Services;
 using ZXingCpp;
 
@@ -17,7 +19,9 @@ namespace Lupe.Demo;
 internal static class DemoData
 {
     public const string CameraId = "lupe-demo-kamera";
-    public static CameraInfo Camera { get; } = new(CameraId, "Demo-Kamera");
+    private static CameraInfo? _camera;
+    /// <summary>Erst beim ersten Zugriff angelegt – der Name hängt von der Sprache ab, die beim Start eingestellt wird.</summary>
+    public static CameraInfo Camera => _camera ??= new(CameraId, Strings.App_Demo_Camera);
 
     public const string DeliveryUrl = "https://example.org/lieferung/4711";
     public const string InvoiceUrl = "https://example.org/rechnung/2026-118";
@@ -115,7 +119,7 @@ internal static class DemoData
             for (int i = 0; i < items.Length; i++)
             {
                 double row = y + 50 + i * 40;
-                Text(dc, (i + 1).ToString(Labels.German), 64, row, 16, FontWeight.Normal);
+                Text(dc, (i + 1).ToString(CultureInfo.CurrentCulture), 64, row, 16, FontWeight.Normal);
                 Text(dc, items[i], 150, row, 16, FontWeight.Normal);
                 Text(dc, i == 1 ? "12" : "1", 760, row, 16, FontWeight.Normal);
                 dc.DrawLine(line, new Point(64, row + 32), new Point(w - 64, row + 32));
@@ -275,7 +279,7 @@ internal static class DemoData
     private static void Text(DrawingContext dc, string text, double x, double y, double size, FontWeight weight, IBrush? brush = null)
     {
         var face = new Typeface(Face.Value, FontStyle.Normal, weight);
-        dc.DrawText(new FormattedText(text, Labels.German, FlowDirection.LeftToRight, face, size, brush ?? Gray(30)), new Point(x, y));
+        dc.DrawText(new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight, face, size, brush ?? Gray(30)), new Point(x, y));
     }
 
     private static SolidColorBrush Gray(byte v) => new(Color.FromRgb(v, v, v));

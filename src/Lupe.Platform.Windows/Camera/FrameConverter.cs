@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using Lupe.Core.Camera;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 using WinRT;
 using Windows.Graphics.Imaging;
 
@@ -29,14 +30,14 @@ internal static class FrameConverter
         var plane = buffer.GetPlaneDescription(0);
         int width = Math.Min(plane.Width, bitmap.PixelWidth);
         int height = Math.Min(plane.Height, bitmap.PixelHeight);
-        if (width <= 0 || height <= 0) throw new InvalidOperationException("Das Kamerabild ist leer.");
+        if (width <= 0 || height <= 0) throw new InvalidOperationException(Strings.Win_Camera_FrameEmpty);
 
         using var reference = buffer.CreateReference();
         var access = reference.As<Native.IMemoryBufferByteAccess>();
         try
         {
             access.GetBuffer(out byte* data, out uint capacity);
-            if (data == null) throw new InvalidOperationException("Der Speicher des Kamerabilds ist nicht lesbar.");
+            if (data == null) throw new InvalidOperationException(Strings.Win_Camera_FrameMemoryUnreadable);
 
             int rowBytes = width * 4;
             var pixels = GC.AllocateUninitializedArray<byte>(rowBytes * height);
@@ -44,7 +45,7 @@ internal static class FrameConverter
             {
                 long offset = plane.StartIndex + (long)y * plane.Stride;
                 if (offset < 0 || offset + rowBytes > capacity)
-                    throw new InvalidOperationException("Das Kamerabild hat ein unerwartetes Speicherlayout.");
+                    throw new InvalidOperationException(Strings.Win_Camera_FrameUnexpectedLayout);
                 new ReadOnlySpan<byte>(data + offset, rowBytes).CopyTo(pixels.AsSpan(y * rowBytes, rowBytes));
             }
             MakeOpaque(pixels);

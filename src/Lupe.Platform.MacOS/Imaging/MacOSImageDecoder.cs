@@ -1,5 +1,6 @@
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Platform.MacOS.Native;
 
 namespace Lupe.Platform.MacOS.Imaging;
@@ -15,7 +16,7 @@ public sealed class MacOSImageDecoder : IImageDecoder
 
     public async Task<PixelImage> DecodeAsync(Stream stream, string name, int maxPixels, CancellationToken ct)
     {
-        if (!OperatingSystem.IsMacOS()) throw new InvalidDataException($"„{name}“ kann nicht gelesen werden: {MacOS.NotHere("Bilddateien")}");
+        if (!OperatingSystem.IsMacOS()) throw new InvalidDataException(string.Format(Strings.Mac_NotHere_Image, name));
         var buffer = new MemoryStream();
         await stream.CopyToAsync(buffer, ct).ConfigureAwait(false);
         ct.ThrowIfCancellationRequested();
@@ -26,10 +27,10 @@ public sealed class MacOSImageDecoder : IImageDecoder
     public Exception Translate(Exception ex, string name) => ex switch
     {
         InvalidDataException or IOException => ex,
-        OutOfMemoryException or InsufficientExecutionStackException => new InvalidDataException($"„{name}“ ist zu groß, um geladen zu werden.", ex),
+        OutOfMemoryException or InsufficientExecutionStackException => new InvalidDataException(string.Format(Strings.Mac_Image_TooLarge, name), ex),
         DllNotFoundException or EntryPointNotFoundException =>
-            new InvalidDataException($"„{name}“ kann nicht gelesen werden: ImageIO ist auf diesem Mac nicht verfügbar.", ex),
-        _ => new InvalidDataException($"„{name}“ konnte nicht als Bild gelesen werden ({ex.Message.Trim()}).", ex),
+            new InvalidDataException(string.Format(Strings.Mac_Image_ImageIOMissing, name), ex),
+        _ => new InvalidDataException(string.Format(Strings.Mac_Image_NotReadable, name, ex.Message.Trim()), ex),
     };
 }
 
@@ -38,7 +39,7 @@ internal static class ImageIOReader
 {
     public static unsafe PixelImage Decode(ReadOnlySpan<byte> bytes, string name, int maxPixels, bool largestFrame)
     {
-        if (bytes.IsEmpty) throw new InvalidDataException($"„{name}“ ist leer.");
+        if (bytes.IsEmpty) throw new InvalidDataException(string.Format(Strings.Mac_Image_EmptyFile, name));
         nint data = 0, source = 0, image = 0, oriented = 0, options = 0;
         try
         {
@@ -67,9 +68,9 @@ internal static class ImageIOReader
             }
 
             image = ImageIO.CGImageSourceCreateImageAtIndex(source, index, 0);
-            if (image == 0) throw new InvalidDataException($"„{name}“ ist beschädigt oder kein gültiges Bild.");
+            if (image == 0) throw new InvalidDataException(string.Format(Strings.Mac_Image_Corrupt, name));
             long rawW = (long)CG.CGImageGetWidth(image), rawH = (long)CG.CGImageGetHeight(image);
-            if (rawW <= 0 || rawH <= 0) throw new InvalidDataException($"„{name}“ enthält kein Bild (0 Pixel).");
+            if (rawW <= 0 || rawH <= 0) throw new InvalidDataException(string.Format(Strings.Mac_Image_Empty, name));
 
             // Mit EXIF-Drehung und schon passend verkleinert: das „Vorschaubild“ in Zielgröße
             var (fitW, fitH) = FitInto(checked((int)rawW), checked((int)rawH), maxPixels);
@@ -128,7 +129,7 @@ internal static class ImageIOReader
             {
                 nint context = CG.CGBitmapContextCreate(p, (nuint)width, (nuint)height, 8, (nuint)stride, space,
                     CG.kCGImageAlphaPremultipliedFirst | CG.kCGBitmapByteOrder32Little);
-                if (context == 0) throw new InvalidDataException("Das Bild ließ sich nicht umwandeln (CoreGraphics).");
+                if (context == 0) throw new InvalidDataException(Strings.Mac_Image_ConvertFailed);
                 try
                 {
                     var rect = new CGRect(0, 0, width, height);
@@ -153,5 +154,5 @@ internal static class ImageIOReader
     }
 
     private static InvalidDataException Unsupported(string name) =>
-        new($"„{name}“ ist kein unterstütztes Bildformat (PNG, JPEG, BMP, GIF, TIFF, HEIC …) oder beschädigt.");
+        new(string.Format(Strings.Mac_Image_Unsupported, name));
 }

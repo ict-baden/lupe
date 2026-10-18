@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 
 namespace Lupe.Core.Camera;
 
@@ -24,7 +25,7 @@ public sealed class FakeFrameSource : IFrameSource
     /// <summary>Gesetzt, während dieser Thread gerade ein Ereignis dieser Quelle ausliefert (gegen Selbst-Verklemmung).</summary>
     [ThreadStatic] private static FakeFrameSource? t_callbackOwner;
 
-    public FakeFrameSource(IReadOnlyList<PixelImage> frames, double framesPerSecond = 15, string name = "Demo-Kamera")
+    public FakeFrameSource(IReadOnlyList<PixelImage> frames, double framesPerSecond = 15, string? name = null)
     {
         ArgumentNullException.ThrowIfNull(frames);
         if (frames.Count == 0) throw new ArgumentException("Die Attrappe braucht mindestens ein Bild.", nameof(frames));
@@ -38,7 +39,7 @@ public sealed class FakeFrameSource : IFrameSource
         // PeriodicTimer braucht mindestens 1 ms; mehr als ein Tag Abstand ergibt keinen Sinn
         double ms = Math.Clamp(1000.0 / framesPerSecond, 1.0, TimeSpan.FromDays(1).TotalMilliseconds);
         _period = TimeSpan.FromMilliseconds(ms);
-        Name = string.IsNullOrWhiteSpace(name) ? "Demo-Kamera" : name.Trim();
+        Name = string.IsNullOrWhiteSpace(name) ? Strings.Core_Camera_DemoName : name.Trim();
     }
 
     public string Name { get; }
@@ -176,7 +177,7 @@ public sealed class FakeFrameSource : IFrameSource
         {
             // z. B. kein Speicher mehr für die Kopie – wie eine echte Kamera als Ausfall melden
             Trace.TraceError($"Lupe: Demo-Kamera ausgefallen: {ex}");
-            Raise(Failed, $"Die Kamera „{Name}“ ist ausgefallen ({ex.Message}). Starten Sie sie erneut.", nameof(Failed));
+            Raise(Failed, string.Format(Strings.Core_Camera_FailedWithReason, Name, ex.Message), nameof(Failed));
         }
     }
 

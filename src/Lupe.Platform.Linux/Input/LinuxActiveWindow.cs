@@ -1,4 +1,5 @@
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Platform.Linux.Native;
 
 namespace Lupe.Platform.Linux.Input;
@@ -48,13 +49,13 @@ public sealed class LinuxActiveWindow : IActiveWindow
     {
         if (LinuxSession.Kind == SessionKind.Wayland)
             return null; // nicht möglich und nicht nötig: der Fokus geht nach der Auswahl von selbst zurück
-        if (window == 0) return "Es war kein Fenster vorn – nichts eingetippt.";
+        if (window == 0) return Strings.Linux_ActiveWindow_None;
         lock (_gate)
         {
-            if (!Open()) return "Keine Verbindung zum X-Server – nichts eingetippt.";
+            if (!Open()) return Strings.Linux_ActiveWindow_NoXServer;
             if (ForegroundCore() == window) return null;
             int error = RequestActivation(_display, window);
-            if (error == 3) return "Das Fenster von vorher gibt es nicht mehr – nichts eingetippt."; // BadWindow
+            if (error == 3) return Strings.Linux_ActiveWindow_Gone; // BadWindow
         }
         for (int i = 0; i < 25; i++)
         {
@@ -62,7 +63,7 @@ public sealed class LinuxActiveWindow : IActiveWindow
             lock (_gate)
                 if (ForegroundCore() == window) return null;
         }
-        return "Das Fenster von vorher ließ sich nicht nach vorn holen – nichts eingetippt.";
+        return Strings.Linux_ActiveWindow_ActivateFailed;
     }
 
     /// <summary>Bittet den Fenstermanager per EWMH, das Fenster zu aktivieren; liefert den X-Fehlercode (0 = keiner).</summary>

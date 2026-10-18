@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 using Lupe.Interop;
 using Lupe.Services;
 using CorePixelRect = Lupe.Core.Screen.PixelRect;
@@ -37,8 +38,8 @@ public partial class ResultToast : Window
         _workArea = monitor?.WorkArea;
 
         TitleText.Text = title;
-        SubtitleText.Text = item is null ? "Lupe · Bildschirm" : $"Lupe · {item.FormatLabel}";
-        ContentText.Text = item?.Text ?? "Tipp: Rechteck etwas größer ziehen, den Code ganz einschließen – oder die Ansicht vergrößern.";
+        SubtitleText.Text = $"Lupe · {(item is null ? Strings.App_Nav_Screen : item.FormatLabel)}";
+        ContentText.Text = item?.Text ?? Strings.App_Toast_NoCodeTip;
         ToolTip.SetTip(ContentText, item?.ToolTipText);
         DoneText.Text = done;
         DoneRow.IsVisible = done.Length > 0;
@@ -97,7 +98,7 @@ public partial class ResultToast : Window
         toast.IconGlyph.Text = "\uE946";
         toast.IconCircle.SetResource(Border.BackgroundProperty, "AccentFillColorDefaultBrush");
         toast.IconGlyph.SetResource(TextBlock.ForegroundProperty, "TextOnAccentFillColorPrimaryBrush");
-        toast.OpenText.Text = "Lupe öffnen";
+        toast.OpenText.Text = Strings.App_Tray_Open;
         toast._timer.Interval = TimeSpan.FromSeconds(8);
         toast.Present();
     }

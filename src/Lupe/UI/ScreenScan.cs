@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Core.Screen;
 using Lupe.Interop;
 using Lupe.Services;
@@ -64,9 +65,9 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
             // Was auch schiefgeht: Das ausgeblendete Lupe-Fenster kommt wieder, und die Meldung erscheint dort, wo man
             // sie sieht – im Fenster nur, wenn der Scan von dort kam
             Restore(main, hidden, activate: fromLupe);
-            var message = $"Der Bildschirm-Scan ist fehlgeschlagen: {ex.Message}";
+            var message = string.Format(Strings.App_Scan_Failed, ex.Message);
             if (fromLupe && main is { IsVisible: true }) state.Report(NoticeKind.Error, message);
-            else new ResultToast(state, null, "Bildschirm-Scan nicht möglich", "", message, null).Present();
+            else new ResultToast(state, null, Strings.App_Scan_NotPossible, "", message, null).Present();
         }
     }
 
@@ -85,12 +86,12 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            CaptureFailed($"Das Bildschirmfoto ist fehlgeschlagen: {ex.Message}");
+            CaptureFailed(string.Format(Strings.App_Scan_CaptureFailed, ex.Message));
             return;
         }
         if (desktop is null)
         {
-            CaptureFailed(refused ?? "Bildschirmfoto nicht möglich.");
+            CaptureFailed(refused ?? Strings.App_Scan_CaptureNotPossible);
             return;
         }
 
@@ -98,7 +99,7 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
         {
             Restore(main, hidden, activate: true);
             if (main is { IsVisible: true }) state.Report(NoticeKind.Error, message);
-            else new ResultToast(state, null, "Bildschirm-Scan nicht möglich", "", message, null).Present();
+            else new ResultToast(state, null, Strings.App_Scan_NotPossible, "", message, null).Present();
         }
 
         var selection = await new SelectionOverlay(desktop, area, monitors).SelectAsync();
@@ -129,9 +130,9 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
 
         if (codes.Count == 0)
         {
-            const string title = "Kein Code gefunden";
-            var detail = failure is null ? "Im Ausschnitt hat Lupe keinen QR- oder Barcode erkannt." : $"Die Erkennung ist fehlgeschlagen: {failure}";
-            if (inWindow) state.Report(NoticeKind.Warning, $"{detail} Tipp: Rechteck etwas größer ziehen oder die Ansicht vergrößern.");
+            var title = Strings.App_Scan_NoCode;
+            var detail = failure is null ? Strings.App_Scan_NoCodeDetail : string.Format(Strings.App_Scan_RecognitionFailed, failure);
+            if (inWindow) state.Report(NoticeKind.Warning, string.Format(Strings.App_Scan_NoCodeTip, detail));
             else
             {
                 ReturnFocus(typeTarget);
@@ -154,7 +155,7 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
                 {
                     var error = await state.Hits.CopyAllAsync(report);
                     AddRecent(report);
-                    Finish(inWindow, typeTarget, monitor, null, $"{codes.Count} Codes zeilenweise kopiert", error is null ? ResultActions.Kopieren : ResultActions.Keine, error ?? "");
+                    Finish(inWindow, typeTarget, monitor, null, string.Format(Strings.App_Scan_CopiedAll, codes.Count), error is null ? ResultActions.Kopieren : ResultActions.Keine, error ?? "");
                 }
                 else
                 {
@@ -173,7 +174,7 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
         var item = index < state.ScreenResults.Count && ReferenceEquals(state.ScreenResults[index].Code, chosen)
             ? state.ScreenResults[index]
             : new CodeItem(chosen, ScanSource.Bildschirm, report.Time, state.LinkFor(chosen.Text), entry: report.EntryAt(index));
-        var titleText = codes.Count > 1 ? $"{item.FormatLabel} gewählt ({codes.Count} gefunden)" : $"{item.FormatLabel} erkannt";
+        var titleText = codes.Count > 1 ? string.Format(Strings.App_Scan_Chosen, item.FormatLabel, codes.Count) : string.Format(Strings.App_Scan_Recognized, item.FormatLabel);
         Finish(inWindow, typeTarget, monitor, item, titleText, outcome.Done, string.Join(" ", outcome.Problems));
     }
 
@@ -183,9 +184,9 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
         var done = Labels.Actions(actions);
         if (inWindow)
         {
-            var text = item is null ? title : $"{title}: {Labels.OneLine(item.Text, 80)}";
-            if (done.Length > 0) text += $" – {done}";
-            if (problems.Length > 0) text += $". {problems}";
+            var text = item is null ? title : string.Format(Strings.App_Scan_ResultWithContent, title, Labels.OneLine(item.Text, 80));
+            if (done.Length > 0) text = string.Format(Strings.App_Scan_ResultWithDone, text, done);
+            if (problems.Length > 0) text = string.Format(Strings.App_Scan_ResultWithProblems, text, problems);
             state.Report(problems.Length > 0 ? NoticeKind.Warning : NoticeKind.Success, text);
             return;
         }
@@ -198,14 +199,14 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
     {
         var actions = state.Hits.ActionsFor(ScanSource.Bildschirm);
         var parts = new List<string>();
-        if (actions.HasFlag(ResultActions.Kopieren)) parts.Add("kopiert");
-        if (actions.HasFlag(ResultActions.Eintippen) && canType) parts.Add("in das vorherige Fenster getippt");
-        if (actions.HasFlag(ResultActions.LinkOeffnen)) parts.Add("als Link geöffnet (wenn eine Regel passt)");
+        if (actions.HasFlag(ResultActions.Kopieren)) parts.Add(Strings.App_Choice_ActionCopied);
+        if (actions.HasFlag(ResultActions.Eintippen) && canType) parts.Add(Strings.App_Choice_ActionTyped);
+        if (actions.HasFlag(ResultActions.LinkOeffnen)) parts.Add(Strings.App_Choice_ActionLinkOpened);
         return parts.Count switch
         {
             0 => "",
             1 => parts[0],
-            _ => string.Join(", ", parts[..^1]) + " und " + parts[^1],
+            _ => string.Format(Strings.App_List_And, string.Join(Strings.App_List_Separator, parts[..^1]), parts[^1]),
         };
     }
 

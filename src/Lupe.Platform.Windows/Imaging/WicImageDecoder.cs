@@ -1,6 +1,7 @@
 using Lupe.Core.Decoding;
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
 
@@ -57,7 +58,7 @@ public sealed class WicImageDecoder : IImageDecoder
     private static async Task<PixelImage> ReadPixelsAsync(BitmapFrame frame, string name, int maxPixels, CancellationToken ct)
     {
         uint pw = frame.PixelWidth, ph = frame.PixelHeight;
-        if (pw == 0 || ph == 0) throw new InvalidDataException($"„{name}“ enthält kein Bild (0 Pixel).");
+        if (pw == 0 || ph == 0) throw new InvalidDataException(string.Format(Strings.Win_Image_Empty, name));
         // Drehung um 90°/270° (EXIF) vertauscht Breite und Höhe
         bool swapped = frame.OrientedPixelWidth != pw || frame.OrientedPixelHeight != ph;
 
@@ -91,7 +92,7 @@ public sealed class WicImageDecoder : IImageDecoder
         int width = (int)(swapped ? h : w), height = (int)(swapped ? w : h);
         // Sicherheitsnetz, falls der Decoder anders skaliert hat als verlangt (eine vertauschte Lage verriete die Länge nicht)
         if (pixels.Length != (long)width * height * 4)
-            throw new InvalidDataException($"„{name}“ konnte nicht gelesen werden: Der Bilddecoder hat eine unerwartete Pixelzahl geliefert.");
+            throw new InvalidDataException(string.Format(Strings.Win_Image_UnexpectedPixelCount, name));
         ImageFile.FlattenOnWhite(pixels);
         return new PixelImage(width, height, pixels);
     }
@@ -113,21 +114,20 @@ public sealed class WicImageDecoder : IImageDecoder
         string extension = Path.GetExtension(name).ToLowerInvariant();
         int hr = ex.HResult;
         if (ex is OutOfMemoryException || hr == EOutOfMemory || hr == WincodecErrImageSizeOutOfRange)
-            return new InvalidDataException($"„{name}“ ist zu groß, um geladen zu werden.", ex);
+            return new InvalidDataException(string.Format(Strings.Win_Image_TooLarge, name), ex);
         if (hr is WincodecErrComponentNotFound or WincodecErrUnknownImageFormat or WincodecErrComponentInitializeFailure
             or MfErrTopoCodecNotFound or WincodecErrUnsupportedPixelFormat or WincodecErrUnsupportedOperation)
         {
             if (NeedsExtension.Contains(extension))
                 return new InvalidDataException(
-                    $"„{name}“ kann nicht gelesen werden: Für {extension.TrimStart('.').ToUpperInvariant()} fehlt Windows der passende Codec " +
-                    "(Bilderweiterung aus dem Microsoft Store, z. B. „HEIF-Bilderweiterungen“ oder „Webp-Bilderweiterungen“).", ex);
-            return new InvalidDataException($"„{name}“ ist kein unterstütztes Bildformat (PNG, JPEG, BMP, GIF, TIFF …) oder beschädigt.", ex);
+                    string.Format(Strings.Win_Image_CodecMissing, name, extension.TrimStart('.').ToUpperInvariant()), ex);
+            return new InvalidDataException(string.Format(Strings.Win_Image_Unsupported, name), ex);
         }
         if ((uint)hr >> 16 == 0x8898)
-            return new InvalidDataException($"„{name}“ ist beschädigt oder kein gültiges Bild.", ex);
+            return new InvalidDataException(string.Format(Strings.Win_Image_Corrupt, name), ex);
         if (ex is IOException io)
-            return new IOException($"„{name}“ konnte nicht gelesen werden: {io.Message}", ex);
-        return new InvalidDataException($"„{name}“ konnte nicht als Bild gelesen werden ({ex.Message.Trim()}).", ex);
+            return new IOException(string.Format(Strings.Win_Image_ReadFailed, name, io.Message), ex);
+        return new InvalidDataException(string.Format(Strings.Win_Image_NotReadable, name, ex.Message.Trim()), ex);
     }
 
     // ---------- Endungen ----------

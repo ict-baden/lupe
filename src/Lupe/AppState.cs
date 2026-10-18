@@ -3,6 +3,7 @@ using Avalonia.Threading;
 using Lupe.Core.Decoding;
 using Lupe.Core.History;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 using Lupe.Core.Settings;
 using Lupe.Services;
 
@@ -145,7 +146,7 @@ internal sealed class AppState : IDisposable
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             settings = new LupeSettings();
-            problems.Add($"Die Einstellungen ließen sich nicht lesen ({ex.Message}). Es gelten die Standardwerte; gespeichert wird in dieser Sitzung nicht.");
+            problems.Add(string.Format(Strings.App_State_SettingsUnreadable, ex.Message));
         }
 
         // Ob der Verlauf auf die Platte darf, steht in den Einstellungen. Sind sie nicht lesbar, ist das unbekannt – dann
@@ -154,12 +155,12 @@ internal sealed class AppState : IDisposable
         // (beim Ausschalten wird sie gelöscht) – dann geht es mit ihr weiter.
         bool settingsUnknown = file is null or { State: SettingsFileState.Unreadable };
         bool historyWaits = settingsUnknown && settings.KeepHistory && !File.Exists(HistoryStore.DefaultPath);
-        if (historyWaits) problems.Add(file is null ? "Der Verlauf bleibt in dieser Sitzung nur im Speicher." : "Der Verlauf bleibt bis dahin nur im Speicher.");
+        if (historyWaits) problems.Add(file is null ? Strings.App_State_HistoryInMemorySession : Strings.App_State_HistoryInMemoryUntil);
 
         // „Verlauf speichern“ ist aus, aber die Datei liegt noch da (beim Ausschalten gesperrt): Löschen jetzt nachholen
         if (file is { State: SettingsFileState.Loaded or SettingsFileState.Repaired } && !settings.KeepHistory
             && !HistoryStore.TryDeleteFile(null, out _, out var deleteError))
-            problems.Add($"{deleteError} „Verlauf speichern“ ist aus – bitte die Datei von Hand löschen, sie kann vertrauliche Inhalte enthalten.");
+            problems.Add(string.Format(Strings.App_State_HistoryDeleteManuallyOff, deleteError));
 
         HistoryStore history;
         try
@@ -170,7 +171,7 @@ internal sealed class AppState : IDisposable
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             history = new HistoryStore(null, settings.HistoryLimit, persist: false);
-            problems.Add($"Der Verlauf ließ sich nicht öffnen ({ex.Message}). Er wird in dieser Sitzung nicht gespeichert.");
+            problems.Add(string.Format(Strings.App_State_HistoryOpenFailedSession, ex.Message));
         }
 
         var state = new AppState(settings, file, history, isDemo: false, strict: false)
@@ -233,7 +234,7 @@ internal sealed class AppState : IDisposable
             try { result = _settingsFile.Save(next); }
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {
-                result = new SettingsSaveResult(SettingsSaveStatus.Failed, next, $"Die Einstellungen ließen sich nicht speichern: {ex.Message}");
+                result = new SettingsSaveResult(SettingsSaveStatus.Failed, next, string.Format(Strings.App_State_SettingsSaveFailed, ex.Message));
             }
             next = result.Settings;
             SettingsProblem = _settingsFile.Problem;
@@ -315,7 +316,7 @@ internal sealed class AppState : IDisposable
         try { created = new HistoryStore(null, next.HistoryLimit, newPersist); }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            Report(NoticeKind.Error, $"Der Verlauf ließ sich nicht öffnen ({ex.Message}). Er wird nicht gespeichert.");
+            Report(NoticeKind.Error, string.Format(Strings.App_State_HistoryOpenFailed, ex.Message));
             created = new HistoryStore(null, next.HistoryLimit, persist: false);
             newPersist = false;
         }
@@ -323,9 +324,9 @@ internal sealed class AppState : IDisposable
         if (oldPersist && !next.KeepHistory)
         {
             if (!HistoryStore.TryDeleteFile(null, out bool deleted, out var error))
-                Report(NoticeKind.Warning, $"{error} Bitte die Datei von Hand löschen – sie kann vertrauliche Inhalte enthalten.");
+                Report(NoticeKind.Warning, string.Format(Strings.App_State_HistoryDeleteManually, error));
             else if (deleted)
-                Report(NoticeKind.Success, "Der Verlauf wird nicht mehr gespeichert – die Datei verlauf.json ist gelöscht. Die Einträge hier bleiben bis zum Beenden.");
+                Report(NoticeKind.Success, Strings.App_State_HistoryNoLongerSaved);
         }
         // Was nur im Speicher stand, übernehmen (älteste zuerst, damit die Reihenfolge bleibt)
         if (!newPersist || !wasPersisting)

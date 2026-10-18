@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Lupe.Core.Platform;
+using Lupe.Core.Resources;
 using Lupe.Platform.MacOS.Native;
 
 namespace Lupe.Platform.MacOS;
@@ -26,17 +27,10 @@ internal static class MacOSPermissions
     public const string ScreenSettings = "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture";
     public const string AccessibilitySettings = "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility";
 
-    public const string CameraDenied =
-        "Lupe darf die Kamera nicht verwenden. Bitte in den Systemeinstellungen unter „Datenschutz & Sicherheit → Kamera“ "
-        + "Lupe erlauben und Lupe danach neu starten.";
-    public const string CameraRestricted =
-        "Die Kamera ist auf diesem Mac gesperrt (Bildschirmzeit oder Geräteverwaltung) – bitte an die IT wenden.";
-    public const string ScreenDenied =
-        "Lupe darf den Bildschirm nicht aufnehmen. Bitte in den Systemeinstellungen unter „Datenschutz & Sicherheit → "
-        + "Bildschirm- & Systemaudioaufnahme“ Lupe erlauben und Lupe danach neu starten.";
-    public const string AccessibilityDenied =
-        "Lupe darf unter macOS noch keine Tastatureingaben senden. Bitte in den Systemeinstellungen unter „Datenschutz & "
-        + "Sicherheit → Bedienungshilfen“ Lupe erlauben – bis dahin den Text stattdessen kopieren.";
+    public static string CameraDenied => Strings.Mac_Camera_Denied;
+    public static string CameraRestricted => Strings.Mac_Camera_Restricted;
+    public static string ScreenDenied => Strings.Mac_Screen_Denied;
+    public static string AccessibilityDenied => Strings.Mac_Typing_AccessibilityDenied;
 
     private static int s_screenRequested, s_accessibilityRequested;
 

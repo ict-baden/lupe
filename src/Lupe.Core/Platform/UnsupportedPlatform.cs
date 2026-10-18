@@ -3,6 +3,7 @@ using Lupe.Core.Camera;
 using Lupe.Core.Input;
 using Lupe.Core.Model;
 using Lupe.Core.Screen;
+using Lupe.Core.Resources;
 
 namespace Lupe.Core.Platform;
 
@@ -13,20 +14,20 @@ namespace Lupe.Core.Platform;
 /// </summary>
 public class UnsupportedPlatform : IPlatform
 {
-    public UnsupportedPlatform() : this("unbekanntes System") { }
+    public UnsupportedPlatform() : this(Strings.Core_Platform_UnknownSystem) { }
 
     /// <param name="name">Systemname für die Meldungen („Linux“, „macOS“ …).</param>
     public UnsupportedPlatform(string name)
     {
         Name = name;
         Cameras = new UnsupportedCameras();
-        Screen = new UnsupportedScreen($"Bildschirmfotos sind auf {name} (noch) nicht verfügbar.");
-        Keyboard = new UnsupportedKeyboard($"Eintippen ist auf {name} (noch) nicht verfügbar – den Text stattdessen kopieren.");
+        Screen = new UnsupportedScreen(string.Format(Strings.Core_Platform_NoScreenshots, name));
+        Keyboard = new UnsupportedKeyboard(string.Format(Strings.Core_Platform_NoTyping, name));
         KeyboardLayout = new UnsupportedKeyboardLayout();
-        Hotkeys = new UnsupportedHotkeys($"Globale Tastenkürzel sind auf {name} (noch) nicht verfügbar – Lupe über das Symbol im Infobereich oder das Menü öffnen.");
+        Hotkeys = new UnsupportedHotkeys(string.Format(Strings.Core_Platform_NoHotkeys, name));
         ActiveWindow = new UnsupportedActiveWindow();
-        Autostart = new UnsupportedAutostart($"Autostart ist auf {name} (noch) nicht verfügbar.");
-        Images = new UnsupportedImageDecoder($"Bilddateien lassen sich auf {name} (noch) nicht lesen.");
+        Autostart = new UnsupportedAutostart(string.Format(Strings.Core_Platform_NoAutostart, name));
+        Images = new UnsupportedImageDecoder(string.Format(Strings.Core_Platform_NoImageFiles, name));
         Problems = new NoProblems();
     }
 
@@ -52,7 +53,7 @@ public sealed class UnsupportedCameras : ICameraProvider
     }
 
     public IFrameSource Open(CameraInfo camera) =>
-        throw new NotSupportedException("Kameras sind auf diesem System (noch) nicht verfügbar.");
+        throw new NotSupportedException(Strings.Core_Platform_NoCameras);
 }
 
 /// <summary>Kein Bildschirm.</summary>
@@ -116,7 +117,7 @@ public sealed class UnsupportedActiveWindow : IActiveWindow
     public nint Foreground() => 0;
     public bool IsOwnWindow(nint window) => false;
     public Task<string?> ActivateAsync(nint window, CancellationToken ct = default) =>
-        Task.FromResult<string?>("Das Fenster von vorher lässt sich auf diesem System nicht nach vorn holen – nichts eingetippt.");
+        Task.FromResult<string?>(Strings.Core_Platform_NoActivate);
 }
 
 /// <summary>Kein Autostart.</summary>
@@ -133,10 +134,10 @@ public sealed class UnsupportedImageDecoder(string reason) : IImageDecoder
     public IReadOnlyList<string> Extensions { get; } = [".png", ".jpg", ".jpeg", ".bmp", ".gif"];
 
     public Task<PixelImage> DecodeAsync(Stream stream, string name, int maxPixels, CancellationToken ct) =>
-        throw new InvalidDataException($"„{name}“ kann nicht gelesen werden: {reason}");
+        throw new InvalidDataException(string.Format(Strings.Core_Image_CannotRead, name, reason));
 
     public Exception Translate(Exception ex, string name) =>
-        new InvalidDataException($"„{name}“ konnte nicht als Bild gelesen werden ({ex.Message.Trim()}).", ex);
+        new InvalidDataException(string.Format(Strings.Core_Image_NotAnImage, name, ex.Message.Trim()), ex);
 }
 
 /// <summary>Nichts bekannt.</summary>

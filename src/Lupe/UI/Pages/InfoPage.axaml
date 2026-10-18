@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="clr-namespace:Lupe.UI"
+             xmlns:l="clr-namespace:Lupe.Core.Resources;assembly=Lupe.Core"
              x:Class="Lupe.UI.Pages.InfoPage">
     <ScrollViewer Classes="page">
         <StackPanel MaxWidth="1000">
@@ -9,64 +10,63 @@
                     <Image Source="avares://Lupe/Assets/lupe.png" Width="64" Height="64" RenderOptions.BitmapInterpolationMode="HighQuality"/>
                     <StackPanel Margin="20,0,0,0" VerticalAlignment="Center">
                         <TextBlock Text="Lupe" Classes="subtitle"/>
-                        <TextBlock x:Name="VersionText" Text="Version 0.1.0" Classes="caption"/>
-                        <TextBlock Text="Liest QR- und Barcodes per Webcam, Bildschirmausschnitt, Datei und Zwischenablage." Classes="caption"/>
+                        <TextBlock x:Name="VersionText" Classes="caption"/>
+                        <TextBlock Text="{x:Static l:Strings.Page_Info_Tagline}" Classes="caption"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
 
-            <ui:SettingCard Glyph="&#xE7EF;" Header="Herausgeber" Description="ICT-Baden">
+            <ui:SettingCard Glyph="&#xE7EF;" Header="{x:Static l:Strings.Page_Info_Publisher}" Description="ICT-Baden">
                 <TextBlock/>
             </ui:SettingCard>
-            <ui:SettingCard Glyph="&#xE8D7;" Header="Lizenz" Description="Die Lizenz ist noch nicht festgelegt.">
+            <ui:SettingCard Glyph="&#xE8D7;" Header="{x:Static l:Strings.Page_Info_License}" Description="{x:Static l:Strings.Page_Info_LicenseMit}">
                 <TextBlock/>
             </ui:SettingCard>
-            <ui:SettingCard Glyph="&#xE71B;" Header="Quellcode und Fragen" Description="github.com/ict-baden/lupe">
+            <ui:SettingCard Glyph="&#xE71B;" Header="{x:Static l:Strings.Page_Info_SourceCode}" Description="github.com/ict-baden/lupe">
                 <Button Click="OpenRepository_Click">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE8A7;" Classes="glyph"/>
-                        <TextBlock Text="Im Browser öffnen" VerticalAlignment="Center"/>
+                        <TextBlock Text="{x:Static l:Strings.Page_Info_OpenInBrowser}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
             </ui:SettingCard>
-            <ui:SettingCard Glyph="&#xED14;" Header="Erkennung und Oberfläche"
-                            Description="zxing-cpp 3.1.1 (Apache-2.0) mit libzint und libzueci (BSD-3-Clause) – QR und Micro QR, Data Matrix, Aztec, PDF417, MaxiCode, EAN, UPC, Code 128/39/93, ITF, Codabar, GS1 DataBar und weitere. Oberfläche mit Avalonia (MIT).">
-                <Button Click="OpenNotices_Click" AutomationProperties.Name="Lizenztexte der mitgelieferten Bibliotheken anzeigen">
+            <ui:SettingCard Glyph="&#xED14;" Header="{x:Static l:Strings.Page_Info_Components}"
+                            Description="{x:Static l:Strings.Page_Info_ComponentsText}">
+                <Button Click="OpenNotices_Click" AutomationProperties.Name="{x:Static l:Strings.Page_Info_LicenseTextsName}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE8A5;" Classes="glyph"/>
-                        <TextBlock Text="Lizenztexte" VerticalAlignment="Center"/>
+                        <TextBlock Text="{x:Static l:Strings.Page_Info_LicenseTexts}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
             </ui:SettingCard>
-            <ui:SettingCard Glyph="&#xE72E;" Header="Ihre Daten" x:Name="DataCard"
-                            Description="Einstellungen und Verlauf liegen unter %LocalAppData%\Lupe – nur für Sie. Lupe schickt nichts ins Internet; Links öffnet nur der Browser, wenn Sie es einstellen.">
+            <ui:SettingCard Glyph="&#xE72E;" Header="{x:Static l:Strings.Page_Info_YourData}" x:Name="DataCard">
                 <Button x:Name="DataButton" Click="OpenData_Click">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE838;" Classes="glyph"/>
-                        <TextBlock Text="Ordner öffnen" VerticalAlignment="Center"/>
+                        <TextBlock Text="{x:Static l:Strings.Page_Shared_OpenFolder}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
             </ui:SettingCard>
 
-            <TextBlock Text="Befehlszeile" Classes="section"/>
+            <TextBlock Text="{x:Static l:Strings.Page_Info_CommandLine}" Classes="section"/>
             <Border Classes="card" Padding="20,16">
                 <StackPanel>
-                    <TextBlock x:Name="CommandIntro" Classes="body" Text="Dieselbe Lupe.exe liest Bilder auch ohne Fenster – je Code eine Zeile „FORMAT⇥Inhalt“, für Skripte und geplante Aufgaben:"/>
+                    <TextBlock x:Name="CommandIntro" Classes="body" Text="{x:Static l:Strings.Page_Info_CommandIntroWindows}"/>
                     <TextBox x:Name="CommandExample" IsReadOnly="True" FontFamily="{DynamicResource MonoFont}" FontSize="12.5" Margin="0,10,0,0" TextWrapping="Wrap"
-                             AutomationProperties.Name="Beispiel für die Befehlszeile"/>
+                             AutomationProperties.Name="{x:Static l:Strings.Page_Info_CommandExampleName}"/>
                     <Grid Margin="0,12,0,0" ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto">
-                        <TextBlock Text="Exitcode 0" Classes="bodyStrong" FontSize="13" Margin="0,0,16,4"/>
-                        <TextBlock Grid.Column="1" Text="mindestens ein Code gefunden" Classes="body" FontSize="13"/>
-                        <TextBlock Grid.Row="1" Text="Exitcode 1" Classes="bodyStrong" FontSize="13" Margin="0,0,16,4"/>
-                        <TextBlock Grid.Row="1" Grid.Column="1" Text="kein Code gefunden" Classes="body" FontSize="13"/>
-                        <TextBlock Grid.Row="2" Text="Exitcode 3" Classes="bodyStrong" FontSize="13" Margin="0,0,16,0"/>
-                        <TextBlock Grid.Row="2" Grid.Column="1" Text="Fehler – Bild fehlt oder ist nicht lesbar, falscher Aufruf" Classes="body" FontSize="13"/>
+                        <TextBlock Text="{x:Static l:Strings.Page_Info_ExitCode0}" Classes="bodyStrong" FontSize="13" Margin="0,0,16,4"/>
+                        <TextBlock Grid.Column="1" Text="{x:Static l:Strings.Page_Info_ExitCode0Text}" Classes="body" FontSize="13"/>
+                        <TextBlock Grid.Row="1" Text="{x:Static l:Strings.Page_Info_ExitCode1}" Classes="bodyStrong" FontSize="13" Margin="0,0,16,4"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Static l:Strings.Page_Info_ExitCode1Text}" Classes="body" FontSize="13"/>
+                        <TextBlock Grid.Row="2" Text="{x:Static l:Strings.Page_Info_ExitCode3}" Classes="bodyStrong" FontSize="13" Margin="0,0,16,0"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{x:Static l:Strings.Page_Info_ExitCode3Text}" Classes="body" FontSize="13"/>
                     </Grid>
-                    <TextBlock x:Name="CommandHelp" Classes="caption" Margin="0,12,0,0" Text="Alle Befehle und Optionen: Lupe.exe --hilfe"/>
+                    <TextBlock x:Name="CommandHelp" Classes="caption" Margin="0,12,0,0"/>
                 </StackPanel>
             </Border>
 
-            <TextBlock Text="Tastatur" Classes="section"/>
+            <TextBlock Text="{x:Static l:Strings.Page_Info_Keyboard}" Classes="section"/>
             <Border Classes="card" Padding="20,14">
                 <TextBlock x:Name="KeysText" Classes="body" FontSize="13" LineHeight="22"/>
             </Border>

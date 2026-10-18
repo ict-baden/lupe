@@ -1,8 +1,10 @@
 using System.Collections.Specialized;
+using System.Globalization;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Lupe.Core.Input;
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 
 namespace Lupe.UI.Pages;
 
@@ -37,19 +39,19 @@ public partial class ScreenPage : UserControl, IPage
         bool problem = _state.HotkeyError is not null && !_state.HotkeyOffInDemo;
         HotkeyWarning.IsVisible = problem;
         HotkeyWarningText.Text = problem ? _state.HotkeyError : "";
-        HotkeyNote.Text = _state.HotkeyOffInDemo ? "in der Demo aus – hier den Knopf nehmen" : problem ? "gerade nicht verfügbar" : "aus jedem Programm";
+        HotkeyNote.Text = _state.HotkeyOffInDemo ? Strings.Page_Screen_HotkeyOffInDemo : problem ? Strings.Page_Screen_HotkeyNotAvailableNow : Strings.Page_Screen_HotkeyFromAnyProgram;
 
         var actions = settings.ScreenActions;
         var parts = new List<string>();
-        if (actions.HasFlag(ResultActions.Kopieren)) parts.Add("in die Zwischenablage kopieren");
+        if (actions.HasFlag(ResultActions.Kopieren)) parts.Add(Strings.Page_Screen_ActionCopy);
         if (actions.HasFlag(ResultActions.Eintippen))
-            parts.Add(settings.TypeSuffix is "Enter" or "Tab" ? $"in das vorherige Fenster tippen (danach {settings.TypeSuffix})" : "in das vorherige Fenster tippen");
-        if (actions.HasFlag(ResultActions.LinkOeffnen)) parts.Add("Link öffnen, wenn eine Regel passt");
-        var sentence = string.Join(", ", parts);
+            parts.Add(settings.TypeSuffix is "Enter" or "Tab" ? string.Format(Strings.Page_Screen_ActionTypeThen, settings.TypeSuffix) : Strings.Page_Screen_ActionType);
+        if (actions.HasFlag(ResultActions.LinkOeffnen)) parts.Add(Strings.Page_Screen_ActionOpenLink);
+        var list = string.Join(Strings.Page_Screen_ActionSeparator, parts);
+        if (list.Length > 0) list = char.ToUpper(list[0], CultureInfo.CurrentCulture) + list[1..];
         ActionsCard.Description = parts.Count == 0
-            ? "Nur anzeigen und in den Verlauf – keine Aktion eingestellt."
-            : char.ToUpper(sentence[0], Labels.German) + sentence[1..] + "."
-              + (actions.HasFlag(ResultActions.Eintippen) ? " Eintippen nur, wenn der Scan per Tastenkürzel aus einem anderen Programm kommt." : "");
+            ? Strings.Page_Screen_ActionsNone
+            : string.Format(actions.HasFlag(ResultActions.Eintippen) ? Strings.Page_Screen_ActionsSentenceWithType : Strings.Page_Screen_ActionsSentence, list);
     }
 
     private void OnResultsChanged(object? sender, NotifyCollectionChangedEventArgs? e) =>

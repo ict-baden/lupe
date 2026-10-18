@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Lupe.Core.Resources;
 
 namespace Lupe.Platform.Linux.Native;
 
@@ -145,19 +146,19 @@ internal static unsafe partial class X11
         string? name = LinuxSession.Environment("DISPLAY");
         if (string.IsNullOrWhiteSpace(name))
         {
-            error = "Kein X-Server (DISPLAY ist nicht gesetzt).";
+            error = Strings.Linux_X11_NoDisplay;
             return 0;
         }
         try
         {
             _ = s_threads.Value;
             nint display = XOpenDisplay(name);
-            if (display == 0) error = $"Keine Verbindung zum X-Server „{name}“.";
+            if (display == 0) error = string.Format(Strings.Linux_X11_ConnectFailed, name);
             return display;
         }
         catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException or BadImageFormatException)
         {
-            error = "Die X11-Bibliothek (libX11) fehlt.";
+            error = Strings.Linux_X11_LibraryMissing;
             return 0;
         }
     }

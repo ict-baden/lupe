@@ -1,4 +1,5 @@
 using Lupe.Core.Model;
+using Lupe.Core.Resources;
 
 namespace Lupe.Services;
 
@@ -14,7 +15,7 @@ internal sealed record ActionOutcome(ResultActions Done, IReadOnlyList<string> P
         {
             var done = Labels.Actions(Done);
             var problems = string.Join(" ", Problems);
-            return done.Length == 0 ? problems : problems.Length == 0 ? done : $"{done}. {problems}";
+            return done.Length == 0 ? problems : problems.Length == 0 ? done : string.Format(Strings.App_Scan_ResultWithProblems, done, problems);
         }
     }
 }
@@ -108,7 +109,7 @@ internal sealed class Hits(AppState state)
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            state.Report(NoticeKind.Warning, $"Verlauf: {ex.Message}");
+            state.Report(NoticeKind.Warning, string.Format(Strings.App_Hits_HistoryError, ex.Message));
             return null;
         }
     }
@@ -129,8 +130,8 @@ internal sealed class Hits(AppState state)
         if (wanted.HasFlag(ResultActions.Eintippen))
         {
             if (typeTarget == 0) problems.Add(source == ScanSource.Kamera
-                ? "Nicht eingetippt: Lupe ist gerade das aktive Fenster – erst das Zielprogramm anklicken, Lupe kann dahinter oder minimiert weiterlaufen."
-                : "Nicht eingetippt: Der Scan kam aus Lupe selbst – Eintippen geht über das Tastenkürzel aus einem anderen Programm.");
+                ? Strings.App_Hits_NotTypedLupeActive
+                : Strings.App_Hits_NotTypedFromLupe);
             else if (await Typing.TypeIntoAsync(typeTarget, code.Text, state.Settings.TypeSuffix, state.Settings.TypeDelayMs) is { } error) problems.Add(error);
             else done |= ResultActions.Eintippen;
         }
@@ -169,7 +170,7 @@ internal sealed class Hits(AppState state)
         try { state.History.Add(entry); }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
-            state.Report(NoticeKind.Warning, $"Verlauf: {ex.Message}");
+            state.Report(NoticeKind.Warning, string.Format(Strings.App_Hits_HistoryError, ex.Message));
             return null;
         }
         return entry;
@@ -208,7 +209,7 @@ public sealed class CodeItem
     public string OneLine => Labels.OneLine(Code.Text);
     public bool HasLink => Link is not null;
     public string LinkText => Link?.AbsoluteUri ?? "";
-    public string NumberText => Number > 0 ? Number.ToString(Labels.German) : "";
+    public string NumberText => Number > 0 ? Number.ToString(System.Globalization.CultureInfo.CurrentCulture) : "";
     public string TimeText => Labels.ShortTime(Time, DateTimeOffset.Now);
     public string SourceLabel => Labels.Source(Source);
     public string ToolTipText => Link is null ? Code.Text : $"{Code.Text}\n→ {Link.AbsoluteUri}";

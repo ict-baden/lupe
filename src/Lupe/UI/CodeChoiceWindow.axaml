@@ -1,8 +1,9 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:svc="clr-namespace:Lupe.Services"
+        xmlns:l="clr-namespace:Lupe.Core.Resources;assembly=Lupe.Core"
         x:Class="Lupe.UI.CodeChoiceWindow"
-        Title="Lupe – Code wählen" WindowDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent"
+        Title="{x:Static l:Strings.App_Choice_WindowTitle}" WindowDecorations="None" Background="Transparent" TransparencyLevelHint="Transparent"
         CanResize="False" ShowInTaskbar="False" Topmost="True" SizeToContent="Height" Width="520"
         WindowStartupLocation="Manual" FontFamily="{DynamicResource UiFont}" UseLayoutRounding="True"
         Foreground="{DynamicResource TextFillColorPrimaryBrush}">
@@ -11,8 +12,8 @@
         <StackPanel Margin="18,14,14,16">
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <Image Source="avares://Lupe/Assets/lupe.png" Width="20" Height="20" RenderOptions.BitmapInterpolationMode="HighQuality"/>
-                <TextBlock x:Name="TitleText" Grid.Column="1" Text="Mehrere Codes gefunden" Classes="bodyStrong" Margin="10,0,0,0" VerticalAlignment="Center"/>
-                <Button Grid.Column="2" Classes="ghost" Click="Cancel_Click" ToolTip.Tip="Abbrechen (Esc)" AutomationProperties.Name="Abbrechen">
+                <TextBlock x:Name="TitleText" Grid.Column="1" Classes="bodyStrong" Margin="10,0,0,0" VerticalAlignment="Center"/>
+                <Button Grid.Column="2" Classes="ghost" Click="Cancel_Click" ToolTip.Tip="{x:Static l:Strings.App_Choice_CancelTip}" AutomationProperties.Name="{x:Static l:Strings.App_Choice_Cancel}">
                     <TextBlock Text="&#xE711;" Classes="icon" FontSize="11"/>
                 </Button>
             </Grid>
@@ -20,7 +21,7 @@
 
             <ListBox x:Name="List" Classes="choice" Margin="-4,12,0,0" MaxHeight="330" BorderThickness="0" Background="Transparent"
                      ScrollViewer.HorizontalScrollBarVisibility="Disabled" DoubleTapped="List_DoubleTapped"
-                     AutomationProperties.Name="Gefundene Codes">
+                     AutomationProperties.Name="{x:Static l:Strings.App_Choice_ListName}">
                 <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="svc:CodeItem">
                         <Grid Margin="0,4" ColumnDefinitions="Auto,*">
@@ -37,15 +38,15 @@
             </ListBox>
 
             <Grid Margin="0,14,0,0" ColumnDefinitions="Auto,*,Auto,Auto">
-                <Button Click="CopyAll_Click" ToolTip.Tip="Alle Codes zeilenweise in die Zwischenablage">
+                <Button Click="CopyAll_Click" ToolTip.Tip="{x:Static l:Strings.App_Choice_CopyAllTip}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE8C8;" Classes="glyph"/>
-                        <TextBlock Text="Alle kopieren" VerticalAlignment="Center"/>
+                        <TextBlock Text="{x:Static l:Strings.App_Choice_CopyAll}" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Button>
-                <Button Grid.Column="2" Content="Abbrechen" Click="Cancel_Click" IsCancel="True" MinWidth="96"/>
+                <Button Grid.Column="2" Content="{x:Static l:Strings.App_Choice_Cancel}" Click="Cancel_Click" IsCancel="True" MinWidth="96"/>
                 <Button Grid.Column="3" Classes="accent" Click="Take_Click" IsDefault="True" Margin="8,0,0,0" MinWidth="120">
-                    <TextBlock x:Name="TakeText" Text="Übernehmen"/>
+                    <TextBlock x:Name="TakeText" Text="{x:Static l:Strings.App_Choice_Take}"/>
                 </Button>
             </Grid>
         </StackPanel>
