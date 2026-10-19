@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using Avalonia;
 using Avalonia.Headless;
 using Avalonia.Threading;

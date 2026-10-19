@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 namespace Lupe.Platform.Linux;
 
 /// <summary>Welche Art von Desktop-Sitzung läuft (X11, Wayland, keine)?</summary>

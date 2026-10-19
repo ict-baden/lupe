@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using Zx = ZXingCpp.BarcodeFormat;
 
 namespace Lupe.Core.Decoding;

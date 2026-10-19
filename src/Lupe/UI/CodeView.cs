@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;

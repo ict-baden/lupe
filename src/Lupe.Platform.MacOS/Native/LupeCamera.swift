@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 // Kamera unter macOS direkt über AVFoundation – ersetzt FlashCap, dessen AVFoundation-Teil Formate vertauscht und
 // Objective-C-Objekte zu oft freigibt (falsche Farben, Absturz beim Aufräumen des Autorelease-Pools).
 // Wird beim Bauen auf einem Mac zu libLupeCamera.dylib (arm64 + x86_64) übersetzt, siehe Lupe.Platform.MacOS.csproj;

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using Avalonia.Controls;
 using Avalonia.Threading;
 using Lupe.Core.Resources;

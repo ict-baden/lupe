@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using Lupe.Core.Input;
 
 namespace Lupe.Platform.MacOS.Input;

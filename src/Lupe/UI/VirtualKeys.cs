@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using Avalonia.Input;
 
 namespace Lupe.UI;

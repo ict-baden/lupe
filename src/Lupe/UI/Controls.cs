@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;

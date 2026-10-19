@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using System.Collections.Concurrent;
 using Lupe.Core.Input;
 using Lupe.Core.Model;

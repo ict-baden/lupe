@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using System.Diagnostics;
 using Lupe.Core.Platform;
 using Lupe.Platform.MacOS.Native;

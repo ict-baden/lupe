@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Globalization;

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using Lupe.Core.Camera;
 using Lupe.Core.Model;
 using Microsoft.Win32;

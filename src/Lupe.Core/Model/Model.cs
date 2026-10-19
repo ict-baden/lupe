@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 namespace Lupe.Core.Model;
 
 /// <summary>

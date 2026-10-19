@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using System.Text;
 using ZXingCpp;
 using Zx = ZXingCpp.BarcodeFormat;

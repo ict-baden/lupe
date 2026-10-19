@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics;
 using System.Globalization;

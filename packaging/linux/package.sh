@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: MIT
 # Linux-Pakete aus einer Veröffentlichung (dotnet publish -r linux-<arch> --self-contained):
 #   package.sh <publish-ordner> <arch: x64|arm64> <version> <ausgabe-ordner> [<dateisuffix>]
 # Ergebnis: Lupe<suffix>-linux-<arch>.tar.gz, für x64 zusätzlich das .deb (dpkg-deb):

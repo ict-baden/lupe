@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using Lupe.Tests.TestSupport;
 using System.Diagnostics;
 using Lupe.Core.History;

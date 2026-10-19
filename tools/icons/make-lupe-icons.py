@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 # Baut src/Lupe/Assets/LupeIcons.ttf: die von Lupe genutzten Fluent UI System Icons (MIT, Microsoft) auf den
 # Codepunkten von Segoe Fluent Icons – so bleiben die Zeichencodes in XAML auf jedem System dieselben.
 #

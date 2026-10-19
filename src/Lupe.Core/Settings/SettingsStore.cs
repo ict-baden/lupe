@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using System.Reflection;
 using System.Text.Encodings.Web;
 using System.Text.Json;

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using System.Runtime.InteropServices;
 using Lupe.Core.Camera;
 using Windows.Media.Capture.Frames;

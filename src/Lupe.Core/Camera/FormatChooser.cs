@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 namespace Lupe.Core.Camera;
 
 /// <summary>Ein Videoformat, das eine Kamera anbietet (Ausschnitt aus <c>MediaFrameFormat</c>).</summary>

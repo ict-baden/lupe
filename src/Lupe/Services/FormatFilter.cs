@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using Lupe.Core.Decoding;
 
 namespace Lupe.Services;

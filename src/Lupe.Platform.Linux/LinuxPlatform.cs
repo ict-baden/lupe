@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using Lupe.Core.Platform;
 using Lupe.Platform.Linux;
 using Lupe.Platform.Linux.Camera;

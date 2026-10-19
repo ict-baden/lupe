@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: MIT
 # Lupe für den aktuellen Benutzer einrichten (ohne root): Programm nach ~/.local/opt/lupe,
 # Befehl „lupe“ in ~/.local/bin, Eintrag im Anwendungsmenü. Entfernen: ./install.sh --entfernen
 set -e

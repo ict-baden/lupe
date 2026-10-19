@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using System.Security.Cryptography;
 using Lupe.Core.Resources;
 using Tmds.DBus.Protocol;

@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: MIT
 # Lupe.app aus einer Veröffentlichung (dotnet publish -r osx-<arch> --self-contained), gepackt als ZIP:
 #   package.sh <publish-ordner> <arch: arm64|x64> <version> <ausgabe-ordner> [<dateisuffix>]
 # Nur ad hoc signiert, nicht notarisiert – Gatekeeper verlangt beim ersten Start Rechtsklick → Öffnen.

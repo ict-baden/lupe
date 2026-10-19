@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using System.Text.RegularExpressions;
 using Lupe.Core.Model;
 using Lupe.Core.Resources;

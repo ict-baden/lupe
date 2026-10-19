@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
