@@ -9,7 +9,10 @@ using Lupe.Services;
 
 namespace Lupe.UI.Pages;
 
-/// <summary>Info: Version, Herausgeber, Lizenz (noch offen), Repo, Erkennung und Oberfläche mit Lizenztexten, Daten, Befehlszeile, Tastatur.</summary>
+/// <summary>
+/// Info (Richtlinie 07): Version und Build, Herausgeber, Lizenz, Repo, Erkennung und Oberfläche mit Lizenztexten,
+/// Datenschutz, Hilfe und Support, Daten, Befehlszeile, Tastatur.
+/// </summary>
 public partial class InfoPage : UserControl, IPage
 {
     private readonly AppState _state;
@@ -18,7 +21,9 @@ public partial class InfoPage : UserControl, IPage
     {
         InitializeComponent();
         _state = state;
-        VersionText.Text = string.Format(Strings.Page_Info_Version, AppInfo.Version, Environment.Version.ToString(3));
+        VersionText.Text = AppInfo.Build.Length > 0
+            ? string.Format(Strings.Page_Info_VersionBuild, AppInfo.Version, AppInfo.Build, Environment.Version.ToString(3))
+            : string.Format(Strings.Page_Info_Version, AppInfo.Version, Environment.Version.ToString(3));
         if (OperatingSystem.IsWindows())
         {
             CommandExample.Text = "Lupe.exe lesen C:\\Scans\\etikett.png --format QR_CODE";
@@ -78,6 +83,12 @@ public partial class InfoPage : UserControl, IPage
     }
 
     private void OpenRepository_Click(object? sender, RoutedEventArgs e) => Open(AppInfo.RepositoryUrl);
+
+    private void OpenLicense_Click(object? sender, RoutedEventArgs e) => Open(AppInfo.LicenseUrl);
+
+    private void OpenPrivacy_Click(object? sender, RoutedEventArgs e) => Open(AppInfo.PrivacyUrl);
+
+    private void OpenSupport_Click(object? sender, RoutedEventArgs e) => Open(AppInfo.SupportUrl);
 
     private void OpenNotices_Click(object? sender, RoutedEventArgs e)
     {

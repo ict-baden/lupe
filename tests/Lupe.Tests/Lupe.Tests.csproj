@@ -5,8 +5,6 @@
     <TargetFrameworks>net10.0-windows10.0.19041.0;net10.0</TargetFrameworks>
     <!-- auch unter Linux/macOS wiederherstellbar (das Windows-Ziel wird dort nur nicht ausgeführt) -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>

@@ -10,6 +10,19 @@ namespace Lupe.Tests.App;
 /// <summary>Reine Logik der App (ohne Fenster), direkt aus der gebauten Lupe.dll – siehe <see cref="AppInternals"/>.</summary>
 public sealed class AppLogicTests
 {
+    // ================= Info-Seite =================
+
+    private static string BuildOf(string informationalVersion) =>
+        (string)AppInternals.Call("Lupe.AppInfo", "BuildOf", informationalVersion)!;
+
+    [AppFact]
+    public void Build_ist_das_Commit_Kuerzel_aus_der_Version()
+    {
+        Assert.Equal("65da071", BuildOf("0.1.0-ci.12+65da0719050ee24f013b28f2cb2eadd6d31f9080"));
+        Assert.Equal("abc", BuildOf("0.1.0+abc"));
+        Assert.Equal("", BuildOf("0.1.0"));
+    }
+
     // ================= Fensterlage (Auswahl mehrerer Codes) =================
 
     private static (int X, int Y) CenterOn(int x, int y, int width, int height, PixelRect workArea) =>

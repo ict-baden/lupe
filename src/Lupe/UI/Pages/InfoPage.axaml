@@ -20,7 +20,12 @@
                 <TextBlock/>
             </ui:SettingCard>
             <ui:SettingCard Glyph="&#xE8D7;" Header="{x:Static l:Strings.Page_Info_License}" Description="{x:Static l:Strings.Page_Info_LicenseMit}">
-                <TextBlock/>
+                <Button Click="OpenLicense_Click" AutomationProperties.Name="{x:Static l:Strings.Page_Info_LicenseOpenName}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8A7;" Classes="glyph"/>
+                        <TextBlock Text="{x:Static l:Strings.Page_Info_OpenInBrowser}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
             </ui:SettingCard>
             <ui:SettingCard Glyph="&#xE71B;" Header="{x:Static l:Strings.Page_Info_SourceCode}" Description="github.com/ict-baden/lupe">
                 <Button Click="OpenRepository_Click">
@@ -39,7 +44,23 @@
                     </StackPanel>
                 </Button>
             </ui:SettingCard>
-            <ui:SettingCard Glyph="&#xE72E;" Header="{x:Static l:Strings.Page_Info_YourData}" x:Name="DataCard">
+            <ui:SettingCard Glyph="&#xE72E;" Header="{x:Static l:Strings.Page_Info_Privacy}" Description="{x:Static l:Strings.Page_Info_PrivacyText}">
+                <Button Click="OpenPrivacy_Click" AutomationProperties.Name="{x:Static l:Strings.Page_Info_PrivacyOpenName}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8A7;" Classes="glyph"/>
+                        <TextBlock Text="{x:Static l:Strings.Page_Info_OpenInBrowser}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </ui:SettingCard>
+            <ui:SettingCard Glyph="&#xE946;" Header="{x:Static l:Strings.Page_Info_Support}" Description="{x:Static l:Strings.Page_Info_SupportText}">
+                <Button Click="OpenSupport_Click" AutomationProperties.Name="{x:Static l:Strings.Page_Info_SupportOpenName}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8A7;" Classes="glyph"/>
+                        <TextBlock Text="{x:Static l:Strings.Page_Info_OpenInBrowser}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+            </ui:SettingCard>
+            <ui:SettingCard Glyph="&#xE8E5;" Header="{x:Static l:Strings.Page_Info_YourData}" x:Name="DataCard">
                 <Button x:Name="DataButton" Click="OpenData_Click">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE838;" Classes="glyph"/>

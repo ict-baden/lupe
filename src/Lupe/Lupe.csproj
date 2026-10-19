@@ -8,22 +8,15 @@
     <TargetFramework Condition="'$(RuntimeIdentifier)' != '' and $(RuntimeIdentifier.StartsWith('win'))">net10.0-windows10.0.19041.0</TargetFramework>
     <TargetFramework Condition="'$(RuntimeIdentifier)' != '' and !$(RuntimeIdentifier.StartsWith('win'))">net10.0</TargetFramework>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Lupe</RootNamespace>
     <AssemblyName>Lupe</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\lupe.ico</ApplicationIcon>
     <Version>0.1.0</Version>
-    <Company>ICT-Baden</Company>
-    <Copyright>© 2026 ICT-Baden GmbH</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Product>Lupe</Product>
     <Description>Liest QR- und Barcodes per Webcam, Bildschirmausschnitt, Datei oder Zwischenablage</Description>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
-    <!-- Nur die Sprachen von Lupe ausliefern (Richtlinie 13), keine Sprachdateien anderer Pakete -->
-    <SatelliteResourceLanguages>en;de</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">

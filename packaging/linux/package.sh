@@ -3,7 +3,8 @@
 # Linux-Pakete aus einer Veröffentlichung (dotnet publish -r linux-<arch> --self-contained):
 #   package.sh <publish-ordner> <arch: x64|arm64> <version> <ausgabe-ordner> [<dateisuffix>]
 # Ergebnis: Lupe<suffix>-linux-<arch>.tar.gz, für x64 zusätzlich das .deb (dpkg-deb):
-#   ohne Suffix (main) lupe_amd64.deb – fester Link auf „latest“, mit Suffix (Tag) lupe_<version>_amd64.deb
+#   ohne Suffix (main) lupe_amd64.deb – fester Link auf „latest“, mit Suffix (Tag) lupe_<version>_amd64.deb;
+#   der Paketname darin ist ictbaden-lupe (richtlinien/12), der Dateiname bleibt wegen der festen Links
 set -euo pipefail
 pub=$1; arch=$2; version=$3; out=$4; suffix=${5:-}
 here=$(cd "$(dirname "$0")" && pwd)
@@ -27,21 +28,25 @@ echo "Gebaut: $out/Lupe$suffix-linux-$arch.tar.gz"
 # .deb: /opt/lupe, /usr/bin/lupe, Menüeintrag und Symbol
 deb="$work/deb"
 mkdir -p "$deb/DEBIAN" "$deb/opt/lupe" "$deb/usr/bin" "$deb/usr/share/applications" \
-         "$deb/usr/share/icons/hicolor/256x256/apps" "$deb/usr/share/doc/lupe"
+         "$deb/usr/share/icons/hicolor/256x256/apps" "$deb/usr/share/doc/ictbaden-lupe"
 cp -R "$pub"/. "$deb/opt/lupe/"
 chmod -R u=rwX,go=rX "$deb/opt/lupe"
 chmod 755 "$deb/opt/lupe/Lupe"
 ln -s /opt/lupe/Lupe "$deb/usr/bin/lupe"
 install -m 644 "$here/lupe.desktop" "$deb/usr/share/applications/lupe.desktop"
 install -m 644 "$repo/src/Lupe/Assets/lupe.png" "$deb/usr/share/icons/hicolor/256x256/apps/lupe.png"
-install -m 644 "$repo/THIRD-PARTY-NOTICES.txt" "$deb/usr/share/doc/lupe/THIRD-PARTY-NOTICES.txt"
+install -m 644 "$repo/THIRD-PARTY-NOTICES.txt" "$deb/usr/share/doc/ictbaden-lupe/THIRD-PARTY-NOTICES.txt"
 # „0.1.0-ci.12“: der Bindestrich wäre eine Debian-Revision – „0.1.0~ci.12“ sortiert vor 0.1.0
 debversion=${version//-/\~}
 size=$(du -sk "$deb" | cut -f1)
 {
-    echo "Package: lupe"
+    # Paketname nach richtlinien/12 (ictbaden-<name>); ersetzt das frühere Paket „lupe“ sauber
+    echo "Package: ictbaden-lupe"
     echo "Version: $debversion"
     echo "Architecture: amd64"
+    echo "Provides: lupe"
+    echo "Conflicts: lupe"
+    echo "Replaces: lupe"
     echo "Maintainer: ICT-Baden <noreply@github.com>"
     echo "Installed-Size: $size"
     echo "Depends: libx11-6, libxtst6, libxrandr2, libxi6, libice6, libsm6, libfontconfig1, libicu78 | libicu76 | libicu74 | libicu72 | libicu71 | libicu70 | libicu67"

@@ -2125,6 +2125,9 @@ redirection on to Lupe, the file would stay empty. In .cmd files cmd waits by it
   <data name="Page_Info_LicenseMit" xml:space="preserve">
     <value>MIT licence – © 2026 ICT-Baden GmbH</value>
   </data>
+  <data name="Page_Info_LicenseOpenName" xml:space="preserve">
+    <value>Open the MIT licence text in the browser</value>
+  </data>
   <data name="Page_Info_LicenseTexts" xml:space="preserve">
     <value>License texts</value>
   </data>
@@ -2135,11 +2138,29 @@ redirection on to Lupe, the file would stay empty. In .cmd files cmd waits by it
   <data name="Page_Info_OpenInBrowser" xml:space="preserve">
     <value>Open in browser</value>
   </data>
+  <data name="Page_Info_Privacy" xml:space="preserve">
+    <value>Data and privacy</value>
+  </data>
+  <data name="Page_Info_PrivacyOpenName" xml:space="preserve">
+    <value>Open the data and privacy page in the browser</value>
+  </data>
+  <data name="Page_Info_PrivacyText" xml:space="preserve">
+    <value>This software sends no data to ICT-Baden. What Lupe stores, where, and how to delete it.</value>
+  </data>
   <data name="Page_Info_Publisher" xml:space="preserve">
     <value>Publisher</value>
   </data>
   <data name="Page_Info_SourceCode" xml:space="preserve">
     <value>Source code and questions</value>
+  </data>
+  <data name="Page_Info_Support" xml:space="preserve">
+    <value>Help &amp; support</value>
+  </data>
+  <data name="Page_Info_SupportOpenName" xml:space="preserve">
+    <value>Open help and support in the browser</value>
+  </data>
+  <data name="Page_Info_SupportText" xml:space="preserve">
+    <value>Free via GitHub, guaranteed with a support contract from ICT-Baden.</value>
   </data>
   <data name="Page_Info_Tagline" xml:space="preserve">
     <value>Reads QR codes and barcodes from the webcam, a screen region, a file and the clipboard.</value>
@@ -2151,6 +2172,10 @@ redirection on to Lupe, the file would stay empty. In .cmd files cmd waits by it
   <data name="Page_Info_Version" xml:space="preserve">
     <value>Version {0} · .NET {1}</value>
     <comment>{0} = Lupe version, {1} = .NET version</comment>
+  </data>
+  <data name="Page_Info_VersionBuild" xml:space="preserve">
+    <value>Version {0} · Build {1} · .NET {2}</value>
+    <comment>{0} = Lupe version, {1} = commit of the build, {2} = .NET version</comment>
   </data>
   <data name="Page_Info_YourData" xml:space="preserve">
     <value>Your data</value>

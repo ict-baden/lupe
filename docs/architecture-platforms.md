@@ -1,3 +1,5 @@
+<sub><a href="../README.md">Lupe</a> › <a href="../README.md#documentation">Documentation</a> › <a href="development.md">Development</a> › Platform architecture</sub>
+
 # Platform architecture
 
 Lupe is being ported from Windows-only (WPF + WinRT) to Windows, Linux (X11 and Wayland) and macOS; the UI is now Avalonia. This note describes
@@ -47,13 +49,13 @@ All human-readable text returned by a backend comes from `Lupe.Core.Resources.St
 | Interface | Members | Notes |
 | --- | --- | --- |
 | `IPlatform` | `Name`, `Cameras`, `Screen`, `Keyboard`, `KeyboardLayout`, `Hotkeys`, `ActiveWindow`, `Autostart`, `Images`, `Problems` | Aggregate, one per OS. |
-| `ICameraProvider` | `ListAsync(ct)` → `IReadOnlyList<CameraInfo>`; `Open(CameraInfo)` → `IFrameSource` | No camera → empty list. `IFrameSource` (in `Lupe.Core.Camera`) delivers BGRA `PixelImage`s on a background thread and reports problems via `Failed` (German), also during `StartAsync`. Use `CameraList.MakeUnique` for names, `FormatChooser` to pick ~1280×720. |
+| `ICameraProvider` | `ListAsync(ct)` → `IReadOnlyList<CameraInfo>`; `Open(CameraInfo)` → `IFrameSource` | No camera → empty list. `IFrameSource` (in `Lupe.Core.Camera`) delivers BGRA `PixelImage`s on a background thread and reports problems via `Failed` (text in the UI language from `Strings.resx`), also during `StartAsync`. Use `CameraList.MakeUnique` for names, `FormatChooser` to pick ~1280×720. |
 | `IScreenCapture` | `Monitors()`, `VirtualScreen`, `TryCapture(PixelRect, out PixelImage?, out string? error)` | Physical pixels of the virtual desktop; primary monitor at 0,0. The facade validates the rectangle first. May block (Wayland portal). |
 | `IKeyboardOutput` | `Send(ReadOnlySpan<KeyEvent>, out int errorCode)` → accepted count; `IsDown(vk)`; `Pause(ms, ct)`; `ForegroundProblem()`; `DescribeRejection(errorCode)` | Backend for `KeyboardTyper`. Core builds the sequence, waits for held keys, releases modifiers, batches (≤ 400 events, 15 ms pause) or sends one key per batch with the per-character delay. |
 | `IKeyboardLayout` | `KeyChar(vk)`, `KeyForChar(char)`, `AltGrIsCtrlAlt`, `AltGrText(vk, shift)` | Used by `HotkeyText` to show and parse layout keys (Ü, #, …) and for the AltGr warning (only where AltGr = Ctrl+Alt, i.e. Windows). |
 | `IGlobalHotkeyProvider` | `UnsupportedReason`; `Register(Hotkey)` → `IGlobalHotkey` | `IGlobalHotkey`: `Pressed` (background thread), `IsRegistered`, `Error`, `Dispose()` unregisters. `Register` returns once the outcome is known. |
-| `IActiveWindow` | `IsSupported`, `Foreground()` → opaque `nint` (0 = unknown), `IsOwnWindow(nint)`, `ActivateAsync(nint, ct)` → null or German reason | Remembers the window that was in front before a scan, to type into it afterwards. Wayland: `IsSupported = false`. |
-| `IAutostart` | `IsSupported`, `IsEnabled`, `Set(bool)` → null or German error | Start command must pass `--hintergrund` (tray only). |
+| `IActiveWindow` | `IsSupported`, `Foreground()` → opaque `nint` (0 = unknown), `IsOwnWindow(nint)`, `ActivateAsync(nint, ct)` → null or a reason in the UI language | Remembers the window that was in front before a scan, to type into it afterwards. Wayland: `IsSupported = false`. |
+| `IAutostart` | `IsSupported`, `IsEnabled`, `Set(bool)` → null or an error in the UI language | Start command must pass `--hintergrund` (tray only). |
 | `IImageDecoder` | `Extensions`, `DecodeAsync(stream, name, maxPixels, ct)`, `Translate(Exception, name)` | Seekable stream at position 0, do not close it. First frame (ICO: largest), EXIF orientation applied, downscale above `maxPixels`, then `ImageFile.FlattenOnWhite`. Core handles file opening, truncation check and the common error texts. |
 | `IPlatformProblems` | `Check()` → `IReadOnlyList<PlatformProblem>` | `PlatformProblem(Feature, Message, SettingsLink?)`; e.g. Windows camera privacy, macOS Camera / Screen Recording / Accessibility permissions. Fast, never prompts. |
 
@@ -91,7 +93,7 @@ of it has run on a Mac yet.
 
 | Part | Implementation | Notes |
 | --- | --- | --- |
-| Camera | `libLupeCamera.dylib` from `Native/LupeCamera.swift`: `AVCaptureSession` + `AVCaptureVideoDataOutput` with `kCVPixelFormatType_32BGRA`, frames copied in `AVFoundationFrameSource` (C ABI, `[UnmanagedCallersOnly]` callbacks) | Size chosen with `FormatChooser` (~1280×720) from the device's formats. Asks for the camera permission on first start, denied → German hint. Unplugging (`AVCaptureDeviceWasDisconnected`) and session errors are reported. Replaces FlashCap, whose AVFoundation backend (1.12.0) swaps YUYV/UYVY and over-releases Objective-C objects (wrong colours, crash when a thread's autorelease pool drains). |
+| Camera | `libLupeCamera.dylib` from `Native/LupeCamera.swift`: `AVCaptureSession` + `AVCaptureVideoDataOutput` with `kCVPixelFormatType_32BGRA`, frames copied in `AVFoundationFrameSource` (C ABI, `[UnmanagedCallersOnly]` callbacks) | Size chosen with `FormatChooser` (~1280×720) from the device's formats. Asks for the camera permission on first start, denied → hint in the UI language. Unplugging (`AVCaptureDeviceWasDisconnected`) and session errors are reported. Replaces FlashCap, whose AVFoundation backend (1.12.0) swaps YUYV/UYVY and over-releases Objective-C objects (wrong colours, crash when a thread's autorelease pool drains). |
 | Screen | `CGGetActiveDisplayList` / `CGDisplayBounds` / `CGDisplayModeGetPixelWidth`; one `screencapture -x -t png -D n` per touched display, decoded with ImageIO | Pixel space = points × the largest display scale, so mixed Retina/non-Retina layouts don't overlap; captures from a lower-scale display are upscaled (nearest). `WorkArea` = `Bounds` (menu bar/Dock not subtracted). `CGDisplayCreateImage` is obsolete from macOS 15. |
 | Typing | `CGEventCreateKeyboardEvent(key 0)` + `CGEventKeyboardSetUnicodeString`, posted at `kCGHIDEventTap`, flags cleared | Layout-independent. Surrogate pairs are joined into one event. Needs the Accessibility permission (`AXIsProcessTrusted`), otherwise macOS drops the events silently – `ForegroundProblem` reports it and shows the system prompt once. |
 | Layout | `TISCopyCurrentKeyboardLayoutInputSource` + `UCKeyTranslate` | TIS is only called on the main thread (`pthread_main_np`), the table is cached. Letters/digits keep their VK; OEM keys map by US position (`MacKeyCodes`). |

@@ -1,8 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Lupe.Platform.Linux</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Description>Linux-Anbindung für Lupe (X11 und Wayland): Kamera (V4L2), Bildschirm, Tippen, Tastenkürzel, Autostart.</Description>

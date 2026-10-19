@@ -2,8 +2,6 @@
   <PropertyGroup>
     <!-- Plattformneutral: alles Systemnahe steckt in Lupe.Platform.Windows/.Linux/.MacOS (siehe docs/architecture-platforms.md) -->
     <TargetFramework>net10.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Lupe.Core</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Description>Erkennung, Verlauf, Einstellungen, Scan-Schleife, Tipp-Logik und Plattform-Schnittstellen für Lupe – ohne Oberfläche und ohne Systemaufrufe.</Description>

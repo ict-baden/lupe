@@ -37,6 +37,9 @@
 </p>
 
 > [!NOTE]
+> **Deutsch:** Lupe liest QR- und Barcodes per Webcam, aus einem Bildschirmausschnitt, aus Bilddateien und aus der Zwischenablage, unter Windows, Linux und macOS. Das Ergebnis wird kopiert, in das Programm vorn eingetippt oder als Link geöffnet. Download: [Release „latest“](https://github.com/ict-baden/lupe/releases/tag/latest). Die Oberfläche ist Deutsch oder Englisch und folgt der Sprache des Systems; diese Doku ist Englisch.
+
+> [!NOTE]
 > **The application speaks English and German.** It follows the language of the operating system (English for any other language) and can be switched under *Settings › Language*. This documentation still quotes the German labels with their English meaning, for example *Bildschirm* (Screen), *Eintippen* (Type) or *Link öffnen* (Open link).
 
 ## What Lupe does
@@ -271,5 +274,17 @@ Needs the .NET 10 SDK (`global.json`: 10.0.100, roll forward to the latest featu
 
 <p align="center">
   <img src="docs/assets/logo.svg" alt="" width="48"><br>
-  <sub><b>Lupe</b> · Every code, from anywhere · ICT-Baden</sub>
+  <sub><b>Lupe</b> · Every code, from anywhere · A tool by ICT-Baden</sub>
 </p>
+
+---
+
+<sub>
+Lupe is free and open source software by <b>ICT-Baden</b>. &nbsp;·&nbsp;
+Licence: <a href="LICENSE">MIT</a> &nbsp;·&nbsp;
+Third-party licences: <a href="THIRD-PARTY-NOTICES.txt">THIRD-PARTY-NOTICES.txt</a> &nbsp;·&nbsp;
+Support: free via GitHub, guaranteed with a <a href="SUPPORT.md">support contract</a> &nbsp;·&nbsp;
+<a href="SECURITY.md">Security</a> &nbsp;·&nbsp;
+<a href="CHANGELOG.md">Changes</a>
+<!-- Link „Impressum“ folgt, sobald die Webseite steht (Domain offen, richtlinien/OFFEN.md) -->
+</sub>

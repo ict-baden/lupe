@@ -1742,6 +1742,9 @@ an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.</v
   <data name="Page_Info_LicenseMit" xml:space="preserve">
     <value>MIT-Lizenz – © 2026 ICT-Baden GmbH</value>
   </data>
+  <data name="Page_Info_LicenseOpenName" xml:space="preserve">
+    <value>Den Text der MIT-Lizenz im Browser öffnen</value>
+  </data>
   <data name="Page_Info_LicenseTexts" xml:space="preserve">
     <value>Lizenztexte</value>
   </data>
@@ -1751,11 +1754,29 @@ an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.</v
   <data name="Page_Info_OpenInBrowser" xml:space="preserve">
     <value>Im Browser öffnen</value>
   </data>
+  <data name="Page_Info_Privacy" xml:space="preserve">
+    <value>Daten und Datenschutz</value>
+  </data>
+  <data name="Page_Info_PrivacyOpenName" xml:space="preserve">
+    <value>Die Seite „Daten und Datenschutz“ im Browser öffnen</value>
+  </data>
+  <data name="Page_Info_PrivacyText" xml:space="preserve">
+    <value>Diese Software sendet keine Daten an ICT-Baden. Was Lupe wo speichert und wie man es löscht.</value>
+  </data>
   <data name="Page_Info_Publisher" xml:space="preserve">
     <value>Herausgeber</value>
   </data>
   <data name="Page_Info_SourceCode" xml:space="preserve">
     <value>Quellcode und Fragen</value>
+  </data>
+  <data name="Page_Info_Support" xml:space="preserve">
+    <value>Hilfe &amp; Support</value>
+  </data>
+  <data name="Page_Info_SupportOpenName" xml:space="preserve">
+    <value>Hilfe und Support im Browser öffnen</value>
+  </data>
+  <data name="Page_Info_SupportText" xml:space="preserve">
+    <value>Kostenlos über GitHub, verbindlich mit einem Supportvertrag von ICT-Baden.</value>
   </data>
   <data name="Page_Info_Tagline" xml:space="preserve">
     <value>Liest QR- und Barcodes per Webcam, Bildschirmausschnitt, Datei und Zwischenablage.</value>
@@ -1765,6 +1786,9 @@ an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.</v
   </data>
   <data name="Page_Info_Version" xml:space="preserve">
     <value>Version {0} · .NET {1}</value>
+  </data>
+  <data name="Page_Info_VersionBuild" xml:space="preserve">
+    <value>Version {0} · Build {1} · .NET {2}</value>
   </data>
   <data name="Page_Info_YourData" xml:space="preserve">
     <value>Ihre Daten</value>

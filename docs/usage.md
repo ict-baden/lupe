@@ -162,7 +162,7 @@ Changes apply and are saved immediately – there is no *Save* button. The page 
   <img alt="Info page: Lupe version 0.1.0 and .NET version; publisher ICT-Baden; MIT licence; source code link with “Im Browser öffnen”; origin from Barcode-Reader with “Ansehen”; recognition with zxing-cpp and the button “Lizenztexte”; “Ihre Daten” with “Ordner öffnen”; the heading Befehlszeile." src="assets/screenshots/about-light.png" width="900">
 </picture>
 
-Version and .NET version, publisher, *Lizenz: MIT-Lizenz – © 2026 ICT-Baden GmbH*, the source code link, the decoding and UI libraries (*Erkennung und Oberfläche*: zxing-cpp, Apache-2.0, with libzint and libzueci, BSD-3-Clause; *Lizenztexte* opens the licence texts of all bundled components), *Ihre Daten* (your data) with *Ordner öffnen* for `%LocalAppData%\Lupe`, a short introduction to the command line with the exit codes, and the keyboard shortcuts (*Tastatur*).
+Version, build (commit) and .NET version, publisher, *Lizenz: MIT-Lizenz – © 2026 ICT-Baden GmbH* with a link to the licence text, the source code link, the decoding and UI libraries (*Erkennung und Oberfläche*: zxing-cpp, Apache-2.0, with libzint and libzueci, BSD-3-Clause; *Lizenztexte* opens the licence texts of all bundled components), *Daten und Datenschutz* (data and privacy: “This software sends no data to ICT-Baden”, links to [Data & privacy](data-and-privacy.md)), *Hilfe & Support* (free via GitHub, guaranteed with a support contract, links to [SUPPORT.md](../SUPPORT.md)), *Ihre Daten* (your data) with *Ordner öffnen* for `%LocalAppData%\Lupe`, a short introduction to the command line with the exit codes, and the keyboard shortcuts (*Tastatur*).
 
 ## Workflows
 

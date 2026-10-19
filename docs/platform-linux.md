@@ -1,7 +1,9 @@
+<sub><a href="../README.md">Lupe</a> › <a href="../README.md#documentation">Documentation</a> › <a href="development.md">Development</a> › Lupe on Linux</sub>
+
 # Lupe on Linux
 
 How `src/Lupe.Platform.Linux` works, what it needs from the system and where X11 and Wayland differ. User-visible
-messages are German; this note is for developers and packagers.
+messages come from `Strings.resx` in the UI language (English or German); this note is for developers and packagers.
 
 ## Session detection
 
@@ -51,7 +53,7 @@ everything else `0x01000000 + code point` (surrogate pairs from the core are joi
 The first time, the desktop asks whether Lupe may control the keyboard. With RemoteDesktop version 2 or later, Lupe
 asks for `persist_mode=2` and stores the restore token in `~/.config/lupe/remotedesktop-token` (mode 0600), so the
 question does not come back on every start. Desktops without a RemoteDesktop portal (for example wlroots with only
-`xdg-desktop-portal-wlr`) get a German message and copying still works. Characters outside the active keyboard layout
+`xdg-desktop-portal-wlr`) get a message and copying still works. Characters outside the active keyboard layout
 may not arrive, depending on how the compositor maps keysyms.
 
 ### Hotkeys

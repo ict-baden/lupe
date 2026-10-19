@@ -4,8 +4,6 @@
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Lupe.Platform.Windows</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Description>Windows-Anbindung für Lupe: Kamera (MediaCapture), Bildschirm (GDI), Tippen (SendInput), Tastenkürzel, Autostart, Bilddateien (WIC).</Description>

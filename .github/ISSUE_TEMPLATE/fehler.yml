@@ -1,0 +1,53 @@
+name: Fehler melden / Bug report
+description: Etwas funktioniert nicht wie beschrieben. / Something does not work as documented.
+labels: [fehler]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke! Bitte keine Passwörter, internen Hostnamen oder Kundendaten einfügen – dieses Issue ist öffentlich.
+        Thanks! Please do not paste passwords, internal host names or customer data – this issue is public.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Aus dem Info-Fenster oder `--version`. / From the About window or `--version`.
+      placeholder: 0.1.0-ci.12
+    validations:
+      required: true
+  - type: dropdown
+    id: variante
+    attributes:
+      label: Variante / Package
+      options: [MSI, Einzeldatei / single exe (Windows), ZIP (framework), Linux .deb, Linux tar.gz, macOS, aus dem Quellcode / from source]
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Betriebssystem / OS
+      placeholder: Windows 11 24H2, Ubuntu 24.04 (Wayland), macOS 15
+  - type: textarea
+    id: schritte
+    attributes:
+      label: Schritte zum Nachstellen / Steps to reproduce
+      placeholder: |
+        1. …
+        2. …
+    validations:
+      required: true
+  - type: textarea
+    id: erwartet
+    attributes:
+      label: Erwartet und tatsächlich / Expected and actual
+    validations:
+      required: true
+  - type: textarea
+    id: geraet
+    attributes:
+      label: Gerät, Hersteller, Firmware (falls zutreffend) / Device, vendor, firmware (if relevant)
+  - type: textarea
+    id: protokoll
+    attributes:
+      label: Protokoll oder Diagnosepaket (anonymisiert) / Log or diagnostics (anonymised)
+      render: text

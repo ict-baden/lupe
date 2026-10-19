@@ -1,0 +1,19 @@
+<Project>
+  <!-- Gemeinsame Einstellungen für alle Projekte im Repo (Vorlage aus ict-baden/richtlinien) -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+
+    <!-- Firmierung „ICT-Baden GmbH“ noch offen (richtlinien/OFFEN.md), bis dahin „ICT-Baden“ -->
+    <Company>ICT-Baden</Company>
+    <Product>Lupe</Product>
+    <Copyright>© 2026 ICT-Baden GmbH</Copyright>
+    <!-- Strings.resx ist Englisch und Rückfallsprache, siehe richtlinien/13 -->
+    <NeutralLanguage>en</NeutralLanguage>
+    <!-- Nur die Sprachen mitliefern, für die es Sprachdateien gibt (eigene und fremde Pakete); es, fr, zh-Hans folgen -->
+    <SatelliteResourceLanguages>en;de</SatelliteResourceLanguages>
+  </PropertyGroup>
+</Project>

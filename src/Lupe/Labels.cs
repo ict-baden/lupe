@@ -10,11 +10,28 @@ public static class AppInfo
 {
     public const string RepositoryUrl = "https://github.com/ict-baden/lupe";
     public const string Publisher = "ICT-Baden";
+    // Info-Seite (Richtlinien 07 und 10). Impressum und Webseite fehlen noch: die Domain ist offen (richtlinien/OFFEN.md).
+    public const string LicenseUrl = RepositoryUrl + "/blob/main/LICENSE";
+    public const string PrivacyUrl = RepositoryUrl + "/blob/main/docs/data-and-privacy.md";
+    public const string SupportUrl = RepositoryUrl + "/blob/main/SUPPORT.md";
+
+    private static readonly string Informational =
+        typeof(AppInfo).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
+        ?? typeof(AppInfo).Assembly.GetName().Version?.ToString(3) ?? "0.1.0";
 
     /// <summary>Version ohne Build-Anhang, z. B. „0.1.0“.</summary>
-    public static string Version { get; } =
-        (typeof(AppInfo).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
-         ?? typeof(AppInfo).Assembly.GetName().Version?.ToString(3) ?? "0.1.0").Split('+')[0];
+    public static string Version { get; } = Informational.Split('+')[0];
+
+    /// <summary>Commit-Kürzel des Builds (vom SDK als „+&lt;sha&gt;“ an die Version gehängt), leer ohne Git.</summary>
+    public static string Build { get; } = BuildOf(Informational);
+
+    internal static string BuildOf(string informationalVersion)
+    {
+        int plus = informationalVersion.IndexOf('+');
+        if (plus < 0) return "";
+        var sha = informationalVersion[(plus + 1)..];
+        return sha.Length > 7 ? sha[..7] : sha;
+    }
 }
 
 /// <summary>Bezeichnungen für Formate, Quellen, Aktionen und Zeiten in der Sprache der Oberfläche.</summary>
