@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 using System.Globalization;
 using System.Text.RegularExpressions;
-using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 using Lupe.Core.Resources;
 using Lupe.Core.Localization;
@@ -11,8 +10,9 @@ namespace Lupe.Tests.Localization;
 /// <summary>Sprachdateien und Sprachwahl (Richtlinie 13).</summary>
 public sealed partial class LocalizationTests
 {
-    private static string ResourceDir([CallerFilePath] string here = "") =>
-        Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "..", "..", "src", "Lupe.Core", "Resources"));
+    // Die Sprachdateien liegen als Kopie neben der Test-DLL (Lupe.Tests.csproj): In der CI schreibt
+    // ContinuousIntegrationBuild die Quellpfade auf /_/ um, ein Weg über [CallerFilePath] fände sie dort nicht.
+    private static string ResourceDir() => Path.Combine(AppContext.BaseDirectory, "Resources");
 
     private static Dictionary<string, string> Load(string file) =>
         XDocument.Load(Path.Combine(ResourceDir(), file)).Root!.Elements("data")

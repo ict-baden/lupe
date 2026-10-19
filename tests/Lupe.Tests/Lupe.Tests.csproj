@@ -30,6 +30,11 @@
     <PackageReference Include="Avalonia.Headless" Version="12.1.4" />
   </ItemGroup>
 
+  <!-- Sprachdateien für LocalizationTests (Schlüssel, Platzhalter, leere Texte) -->
+  <ItemGroup>
+    <None Include="..\..\src\Lupe.Core\Resources\Strings*.resx" Link="Resources\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-windows10.0.19041.0'">
     <ProjectReference Include="..\..\src\Lupe.Platform.Windows\Lupe.Platform.Windows.csproj" />
   </ItemGroup>
