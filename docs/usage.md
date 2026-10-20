@@ -20,7 +20,7 @@ Start Lupe from the Start menu or by running `Lupe.exe` without arguments. The w
 | *Datei* | File | <kbd>Ctrl</kbd>+<kbd>3</kbd> | Open an image, drop one, or read the clipboard |
 | *Verlauf* | History | <kbd>Ctrl</kbd>+<kbd>4</kbd> | Everything Lupe has read; search, copy, export |
 | *Einstellungen* | Settings | <kbd>Ctrl</kbd>+<kbd>5</kbd> | What happens with a result, shortcut, link rules, formats |
-| *Info* | About | <kbd>Ctrl</kbd>+<kbd>6</kbd> | Version, origin, data location, command line |
+| *Info* | About | <kbd>Ctrl</kbd>+<kbd>6</kbd> | Version, licence, website and legal notice, licence texts, data location, command line |
 
 - <kbd>Ctrl</kbd>+<kbd>V</kbd> anywhere outside a text box jumps to *Datei* and reads the image on the clipboard.
 - Above the navigation, a card shows the screen-scan shortcut and whether it is ready (*scannt einen Ausschnitt*) or taken by another program (*belegt – siehe Einstellungen*; the entry *Bildschirm* then carries a “!”). Next to *Verlauf* a badge counts the history entries.
@@ -159,10 +159,10 @@ Changes apply and are saved immediately – there is no *Save* button. The page 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/screenshots/about-dark.png">
-  <img alt="Info page: Lupe version 0.1.0 and .NET version; publisher ICT-Baden; MIT licence; source code link with “Im Browser öffnen”; origin from Barcode-Reader with “Ansehen”; recognition with zxing-cpp and the button “Lizenztexte”; “Ihre Daten” with “Ordner öffnen”; the heading Befehlszeile." src="assets/screenshots/about-light.png" width="900">
+  <img alt="Info page: Lupe version 0.1.0 with build and .NET version; publisher ICT-Baden; licence “MIT-Lizenz – © 2026 ICT-Baden GmbH” with “Anzeigen”; website ict-baden.de, Impressum and source code, each with “Im Browser öffnen”; recognition with zxing-cpp and the button “Lizenztexte”; “Daten und Datenschutz” with “Im Browser öffnen”." src="assets/screenshots/about-light.png" width="900">
 </picture>
 
-Version, build (commit) and .NET version, publisher, *Lizenz: MIT-Lizenz – © 2026 ICT-Baden GmbH* with a link to the licence text, the source code link, the decoding and UI libraries (*Erkennung und Oberfläche*: zxing-cpp, Apache-2.0, with libzint and libzueci, BSD-3-Clause; *Lizenztexte* opens the licence texts of all bundled components), *Daten und Datenschutz* (data and privacy: “This software sends no data to ICT-Baden”, links to [Data & privacy](data-and-privacy.md)), *Hilfe & Support* (free via GitHub, guaranteed with a support contract, links to [SUPPORT.md](../SUPPORT.md)), *Ihre Daten* (your data) with *Ordner öffnen* for `%LocalAppData%\Lupe`, a short introduction to the command line with the exit codes, and the keyboard shortcuts (*Tastatur*).
+Version, build (commit) and .NET version, publisher, *Lizenz: MIT-Lizenz – © 2026 ICT-Baden GmbH* with *Anzeigen* (shows the licence text that ships with Lupe), *Webseite* (website) and *Impressum* (legal notice) on ict-baden.de, the source code link, the decoding and UI libraries (*Erkennung und Oberfläche*: zxing-cpp, Apache-2.0, with libzint and libzueci, BSD-3-Clause; *Lizenztexte* opens the licence texts of all bundled components), *Daten und Datenschutz* (data and privacy: “This software sends no data to ICT-Baden”, links to [Data & privacy](data-and-privacy.md)), *Hilfe & Support* (free via GitHub, guaranteed with a support contract, links to [SUPPORT.md](../SUPPORT.md)), *Ihre Daten* (your data) with *Ordner öffnen* for `%LocalAppData%\Lupe`, a short introduction to the command line with the exit codes, and the keyboard shortcuts (*Tastatur*).
 
 ## Workflows
 
