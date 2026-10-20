@@ -54,7 +54,7 @@ else
 fi
 codesign --verify --deep --strict "$app"
 
-if [ -n "$identity" ] && [ -n "${MACOS_NOTARY_PASSWORD:-}" ]; then
+if [ -n "$identity" ] && [ -n "${MACOS_NOTARY_APPLE_ID:-}" ] && [ -n "${MACOS_NOTARY_TEAM_ID:-}" ] && [ -n "${MACOS_NOTARY_PASSWORD:-}" ]; then
     ditto -c -k --keepParent "$app" "$work/notarisieren.zip"
     xcrun notarytool submit "$work/notarisieren.zip" --apple-id "$MACOS_NOTARY_APPLE_ID" --team-id "$MACOS_NOTARY_TEAM_ID" \
         --password "$MACOS_NOTARY_PASSWORD" --wait --timeout 30m

@@ -6,7 +6,7 @@ Set up for this user (application menu, command "lupe"):
                            ./install.sh
 Remove again:              ~/.local/opt/lupe/install.sh --entfernen
 
-Needs glibc 2.27 or later (Debian 10, Ubuntu 18.04, RHEL 8 and newer) and, usually already installed:
+Needs glibc 2.31 or later (Ubuntu 20.04, Debian 11 and newer) and, usually already installed:
 libX11, libXtst, libXrandr, libXi, libICE, libSM, fontconfig and ICU. Without ICU Lupe does not start,
 without fontconfig it cannot read image files.
   Debian/Ubuntu:  sudo apt install libx11-6 libxtst6 libxrandr2 libxi6 libice6 libsm6 libfontconfig1

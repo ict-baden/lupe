@@ -3,7 +3,7 @@
 # Lupe on Linux
 
 How `src/Lupe.Platform.Linux` works, what it needs from the system and where X11 and Wayland differ. User-visible
-messages come from `Strings.resx` in the UI language (English or German); this note is for developers and packagers.
+messages come from the language files (`Strings*.resx`) in the UI language (English, German, Spanish, French or Chinese); this note is for developers and packagers.
 
 ## Session detection
 

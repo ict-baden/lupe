@@ -536,12 +536,35 @@ jobs:
   macos:
     needs: [version, zxing-macos]
     runs-on: macos-latest
-    env:
-      # Developer-ID-Signatur und Notarisierung nur, wenn die Organisation die Zugangsdaten hinterlegt hat (Apple Developer
-      # Program, siehe docs/development.md) und nicht bei Pull Requests. Bis dahin ad hoc signiert wie bisher.
-      MACOS_SIGN: ${{ secrets.MACOS_CERTIFICATE_P12 != '' && github.event_name != 'pull_request' }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Signieren und Notarisieren eingerichtet?
+        # Developer-ID-Signatur und Notarisierung nur, wenn die Organisation die Zugangsdaten hinterlegt hat (Apple Developer
+        # Program, siehe docs/development.md) und nicht bei Pull Requests. Bis dahin ad hoc signiert wie bisher. Halbe
+        # Angaben brechen den Lauf nicht ab (sonst bliebe „latest“ stehen), sondern fallen mit Warnung zurück:
+        # MACOS_SIGN braucht Zertifikat, Passwort und Identität, MACOS_NOTARIZE zusätzlich alle drei Notar-Angaben.
+        env:
+          P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+          CERT_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
+          APPLE_ID: ${{ secrets.MACOS_NOTARY_APPLE_ID }}
+          TEAM_ID: ${{ secrets.MACOS_NOTARY_TEAM_ID }}
+          NOTARY_PASSWORD: ${{ secrets.MACOS_NOTARY_PASSWORD }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          sign=false; notarize=false
+          if [ "$EVENT" != pull_request ] && [ -n "$P12" ]; then
+            if [ -n "$CERT_PASSWORD" ] && [ -n "$IDENTITY" ]; then sign=true
+            else echo "::warning::MACOS_CERTIFICATE_P12 ist gesetzt, MACOS_CERTIFICATE_PASSWORD oder MACOS_SIGN_IDENTITY fehlt – Lupe.app wird nur ad hoc signiert."; fi
+          fi
+          if [ "$sign" = true ]; then
+            if [ -n "$APPLE_ID" ] && [ -n "$TEAM_ID" ] && [ -n "$NOTARY_PASSWORD" ]; then notarize=true
+            else echo "::warning::MACOS_NOTARY_APPLE_ID, MACOS_NOTARY_TEAM_ID oder MACOS_NOTARY_PASSWORD fehlt – Lupe.app wird signiert, aber nicht notarisiert (Gatekeeper fragt dann wie bisher)."; fi
+          fi
+          echo "Developer ID: $sign, Notarisierung: $notarize"
+          echo "MACOS_SIGN=$sign" >> "$GITHUB_ENV"
+          echo "MACOS_NOTARIZE=$notarize" >> "$GITHUB_ENV"
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -592,9 +615,9 @@ jobs:
         env:
           # Leer = ad hoc signiert (package.sh); sonst Developer ID mit Hardened Runtime und, mit den Notar-Angaben, notarisiert
           MACOS_SIGN_IDENTITY: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_SIGN_IDENTITY || '' }}
-          MACOS_NOTARY_APPLE_ID: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_NOTARY_APPLE_ID || '' }}
-          MACOS_NOTARY_TEAM_ID: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_NOTARY_TEAM_ID || '' }}
-          MACOS_NOTARY_PASSWORD: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_NOTARY_PASSWORD || '' }}
+          MACOS_NOTARY_APPLE_ID: ${{ env.MACOS_NOTARIZE == 'true' && secrets.MACOS_NOTARY_APPLE_ID || '' }}
+          MACOS_NOTARY_TEAM_ID: ${{ env.MACOS_NOTARIZE == 'true' && secrets.MACOS_NOTARY_TEAM_ID || '' }}
+          MACOS_NOTARY_PASSWORD: ${{ env.MACOS_NOTARIZE == 'true' && secrets.MACOS_NOTARY_PASSWORD || '' }}
         run: |
           v='${{ needs.version.outputs.version }}'
           for arch in arm64 x64; do
@@ -624,9 +647,19 @@ jobs:
           else
             echo "Rosetta fehlt – Rauchtest der Intel-Fassung übersprungen"
           fi
+          # Developer ID mit Hardened Runtime; Gatekeeper und Ticket nur, wenn auch notarisiert wurde
           if [ "$MACOS_SIGN" = true ]; then
-            spctl --assess --type execute -vv /tmp/lupe-probe-arm64/Lupe.app
-            xcrun stapler validate /tmp/lupe-probe-arm64/Lupe.app
+            for arch in arm64 x64; do
+              details=$(codesign -dvv /tmp/lupe-probe-$arch/Lupe.app 2>&1)
+              echo "$details" | grep -q '^Authority=Developer ID Application:' || { echo "::error::Lupe.app ($arch) ist nicht mit der Developer ID signiert."; echo "$details"; exit 1; }
+              echo "$details" | grep -q 'flags=.*runtime' || { echo "::error::Lupe.app ($arch) ohne Hardened Runtime."; echo "$details"; exit 1; }
+            done
+          fi
+          if [ "$MACOS_NOTARIZE" = true ]; then
+            for arch in arm64 x64; do
+              spctl --assess --type execute -vv /tmp/lupe-probe-$arch/Lupe.app
+              xcrun stapler validate /tmp/lupe-probe-$arch/Lupe.app
+            done
           fi
 
       - uses: actions/upload-artifact@v4
@@ -693,7 +726,7 @@ jobs:
                    "- **[Lupe-win-x64-framework.zip]($base/Lupe-win-x64-framework.zip)**: kleine Variante, braucht die .NET 10 Runtime`n`n" +
                    "**Linux** (X11 und Wayland)`n`n" +
                    "- **[lupe_amd64.deb]($base/lupe_amd64.deb)**: Paket für Debian/Ubuntu (x64)`n" +
-                   "- **[Lupe-linux-x64.tar.gz]($base/Lupe-linux-x64.tar.gz)** / **[Lupe-linux-arm64.tar.gz]($base/Lupe-linux-arm64.tar.gz)**: entpacken, ``lupe/install.sh`` (glibc 2.27 oder neuer)`n`n" +
+                   "- **[Lupe-linux-x64.tar.gz]($base/Lupe-linux-x64.tar.gz)** / **[Lupe-linux-arm64.tar.gz]($base/Lupe-linux-arm64.tar.gz)**: entpacken, ``lupe/install.sh`` (glibc 2.31 oder neuer: Ubuntu 20.04, Debian 11)`n`n" +
                    "**macOS** (12 oder neuer; noch nicht notarisiert: beim ersten Start unter Systemeinstellungen › Datenschutz & Sicherheit „Dennoch öffnen“ wählen, siehe [Installation](https://github.com/$env:GITHUB_REPOSITORY/blob/main/docs/installation.md#macos))`n`n" +
                    "- **[Lupe-macos-arm64.zip]($base/Lupe-macos-arm64.zip)**: Apple Silicon`n" +
                    "- **[Lupe-macos-x64.zip]($base/Lupe-macos-x64.zip)**: Intel`n`n" +

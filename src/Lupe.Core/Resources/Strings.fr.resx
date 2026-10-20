@@ -107,6 +107,8 @@ de l’écran – depuis n’importe quel programme, tant que Lupe est lancé.
   FORMAT&lt;Tab&gt;contenu                    p. ex. QR_CODE&lt;Tab&gt;https://example.org
 Les caractères de contrôle du contenu sont échappés : \n (saut de ligne), \r, \t
 (tabulation), les autres sous la forme \xHH – p. ex. \x1D, le séparateur des codes GS1.
+Les séparateurs de ligne et de paragraphe ainsi que les caractères qui changent le sens
+d’écriture apparaissent sous la forme \uXXXX (p. ex. \u2028, \u202E).
 Les remarques (« Aucun code trouvé ») et les erreurs vont sur stderr, la sortie reste
 ainsi facile à traiter.
 

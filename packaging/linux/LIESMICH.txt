@@ -6,7 +6,7 @@ Für diesen Benutzer einrichten (Anwendungsmenü, Befehl „lupe“):
                            ./install.sh
 Wieder entfernen:          ~/.local/opt/lupe/install.sh --entfernen
 
-Benötigt glibc 2.27 oder neuer (Debian 10, Ubuntu 18.04, RHEL 8 und neuer) und, meist schon vorhanden:
+Benötigt glibc 2.31 oder neuer (Ubuntu 20.04, Debian 11 und neuer) und, meist schon vorhanden:
 libX11, libXtst, libXrandr, libXi, libICE, libSM, fontconfig und ICU. Ohne ICU startet Lupe nicht, ohne
 fontconfig liest es keine Bilddateien.
   Debian/Ubuntu:  sudo apt install libx11-6 libxtst6 libxrandr2 libxi6 libice6 libsm6 libfontconfig1

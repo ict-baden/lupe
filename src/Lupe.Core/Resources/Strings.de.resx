@@ -103,8 +103,10 @@ Ausschnitt des Bildschirms – aus jedem Programm, solange Lupe läuft.
 „lesen“ sucht in jedem Bild alle Codes und schreibt je Code eine Zeile:
   FORMAT&lt;Tab&gt;Inhalt                     z. B. QR_CODE&lt;Tab&gt;https://example.org
 Steuerzeichen im Inhalt erscheinen maskiert: \n (Zeilenumbruch), \r, \t (Tabulator),
-andere als \xHH – etwa \x1D, das Trennzeichen in GS1-Codes. Hinweise („Kein Code
-gefunden“) und Fehler gehen nach stderr, die Ausgabe bleibt so gut weiterzuverarbeiten.
+andere als \xHH – etwa \x1D, das Trennzeichen in GS1-Codes. Zeilen- und Absatztrenner
+sowie Zeichen zur Schreibrichtung erscheinen als \uXXXX (z. B. \u2028, \u202E).
+Hinweise („Kein Code gefunden“) und Fehler gehen nach stderr, die Ausgabe bleibt so
+gut weiterzuverarbeiten.
 
 {4} Platzhalter im Dateinamen sind
 erlaubt, z. B. {5}.

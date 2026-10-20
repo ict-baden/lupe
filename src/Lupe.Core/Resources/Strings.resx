@@ -114,8 +114,10 @@ of the screen – from any program, as long as Lupe is running.
 "lesen" finds all codes in each image and writes one line per code:
   FORMAT&lt;Tab&gt;content                    e.g. QR_CODE&lt;Tab&gt;https://example.org
 Control characters in the content are escaped: \n (line break), \r, \t (tab),
-others as \xHH – such as \x1D, the separator in GS1 codes. Notes ("No code
-found") and errors go to stderr, so the output stays easy to process further.
+others as \xHH – such as \x1D, the separator in GS1 codes. Line and paragraph
+separators and characters that change the text direction come out as \uXXXX
+(e.g. \u2028, \u202E). Notes ("No code found") and errors go to stderr, so the
+output stays easy to process further.
 
 {4} Wildcards are allowed in the file
 name, e.g. {5}.

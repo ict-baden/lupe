@@ -132,12 +132,12 @@ If you regularly type into an elevated program, start Lupe with *Run as administ
 
 ## Linux
 
-Lupe runs on X11 and Wayland desktops, x64 and arm64, on distributions with glibc 2.27 or later (Debian 10, Ubuntu 18.04, RHEL 8 and newer). Both packages include .NET. Each build is tested in CI on Ubuntu 20.04, Ubuntu 22.04 and Debian 12 (reading a code from the command line).
+Lupe runs on X11 and Wayland desktops, x64 and arm64, on distributions with glibc 2.31 or later (Ubuntu 20.04, Debian 11 and newer; RHEL 9). That is the minimum CI enforces for every shipped library and tests: each build reads a code from the command line on Ubuntu 20.04, Ubuntu 22.04 and Debian 12. Older systems are not tested. Both packages include .NET. The `.deb` needs ICU 66 or newer (`libicu66` on Ubuntu 20.04, `libicu67` on Debian 11).
 
 | File | Install |
 |---|---|
 | [`lupe_amd64.deb`](https://github.com/ict-baden/lupe/releases/download/latest/lupe_amd64.deb) | Debian, Ubuntu and derivatives (x64): `sudo apt install ./lupe_amd64.deb`. Installs to `/opt/lupe`, the command `lupe` and a menu entry; `sudo apt remove ictbaden-lupe` removes it (the package was called `lupe` before; installing the new one replaces it). |
-| [`Lupe-linux-x64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-x64.tar.gz), [`Lupe-linux-arm64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-arm64.tar.gz) | Any distribution with glibc 2.27 or later: `tar -xzf Lupe-linux-x64.tar.gz && lupe/install.sh`. Installs for the current user only (no root) into `~/.local/opt/lupe`, with the command `lupe` in `~/.local/bin` and a menu entry. `./Lupe` inside the folder also runs it without installing. Remove with `~/.local/opt/lupe/install.sh --entfernen`. |
+| [`Lupe-linux-x64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-x64.tar.gz), [`Lupe-linux-arm64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-arm64.tar.gz) | Any distribution with glibc 2.31 or later: `tar -xzf Lupe-linux-x64.tar.gz && lupe/install.sh`. Installs for the current user only (no root) into `~/.local/opt/lupe`, with the command `lupe` in `~/.local/bin` and a menu entry. `./Lupe` inside the folder also runs it without installing. Remove with `~/.local/opt/lupe/install.sh --entfernen`. |
 
 Tagged releases name the package `lupe_1.2.3_amd64.deb`. The libraries Lupe needs are part of every desktop installation; on a minimal system install `libx11-6 libxtst6 libxrandr2 libxi6 libice6 libsm6 libfontconfig1` and ICU, e.g. `libicu72` on Debian 12 (`apt-cache search --names-only '^libicu[0-9]+$'` shows the name; the `.deb` pulls them in). Without ICU Lupe does not start; without fontconfig it cannot read image files. If Lupe reports `LUP-0001`, the recognition library cannot be loaded – see [Error codes](error-codes.md#lup-0001).
 

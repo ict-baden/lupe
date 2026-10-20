@@ -107,6 +107,8 @@ una región de la pantalla – desde cualquier programa, mientras Lupe esté en 
   FORMATO&lt;Tab&gt;contenido                 p. ej. QR_CODE&lt;Tab&gt;https://example.org
 Los caracteres de control del contenido aparecen escapados: \n (salto de línea), \r,
 \t (tabulador), los demás como \xHH – p. ej. \x1D, el separador de los códigos GS1.
+Los separadores de línea y de párrafo y los caracteres que cambian la dirección del
+texto aparecen como \uXXXX (p. ej. \u2028, \u202E).
 Los avisos ("No se encontró ningún código") y los errores van a stderr, así la salida
 sigue siendo fácil de procesar.
 
