@@ -14,6 +14,13 @@ public sealed class InvariantGlobalizationTests
     private static readonly string LupeDll = Path.Combine(AppContext.BaseDirectory, "Lupe.dll");
     private static readonly string QrImage = Path.Combine(AppContext.BaseDirectory, "TestData", "smoke-qr.png");
 
+    /// <summary>Die neutrale Fassung (net10.0) liest unter Windows keine Bilddateien – dort prüft das das Windows-Ziel.</summary>
+#if WINDOWS
+    private static readonly bool ReadsImageFiles = true;
+#else
+    private static readonly bool ReadsImageFiles = !OperatingSystem.IsWindows();
+#endif
+
     [Fact]
     public void Hilfe_ohne_Kulturdaten()
     {
@@ -29,9 +36,14 @@ public sealed class InvariantGlobalizationTests
     [Fact]
     public void Lesen_Version_und_Info_ohne_Kulturdaten()
     {
-        var (exit, output, error) = Run(TimeSpan.FromSeconds(60), "lesen", QrImage);
-        Assert.True(exit == 0, $"Exitcode {exit}: {error}");
-        Assert.Equal("QR_CODE\thttps://github.com/ict-baden/lupe", output.Trim());
+        int exit;
+        string output, error;
+        if (ReadsImageFiles)
+        {
+            (exit, output, error) = Run(TimeSpan.FromSeconds(60), "lesen", QrImage);
+            Assert.True(exit == 0, $"Exitcode {exit}: {error}");
+            Assert.Equal("QR_CODE\thttps://github.com/ict-baden/lupe", output.Trim());
+        }
 
         foreach (var command in new[] { "--version", "--info" })
         {
