@@ -177,6 +177,27 @@ jobs:
           timestamp-rfc3161: http://timestamp.acs.microsoft.com
           timestamp-digest: SHA256
 
+      - name: Screenshots der Doku rendern
+        # Wie tools/screenshots/make-assets.ps1 (ohne Banner): jede Seite hell und dunkel, deutsche Oberfläche wie in der
+        # Doku. Prüft nebenbei, dass jede Seite zeichnet; die Bilder liegen einen Tag als Artifact zum Übernehmen bereit.
+        shell: pwsh
+        env:
+          LUPE_LANGUAGE: de
+        run: |
+          $exe = 'src/Lupe/bin/Release/net10.0-windows10.0.19041.0/Lupe.exe'
+          $p = Start-Process $exe -ArgumentList '--screenshots', "`"$PWD\screenshots`"" -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { throw "Screenshots: Exitcode $($p.ExitCode)" }
+          Get-ChildItem screenshots | Format-Table Name, Length
+
+      - name: Screenshots hochladen
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: Screenshots
+          path: screenshots/*.png
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Publish
         shell: pwsh
         run: |
