@@ -14,7 +14,8 @@ Bisher nur Builds im Release „latest“ (`0.1.0-ci.N`), noch keine Version mit
 - Windows, Linux (X11 und Wayland, x64 und arm64) und macOS (Apple Silicon und Intel), Oberfläche mit Avalonia.
 - Pakete: MSI, Einzeldatei-Exe, ZIP mit Framework, `.deb`, `tar.gz`, `Lupe.app`; `SHA256SUMS.txt` im Release.
 - Oberfläche auf Englisch und Deutsch, folgt der Systemsprache, umschaltbar.
-- Info-Seite mit Version, Build, Lizenz, Drittanbieter-Lizenzen, Datenschutz und Support.
+- Info-Seite mit Version, Build, Lizenz, Drittanbieter-Lizenzen, Webseite, Impressum, Datenschutz und Support; die Lizenz öffnet lokal statt im Browser.
+- `lupe --version` und `lupe --info` (Version, Lizenz, Links); englische Namen für Befehle und Schalter (`read`, `--background`, `--screen`, `--help`, `--theme light|dark|both`). Hilfe und Info-Seite nennen den Befehl je System (`Lupe.exe`, `lupe`, unter macOS das Programm in `Lupe.app`) und die dort lesbaren Bildformate.
 
 ### Geändert
 - Linux-Paket heißt jetzt `ictbaden-lupe` (vorher `lupe`) und ersetzt das alte Paket beim Installieren.

@@ -10,10 +10,17 @@ public static class AppInfo
 {
     public const string RepositoryUrl = "https://github.com/ict-baden/lupe";
     public const string Publisher = "ICT-Baden";
-    // Info-Seite (Richtlinien 07 und 10). Impressum und Webseite fehlen noch: die Domain ist offen (richtlinien/OFFEN.md).
+    // Info-Seite und lupe --info (Richtlinien 07 und 10)
     public const string LicenseUrl = RepositoryUrl + "/blob/main/LICENSE";
     public const string PrivacyUrl = RepositoryUrl + "/blob/main/docs/data-and-privacy.md";
     public const string SupportUrl = RepositoryUrl + "/blob/main/SUPPORT.md";
+    public const string WebsiteUrl = "https://ict-baden.de/";
+    /// <summary>Das eine Impressum auf der Webseite (Richtlinie 07); die neue Seite leitet diese Adresse später weiter.</summary>
+    public const string ImprintUrl = "https://ict-baden.de/index.html?page=imprint";
+
+    /// <summary>„© 2026 …“ aus den Assembly-Angaben (Directory.Build.props).</summary>
+    public static string Copyright { get; } =
+        typeof(AppInfo).Assembly.GetCustomAttribute<AssemblyCopyrightAttribute>()?.Copyright ?? "";
 
     private static readonly string Informational =
         typeof(AppInfo).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion

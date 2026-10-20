@@ -133,8 +133,9 @@ internal sealed record StartOptions(AppMode Mode, string ScreenshotFolder = "", 
         if (args.Length == 0) return new(AppMode.Normal);
         var first = args[0].Trim();
         if (args.Length == 1 && first.Equals("--demo", StringComparison.OrdinalIgnoreCase)) return new(AppMode.Demo);
-        if (args.Length == 1 && first.Equals("--hintergrund", StringComparison.OrdinalIgnoreCase)) return new(AppMode.Background);
-        if (args.Length == 1 && first.Equals("--bildschirm", StringComparison.OrdinalIgnoreCase)) return new(AppMode.Background, ScanOnStart: true);
+        // Deutsche Schalter wie bisher, dazu englische Namen (--background, --screen)
+        if (args.Length == 1 && (Is(first, "--hintergrund") || Is(first, "--background"))) return new(AppMode.Background);
+        if (args.Length == 1 && (Is(first, "--bildschirm") || Is(first, "--screen"))) return new(AppMode.Background, ScanOnStart: true);
 
         if (first.Equals("--screenshots", StringComparison.OrdinalIgnoreCase))
         {
@@ -143,10 +144,13 @@ internal sealed record StartOptions(AppMode Mode, string ScreenshotFolder = "", 
             var theme = "beide";
             if (args.Length == 4 && args[2].Equals("--theme", StringComparison.OrdinalIgnoreCase)) theme = args[3].Trim().ToLowerInvariant();
             else if (args.Length != 2) return new(AppMode.CommandLine);
+            theme = theme switch { "light" => "hell", "dark" => "dunkel", "both" => "beide", _ => theme };
             if (theme is not ("hell" or "dunkel" or "beide")) return new(AppMode.CommandLine);
             try { return new(AppMode.Screenshots, Path.GetFullPath(args[1]), theme); }
             catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException) { return new(AppMode.CommandLine); }
         }
         return new(AppMode.CommandLine);
     }
+
+    private static bool Is(string arg, string name) => arg.Equals(name, StringComparison.OrdinalIgnoreCase);
 }

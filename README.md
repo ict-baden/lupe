@@ -256,7 +256,7 @@ Lupe is a rewrite of Till's [Barcode-Reader](https://github.com/pieewiee/Barcode
 - **Command line into a pipe** uses the console's code page; characters outside it are replaced. Redirect into a file for lossless UTF-8.
 - **Linux and macOS are new and less tested than Windows.** On Wayland the screen scan, typing and the shortcut go through the desktop portals, which ask for permission and are not offered by every desktop; Lupe cannot see which window is in front there. The macOS build has not run on a real Mac yet. Details: [Limitations › Linux and macOS](docs/limitations.md#linux-and-macos).
 - **Pre-release 0.1.0, not code-signed.** SmartScreen may warn; macOS Gatekeeper asks once.
-- **Licence: MIT.** Lupe is under the [MIT licence](LICENSE), like all ICT-Baden software. The licences of the bundled third-party components (zxing-cpp with libzint and libzueci, C#/WinRT, .NET) are in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which ships next to `Lupe.exe` and opens from *Info › Erkennung › Lizenztexte*.
+- **Licence: MIT.** Lupe is under the [MIT licence](LICENSE), like all ICT-Baden software. The licences of the bundled third-party components (zxing-cpp with libzint and libzueci, Avalonia, SkiaSharp and HarfBuzzSharp with the libraries compiled into them, ANGLE, MicroCom, C#/WinRT, the Windows SDK projection, .NET and more) are in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which ships in every package and opens from *Info › Recognition and user interface › License texts* (*Erkennung und Oberfläche › Lizenztexte*).
 
 Everything else: **[Limitations →](docs/limitations.md)**
 
@@ -285,6 +285,7 @@ Licence: <a href="LICENSE">MIT</a> &nbsp;·&nbsp;
 Third-party licences: <a href="THIRD-PARTY-NOTICES.txt">THIRD-PARTY-NOTICES.txt</a> &nbsp;·&nbsp;
 Support: free via GitHub, guaranteed with a <a href="SUPPORT.md">support contract</a> &nbsp;·&nbsp;
 <a href="SECURITY.md">Security</a> &nbsp;·&nbsp;
-<a href="CHANGELOG.md">Changes</a>
-<!-- Link „Impressum“ folgt, sobald die Webseite steht (Domain offen, richtlinien/OFFEN.md) -->
+<a href="CHANGELOG.md">Changes</a> &nbsp;·&nbsp;
+Website: <a href="https://ict-baden.de/">ict-baden.de</a> &nbsp;·&nbsp;
+<a href="https://ict-baden.de/index.html?page=imprint">Impressum</a>
 </sub>
