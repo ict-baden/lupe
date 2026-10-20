@@ -114,7 +114,7 @@ Uninstalling alone leaves steps 1 and 3 undone – see [Installation › Updates
 
 ## Linux and macOS
 
-What Lupe looks at and what the history contains is the same as on Windows. Settings and history are readable only by your user: new folders are created with mode `0700`, the files with `0600`.
+What Lupe looks at and what the history contains is the same as on Windows. Settings and history are readable only by your user: new folders are created with mode `0700`, the files with `0600`. A CSV export goes where you choose and is not restricted this way: a new file follows your umask, an existing file you overwrite keeps its permissions.
 
 | | Linux | macOS |
 |---|---|---|

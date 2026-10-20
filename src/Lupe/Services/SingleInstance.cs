@@ -173,9 +173,12 @@ internal abstract class SingleInstance : IDisposable
                     {
                         return;
                     }
-                    catch (IOException)
+                    catch (Exception ex) when (ex is not OperationCanceledException)
                     {
-                        // Eine alte Socket-Datei (nach einem Absturz) oder ein abgebrochener zweiter Start – kurz warten, weiter
+                        // Eine alte Socket-Datei (nach einem Absturz, SocketException), ein abgebrochener zweiter Start
+                        // (IOException), ein fremder Benutzer am Socket (UnauthorizedAccessException) oder ein Fehler beim
+                        // Reagieren auf das Signal: kurz warten und weiter lauschen – sonst kämen spätere Signale nie mehr an
+                        System.Diagnostics.Debug.WriteLine($"Nur eine Lupe: Signal nicht angenommen: {ex}");
                         await Task.Delay(500, CancellationToken.None);
                     }
                 }

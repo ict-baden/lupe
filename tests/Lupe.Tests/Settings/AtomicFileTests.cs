@@ -30,6 +30,25 @@ public sealed class AtomicFileTests : IDisposable
     }
 
     [Fact]
+    public void Export_folgt_der_umask_und_behaelt_die_Rechte_einer_vorhandenen_Datei()
+    {
+        if (OperatingSystem.IsWindows()) return;
+        var reference = _temp.File("vergleich.csv");
+        File.WriteAllText(reference, "x"); // neue Datei wie jedes Programm: 0666 ohne umask
+        var path = _temp.File("export.csv");
+
+        AtomicFile.Write(path, "neu"u8.ToArray(), ownerOnly: false);
+        Assert.Equal(File.GetUnixFileMode(reference), File.GetUnixFileMode(path));
+
+        // Eine vorhandene Datei (z. B. für die Gruppe freigegeben) behält beim Überschreiben ihre Rechte
+        var shared = AtomicFile.OwnerOnlyFile | UnixFileMode.GroupRead | UnixFileMode.GroupWrite;
+        File.SetUnixFileMode(path, shared);
+        AtomicFile.Write(path, "noch neuer"u8.ToArray(), ownerOnly: false);
+        Assert.Equal(shared, File.GetUnixFileMode(path));
+        Assert.Equal("noch neuer", File.ReadAllText(path));
+    }
+
+    [Fact]
     public void Schreibt_neue_Datei_und_legt_Ordner_an()
     {
         var path = _temp.File("a", "b", "c.json");

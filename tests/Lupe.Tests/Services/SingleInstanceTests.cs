@@ -28,6 +28,38 @@ public sealed class SingleInstanceTests
     }
 
     [Fact]
+    public async Task Ein_Fehler_bei_einem_Signal_beendet_das_Lauschen_nicht()
+    {
+        if (OperatingSystem.IsWindows()) return; // siehe oben
+        using var first = SingleInstance.TryAcquire();
+        if (first is null) return; // auf diesem Rechner läuft gerade eine echte Lupe
+
+        int shows = 0;
+        var scanned = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        first.Listen(
+            onShow: () =>
+            {
+                Interlocked.Increment(ref shows);
+                throw new InvalidOperationException("Fehler beim Zeigen des Fensters");
+            },
+            onScan: () => scanned.TrySetResult());
+        for (int i = 0; i < 50 && Volatile.Read(ref shows) == 0; i++)
+        {
+            SingleInstance.SignalFirst(scan: false);
+            await Task.Delay(100);
+        }
+        Assert.True(Volatile.Read(ref shows) > 0, "Signal kam nicht an");
+
+        // Danach lauscht die erste Instanz weiter
+        for (int i = 0; i < 80 && !scanned.Task.IsCompleted; i++)
+        {
+            SingleInstance.SignalFirst(scan: true);
+            await Task.WhenAny(scanned.Task, Task.Delay(100));
+        }
+        Assert.True(scanned.Task.IsCompleted, "Nach dem Fehler kam kein Signal mehr an");
+    }
+
+    [Fact]
     public void Socket_liegt_nicht_unter_festem_Namen_im_gemeinsamen_Temp_Ordner()
     {
         if (OperatingSystem.IsWindows()) return; // Windows: benannte Ereignisse je Sitzung
