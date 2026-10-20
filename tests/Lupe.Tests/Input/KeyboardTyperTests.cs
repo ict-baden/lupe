@@ -7,6 +7,22 @@ namespace Lupe.Tests.Input;
 /// <summary>Die INPUT-Folge, die KeyboardTyper an SendInput gibt.</summary>
 public sealed class KeyboardTyperInputTests
 {
+    [Theory]
+    [InlineData("eins\r\nzwei", "eins zwei")]
+    [InlineData("a\nb\rc\u0085d\u2028e\u2029f", "a b c d e f")]
+    [InlineData("rm -rf ~\n", "rm -rf ~ ")]
+    [InlineData("ohne Umbruch\tmit Tab", "ohne Umbruch\tmit Tab")]
+    public void Kamera_tippt_Zeilenumbrueche_als_Leerzeichen(string text, string expected)
+    {
+        Assert.Equal(expected, KeyboardTyper.WithoutLineBreaks(text));
+        // Danach erzeugt das Tippen kein Enter mehr
+        Assert.DoesNotContain(KeyboardTyper.BuildInputs(KeyboardTyper.WithoutLineBreaks(text), null), e => e.VirtualKey == 0x0D);
+    }
+
+    [Fact]
+    public void Ohne_Umbruch_bleibt_der_Text_derselbe() =>
+        Assert.Same("https://example.org", KeyboardTyper.WithoutLineBreaks("https://example.org"));
+
     [Fact]
     public void Einfache_Zeichen_als_Unicode_Druck_und_Loslassen()
     {

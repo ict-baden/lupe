@@ -56,12 +56,21 @@ internal static class Beep
         }
     }
 
-    private static string WriteTempWave()
+    /// <summary>
+    /// Der Ton als Datei für den Abspieler – in einem eigenen, neu angelegten Ordner (unter Linux und macOS nur für den
+    /// Benutzer, 0700), nicht unter einem festen Namen im gemeinsamen /tmp: Dort könnte ein anderer Benutzer vorher einen
+    /// Symlink anlegen, und Lupe überschriebe dessen Ziel mit dem Ton. Der Ordner wird beim Beenden entfernt.
+    /// </summary>
+    internal static string WriteTempWave()
     {
-        var folder = Path.Combine(Path.GetTempPath(), $"lupe-{Environment.UserName}");
-        Directory.CreateDirectory(folder);
-        var path = Path.Combine(folder, "treffer.wav");
-        File.WriteAllBytes(path, Wave.Value);
+        var folder = Directory.CreateTempSubdirectory("lupe-");
+        var path = Path.Combine(folder.FullName, "treffer.wav");
+        using (var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None)) stream.Write(Wave.Value);
+        AppDomain.CurrentDomain.ProcessExit += (_, _) =>
+        {
+            try { folder.Delete(recursive: true); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        };
         return path;
     }
 

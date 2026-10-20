@@ -261,12 +261,15 @@ internal static class CodeLine
     public static string Format(DecodedCode code) => $"{code.Format}\t{Escape(code.Text)}";
 
     /// <summary>
-    /// Steuerzeichen so maskieren, dass jeder Code genau eine Zeile bleibt: \n, \r, \t und \xHH. Der umgekehrte
-    /// Schrägstrich selbst bleibt unverändert – WLAN-Codes (<c>WIFI:S:Netz\;…</c>) und Pfade bleiben so lesbar.
+    /// Steuerzeichen so maskieren, dass jeder Code genau eine Zeile bleibt: \n, \r, \t und \xHH (auch C1-Steuerzeichen
+    /// U+0080–U+009F wie NEL), Zeilen- und Absatztrenner (U+2028, U+2029) und Zeichen zur Schreibrichtung (U+200E/F,
+    /// U+202A–U+202E, U+2066–U+2069, U+061C) als \uXXXX – sie könnten eine Zeile teilen oder die Anzeige im Terminal
+    /// verdrehen. Der umgekehrte Schrägstrich selbst bleibt unverändert – WLAN-Codes (<c>WIFI:S:Netz\;…</c>) und Pfade
+    /// bleiben so lesbar.
     /// </summary>
     public static string Escape(string text)
     {
-        if (!text.Any(c => c < 0x20 || c == 0x7F)) return text;
+        if (!text.Any(NeedsEscape)) return text;
         var sb = new StringBuilder(text.Length + 8);
         foreach (var c in text)
         {
@@ -275,10 +278,18 @@ internal static class CodeLine
                 case '\n': sb.Append(@"\n"); break;
                 case '\r': sb.Append(@"\r"); break;
                 case '\t': sb.Append(@"\t"); break;
-                case < (char)0x20 or (char)0x7F: sb.Append(@"\x").Append(((int)c).ToString("X2", System.Globalization.CultureInfo.InvariantCulture)); break;
+                case < (char)0x20 or (>= (char)0x7F and <= (char)0x9F):
+                    sb.Append(@"\x").Append(((int)c).ToString("X2", System.Globalization.CultureInfo.InvariantCulture)); break;
+                case var other when NeedsEscape(other):
+                    sb.Append(@"\u").Append(((int)other).ToString("X4", System.Globalization.CultureInfo.InvariantCulture)); break;
                 default: sb.Append(c); break;
             }
         }
         return sb.ToString();
     }
+
+    private static bool NeedsEscape(char c) =>
+        c < 0x20 || c is >= (char)0x7F and <= (char)0x9F
+        || c is '\u2028' or '\u2029' or '\u200E' or '\u200F' or '\u061C'
+        || c is >= '\u202A' and <= '\u202E' || c is >= '\u2066' and <= '\u2069';
 }

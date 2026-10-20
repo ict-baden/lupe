@@ -37,7 +37,7 @@ What Lupe cannot do, what was not tested the way it will be used, and the pitfal
 - **Live search only.** The camera reads the whole frame; the slanted and enlarged versions of the thorough search are reserved for the screen scan and files. A barcode held at a steep angle is found once you hold it straighter.
 - **No light-on-dark barcodes from the camera.** The live search reads light 2D codes (QR, Data Matrix, Aztec, PDF417, MaxiCode), but not a light 1D barcode on a dark background. A photo of it on the page *Datei* gets the thorough search.
 - **Shared mode.** If another program holds the camera, Lupe may get it only in shared read-only mode with that program's format, or not at all.
-- **No typing from the camera** – Lupe is the active window then. Copy, or use the screen scan.
+- **Typing from the camera** works like a handheld scanner into the program in front (*Eintippen*, off by default). Line breaks inside a code are typed as spaces there, so a code held in front of the camera cannot press <kbd>Enter</kbd> in that program – for example run a command in a terminal while Lupe works unattended. The key after typing (<kbd>Enter</kbd> or <kbd>Tab</kbd>, if set) is still sent; multi-line contents come out complete via copying or the screen scan.
 
 ## Screen scan and shortcut
 
@@ -49,7 +49,7 @@ What Lupe cannot do, what was not tested the way it will be used, and the pitfal
 ## Typing
 
 - **Elevated windows.** Windows does not allow a normal program to type into a program running as administrator. Lupe detects it, types nothing and says so. Start Lupe as administrator too if you need it ([details](installation.md#running-as-administrator)).
-- **Control characters are dropped.** Line breaks become <kbd>Enter</kbd>, tabs <kbd>Tab</kbd>; everything else below code 32 – for example the group separator `0x1D` in GS1 codes – cannot be typed. The command line shows it as `\x1D`; the clipboard keeps it.
+- **Control characters are dropped.** Line breaks become <kbd>Enter</kbd> (from the camera: a space), tabs <kbd>Tab</kbd>; everything else below code 32 – for example the group separator `0x1D` in GS1 codes – cannot be typed. The command line shows it as `\x1D`; the clipboard keeps it.
 - **Only with the shortcut from another program.** A scan started from the Lupe window or the notification-area menu does not type – the window in front would be Lupe.
 - **Keys held down.** Lupe waits up to 1.5 seconds for you to release the shortcut keys, then releases the modifiers itself.
 

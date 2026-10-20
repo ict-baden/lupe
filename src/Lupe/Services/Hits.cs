@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+using Lupe.Core.Input;
 using Lupe.Core.Model;
 using Lupe.Core.Resources;
 
@@ -133,7 +134,10 @@ internal sealed class Hits(AppState state)
             if (typeTarget == 0) problems.Add(source == ScanSource.Kamera
                 ? Strings.App_Hits_NotTypedLupeActive
                 : Strings.App_Hits_NotTypedFromLupe);
-            else if (await Typing.TypeIntoAsync(typeTarget, code.Text, state.Settings.TypeSuffix, state.Settings.TypeDelayMs) is { } error) problems.Add(error);
+            // Kamera: Zeilenumbrüche im Code als Leerzeichen – ein Code vor der Kamera soll im Programm vorn kein Enter
+            // drücken können (Lupe tippt dort auch unbeaufsichtigt). Der Bildschirm-Scan startet der Benutzer selbst.
+            else if (await Typing.TypeIntoAsync(typeTarget, source == ScanSource.Kamera ? KeyboardTyper.WithoutLineBreaks(code.Text) : code.Text,
+                         state.Settings.TypeSuffix, state.Settings.TypeDelayMs) is { } error) problems.Add(error);
             else done |= ResultActions.Eintippen;
         }
         if (wanted.HasFlag(ResultActions.LinkOeffnen) && state.LinkFor(code.Text) is { } link)

@@ -8,6 +8,8 @@ namespace Lupe.Core.Settings;
 /// dann per Umbenennen (MoveFileEx mit REPLACE_EXISTING, auf NTFS atomar) an die Zielstelle. Ein Absturz oder
 /// voller Datenträger hinterlässt damit nie eine halbe Datei – entweder steht der alte oder der neue Inhalt da.
 /// Kurze Sperren durch Virenscanner oder Indexdienst werden mit wenigen Wiederholungen abgefangen.
+/// <para>Unter Linux und macOS nur für den eigenen Benutzer lesbar: neue Ordner 0700, Dateien 0600 – Verlauf und
+/// Einstellungen können vertrauliche Inhalte enthalten.</para>
 /// </summary>
 internal static class AtomicFile
 {
@@ -25,13 +27,16 @@ internal static class AtomicFile
     {
         var full = Path.GetFullPath(path);
         var dir = Path.GetDirectoryName(full) ?? throw new IOException(string.Format(Strings.Core_File_NoFolder, full));
-        Directory.CreateDirectory(dir);
+        if (OperatingSystem.IsWindows()) Directory.CreateDirectory(dir);
+        else if (!Directory.Exists(dir)) Directory.CreateDirectory(dir, OwnerOnlyFolder);
 
         // Eindeutiger Name im selben Ordner (gleiches Volume → Umbenennen statt Kopieren)
         var tmp = Path.Combine(dir, $"{Path.GetFileName(full)}.{Guid.NewGuid():N}.tmp");
         try
         {
-            using (var stream = new FileStream(tmp, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 64 * 1024))
+            var options = new FileStreamOptions { Mode = FileMode.CreateNew, Access = FileAccess.Write, Share = FileShare.None, BufferSize = 64 * 1024 };
+            if (!OperatingSystem.IsWindows()) options.UnixCreateMode = OwnerOnlyFile;
+            using (var stream = new FileStream(tmp, options))
             {
                 writeContent(stream);
                 // Erst auf die Platte, dann umbenennen – sonst kann nach einem Stromausfall eine leere Datei übrig bleiben
@@ -55,6 +60,12 @@ internal static class AtomicFile
         stream.ReadExactly(buffer);
         return buffer;
     });
+
+    /// <summary>Rechte neuer Ordner unter Linux und macOS: nur der Benutzer (0700).</summary>
+    internal const UnixFileMode OwnerOnlyFolder = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
+
+    /// <summary>Rechte neuer Dateien unter Linux und macOS: nur der Benutzer (0600).</summary>
+    internal const UnixFileMode OwnerOnlyFile = UnixFileMode.UserRead | UnixFileMode.UserWrite;
 
     /// <summary>Obergrenze beim Lesen – schützt vor einer riesigen (fremden) Datei, die den Speicher füllt.</summary>
     internal const long MaxReadBytes = 256L * 1024 * 1024;

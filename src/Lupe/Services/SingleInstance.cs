@@ -29,6 +29,9 @@ internal abstract class SingleInstance : IDisposable
 
     public abstract void Dispose();
 
+    /// <summary>Linux und macOS: Pfad des Sockets für das Signal (Tests).</summary>
+    internal static string UnixSocketPath => UnixInstance.PipeName;
+
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
     private sealed class WindowsInstance(Mutex mutex, EventWaitHandle show) : SingleInstance
     {
@@ -106,7 +109,12 @@ internal abstract class SingleInstance : IDisposable
             }
         }
 
-        private static string PipeName => $"ict-baden.lupe.{Environment.UserName}";
+        /// <summary>
+        /// Der Unix-Socket im selben Ordner wie die Sperrdatei (ein absoluter Pfad ist für .NET der Ort des Sockets) – nicht
+        /// unter festem Namen im gemeinsamen /tmp, wo ein anderer Benutzer ihn vorher anlegen könnte. Dazu
+        /// <see cref="PipeOptions.CurrentUserOnly"/>: Socket nur für den Benutzer, und der Gegenüber muss derselbe Benutzer sein.
+        /// </summary>
+        internal static string PipeName => Path.Combine(Folder, $"lupe-{Environment.UserName}.sock");
 
         public static SingleInstance? Acquire()
         {
@@ -134,7 +142,7 @@ internal abstract class SingleInstance : IDisposable
         {
             try
             {
-                using var client = new NamedPipeClientStream(".", PipeName, PipeDirection.Out);
+                using var client = new NamedPipeClientStream(".", PipeName, PipeDirection.Out, PipeOptions.CurrentUserOnly);
                 client.Connect(1000);
                 client.WriteByte(scan ? ScanByte : ShowByte);
             }
@@ -153,7 +161,8 @@ internal abstract class SingleInstance : IDisposable
                 {
                     try
                     {
-                        await using var server = new NamedPipeServerStream(PipeName, PipeDirection.In, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+                        await using var server = new NamedPipeServerStream(PipeName, PipeDirection.In, 1, PipeTransmissionMode.Byte,
+                            PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
                         await server.WaitForConnectionAsync(token);
                         var buffer = new byte[1];
                         int read = await server.ReadAsync(buffer, token);

@@ -14,6 +14,22 @@ public sealed class AtomicFileTests : IDisposable
     public void Dispose() => _temp.Dispose();
 
     [Fact]
+    public void Unter_Linux_und_macOS_nur_fuer_den_Benutzer_lesbar()
+    {
+        if (OperatingSystem.IsWindows()) return; // Windows: Rechte erbt der Ordner %LocalAppData%\Lupe
+        var path = _temp.File("neu", "verlauf.json");
+
+        AtomicFile.Write(path, "geheim"u8.ToArray());
+
+        Assert.Equal(AtomicFile.OwnerOnlyFolder, File.GetUnixFileMode(Path.GetDirectoryName(path)!));
+        Assert.Equal(AtomicFile.OwnerOnlyFile, File.GetUnixFileMode(path));
+        // Auch beim Ersetzen einer vorhandenen, lesbaren Datei
+        File.SetUnixFileMode(path, AtomicFile.OwnerOnlyFile | UnixFileMode.GroupRead | UnixFileMode.OtherRead);
+        AtomicFile.Write(path, "neu"u8.ToArray());
+        Assert.Equal(AtomicFile.OwnerOnlyFile, File.GetUnixFileMode(path));
+    }
+
+    [Fact]
     public void Schreibt_neue_Datei_und_legt_Ordner_an()
     {
         var path = _temp.File("a", "b", "c.json");

@@ -65,7 +65,7 @@ DATA_MATRIX	SN:LUP-000815;LOT:2610A
 
 - **Per image**, codes come in reading order – top to bottom, left to right – and each content appears once per format. Images are processed in the order given; a pattern expands alphabetically.
 - **No file name** in the line. If you need to know which image a code came from, call `lesen` once per image – see [Examples](#examples).
-- **Control characters** are escaped so that each code stays on one line: `\n` (line feed), `\r`, `\t` (tab) and `\xHH` for the others – e.g. `\x1D`, the group separator in GS1 codes. A backslash in the content stays as it is, so Wi-Fi codes like `WIFI:S:Netz\;…` and paths remain readable.
+- **Control characters** are escaped so that each code stays on one line: `\n` (line feed), `\r`, `\t` (tab) and `\xHH` for the others, including the C1 range U+0080–U+009F – e.g. `\x1D`, the group separator in GS1 codes, or `\x85` (NEL). Line and paragraph separators (U+2028, U+2029) and the characters that change the writing direction in a terminal (U+200E, U+200F, U+061C, U+202A–U+202E, U+2066–U+2069) appear as `\uXXXX`. A backslash in the content stays as it is, so Wi-Fi codes like `WIFI:S:Netz\;…` and paths remain readable.
 - **Hints and errors** go to **stderr**, so stdout can be processed as it is.
 
 ## Messages and exit codes
