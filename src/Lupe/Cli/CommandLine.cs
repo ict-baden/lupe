@@ -67,7 +67,14 @@ internal static class CommandLine
 
     // ================= lesen =================
 
-    private static int Read(string[] args)
+    private static int Read(string[] args) => Read(args, Console.Out, Console.Error, ImageFile.LoadAsync, formats => new BarcodeDecoder(formats));
+
+    /// <summary>
+    /// <c>lesen</c> mit austauschbarer Ausgabe, Bildquelle und Erkennung (Tests setzen hier etwa einen Ladefehler der
+    /// Erkennung ein).
+    /// </summary>
+    internal static int Read(string[] args, TextWriter output, TextWriter error,
+        Func<string, CancellationToken, Task<PixelImage>> load, Func<IReadOnlyList<string>?, BarcodeDecoder> createDecoder)
     {
         var inputs = new List<string>();
         var formatArgs = new List<string>();
@@ -110,7 +117,7 @@ internal static class CommandLine
                     cts.Token.ThrowIfCancellationRequested();
                     if (problem is not null)
                     {
-                        Console.Error.WriteLine(problem);
+                        error.WriteLine(problem);
                         failed = true;
                         continue;
                     }
@@ -119,8 +126,8 @@ internal static class CommandLine
                     {
                         // Laden auf einem Pool-Thread: Main ist ein STA-Thread, und WinRT-Aufrufe (Windows) sollen nicht
                         // auf einen blockierten STA-Thread zurückmüssen
-                        var image = Task.Run(() => ImageFile.LoadAsync(path, cts.Token), cts.Token).GetAwaiter().GetResult();
-                        decoder ??= new BarcodeDecoder(formats);
+                        var image = Task.Run(() => load(path, cts.Token), cts.Token).GetAwaiter().GetResult();
+                        decoder ??= createDecoder(formats);
                         codes = decoder.Decode(image, cts.Token);
                     }
                     catch (OperationCanceledException)
@@ -131,22 +138,22 @@ internal static class CommandLine
                     {
                         // Die Erkennung lädt auf diesem System nicht – kein „nichts gefunden“, und jedes weitere Bild
                         // scheiterte genauso: abbrechen mit Fehlercode und Exitcode 3
-                        Console.Error.WriteLine(ex.Message);
+                        error.WriteLine(ex.Message);
                         return ExitError;
                     }
                     catch (Exception ex)
                     {
-                        Console.Error.WriteLine(string.Format(Strings.App_Cli_ReadFailed, path, ex.Message));
+                        error.WriteLine(string.Format(Strings.App_Cli_ReadFailed, path, ex.Message));
                         failed = true;
                         continue;
                     }
                     // Ausgabe außerhalb: Bricht die Pipe ab (… | Select-Object -First 1), ist das kein Fehler dieses Bildes
-                    foreach (var code in codes) Console.Out.WriteLine(CodeLine.Format(code));
-                    if (codes.Count == 0) Console.Error.WriteLine(string.Format(Strings.App_Cli_NoCodeFound, IsPattern(input) ? Path.GetFileName(path) : input));
+                    foreach (var code in codes) output.WriteLine(CodeLine.Format(code));
+                    if (codes.Count == 0) error.WriteLine(string.Format(Strings.App_Cli_NoCodeFound, IsPattern(input) ? Path.GetFileName(path) : input));
                     found += codes.Count;
                 }
             }
-            Console.Out.Flush();
+            output.Flush();
             return failed ? ExitError : found > 0 ? ExitFound : ExitNothing;
         }
         finally

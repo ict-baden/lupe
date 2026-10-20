@@ -117,6 +117,9 @@ public sealed class BarcodeDecoder
     /// </summary>
     internal Func<string?> NativeProblem { get; init; } = static () => ZXingLibrary.Problem;
 
+    /// <summary>Ein Lesevorgang auf einer Bildvariante; Tests setzen hier etwa einen Ladefehler mitten im parallelen Lesen ein.</summary>
+    internal Func<GrayImage, ReadSettings, List<NativeCode>> Reader { get; init; } = NativeReader.Read;
+
     internal IReadOnlyList<DecodedCode> Decode(GrayImage gray, CancellationToken ct)
     {
         // Vor jedem Objekt von ZXingCpp: Ein Ladefehler ist kein „nichts gefunden“ (und ein halb angelegtes Objekt
@@ -127,7 +130,7 @@ public sealed class BarcodeDecoder
         foreach (var stage in Stages(gray, _formats, Live))
         {
             if (stage.OnlyIfNothingFound && hits.Exists(h => h.Solid)) break;
-            foreach (var (found, map) in RunStage(stage.Tasks, MaxParallelism, ct))
+            foreach (var (found, map) in RunStage(stage.Tasks, Reader, MaxParallelism, ct))
             {
                 foreach (var f in found) Add(hits, ToHit(f, map, gray.Width, gray.Height, _formats, order));
                 order++;
@@ -283,7 +286,8 @@ public sealed class BarcodeDecoder
         }
     }
 
-    private static (List<NativeCode> Found, PointMap Map)[] RunStage(IReadOnlyList<ScanTask> tasks, int maxParallelism, CancellationToken ct)
+    private static (List<NativeCode> Found, PointMap Map)[] RunStage(IReadOnlyList<ScanTask> tasks, Func<GrayImage, ReadSettings, List<NativeCode>> reader,
+        int maxParallelism, CancellationToken ct)
     {
         var results = new (List<NativeCode>, PointMap)[tasks.Count];
         try
@@ -291,7 +295,7 @@ public sealed class BarcodeDecoder
             // Einzeln verteilen (keine Blöcke), damit ungleich lange Aufgaben die Kerne gleichmäßig auslasten
             var partitioner = Partitioner.Create(Enumerable.Range(0, tasks.Count), EnumerablePartitionerOptions.NoBuffering);
             var options = new ParallelOptions { CancellationToken = ct, MaxDegreeOfParallelism = maxParallelism };
-            Parallel.ForEach(partitioner, options, i => results[i] = RunTask(tasks[i], ct));
+            Parallel.ForEach(partitioner, options, i => results[i] = RunTask(tasks[i], reader, ct));
         }
         catch (AggregateException ex) when (IsCancellation(ex, ct))
         {
@@ -305,12 +309,12 @@ public sealed class BarcodeDecoder
         return results;
     }
 
-    private static (List<NativeCode>, PointMap) RunTask(ScanTask task, CancellationToken ct)
+    private static (List<NativeCode>, PointMap) RunTask(ScanTask task, Func<GrayImage, ReadSettings, List<NativeCode>> reader, CancellationToken ct)
     {
         try
         {
             ct.ThrowIfCancellationRequested();
-            return (NativeReader.Read(task.Variant.Image, task.Settings), task.Variant.ToOriginal);
+            return (reader(task.Variant.Image, task.Settings), task.Variant.ToOriginal);
         }
         catch (Exception ex) when (IsLoadFailure(ex))
         {

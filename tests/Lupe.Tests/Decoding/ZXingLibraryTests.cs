@@ -77,6 +77,50 @@ public sealed class ZXingLibraryTests
     }
 
     [Theory]
+    [InlineData("DllNotFound")]
+    [InlineData("EntryPointNotFound")]
+    [InlineData("BadImageFormat")]
+    [InlineData("TypeInitialization")]
+    public void Ladefehler_mitten_im_parallelen_Lesen_kommt_unverpackt_an(string kind)
+    {
+        // Die Vorabprüfung bestand, der Fehler kommt erst in einer der parallelen Aufgaben (Parallel.ForEach verpackt ihn
+        // in eine AggregateException) – heraus kommt trotzdem DecoderUnavailableException selbst
+        var image = TestCodes.Render("Hallo", BarcodeFormat.QR_CODE);
+        int calls = 0;
+        var decoder = new BarcodeDecoder
+        {
+            NativeProblem = () => null,
+            Reader = (_, _) =>
+            {
+                Interlocked.Increment(ref calls);
+                throw LoadFailure(kind, "libZXing.so: version `GLIBC_2.38' not found");
+            },
+        };
+        var ex = Assert.Throws<DecoderUnavailableException>(() => decoder.Decode(image));
+        Assert.Equal("LUP-0001", ex.Code);
+        Assert.StartsWith("LUP-0001: ", ex.Message);
+        Assert.Contains("GLIBC_2.38", ex.Message);
+        Assert.True(calls >= 1);
+    }
+
+    [Fact]
+    public void Anderer_Fehler_im_Lesevorgang_kostet_nur_dessen_Ergebnis()
+    {
+        var image = TestCodes.Render("Hallo", BarcodeFormat.QR_CODE);
+        var decoder = new BarcodeDecoder { NativeProblem = () => null, Reader = (_, _) => throw new InvalidOperationException("zu groß") };
+        Assert.Empty(decoder.Decode(image));
+    }
+
+    internal static Exception LoadFailure(string kind, string message) => kind switch
+    {
+        "DllNotFound" => new DllNotFoundException(message),
+        "EntryPointNotFound" => new EntryPointNotFoundException(message),
+        "BadImageFormat" => new BadImageFormatException(message),
+        "TypeInitialization" => new TypeInitializationException("ZXingCpp.Dll", new DllNotFoundException(message)),
+        _ => throw new ArgumentOutOfRangeException(nameof(kind)),
+    };
+
+    [Theory]
     [InlineData(typeof(DllNotFoundException), true)]
     [InlineData(typeof(EntryPointNotFoundException), true)]
     [InlineData(typeof(BadImageFormatException), true)]
