@@ -80,7 +80,7 @@ What Lupe cannot do, what was not tested the way it will be used, and the pitfal
 - **Linux camera.** Needs the group `video`. Unplugging is detected by a watchdog (no frames for a while), not by a system event.
 - **macOS permissions.** Camera, Screen Recording and Accessibility must be allowed in *System Settings › Privacy & Security*; after allowing Screen Recording, Lupe has to be restarted. The shortcut only works while Lupe runs (also in the background).
 - **macOS screen capture** uses `screencapture` per display. The work area is the full screen (menu bar and Dock are not subtracted). With displays of different scale, the screenshot of a lower-scale display is enlarged.
-- **Not notarised.** Gatekeeper asks once (*right-click › Öffnen*), see [Installation › macOS](installation.md#macos).
+- **Not notarised.** Gatekeeper blocks the first start; allow it once under *System Settings › Privacy & Security › Open Anyway*, see [Installation › macOS](installation.md#macos). Each update counts as a new app for the permissions (ad-hoc signature), so *Screen Recording* and *Accessibility* have to be granted again.
 
 ---
 

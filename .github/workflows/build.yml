@@ -7,9 +7,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Nur lesen; Schreibrechte bekommen die Jobs, die sie brauchen (release: Releases, windows: Anmeldung bei Azure)
 permissions:
-  contents: write # für die Releases
-  id-token: write # für die Anmeldung bei Azure Artifact Signing (OIDC)
+  contents: read
 
 # Läufe auf demselben Branch nacheinander, damit sich die 'latest'-Releases nicht überholen
 concurrency:
@@ -19,6 +19,8 @@ concurrency:
 env:
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
+  # Avalonia schickt beim Build sonst Nutzungsdaten (Avalonia.BuildServices, AvaloniaStatsTask)
+  AVALONIA_TELEMETRY_OPTOUT: '1'
   # Signieren nur, wenn die Organisation Artifact Signing eingerichtet hat (siehe richtlinien/05-signieren.md)
   # und nicht bei Pull Requests (dort gibt es kein OIDC-Token mit den nötigen Rechten). Bis dahin unsigniert.
   SIGN: ${{ vars.SIGNING_ACCOUNT != '' && github.event_name != 'pull_request' }}
@@ -57,15 +59,79 @@ jobs:
           "suffix=$suffix" >> $env:GITHUB_OUTPUT
           Write-Host "Version: $v  MSI: $msi  Dateien: Lupe$suffix-x64.msi"
 
+  # Native zxing-cpp-Bibliothek selbst gebaut (packaging/zxing): Die aus dem NuGet-Paket ZXingCpp braucht glibc 2.38,
+  # macOS 26 bzw. die VC++-Laufzeit. Gebaut wird sie nur, wenn sich Version oder Skript ändern (Zwischenspeicher);
+  # geprüft wird sie bei jedem Lauf.
+  zxing:
+    name: zxing-cpp (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x64, os: ubuntu-latest, rids: linux-x64 }
+          - { name: linux-arm64, os: ubuntu-24.04-arm, rids: linux-arm64 }
+          - { name: macos, os: macos-latest, rids: osx-arm64 osx-x64 }
+          - { name: windows, os: windows-latest, rids: win-x64 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Zwischenspeicher
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: zxing
+          key: zxing-${{ matrix.name }}-${{ hashFiles('packaging/zxing/build.sh', 'packaging/zxing/versions.env') }}
+
+      - name: Bauen
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        env:
+          ZXING_WORK_BASE: ${{ runner.temp }}
+        run: |
+          for rid in ${{ matrix.rids }}; do
+            ZXING_WORK="$ZXING_WORK_BASE/zxing-$rid" packaging/zxing/build.sh "$rid" zxing
+          done
+
+      - name: dumpbin bereitstellen
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property installationPath
+          $dumpbin = Get-ChildItem "$vs\VC\Tools\MSVC\*\bin\Hostx64\x64\dumpbin.exe" | Select-Object -First 1
+          $dumpbin.DirectoryName >> $env:GITHUB_PATH
+
+      - name: Prüfen (glibc, macOS-Mindestversion, keine VC++-Laufzeit, Exporte)
+        shell: bash
+        run: |
+          for rid in ${{ matrix.rids }}; do
+            packaging/zxing/check.sh "$rid" "$(ls zxing/$rid/*ZXing.*)"
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zxing-${{ matrix.name }}
+          path: zxing/
+          if-no-files-found: error
+          retention-days: 1
+
   windows:
-    needs: version
+    needs: [version, zxing]
     runs-on: windows-latest
+    permissions:
+      contents: read
+      id-token: write # für die Anmeldung bei Azure Artifact Signing (OIDC)
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: zxing-windows
+          path: zxing
 
       - name: Restore
         run: dotnet restore Lupe.sln
@@ -89,19 +155,7 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
-      - name: Publish
-        shell: pwsh
-        run: |
-          $v = '${{ needs.version.outputs.version }}'
-          $common = @('src/Lupe/Lupe.csproj', '-c', 'Release', '-r', 'win-x64', '-p:PublishSingleFile=true', "-p:Version=$v", '-p:DebugType=none')
-          # Benötigt .NET 10 Runtime auf dem Zielgerät
-          dotnet publish @common --self-contained false -o out/framework
-          # Ohne Runtime-Abhängigkeit, Grundlage für die MSI
-          dotnet publish @common --self-contained true -o out/self-contained
-          # Eine einzige Exe zum Direkt-Download: Runtime und native DLLs (Skia, HarfBuzz, ZXing) eingebettet
-          dotnet publish @common --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o out/standalone
-
-      # ---- Signieren der Programmdateien (vor dem Packen, damit ZIP und MSI signierte Dateien enthalten) ----
+      # ---- Signieren (vor dem Packen, damit ZIP und MSI signierte Dateien enthalten) ----
       - name: Bei Azure anmelden
         if: env.SIGN == 'true'
         uses: azure/login@v3
@@ -109,6 +163,32 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: ZXing.dll signieren (selbst gebaut)
+        if: env.SIGN == 'true'
+        uses: azure/artifact-signing-action@v2
+        with:
+          endpoint: ${{ vars.SIGNING_ENDPOINT }}
+          signing-account-name: ${{ vars.SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ vars.SIGNING_PROFILE }}
+          files-folder: ${{ github.workspace }}\zxing\win-x64
+          files-folder-filter: dll
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Publish
+        shell: pwsh
+        run: |
+          $v = '${{ needs.version.outputs.version }}'
+          # ZXing.dll aus dem Job zxing statt aus dem NuGet-Paket (statische C/C++-Laufzeit, keine VC++-Laufzeit nötig)
+          $common = @('src/Lupe/Lupe.csproj', '-c', 'Release', '-r', 'win-x64', '-p:PublishSingleFile=true', "-p:Version=$v", '-p:DebugType=none', "-p:LupeZXingDir=$PWD/zxing")
+          # Benötigt .NET 10 Runtime auf dem Zielgerät
+          dotnet publish @common --self-contained false -o out/framework
+          # Ohne Runtime-Abhängigkeit, Grundlage für die MSI
+          dotnet publish @common --self-contained true -o out/self-contained
+          # Eine einzige Exe zum Direkt-Download: Runtime und native DLLs (Skia, HarfBuzz, ZXing) eingebettet
+          dotnet publish @common --self-contained true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o out/standalone
 
       - name: Exe signieren (framework)
         if: env.SIGN == 'true'
@@ -165,6 +245,38 @@ jobs:
           Copy-Item installer/bin/Release/Lupe.msi "dist/Lupe${{ needs.version.outputs.suffix }}-x64.msi"
           Get-ChildItem dist | Format-Table Name, Length
 
+      - name: dumpbin bereitstellen
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property installationPath
+          $dumpbin = Get-ChildItem "$vs\VC\Tools\MSVC\*\bin\Hostx64\x64\dumpbin.exe" | Select-Object -First 1
+          $dumpbin.DirectoryName >> $env:GITHUB_PATH
+
+      - name: Pakete prüfen (keine VC++-Laufzeit, Rauchtest)
+        shell: bash
+        run: |
+          # Die ausgelieferte ZXing.dll ist die selbst gebaute, und keine native Datei braucht die VC++-Laufzeit
+          cmp zxing/win-x64/ZXing.dll out/framework/ZXing.dll
+          cmp zxing/win-x64/ZXing.dll out/self-contained/ZXing.dll
+          packaging/check-natives.sh win-x64 out/framework
+          # Lupe liest einen Code: ZIP-Variante, einzelne Exe (Bibliotheken eingebettet), Self-contained (Grundlage der MSI)
+          packaging/smoke.sh out/framework/Lupe.exe
+          packaging/smoke.sh dist/Lupe.exe
+          packaging/smoke.sh out/self-contained/Lupe.exe
+
+      - name: MSI installieren und deinstallieren
+        shell: pwsh
+        run: |
+          $msi = (Get-ChildItem dist/*.msi).FullName
+          $p = Start-Process msiexec.exe -ArgumentList '/i', "`"$msi`"", '/qn', '/l*v', 'msi-install.log' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content msi-install.log -Tail 40; throw "Installation: Exitcode $($p.ExitCode)" }
+          # Git Bash ausdrücklich: „bash“ allein kann unter Windows die WSL-Bash sein
+          & "$env:ProgramFiles\Git\bin\bash.exe" packaging/smoke.sh "$env:ProgramFiles\Lupe\Lupe.exe"
+          if ($LASTEXITCODE -ne 0) { throw 'Rauchtest der installierten Lupe fehlgeschlagen' }
+          $p = Start-Process msiexec.exe -ArgumentList '/x', "`"$msi`"", '/qn' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "Deinstallation: Exitcode $($p.ExitCode)" }
+          if (Test-Path "$env:ProgramFiles\Lupe\Lupe.exe") { throw 'Lupe.exe ist nach der Deinstallation noch da' }
+
       - name: MSI signieren
         if: env.SIGN == 'true'
         uses: azure/artifact-signing-action@v2
@@ -187,7 +299,7 @@ jobs:
           retention-days: 1
 
   linux:
-    needs: version
+    needs: [version, zxing]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -195,6 +307,12 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: zxing-linux-*
+          path: zxing
+          merge-multiple: true
 
       - name: Pakete für Tests
         run: |
@@ -223,7 +341,8 @@ jobs:
         run: |
           v='${{ needs.version.outputs.version }}'
           for arch in x64 arm64; do
-            dotnet publish src/Lupe/Lupe.csproj -c Release -r linux-$arch --self-contained true "-p:Version=$v" -p:DebugType=none -o out/linux-$arch
+            # libZXing.so aus dem Job zxing (glibc 2.28) statt aus dem NuGet-Paket (glibc 2.38)
+            dotnet publish src/Lupe/Lupe.csproj -c Release -r linux-$arch --self-contained true "-p:Version=$v" -p:DebugType=none "-p:LupeZXingDir=$PWD/zxing" -o out/linux-$arch
             packaging/linux/package.sh out/linux-$arch $arch "$v" dist '${{ needs.version.outputs.suffix }}'
           done
           ls -l dist
@@ -233,8 +352,25 @@ jobs:
           dpkg-deb --info dist/*.deb
           test "$(dpkg-deb --field dist/*.deb Package)" = ictbaden-lupe
           tar -tzf dist/Lupe*-linux-x64.tar.gz | grep -E '^lupe/(Lupe|lupe.desktop|install.sh|lupe.png|libZXing.so|libSkiaSharp.so)$'
+          dpkg-deb --field dist/*.deb Depends | grep -E 'libc6 \(>= 2\.[0-9]+\)'
           mkdir -p /tmp/lupe-probe && tar -xzf dist/Lupe*-linux-x64.tar.gz -C /tmp/lupe-probe
           /tmp/lupe-probe/lupe/Lupe --hilfe | head -n 3
+          # Die ausgelieferten Bibliotheken laden auf älteren Systemen (glibc, libstdc++), libZXing.so ist die selbst gebaute
+          for arch in x64 arm64; do
+            cmp zxing/linux-$arch/libZXing.so out/linux-$arch/libZXing.so
+            packaging/check-natives.sh linux-$arch out/linux-$arch
+          done
+
+      - name: Rauchtest auf älteren Systemen (x64)
+        run: |
+          # .deb auf Ubuntu 22.04 (apt holt die Abhängigkeiten), tar.gz auf Ubuntu 20.04 (glibc 2.31) und Debian 12
+          docker run --rm -v "$PWD/dist:/dist:ro" -v "$PWD/packaging:/p:ro" ubuntu:22.04 sh -c \
+            'export DEBIAN_FRONTEND=noninteractive; apt-get update -qq && apt-get install -y -qq /dist/lupe_*amd64.deb >/dev/null && /p/smoke.sh lupe'
+          for image in ubuntu:20.04 debian:12; do
+            echo "== $image"
+            docker run --rm -v "$PWD/dist:/dist:ro" -v "$PWD/packaging:/p:ro" "$image" sh -c \
+              'export DEBIAN_FRONTEND=noninteractive; apt-get update -qq && apt-get install -y -qq --no-install-recommends libfontconfig1 $(apt-cache search --names-only "^libicu[0-9]+$" | cut -d" " -f1 | head -n 1) >/dev/null && tar -xzf /dist/Lupe*-linux-x64.tar.gz -C /tmp && /p/smoke.sh /tmp/lupe/Lupe'
+          done
 
       - uses: actions/upload-artifact@v4
         with:
@@ -244,15 +380,43 @@ jobs:
           # Der Release-Job holt sie sofort ab; länger aufbewahrt sprengen sie den Artifact-Speicher (Free-Plan: 500 MB)
           retention-days: 1
 
+  linux-arm64-rauchtest:
+    needs: linux
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: Pakete-linux
+          path: dist
+
+      - name: Rauchtest auf älteren Systemen (arm64)
+        run: |
+          for image in ubuntu:20.04 debian:12; do
+            echo "== $image"
+            docker run --rm -v "$PWD/dist:/dist:ro" -v "$PWD/packaging:/p:ro" "$image" sh -c \
+              'export DEBIAN_FRONTEND=noninteractive; apt-get update -qq && apt-get install -y -qq --no-install-recommends libfontconfig1 $(apt-cache search --names-only "^libicu[0-9]+$" | cut -d" " -f1 | head -n 1) >/dev/null && tar -xzf /dist/Lupe*-linux-arm64.tar.gz -C /tmp && /p/smoke.sh /tmp/lupe/Lupe'
+          done
+
   macos:
-    needs: version
+    needs: [version, zxing]
     runs-on: macos-latest
+    env:
+      # Developer-ID-Signatur und Notarisierung nur, wenn die Organisation die Zugangsdaten hinterlegt hat (Apple Developer
+      # Program, siehe docs/development.md) und nicht bei Pull Requests. Bis dahin ad hoc signiert wie bisher.
+      MACOS_SIGN: ${{ secrets.MACOS_CERTIFICATE_P12 != '' && github.event_name != 'pull_request' }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-dotnet@v4
         with:
           global-json-file: global.json
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: zxing-macos
+          path: zxing
 
       - name: Build
         run: dotnet build tests/Lupe.Tests -c Release -f net10.0
@@ -273,20 +437,62 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
+      - name: Signierzertifikat in einen eigenen Schlüsselbund
+        if: env.MACOS_SIGN == 'true'
+        env:
+          MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          keychain="$RUNNER_TEMP/lupe-signing.keychain-db"
+          password=$(openssl rand -base64 24)
+          echo "$MACOS_CERTIFICATE_P12" | base64 --decode > "$RUNNER_TEMP/lupe.p12"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 3600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          security import "$RUNNER_TEMP/lupe.p12" -k "$keychain" -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$password" "$keychain"
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          rm "$RUNNER_TEMP/lupe.p12"
+
       - name: Publish und Lupe.app
+        env:
+          # Leer = ad hoc signiert (package.sh); sonst Developer ID mit Hardened Runtime und, mit den Notar-Angaben, notarisiert
+          MACOS_SIGN_IDENTITY: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_SIGN_IDENTITY || '' }}
+          MACOS_NOTARY_APPLE_ID: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_NOTARY_APPLE_ID || '' }}
+          MACOS_NOTARY_TEAM_ID: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_NOTARY_TEAM_ID || '' }}
+          MACOS_NOTARY_PASSWORD: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_NOTARY_PASSWORD || '' }}
         run: |
           v='${{ needs.version.outputs.version }}'
           for arch in arm64 x64; do
-            dotnet publish src/Lupe/Lupe.csproj -c Release -r osx-$arch --self-contained true "-p:Version=$v" -p:DebugType=none -o out/osx-$arch
+            # libZXing.dylib aus dem Job zxing (ab macOS 12) statt aus dem NuGet-Paket (macOS 26 bzw. 15)
+            dotnet publish src/Lupe/Lupe.csproj -c Release -r osx-$arch --self-contained true "-p:Version=$v" -p:DebugType=none "-p:LupeZXingDir=$PWD/zxing" -o out/osx-$arch
             packaging/macos/package.sh out/osx-$arch $arch "$v" dist '${{ needs.version.outputs.suffix }}'
           done
           ls -l dist
 
       - name: Lupe.app prüfen
         run: |
-          mkdir -p /tmp/lupe-probe && ditto -x -k dist/Lupe*-macos-arm64.zip /tmp/lupe-probe
-          plutil -p /tmp/lupe-probe/Lupe.app/Contents/Info.plist | grep NSCameraUsageDescription
-          /tmp/lupe-probe/Lupe.app/Contents/MacOS/Lupe --hilfe | head -n 3
+          for arch in arm64 x64; do
+            mkdir -p /tmp/lupe-probe-$arch && ditto -x -k dist/Lupe*-macos-$arch.zip /tmp/lupe-probe-$arch
+            app=/tmp/lupe-probe-$arch/Lupe.app
+            plutil -p $app/Contents/Info.plist | grep -E 'NSCameraUsageDescription|LSMinimumSystemVersion|CFBundleVersion'
+            codesign --verify --deep --strict $app
+            cmp zxing/osx-$arch/libZXing.dylib out/osx-$arch/libZXing.dylib
+            # Keine mitgelieferte Bibliothek verlangt ein neueres macOS als LSMinimumSystemVersion
+            rid=osx-$arch; packaging/check-natives.sh $rid $app/Contents/MacOS
+          done
+          /tmp/lupe-probe-arm64/Lupe.app/Contents/MacOS/Lupe --hilfe | head -n 3
+          packaging/smoke.sh /tmp/lupe-probe-arm64/Lupe.app/Contents/MacOS/Lupe
+          # Intel-Fassung unter Rosetta, wenn der Runner es hat
+          if arch -x86_64 /usr/bin/true 2>/dev/null; then
+            packaging/smoke.sh /tmp/lupe-probe-x64/Lupe.app/Contents/MacOS/Lupe
+          else
+            echo "Rosetta fehlt – Rauchtest der Intel-Fassung übersprungen"
+          fi
+          if [ "$MACOS_SIGN" = true ]; then
+            spctl --assess --type execute -vv /tmp/lupe-probe-arm64/Lupe.app
+            xcrun stapler validate /tmp/lupe-probe-arm64/Lupe.app
+          fi
 
       - uses: actions/upload-artifact@v4
         with:
@@ -297,9 +503,11 @@ jobs:
           retention-days: 1
 
   release:
-    needs: [version, windows, linux, macos]
+    needs: [version, windows, linux, linux-arm64-rauchtest, macos]
     if: github.event_name != 'pull_request' && (github.ref_type == 'tag' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # für die Releases
     steps:
       - uses: actions/checkout@v4
 
@@ -351,7 +559,7 @@ jobs:
                    "**Linux** (X11 und Wayland)`n`n" +
                    "- **[lupe_amd64.deb]($base/lupe_amd64.deb)**: Paket für Debian/Ubuntu (x64)`n" +
                    "- **[Lupe-linux-x64.tar.gz]($base/Lupe-linux-x64.tar.gz)** / **[Lupe-linux-arm64.tar.gz]($base/Lupe-linux-arm64.tar.gz)**: entpacken, ``./install.sh```n`n" +
-                   "**macOS** (12 oder neuer, nicht notarisiert: beim ersten Start Rechtsklick → Öffnen)`n`n" +
+                   "**macOS** (12 oder neuer; noch nicht notarisiert: beim ersten Start unter Systemeinstellungen › Datenschutz & Sicherheit „Dennoch öffnen“ wählen, siehe [Installation](https://github.com/$env:GITHUB_REPOSITORY/blob/main/docs/installation.md#macos))`n`n" +
                    "- **[Lupe-macos-arm64.zip]($base/Lupe-macos-arm64.zip)**: Apple Silicon`n" +
                    "- **[Lupe-macos-x64.zip]($base/Lupe-macos-x64.zip)**: Intel`n`n" +
                    "[SHA256SUMS.txt]($base/SHA256SUMS.txt): Prüfsummen aller Dateien"
