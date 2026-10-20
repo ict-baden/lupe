@@ -259,6 +259,8 @@ jobs:
           cmp zxing/win-x64/ZXing.dll out/framework/ZXing.dll
           cmp zxing/win-x64/ZXing.dll out/self-contained/ZXing.dll
           packaging/check-natives.sh win-x64 out/framework
+          # Jede mitgelieferte Bibliothek steht in THIRD-PARTY-NOTICES.txt (deps.json der Einzeldatei liegt unter obj/)
+          python packaging/check-notices.py src/Lupe/obj/Release/net10.0-windows10.0.19041.0/win-x64/Lupe.deps.json out/self-contained
           # Lupe liest einen Code: ZIP-Variante, einzelne Exe (Bibliotheken eingebettet), Self-contained (Grundlage der MSI)
           packaging/smoke.sh out/framework/Lupe.exe
           packaging/smoke.sh dist/Lupe.exe
@@ -359,6 +361,7 @@ jobs:
           for arch in x64 arm64; do
             cmp zxing/linux-$arch/libZXing.so out/linux-$arch/libZXing.so
             packaging/check-natives.sh linux-$arch out/linux-$arch
+            python3 packaging/check-notices.py out/linux-$arch/Lupe.deps.json out/linux-$arch
           done
 
       - name: Rauchtest auf älteren Systemen (x64)
@@ -480,6 +483,7 @@ jobs:
             cmp zxing/osx-$arch/libZXing.dylib out/osx-$arch/libZXing.dylib
             # Keine mitgelieferte Bibliothek verlangt ein neueres macOS als LSMinimumSystemVersion
             rid=osx-$arch; packaging/check-natives.sh $rid $app/Contents/MacOS
+            python3 packaging/check-notices.py out/osx-$arch/Lupe.deps.json out/osx-$arch
           done
           /tmp/lupe-probe-arm64/Lupe.app/Contents/MacOS/Lupe --hilfe | head -n 3
           packaging/smoke.sh /tmp/lupe-probe-arm64/Lupe.app/Contents/MacOS/Lupe
