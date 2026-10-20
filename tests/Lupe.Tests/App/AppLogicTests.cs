@@ -226,13 +226,19 @@ public sealed class AppLogicTests
     [AppFact]
     public void Lizenztexte_eingebettet_und_neben_der_Exe()
     {
-        var text = (string?)AppInternals.Call("Lupe.Services.ThirdPartyNotices", "Text");
+        var text = (string?)AppInternals.Call("Lupe.Services.ThirdPartyNotices", "Text", "THIRD-PARTY-NOTICES.txt");
         Assert.NotNull(text);
-        foreach (var part in new[] { "zxing-cpp 3.1.1", "Apache License", "libzint", "libzueci", "BSD 3-Clause", "Hoehrmann", "MIT" })
+        foreach (var part in new[] { "zxing-cpp 3.1.1", "Apache License", "libzint", "libzueci", "BSD 3-Clause", "Hoehrmann", "MIT",
+                     "av_libglesv2.dll", "MicroCom.Runtime", "Microsoft.Windows.SDK.NET.dll", "APPENDIX" })
             Assert.Contains(part, text);
         // Dieselbe Fassung liegt neben Lupe.exe (ZIP und MSI liefern sie so aus)
         var file = Path.Combine(Path.GetDirectoryName(AppExe.Path!)!, "THIRD-PARTY-NOTICES.txt");
         Assert.Equal(text.ReplaceLineEndings(), File.ReadAllText(file).ReplaceLineEndings());
+        // Lupes eigene Lizenz ebenso (Info-Seite zeigt sie lokal)
+        var license = (string?)AppInternals.Call("Lupe.Services.ThirdPartyNotices", "Text", "LICENSE.txt");
+        Assert.NotNull(license);
+        Assert.Contains("MIT License", license);
+        Assert.Equal(license.ReplaceLineEndings(), File.ReadAllText(Path.Combine(Path.GetDirectoryName(AppExe.Path!)!, "LICENSE.txt")).ReplaceLineEndings());
     }
 
     private static string FormatLabel(string name) => (string)AppInternals.Call("Lupe.Labels", "Format", name)!;
