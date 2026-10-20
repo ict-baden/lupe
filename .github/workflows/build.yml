@@ -594,7 +594,7 @@ jobs:
                    "- **[Lupe-win-x64-framework.zip]($base/Lupe-win-x64-framework.zip)**: kleine Variante, braucht die .NET 10 Runtime`n`n" +
                    "**Linux** (X11 und Wayland)`n`n" +
                    "- **[lupe_amd64.deb]($base/lupe_amd64.deb)**: Paket für Debian/Ubuntu (x64)`n" +
-                   "- **[Lupe-linux-x64.tar.gz]($base/Lupe-linux-x64.tar.gz)** / **[Lupe-linux-arm64.tar.gz]($base/Lupe-linux-arm64.tar.gz)**: entpacken, ``./install.sh```n`n" +
+                   "- **[Lupe-linux-x64.tar.gz]($base/Lupe-linux-x64.tar.gz)** / **[Lupe-linux-arm64.tar.gz]($base/Lupe-linux-arm64.tar.gz)**: entpacken, ``lupe/install.sh`` (glibc 2.27 oder neuer)`n`n" +
                    "**macOS** (12 oder neuer; noch nicht notarisiert: beim ersten Start unter Systemeinstellungen › Datenschutz & Sicherheit „Dennoch öffnen“ wählen, siehe [Installation](https://github.com/$env:GITHUB_REPOSITORY/blob/main/docs/installation.md#macos))`n`n" +
                    "- **[Lupe-macos-arm64.zip]($base/Lupe-macos-arm64.zip)**: Apple Silicon`n" +
                    "- **[Lupe-macos-x64.zip]($base/Lupe-macos-x64.zip)**: Intel`n`n" +
