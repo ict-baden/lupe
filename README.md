@@ -235,7 +235,7 @@ Lupe is a rewrite of Till's [Barcode-Reader](https://github.com/pieewiee/Barcode
     <td valign="top"><a href="docs/link-rules.md"><b>Link rules</b></a><br><sub>Pattern and prefix, the three ways a link is built, examples, and the safety checks</sub></td>
   </tr>
   <tr>
-    <td valign="top"><a href="docs/command-line.md"><b>Command line</b></a><br><sub>Reading images with <code>lesen</code>, choosing formats, output and exit codes, encoding, waiting with <code>start /wait</code>, start switches</sub></td>
+    <td valign="top"><a href="docs/command-line.md"><b>Command line</b></a><br><sub>Reading images with <code>lesen</code>, choosing formats, output and exit codes, encoding, waiting with <code>start /wait</code>, Linux and macOS, <code>--version</code> and <code>--info</code>, start switches</sub></td>
     <td valign="top"><a href="docs/how-it-works.md"><b>How it works</b></a><br><sub>Decoding stages, live vs. thorough search, phantom-code protection, screen capture and DPI, typing, camera</sub></td>
   </tr>
   <tr>
@@ -243,7 +243,8 @@ Lupe is a rewrite of Till's [Barcode-Reader](https://github.com/pieewiee/Barcode
     <td valign="top"><a href="docs/limitations.md"><b>Limitations</b></a><br><sub>What was not tested on real hardware, elevated windows, control characters, encodings and other honest limits</sub></td>
   </tr>
   <tr>
-    <td colspan="2" valign="top"><a href="docs/development.md"><b>Development</b></a><br><sub>Building with .NET 10, about 1,300 tests and which ones skip themselves, architecture, CI and releases, MSI, regenerating the screenshots</sub></td>
+    <td valign="top"><a href="docs/error-codes.md"><b>Error codes</b></a><br><sub>Messages with a code such as <code>LUP-0001</code>: what they mean and what to do</sub></td>
+    <td valign="top"><a href="docs/development.md"><b>Development</b></a><br><sub>Building with .NET 10, about 1,300 tests and which ones skip themselves, architecture, CI and releases, the self-built zxing-cpp library, MSI, regenerating the screenshots</sub></td>
   </tr>
 </table>
 

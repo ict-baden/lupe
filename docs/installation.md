@@ -150,7 +150,7 @@ Tagged releases name the package `lupe_1.2.3_amd64.deb`. The libraries Lupe need
 
 ## macOS
 
-Lupe runs on macOS 12 or later. Download [`Lupe-macos-arm64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-arm64.zip) for Apple Silicon (M1 and later) or [`Lupe-macos-x64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-x64.zip) for Intel Macs, unzip it and move `Lupe.app` to *Programme* (*Applications*). .NET is included.
+Lupe runs on macOS 12 or later. Download [`Lupe-macos-arm64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-arm64.zip) for Apple Silicon (M1 and later) or [`Lupe-macos-x64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-x64.zip) for Intel Macs, unzip it and move `Lupe.app` to *Programme* (*Applications*). .NET is included. Unzip with the Finder (double-click) or `ditto -x -k Lupe-macos-arm64.zip .` – the command-line tool `unzip` drops the extended attributes that carry the signatures of the bundled .NET files, and macOS then refuses the app as damaged.
 
 - **Gatekeeper:** the app is only ad-hoc signed, not yet signed with a Developer ID and not notarised, so macOS refuses the first start with *“Lupe.app” cannot be opened* (or *Apple could not verify …*). Once per download:
   1. Open `Lupe.app` once and close the message with *Done* / *OK*.
