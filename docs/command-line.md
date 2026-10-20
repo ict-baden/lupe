@@ -2,9 +2,9 @@
 
 # Command line
 
-The same `Lupe.exe` that opens the window also reads image files without one: given the command `lesen` (read), it prints one line per code and ends with an exit code – for scripts, scheduled tasks and folders full of scans. Output and messages are in German.
+The same `Lupe.exe` that opens the window also reads image files without one: given the command `lesen` (read), it prints one line per code and ends with an exit code – for scripts, scheduled tasks and folders full of scans. Messages follow the interface language (English, German, Spanish, French or Chinese – the system language or `LUPE_LANGUAGE`); the output lines (`FORMAT<Tab>content`) are the same in every language. On Linux the command is `lupe` (the `.deb` and `install.sh` create it), on macOS `/Applications/Lupe.app/Contents/MacOS/Lupe` – see [Linux and macOS](#linux-and-macos).
 
-**Contents:** [Overview](#overview) · [lesen](#lesen) · [Output](#output) · [Messages and exit codes](#messages-and-exit-codes) · [Waiting for the end](#waiting-for-the-end) · [Examples](#examples) · [Encoding](#encoding) · [Start switches](#start-switches)
+**Contents:** [Overview](#overview) · [lesen](#lesen) · [Output](#output) · [Messages and exit codes](#messages-and-exit-codes) · [Waiting for the end](#waiting-for-the-end) · [Examples](#examples) · [Encoding](#encoding) · [Linux and macOS](#linux-and-macos) · [Start switches](#start-switches)
 
 ## Overview
 
@@ -18,7 +18,7 @@ Lupe.exe --screenshots <folder> [--theme hell|dunkel|beide]
 Lupe.exe --hilfe                      help (also --help, -h, -?, /?, /h, hilfe)
 ```
 
-The theme values stay German: `hell`, `dunkel`, `beide` (light, dark, both). Commands and options are not case-sensitive. An unknown command or option ends with an error message and exit code 3, for example:
+English names work as well: `read` for `lesen`, `--help`, `--background` for `--hintergrund`, `--screen` for `--bildschirm`, and the theme values `light`, `dark`, `both` for `hell`, `dunkel`, `beide`. `--version` prints the version (for bug reports), `--info` the version, licence, website, legal notice (Impressum), privacy and support links. Commands and options are not case-sensitive. An unknown command or option ends with an error message and exit code 3, for example:
 
 ```text
 Fehler: Unbekannter Befehl „frobnicate“.
@@ -146,6 +146,22 @@ Known pitfalls:
 - **A pipe can lose characters.** Content outside the console's code page – Chinese text, emoji, many symbols – arrives as `?`. Redirect into a file for lossless UTF-8, or switch the console to UTF-8 first (`chcp 65001`).
 - **PowerShell 7.4 and later** pass the bytes of `& Lupe.exe … > codes.txt` through unchanged. With an OEM console the file then contains OEM text. Use the redirection of cmd (e.g. in a `.cmd` file), or set `[Console]::OutputEncoding = [Text.Encoding]::UTF8` first.
 - **`> NUL` does not silence Lupe.** The NUL device looks like a console, so the output still appears in the console window.
+
+## Linux and macOS
+
+Everything above applies, with these differences:
+
+| | Linux | macOS |
+|---|---|---|
+| Command | `lupe` – the `.deb` puts it in `/usr/bin`, `install.sh` in `~/.local/bin`; from the unpacked folder `./Lupe` | `/Applications/Lupe.app/Contents/MacOS/Lupe` (there is no `lupe` on the `PATH`; an alias helps: `alias lupe=/Applications/Lupe.app/Contents/MacOS/Lupe`) |
+| Image formats | PNG, JPEG, BMP, GIF, WebP and ICO – **no TIFF** | PNG, JPEG, HEIC, TIFF, GIF, BMP, WebP and whatever else ImageIO reads |
+| Waiting, encoding | The shell waits for Lupe; output is UTF-8 – nothing of [Waiting for the end](#waiting-for-the-end) or the code-page notes applies | same as Linux |
+| Help | `lupe --hilfe` shows the commands, examples and image formats for the system it runs on | same |
+
+```sh
+lupe lesen ~/Scans/*.jpg --format QR_CODE > codes.txt
+case $? in 0) echo found ;; 1) echo nothing ;; *) echo error ;; esac
+```
 
 ## Start switches
 

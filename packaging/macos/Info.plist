@@ -9,13 +9,14 @@
   <key>CFBundleIconFile</key><string>lupe.icns</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>@SHORTVERSION@</string>
-  <key>CFBundleVersion</key><string>@VERSION@</string>
-  <key>CFBundleDevelopmentRegion</key><string>de</string>
+  <key>CFBundleVersion</key><string>@BUNDLEVERSION@</string>
+  <key>CFBundleDevelopmentRegion</key><string>en</string>
+  <key>CFBundleLocalizations</key><array><string>en</string><string>de</string><string>es</string><string>fr</string><string>zh-Hans</string></array>
   <key>LSMinimumSystemVersion</key><string>12.0</string>
   <key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>NSPrincipalClass</key><string>NSApplication</string>
-  <key>NSCameraUsageDescription</key><string>Lupe liest QR- und Barcodes aus dem Kamerabild. Das Bild bleibt auf diesem Mac.</string>
+  <key>NSCameraUsageDescription</key><string>Lupe reads QR codes and barcodes from the camera image. The image stays on this Mac.</string>
   <key>NSHumanReadableCopyright</key><string>ICT-Baden</string>
 </dict>
 </plist>

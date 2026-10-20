@@ -1,0 +1,2412 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- Chinesisch (vereinfacht) (zh-Hans): maschinell vorübersetzt (Claude, 2026-10-20), Fachbegriffe nach ict-baden/richtlinien/sprachen/glossar.csv.
+       NOCH NICHT GEGENGELESEN – vor dem ersten öffentlichen Release liest ein Muttersprachler jede Zeile gegen
+       (Richtlinie 13). Schlüssel und Platzhalter wie in Strings.resx (Englisch); LocalizationTests prüft beides. -->
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="App_Action_Copied" xml:space="preserve">
+    <value>已复制</value>
+  </data>
+  <data name="App_Action_LinkOpened" xml:space="preserve">
+    <value>已打开链接</value>
+  </data>
+  <data name="App_Action_Typed" xml:space="preserve">
+    <value>已输入</value>
+  </data>
+  <data name="App_Choice_ActionCopied" xml:space="preserve">
+    <value>复制</value>
+  </data>
+  <data name="App_Choice_ActionLinkOpened" xml:space="preserve">
+    <value>作为链接打开（如有匹配的规则）</value>
+  </data>
+  <data name="App_Choice_ActionTyped" xml:space="preserve">
+    <value>输入到上一个窗口</value>
+  </data>
+  <data name="App_Choice_Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="App_Choice_CancelTip" xml:space="preserve">
+    <value>取消（Esc）</value>
+  </data>
+  <data name="App_Choice_CopyAll" xml:space="preserve">
+    <value>全部复制</value>
+  </data>
+  <data name="App_Choice_CopyAllTip" xml:space="preserve">
+    <value>将所有代码复制到剪贴板，每行一个</value>
+  </data>
+  <data name="App_Choice_Explain" xml:space="preserve">
+    <value>所选代码将被{0}。所有代码均已记入历史记录。</value>
+  </data>
+  <data name="App_Choice_ExplainNoActions" xml:space="preserve">
+    <value>所选代码作为结果；所有代码均已记入历史记录。</value>
+  </data>
+  <data name="App_Choice_ListName" xml:space="preserve">
+    <value>找到的代码</value>
+  </data>
+  <data name="App_Choice_Take" xml:space="preserve">
+    <value>应用</value>
+  </data>
+  <data name="App_Choice_Title" xml:space="preserve">
+    <value>找到 {0} 个代码，选择哪一个？</value>
+  </data>
+  <data name="App_Choice_WindowTitle" xml:space="preserve">
+    <value>Lupe – 选择代码</value>
+  </data>
+  <data name="App_Cli_Cancelled" xml:space="preserve">
+    <value>已取消。</value>
+  </data>
+  <data name="App_Cli_Error" xml:space="preserve">
+    <value>错误：{0}</value>
+  </data>
+  <data name="App_Cli_ExampleFile" xml:space="preserve">
+    <value>label.png</value>
+  </data>
+  <data name="App_Cli_FileNotFound" xml:space="preserve">
+    <value>找不到文件：{0}</value>
+  </data>
+  <data name="App_Cli_FolderNotFound" xml:space="preserve">
+    <value>找不到文件夹：{0}</value>
+  </data>
+  <data name="App_Cli_FormatNeedsValue" xml:space="preserve">
+    <value>“--format”需要一个值，例如 --format QR_CODE。</value>
+  </data>
+  <data name="App_Cli_FormatsFallback" xml:space="preserve">
+    <value>QR_CODE、DATA_MATRIX、AZTEC、PDF_417、EAN_13、CODE_128 等</value>
+  </data>
+  <data name="App_Cli_Help" xml:space="preserve">
+    <value>Lupe {0} – 读取二维码和条码
+
+用法：
+  {3}
+      启动界面
+  {3} lesen &lt;图像&gt; [&lt;图像&gt; …] [--format &lt;格式&gt;]
+  {3} --hintergrund
+      仅在通知区域中启动（用于开机自启动）
+  {3} --bildschirm
+      立即扫描屏幕区域（如果 Lupe 已在运行，则由其扫描）
+      – 用于自定义快捷键
+  {3} --demo
+      带演示摄像头和示例历史记录的界面
+      （不保存任何内容，不注册全局快捷键）
+  {3} --screenshots &lt;文件夹&gt; [--theme hell|dunkel|beide]
+  {3} --hilfe
+  {3} --version
+      版本，用于错误报告
+  {3} --info
+      版本、许可证、网站、法律声明（Impressum）、隐私和支持
+英文名称同样可用：read、--background、--screen、--help、--theme light|dark|both。
+
+屏幕扫描：{1}（默认，可在设置中更改）读取屏幕的一个区域
+– 可在任何程序中使用，只要 Lupe 正在运行。
+
+“lesen”在每个图像中查找所有代码，每个代码输出一行：
+  格式&lt;Tab&gt;内容                          例如 QR_CODE&lt;Tab&gt;https://example.org
+内容中的控制字符会被转义：\n（换行）、\r、\t（制表符），
+其他字符写作 \xHH – 例如 \x1D，即 GS1 代码中的分隔符。提示（“未找到代码”）
+和错误输出到 stderr，因此输出便于进一步处理。
+
+{4} 文件名中可以使用通配符，例如 {5}。
+
+“lesen”的选项：
+  --format &lt;格式&gt;     只查找这些格式（可重复或用逗号分隔），
+                      例如 --format QR_CODE,EAN_13（也可简写：qr、ean13）。
+                      默认：全部。
+格式：{2}
+
+退出代码：
+  0  至少找到一个代码
+  1  未找到代码
+  3  错误（图像缺失或无法读取、调用错误、已取消）– 即使在其他图像中
+     找到了代码
+
+示例：
+  {3} lesen {7}
+  {3} lesen {5} --format QR_CODE &gt; codes.txt{6}</value>
+  </data>
+  <data name="App_Cli_HelpHint" xml:space="preserve">
+    <value>帮助：{0} --hilfe</value>
+  </data>
+  <data name="App_Cli_ImagesLinux" xml:space="preserve">
+    <value>图像：PNG、JPEG、BMP、GIF、WebP 和 ICO（不支持 TIFF）。</value>
+  </data>
+  <data name="App_Cli_ImagesMac" xml:space="preserve">
+    <value>图像：PNG、JPEG、HEIC、TIFF、GIF、BMP、WebP 以及 macOS 能读取的其他格式。</value>
+  </data>
+  <data name="App_Cli_ImagesWindows" xml:space="preserve">
+    <value>图像：PNG、JPEG、BMP、GIF、TIFF 以及 Windows 能读取的其他格式。</value>
+  </data>
+  <data name="App_Cli_Info" xml:space="preserve">
+    <value>{0}
+{1} – MIT 许可证
+本软件不会向 ICT-Baden 发送任何数据。
+
+许可证：      {2}
+第三方许可证：{3}
+源代码：      {4}
+网站：        {5}
+法律声明：    {6}
+隐私：        {7}
+支持：        {8}</value>
+  </data>
+  <data name="App_Cli_InvalidPath" xml:space="preserve">
+    <value>“{0}”不是有效路径。</value>
+  </data>
+  <data name="App_Cli_IsFolder" xml:space="preserve">
+    <value>“{0}”是一个文件夹 – 请指定图像，例如 {1}</value>
+  </data>
+  <data name="App_Cli_NoCodeFound" xml:space="preserve">
+    <value>未找到代码：{0}</value>
+  </data>
+  <data name="App_Cli_NoImage" xml:space="preserve">
+    <value>请至少指定一个图像，例如 {0} lesen {1}</value>
+  </data>
+  <data name="App_Cli_NoMatch" xml:space="preserve">
+    <value>没有与“{0}”匹配的文件。</value>
+  </data>
+  <data name="App_Cli_ReadFailed" xml:space="preserve">
+    <value>无法读取“{0}”：{1}</value>
+  </data>
+  <data name="App_Cli_StandsAlone" xml:space="preserve">
+    <value>“{0}”不能带其他参数：{1} {0}</value>
+  </data>
+  <data name="App_Cli_UnknownCommand" xml:space="preserve">
+    <value>未知命令“{0}”。</value>
+  </data>
+  <data name="App_Cli_UnknownFormat" xml:space="preserve">
+    <value>未知格式“{0}”。可用格式：{1}。</value>
+  </data>
+  <data name="App_Cli_UnknownOption" xml:space="preserve">
+    <value>未知选项“{0}”。</value>
+  </data>
+  <data name="App_Cli_UsageScreenshots" xml:space="preserve">
+    <value>用法：{0} --screenshots &lt;文件夹&gt; [--theme hell|dunkel|beide]</value>
+  </data>
+  <data name="App_Cli_WindowsWait" xml:space="preserve">
+    <value>
+
+Lupe.exe 是窗口程序；要让命令提示符等待其结束：
+  start /wait Lupe.exe lesen …        （cmd，输出在控制台中）
+  Lupe.exe lesen … | Out-Default      （PowerShell）
+使用重定向（&gt; codes.txt）时，请不要使用“start”调用 – “start”不会把重定向传给 Lupe，
+文件将为空。在 .cmd 文件中，cmd 会自动等待。
+从 cmd 重定向到文件时，输出为带 BOM 的 UTF-8。</value>
+  </data>
+  <data name="App_Code_Copy" xml:space="preserve">
+    <value>复制</value>
+  </data>
+  <data name="App_Code_CopyTip" xml:space="preserve">
+    <value>将内容复制到剪贴板</value>
+  </data>
+  <data name="App_Code_OpenLink" xml:space="preserve">
+    <value>打开链接</value>
+  </data>
+  <data name="App_Demo_Camera" xml:space="preserve">
+    <value>演示摄像头</value>
+  </data>
+  <data name="App_Dialog_No" xml:space="preserve">
+    <value>否</value>
+  </data>
+  <data name="App_Dialog_Yes" xml:space="preserve">
+    <value>是</value>
+  </data>
+  <data name="App_Format_DxFilmEdge" xml:space="preserve">
+    <value>DX 胶片边码</value>
+  </data>
+  <data name="App_Format_MicroQrCode" xml:space="preserve">
+    <value>Micro QR 码</value>
+  </data>
+  <data name="App_Format_QrCode" xml:space="preserve">
+    <value>二维码</value>
+  </data>
+  <data name="App_Format_RmqrCode" xml:space="preserve">
+    <value>rMQR 码</value>
+  </data>
+  <data name="App_Format_UpcEanExtension" xml:space="preserve">
+    <value>UPC/EAN 附加码</value>
+  </data>
+  <data name="App_Hits_HistoryError" xml:space="preserve">
+    <value>历史记录：{0}</value>
+  </data>
+  <data name="App_Hits_NotTypedFromLupe" xml:space="preserve">
+    <value>未输入：扫描来自 Lupe 本身 – 输入功能需要在其他程序中通过快捷键使用。</value>
+  </data>
+  <data name="App_Hits_NotTypedLupeActive" xml:space="preserve">
+    <value>未输入：Lupe 当前是活动窗口 – 请先单击目标程序；Lupe 可以在后台或最小化状态下继续运行。</value>
+  </data>
+  <data name="App_Hotkey_Fallback" xml:space="preserve">
+    <value>快捷键</value>
+  </data>
+  <data name="App_Hotkey_RegisterFailed" xml:space="preserve">
+    <value>无法注册快捷键 {0}：{1}</value>
+  </data>
+  <data name="App_Hotkey_Unavailable" xml:space="preserve">
+    <value>{0} 不可用。</value>
+  </data>
+  <data name="App_List_And" xml:space="preserve">
+    <value>{0}和{1}</value>
+  </data>
+  <data name="App_List_Separator" xml:space="preserve">
+    <value>、</value>
+  </data>
+  <data name="App_Main_CloseNotice" xml:space="preserve">
+    <value>关闭消息</value>
+  </data>
+  <data name="App_Main_HotkeyFallback" xml:space="preserve">
+    <value>快捷键</value>
+  </data>
+  <data name="App_Main_StatusDemoOff" xml:space="preserve">
+    <value>演示中已关闭</value>
+  </data>
+  <data name="App_Main_StatusDemoOffTip" xml:space="preserve">
+    <value>演示中不注册快捷键 –“屏幕”页面上的“扫描区域”仍然可用。</value>
+  </data>
+  <data name="App_Main_StatusNotRegistered" xml:space="preserve">
+    <value>尚未注册</value>
+  </data>
+  <data name="App_Main_StatusReady" xml:space="preserve">
+    <value>扫描屏幕区域</value>
+  </data>
+  <data name="App_Main_StatusReadyTip" xml:space="preserve">
+    <value>{0} 扫描屏幕的一个区域 – 可在任何程序中使用。</value>
+  </data>
+  <data name="App_Main_StatusUnavailable" xml:space="preserve">
+    <value>不可用 – 请参阅设置</value>
+  </data>
+  <data name="App_Main_Tagline" xml:space="preserve">
+    <value>读取二维码和条码</value>
+  </data>
+  <data name="App_Nav_Camera" xml:space="preserve">
+    <value>摄像头</value>
+  </data>
+  <data name="App_Nav_File" xml:space="preserve">
+    <value>文件</value>
+  </data>
+  <data name="App_Nav_History" xml:space="preserve">
+    <value>历史记录</value>
+  </data>
+  <data name="App_Nav_Info" xml:space="preserve">
+    <value>关于</value>
+  </data>
+  <data name="App_Nav_Screen" xml:space="preserve">
+    <value>屏幕</value>
+  </data>
+  <data name="App_Nav_Settings" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="App_NoDisplay_HintSession" xml:space="preserve">
+    <value>请在图形会话中启动 Lupe。</value>
+  </data>
+  <data name="App_NoDisplay_HintWayland" xml:space="preserve">
+    <value>在 Wayland 下窗口需要 XWayland – 请在桌面会话中启用（sway：“xwayland enable”）。</value>
+  </data>
+  <data name="App_NoDisplay_Message" xml:space="preserve">
+    <value>Lupe 无法打开窗口：没有 X 服务器（{0}）。{1} 读取图像也可以不用窗口：lupe lesen &lt;文件&gt;</value>
+  </data>
+  <data name="App_NoDisplay_NotSet" xml:space="preserve">
+    <value>未设置 DISPLAY</value>
+  </data>
+  <data name="App_NoDisplay_Unreachable" xml:space="preserve">
+    <value>无法连接 DISPLAY={0}</value>
+  </data>
+  <data name="App_Notice_Copied" xml:space="preserve">
+    <value>已复制：{0}</value>
+  </data>
+  <data name="App_Notices_Missing" xml:space="preserve">
+    <value>此 Lupe 版本中缺少许可证文本。</value>
+  </data>
+  <data name="App_Notices_OpenFailed" xml:space="preserve">
+    <value>无法打开许可证文本：{0}</value>
+  </data>
+  <data name="App_Overlay_Hint" xml:space="preserve">
+    <value>在代码周围拖出一个矩形  ·  单击：整个屏幕  ·  Esc：取消</value>
+  </data>
+  <data name="App_Overlay_Title" xml:space="preserve">
+    <value>Lupe – 选择区域</value>
+  </data>
+  <data name="App_Page_CameraSubtitle" xml:space="preserve">
+    <value>将代码对准网络摄像头 – Lupe 会自动识别</value>
+  </data>
+  <data name="App_Page_FileSubtitle" xml:space="preserve">
+    <value>打开图像、拖到此处或从剪贴板粘贴</value>
+  </data>
+  <data name="App_Page_HistorySubtitle" xml:space="preserve">
+    <value>Lupe 识别过的所有内容 – 最新的在前</value>
+  </data>
+  <data name="App_Page_InfoSubtitle" xml:space="preserve">
+    <value>关于 Lupe</value>
+  </data>
+  <data name="App_Page_ScreenSubtitle" xml:space="preserve">
+    <value>读取屏幕的一个区域 – 在任何程序中使用快捷键</value>
+  </data>
+  <data name="App_Page_SettingsSubtitle" xml:space="preserve">
+    <value>结果的处理方式 – 更改会立即生效并保存</value>
+  </data>
+  <data name="App_Platform_ThisSystem" xml:space="preserve">
+    <value>此系统</value>
+  </data>
+  <data name="App_Platform_WindowsWithoutSupport" xml:space="preserve">
+    <value>Windows（不含 Windows 支持的版本）</value>
+  </data>
+  <data name="App_Scan_CaptureFailed" xml:space="preserve">
+    <value>屏幕截图失败：{0}</value>
+  </data>
+  <data name="App_Scan_CaptureNotPossible" xml:space="preserve">
+    <value>无法截取屏幕。</value>
+  </data>
+  <data name="App_Scan_Chosen" xml:space="preserve">
+    <value>已选择 {0}（共找到 {1} 个）</value>
+  </data>
+  <data name="App_Scan_CopiedAll" xml:space="preserve">
+    <value>已逐行复制 {0} 个代码</value>
+  </data>
+  <data name="App_Scan_Failed" xml:space="preserve">
+    <value>屏幕扫描失败：{0}</value>
+  </data>
+  <data name="App_Scan_NoCode" xml:space="preserve">
+    <value>未找到代码</value>
+  </data>
+  <data name="App_Scan_NoCodeDetail" xml:space="preserve">
+    <value>Lupe 在该区域中未识别到二维码或条码。</value>
+  </data>
+  <data name="App_Scan_NoCodeTip" xml:space="preserve">
+    <value>{0} 提示：将矩形拖得大一些或放大显示。</value>
+  </data>
+  <data name="App_Scan_NotPossible" xml:space="preserve">
+    <value>无法进行屏幕扫描</value>
+  </data>
+  <data name="App_Scan_RecognitionFailed" xml:space="preserve">
+    <value>识别失败：{0}</value>
+  </data>
+  <data name="App_Scan_Recognized" xml:space="preserve">
+    <value>已识别{0}</value>
+  </data>
+  <data name="App_Scan_ResultWithContent" xml:space="preserve">
+    <value>{0}：{1}</value>
+  </data>
+  <data name="App_Scan_ResultWithDone" xml:space="preserve">
+    <value>{0} – {1}</value>
+  </data>
+  <data name="App_Scan_ResultWithProblems" xml:space="preserve">
+    <value>{0}。{1}</value>
+  </data>
+  <data name="App_ScreenScan_Name" xml:space="preserve">
+    <value>屏幕扫描</value>
+  </data>
+  <data name="App_Screenshots_Failed" xml:space="preserve">
+    <value>截图失败：{0}</value>
+  </data>
+  <data name="App_Screenshots_Start" xml:space="preserve">
+    <value>Lupe {0} – 截图保存到 {1}</value>
+  </data>
+  <data name="App_Screenshots_Written" xml:space="preserve">
+    <value>已写入 {0} 张图像。</value>
+  </data>
+  <data name="App_Screenshots_WrongSize" xml:space="preserve">
+    <value>窗口为 {0:0}×{1:0} 点，而不是 {2:0}×{3:0} 点 – 图像会变形。</value>
+  </data>
+  <data name="App_Shell_BrowserFailed" xml:space="preserve">
+    <value>无法打开浏览器：{0}</value>
+  </data>
+  <data name="App_Shell_ClipboardBusy" xml:space="preserve">
+    <value>剪贴板正被占用（{0}）。</value>
+  </data>
+  <data name="App_Shell_ClipboardUnavailable" xml:space="preserve">
+    <value>无法访问剪贴板。</value>
+  </data>
+  <data name="App_Shell_ClipboardWindowTitle" xml:space="preserve">
+    <value>Lupe – 剪贴板</value>
+  </data>
+  <data name="App_Shell_FolderFailed" xml:space="preserve">
+    <value>无法打开文件夹：{0}</value>
+  </data>
+  <data name="App_Shell_OnlyHttpLinks" xml:space="preserve">
+    <value>只打开 http 和 https 链接。</value>
+  </data>
+  <data name="App_Shell_TypingFailed" xml:space="preserve">
+    <value>输入失败。</value>
+  </data>
+  <data name="App_Shell_TypingFailedWithMessage" xml:space="preserve">
+    <value>输入失败：{0}</value>
+  </data>
+  <data name="App_Source_Clipboard" xml:space="preserve">
+    <value>剪贴板</value>
+  </data>
+  <data name="App_Source_CommandLine" xml:space="preserve">
+    <value>命令行</value>
+  </data>
+  <data name="App_State_HistoryDeleteManually" xml:space="preserve">
+    <value>{0} 请手动删除该文件 – 其中可能包含机密内容。</value>
+  </data>
+  <data name="App_State_HistoryDeleteManuallyOff" xml:space="preserve">
+    <value>{0}“保存历史记录”已关闭 – 请手动删除该文件，其中可能包含机密内容。</value>
+  </data>
+  <data name="App_State_HistoryInMemorySession" xml:space="preserve">
+    <value>本次会话中历史记录仅保存在内存中。</value>
+  </data>
+  <data name="App_State_HistoryInMemoryUntil" xml:space="preserve">
+    <value>在此之前，历史记录仅保存在内存中。</value>
+  </data>
+  <data name="App_State_HistoryNoLongerSaved" xml:space="preserve">
+    <value>历史记录不再保存 – 文件 verlauf.json 已删除。此处的条目将保留到退出 Lupe 为止。</value>
+  </data>
+  <data name="App_State_HistoryOpenFailed" xml:space="preserve">
+    <value>无法打开历史记录（{0}）。将不会保存。</value>
+  </data>
+  <data name="App_State_HistoryOpenFailedSession" xml:space="preserve">
+    <value>无法打开历史记录（{0}）。本次会话中将不会保存。</value>
+  </data>
+  <data name="App_State_SettingsSaveFailed" xml:space="preserve">
+    <value>无法保存设置：{0}</value>
+  </data>
+  <data name="App_State_SettingsUnreadable" xml:space="preserve">
+    <value>无法读取设置（{0}）。将使用默认值；本次会话中不保存任何内容。</value>
+  </data>
+  <data name="App_Time_DateShortTime" xml:space="preserve">
+    <value>MM-dd HH:mm</value>
+  </data>
+  <data name="App_Time_DateTime" xml:space="preserve">
+    <value>yyyy-MM-dd HH:mm:ss</value>
+  </data>
+  <data name="App_Time_Time" xml:space="preserve">
+    <value>HH:mm:ss</value>
+  </data>
+  <data name="App_Toast_Close" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="App_Toast_NoCodeTip" xml:space="preserve">
+    <value>提示：将矩形拖得稍大一些，使其完全包住代码 – 或放大显示。</value>
+  </data>
+  <data name="App_Toast_ShowInLupe" xml:space="preserve">
+    <value>在 Lupe 中显示</value>
+  </data>
+  <data name="App_Toast_WindowTitle" xml:space="preserve">
+    <value>Lupe – 结果</value>
+  </data>
+  <data name="App_Toggle_Off" xml:space="preserve">
+    <value>关</value>
+  </data>
+  <data name="App_Toggle_On" xml:space="preserve">
+    <value>开</value>
+  </data>
+  <data name="App_Tray_Open" xml:space="preserve">
+    <value>打开 Lupe</value>
+  </data>
+  <data name="App_Tray_Quit" xml:space="preserve">
+    <value>退出</value>
+  </data>
+  <data name="App_Tray_Scan" xml:space="preserve">
+    <value>扫描区域</value>
+  </data>
+  <data name="App_Tray_ScanWithHotkey" xml:space="preserve">
+    <value>扫描区域（{0}）</value>
+  </data>
+  <data name="App_Tray_TooltipNoHotkey" xml:space="preserve">
+    <value>Lupe – 快捷键不可用</value>
+  </data>
+  <data name="App_Tray_TooltipReady" xml:space="preserve">
+    <value>Lupe – {0} 扫描屏幕区域</value>
+  </data>
+  <data name="App_TrayHint_Text" xml:space="preserve">
+    <value>{0} 扫描屏幕区域。要退出，请使用通知区域中的 Lupe 图标。</value>
+  </data>
+  <data name="App_TrayHint_Title" xml:space="preserve">
+    <value>Lupe 仍在运行</value>
+  </data>
+  <data name="App_Ui_Failure" xml:space="preserve">
+    <value>{0}：{1}</value>
+  </data>
+  <data name="App_UnexpectedError" xml:space="preserve">
+    <value>意外错误：{0}</value>
+  </data>
+  <data name="Core_Camera_CannotStart" xml:space="preserve">
+    <value>无法启动摄像头“{0}”：{1}</value>
+  </data>
+  <data name="Core_Camera_DecodeFailed" xml:space="preserve">
+    <value>摄像头图像识别失败（{0}：{1}）。请重新启动摄像头；如果错误再次出现，请报告。</value>
+  </data>
+  <data name="Core_Camera_DemoName" xml:space="preserve">
+    <value>演示摄像头</value>
+  </data>
+  <data name="Core_Camera_Failed" xml:space="preserve">
+    <value>摄像头“{0}”出现故障。请重新启动。</value>
+  </data>
+  <data name="Core_Camera_FailedWithReason" xml:space="preserve">
+    <value>摄像头“{0}”出现故障（{1}）。请重新启动。</value>
+  </data>
+  <data name="Core_Camera_FallbackName" xml:space="preserve">
+    <value>摄像头</value>
+  </data>
+  <data name="Core_Decoder_MissingFunctions" xml:space="preserve">
+    <value>{0} 缺少函数 {1}</value>
+  </data>
+  <data name="Core_Decoder_Unavailable" xml:space="preserve">
+    <value>Lupe 无法在此系统上读取代码，因为无法加载识别库（zxing-cpp）。请查看安装指南中的系统要求，或附上此代码报告错误。详细信息：{0}</value>
+  </data>
+  <data name="Core_File_AccessDenied" xml:space="preserve">
+    <value>访问被拒绝 – 没有权限、文件为只读或已在其他程序中打开</value>
+  </data>
+  <data name="Core_File_DiskFull" xml:space="preserve">
+    <value>驱动器空间不足</value>
+  </data>
+  <data name="Core_File_DriveNotFound" xml:space="preserve">
+    <value>找不到驱动器</value>
+  </data>
+  <data name="Core_File_DriveNotReady" xml:space="preserve">
+    <value>驱动器未就绪（例如 U 盘已拔出）</value>
+  </data>
+  <data name="Core_File_FolderNotFound" xml:space="preserve">
+    <value>找不到文件夹</value>
+  </data>
+  <data name="Core_File_InvalidName" xml:space="preserve">
+    <value>文件或文件夹名称无效</value>
+  </data>
+  <data name="Core_File_InvalidPath" xml:space="preserve">
+    <value>路径无效</value>
+  </data>
+  <data name="Core_File_NetworkPathUnreachable" xml:space="preserve">
+    <value>无法访问网络路径</value>
+  </data>
+  <data name="Core_File_NoFolder" xml:space="preserve">
+    <value>“{0}”没有文件夹。</value>
+  </data>
+  <data name="Core_File_NotFound" xml:space="preserve">
+    <value>找不到文件</value>
+  </data>
+  <data name="Core_File_OpenElsewhere" xml:space="preserve">
+    <value>文件已在其他程序中打开</value>
+  </data>
+  <data name="Core_File_PathTooLong" xml:space="preserve">
+    <value>路径过长</value>
+  </data>
+  <data name="Core_File_TooLarge" xml:space="preserve">
+    <value>文件异常大（{0} MB）。</value>
+  </data>
+  <data name="Core_File_Truncated" xml:space="preserve">
+    <value>文件在读取时变短 – 可能有其他程序正在写入</value>
+  </data>
+  <data name="Core_File_WriteProtected" xml:space="preserve">
+    <value>驱动器处于写保护状态</value>
+  </data>
+  <data name="Core_History_Broken" xml:space="preserve">
+    <value>已保存的历史记录“{0}”已损坏，未加载。在添加新条目之前文件保持不变 – 之后历史记录将重新开始。</value>
+  </data>
+  <data name="Core_History_BrokenAtLine" xml:space="preserve">
+    <value>已保存的历史记录“{0}”已损坏（第 {1} 行出错），未加载。在添加新条目之前文件保持不变 – 之后历史记录将重新开始。</value>
+  </data>
+  <data name="Core_History_DeleteError" xml:space="preserve">
+    <value>无法删除历史记录文件“{0}”（{1}）。</value>
+  </data>
+  <data name="Core_History_EntriesSkipped_One" xml:space="preserve">
+    <value>已保存的历史记录中有一个条目无法读取，已跳过。</value>
+  </data>
+  <data name="Core_History_EntriesSkipped_Other" xml:space="preserve">
+    <value>已保存的历史记录中有 {0} 个条目无法读取，已跳过。</value>
+  </data>
+  <data name="Core_History_ExportError" xml:space="preserve">
+    <value>无法将历史记录导出到“{0}”（{1}）。</value>
+  </data>
+  <data name="Core_History_ReadError" xml:space="preserve">
+    <value>无法读取已保存的历史记录“{0}”（{1}）。只有在文件可再次读取后才会保存新条目。</value>
+  </data>
+  <data name="Core_History_SaveError" xml:space="preserve">
+    <value>无法将历史记录保存到“{0}”（{1}）。只要 Lupe 在运行，条目就会保留；添加下一个条目时将重试保存。</value>
+  </data>
+  <data name="Core_Hotkey_AltGrWarning" xml:space="preserve">
+    <value>{0} 可能与德语键盘上的 AltGr 字符冲突 – Windows 将 AltGr 报告为 Ctrl+Alt。此时 Lupe 会自行输入该字符；使用带 Win 的快捷键更安全，例如 Win+Shift+Q。</value>
+  </data>
+  <data name="Core_Hotkey_AltGrWarningCharacter" xml:space="preserve">
+    <value>{0} 可能与德语键盘上的 AltGr 字符冲突（{1} 输入“{2}”）– Windows 将 AltGr 报告为 Ctrl+Alt。此时 Lupe 会自行输入该字符；使用带 Win 的快捷键更安全，例如 Win+Shift+Q。</value>
+  </data>
+  <data name="Core_Hotkey_DisturbsTyping" xml:space="preserve">
+    <value>“{0}”会干扰正常输入 – 请加上 Ctrl、Alt 或 Win。</value>
+  </data>
+  <data name="Core_Hotkey_InvalidKeyCode" xml:space="preserve">
+    <value>不是有效的快捷键（键码 {0}）。</value>
+  </data>
+  <data name="Core_Hotkey_ModifierOnly" xml:space="preserve">
+    <value>Ctrl、Alt、Shift 和 Win 不能单独使用 – 请再加一个键。</value>
+  </data>
+  <data name="Core_Hotkey_MouseButton" xml:space="preserve">
+    <value>鼠标按键不能用作快捷键。</value>
+  </data>
+  <data name="Core_Image_AccessDenied" xml:space="preserve">
+    <value>无法访问“{0}” – 缺少读取权限，还是它是一个文件夹？</value>
+  </data>
+  <data name="Core_Image_CannotRead" xml:space="preserve">
+    <value>无法读取“{0}”：{1}</value>
+  </data>
+  <data name="Core_Image_DefaultName" xml:space="preserve">
+    <value>图像</value>
+  </data>
+  <data name="Core_Image_Empty" xml:space="preserve">
+    <value>“{0}”为空。</value>
+  </data>
+  <data name="Core_Image_EndsMidImage" xml:space="preserve">
+    <value>文件在图像中途结束</value>
+  </data>
+  <data name="Core_Image_FileEmpty" xml:space="preserve">
+    <value>文件“{0}”为空。</value>
+  </data>
+  <data name="Core_Image_FileNotFound" xml:space="preserve">
+    <value>找不到文件“{0}”。</value>
+  </data>
+  <data name="Core_Image_Incomplete" xml:space="preserve">
+    <value>“{0}”不完整 – {1}（下载或复制中断？）。</value>
+  </data>
+  <data name="Core_Image_InUse" xml:space="preserve">
+    <value>“{0}”正被其他程序使用，无法读取。</value>
+  </data>
+  <data name="Core_Image_InvalidPath" xml:space="preserve">
+    <value>“{0}”不是有效的文件路径。</value>
+  </data>
+  <data name="Core_Image_NotAnImage" xml:space="preserve">
+    <value>无法将“{0}”作为图像读取（{1}）。</value>
+  </data>
+  <data name="Core_Image_NotAnImageFile" xml:space="preserve">
+    <value>“{0}”不是图像文件。</value>
+  </data>
+  <data name="Core_Image_OpenError" xml:space="preserve">
+    <value>无法打开“{0}”：{1}</value>
+  </data>
+  <data name="Core_Image_TooLarge" xml:space="preserve">
+    <value>“{0}”太大，无法加载。</value>
+  </data>
+  <data name="Core_Key_Alt" xml:space="preserve">
+    <value>Alt</value>
+  </data>
+  <data name="Core_Key_App1" xml:space="preserve">
+    <value>应用 1</value>
+  </data>
+  <data name="Core_Key_App2" xml:space="preserve">
+    <value>应用 2</value>
+  </data>
+  <data name="Core_Key_Backspace" xml:space="preserve">
+    <value>Backspace</value>
+  </data>
+  <data name="Core_Key_BrowserBack" xml:space="preserve">
+    <value>浏览器后退</value>
+  </data>
+  <data name="Core_Key_BrowserFavorites" xml:space="preserve">
+    <value>浏览器收藏夹</value>
+  </data>
+  <data name="Core_Key_BrowserForward" xml:space="preserve">
+    <value>浏览器前进</value>
+  </data>
+  <data name="Core_Key_BrowserHome" xml:space="preserve">
+    <value>浏览器主页</value>
+  </data>
+  <data name="Core_Key_BrowserRefresh" xml:space="preserve">
+    <value>浏览器刷新</value>
+  </data>
+  <data name="Core_Key_BrowserSearch" xml:space="preserve">
+    <value>浏览器搜索</value>
+  </data>
+  <data name="Core_Key_BrowserStop" xml:space="preserve">
+    <value>浏览器停止</value>
+  </data>
+  <data name="Core_Key_CapsLock" xml:space="preserve">
+    <value>Caps Lock</value>
+  </data>
+  <data name="Core_Key_Comma" xml:space="preserve">
+    <value>逗号</value>
+  </data>
+  <data name="Core_Key_Ctrl" xml:space="preserve">
+    <value>Ctrl</value>
+  </data>
+  <data name="Core_Key_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Core_Key_Down" xml:space="preserve">
+    <value>下</value>
+  </data>
+  <data name="Core_Key_End" xml:space="preserve">
+    <value>End</value>
+  </data>
+  <data name="Core_Key_Enter" xml:space="preserve">
+    <value>Enter</value>
+  </data>
+  <data name="Core_Key_Esc" xml:space="preserve">
+    <value>Esc</value>
+  </data>
+  <data name="Core_Key_Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="Core_Key_Insert" xml:space="preserve">
+    <value>Insert</value>
+  </data>
+  <data name="Core_Key_Left" xml:space="preserve">
+    <value>左</value>
+  </data>
+  <data name="Core_Key_Mail" xml:space="preserve">
+    <value>邮件</value>
+  </data>
+  <data name="Core_Key_MediaSelect" xml:space="preserve">
+    <value>媒体选择</value>
+  </data>
+  <data name="Core_Key_MediaStop" xml:space="preserve">
+    <value>媒体停止</value>
+  </data>
+  <data name="Core_Key_Menu" xml:space="preserve">
+    <value>菜单</value>
+  </data>
+  <data name="Core_Key_Minus" xml:space="preserve">
+    <value>减号</value>
+  </data>
+  <data name="Core_Key_NextTrack" xml:space="preserve">
+    <value>下一曲</value>
+  </data>
+  <data name="Core_Key_NumDecimal" xml:space="preserve">
+    <value>小键盘小数点</value>
+  </data>
+  <data name="Core_Key_NumDivide" xml:space="preserve">
+    <value>小键盘除号</value>
+  </data>
+  <data name="Core_Key_NumLock" xml:space="preserve">
+    <value>Num Lock</value>
+  </data>
+  <data name="Core_Key_NumMinus" xml:space="preserve">
+    <value>小键盘减号</value>
+  </data>
+  <data name="Core_Key_NumMultiply" xml:space="preserve">
+    <value>小键盘乘号</value>
+  </data>
+  <data name="Core_Key_NumPad" xml:space="preserve">
+    <value>Num {0}</value>
+  </data>
+  <data name="Core_Key_NumPlus" xml:space="preserve">
+    <value>小键盘加号</value>
+  </data>
+  <data name="Core_Key_PageDown" xml:space="preserve">
+    <value>Page Down</value>
+  </data>
+  <data name="Core_Key_PageUp" xml:space="preserve">
+    <value>Page Up</value>
+  </data>
+  <data name="Core_Key_Pause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="Core_Key_Period" xml:space="preserve">
+    <value>句点</value>
+  </data>
+  <data name="Core_Key_PlayPause" xml:space="preserve">
+    <value>播放/暂停</value>
+  </data>
+  <data name="Core_Key_Plus" xml:space="preserve">
+    <value>加号</value>
+  </data>
+  <data name="Core_Key_PreviousTrack" xml:space="preserve">
+    <value>上一曲</value>
+  </data>
+  <data name="Core_Key_PrintScreen" xml:space="preserve">
+    <value>Print Screen</value>
+  </data>
+  <data name="Core_Key_Right" xml:space="preserve">
+    <value>右</value>
+  </data>
+  <data name="Core_Key_ScrollLock" xml:space="preserve">
+    <value>Scroll Lock</value>
+  </data>
+  <data name="Core_Key_Shift" xml:space="preserve">
+    <value>Shift</value>
+  </data>
+  <data name="Core_Key_Sleep" xml:space="preserve">
+    <value>睡眠</value>
+  </data>
+  <data name="Core_Key_Space" xml:space="preserve">
+    <value>空格</value>
+  </data>
+  <data name="Core_Key_Tab" xml:space="preserve">
+    <value>Tab</value>
+  </data>
+  <data name="Core_Key_Unknown" xml:space="preserve">
+    <value>Key 0x{0}</value>
+  </data>
+  <data name="Core_Key_Up" xml:space="preserve">
+    <value>上</value>
+  </data>
+  <data name="Core_Key_VolumeDown" xml:space="preserve">
+    <value>音量减</value>
+  </data>
+  <data name="Core_Key_VolumeMute" xml:space="preserve">
+    <value>静音</value>
+  </data>
+  <data name="Core_Key_VolumeUp" xml:space="preserve">
+    <value>音量加</value>
+  </data>
+  <data name="Core_Key_Win" xml:space="preserve">
+    <value>Win</value>
+  </data>
+  <data name="Core_LinkRule_InvalidRegex" xml:space="preserve">
+    <value>该模式不是有效的正则表达式：{0}</value>
+  </data>
+  <data name="Core_LinkRule_InvalidRegexAt" xml:space="preserve">
+    <value>该模式不是有效的正则表达式：{0}（位于第 {1} 个字符）。</value>
+  </data>
+  <data name="Core_LinkRule_PatternMissing" xml:space="preserve">
+    <value>请输入模式（正则表达式）。</value>
+  </data>
+  <data name="Core_LinkRule_PrefixBadCharacters" xml:space="preserve">
+    <value>前缀不得包含控制字符或反斜杠（\）。</value>
+  </data>
+  <data name="Core_LinkRule_PrefixHostNotClosed" xml:space="preserve">
+    <value>主机名后缺少“/” – 例如应为 https://example.com/ 而不是 https://example.com。</value>
+  </data>
+  <data name="Core_LinkRule_PrefixInvalid" xml:space="preserve">
+    <value>该前缀不是有效的链接开头。</value>
+  </data>
+  <data name="Core_LinkRule_PrefixNotHttp" xml:space="preserve">
+    <value>前缀必须为空，或以 http:// 或 https:// 开头（例如 https://example.com/search?q=）。</value>
+  </data>
+  <data name="Core_LinkRule_PrefixUserInfo" xml:space="preserve">
+    <value>前缀不得包含用户名或密码。</value>
+  </data>
+  <data name="Core_Platform_NoActivate" xml:space="preserve">
+    <value>在此系统上无法将上一个窗口切换到前台 – 未输入任何内容。</value>
+  </data>
+  <data name="Core_Platform_NoAutostart" xml:space="preserve">
+    <value>{0} 上（暂时）不支持开机自启动。</value>
+  </data>
+  <data name="Core_Platform_NoCameras" xml:space="preserve">
+    <value>此系统上（暂时）不支持摄像头。</value>
+  </data>
+  <data name="Core_Platform_NoHotkeys" xml:space="preserve">
+    <value>{0} 上（暂时）不支持全局快捷键 – 请通过通知区域中的图标或菜单打开 Lupe。</value>
+  </data>
+  <data name="Core_Platform_NoImageFiles" xml:space="preserve">
+    <value>{0} 上（暂时）无法读取图像文件。</value>
+  </data>
+  <data name="Core_Platform_NoScreenshots" xml:space="preserve">
+    <value>{0} 上（暂时）不支持屏幕截图。</value>
+  </data>
+  <data name="Core_Platform_NoTyping" xml:space="preserve">
+    <value>{0} 上（暂时）不支持输入 – 请改为复制文本。</value>
+  </data>
+  <data name="Core_Platform_UnknownSystem" xml:space="preserve">
+    <value>未知系统</value>
+  </data>
+  <data name="Core_Regex_EndingBackslash" xml:space="preserve">
+    <value>模式末尾有“\”</value>
+  </data>
+  <data name="Core_Regex_ExclusionGroupNotLast" xml:space="preserve">
+    <value>排除组不在字符类的末尾</value>
+  </data>
+  <data name="Core_Regex_InvalidControlCharacter" xml:space="preserve">
+    <value>\c 处的控制字符无效</value>
+  </data>
+  <data name="Core_Regex_InvalidGroup" xml:space="preserve">
+    <value>无效的组“(?…)”</value>
+  </data>
+  <data name="Core_Regex_InvalidGroupName" xml:space="preserve">
+    <value>无效的组名</value>
+  </data>
+  <data name="Core_Regex_InvalidHexDigits" xml:space="preserve">
+    <value>无效的十六进制数字（位于 \x 或 \u）</value>
+  </data>
+  <data name="Core_Regex_MissingClosingParenthesis" xml:space="preserve">
+    <value>缺少右括号“)”</value>
+  </data>
+  <data name="Core_Regex_NestedQuantifiers" xml:space="preserve">
+    <value>两个重复字符相连（例如 a**）</value>
+  </data>
+  <data name="Core_Regex_NumberTooLarge" xml:space="preserve">
+    <value>数字过大</value>
+  </data>
+  <data name="Core_Regex_QuantifierAfterNothing" xml:space="preserve">
+    <value>重复字符（*、+、?、{…}）前面没有内容</value>
+  </data>
+  <data name="Core_Regex_ReversedCharacterRange" xml:space="preserve">
+    <value>字符范围颠倒（例如 [z-a]）</value>
+  </data>
+  <data name="Core_Regex_ReversedQuantifierRange" xml:space="preserve">
+    <value>重复范围颠倒（例如 {3,1}）</value>
+  </data>
+  <data name="Core_Regex_ShorthandInRange" xml:space="preserve">
+    <value>在 […] 中将 \d 等简写类用作范围边界</value>
+  </data>
+  <data name="Core_Regex_SyntaxError" xml:space="preserve">
+    <value>语法错误</value>
+  </data>
+  <data name="Core_Regex_TooManyClosingParentheses" xml:space="preserve">
+    <value>右括号“)”过多</value>
+  </data>
+  <data name="Core_Regex_UndefinedReference" xml:space="preserve">
+    <value>引用了不存在的组</value>
+  </data>
+  <data name="Core_Regex_UnknownUnicodeCategory" xml:space="preserve">
+    <value>\p{…} 中的 Unicode 类别未知</value>
+  </data>
+  <data name="Core_Regex_UnrecognizedEscape" xml:space="preserve">
+    <value>未知的“\”转义序列</value>
+  </data>
+  <data name="Core_Regex_UnterminatedBracket" xml:space="preserve">
+    <value>方括号“[”未闭合</value>
+  </data>
+  <data name="Core_Regex_UnterminatedComment" xml:space="preserve">
+    <value>注释“(?#…)”未闭合</value>
+  </data>
+  <data name="Core_Screen_Monitor" xml:space="preserve">
+    <value>屏幕 {0}</value>
+  </data>
+  <data name="Core_Screen_MonitorNamed" xml:space="preserve">
+    <value>屏幕 {0}（{1}）</value>
+  </data>
+  <data name="Core_Settings_BackupBeforeSave" xml:space="preserve">
+    <value>{0} 下次保存前，会将其原样备份在旁边，名为“{1}.defekt-…”。</value>
+  </data>
+  <data name="Core_Settings_BackupCreated" xml:space="preserve">
+    <value>旧的已损坏设置文件已备份为“{0}”。</value>
+  </data>
+  <data name="Core_Settings_BackupFailed" xml:space="preserve">
+    <value>无法备份已损坏的设置文件（{0}）。为确保不丢失任何内容，未覆盖该文件 – 更改在关闭 Lupe 之前有效。</value>
+  </data>
+  <data name="Core_Settings_Broken" xml:space="preserve">
+    <value>设置文件“{0}”已损坏，未加载。将使用默认值；只有下次保存设置时才会替换该文件。</value>
+  </data>
+  <data name="Core_Settings_BrokenAtLine" xml:space="preserve">
+    <value>设置文件“{0}”已损坏（第 {1} 行出错），未加载。将使用默认值；只有下次保存设置时才会替换该文件。</value>
+  </data>
+  <data name="Core_Settings_DefaultUsedFor" xml:space="preserve">
+    <value>以下项目使用了默认值：{0}。</value>
+  </data>
+  <data name="Core_Settings_EntriesRemovedFrom" xml:space="preserve">
+    <value>已从以下项目中删除不可用的条目：{0}。</value>
+  </data>
+  <data name="Core_Settings_Field_Actions" xml:space="preserve">
+    <value>操作（摄像头/文件）</value>
+  </data>
+  <data name="Core_Settings_Field_AimHelp" xml:space="preserve">
+    <value>瞄准辅助</value>
+  </data>
+  <data name="Core_Settings_Field_Camera" xml:space="preserve">
+    <value>摄像头</value>
+  </data>
+  <data name="Core_Settings_Field_Formats" xml:space="preserve">
+    <value>格式</value>
+  </data>
+  <data name="Core_Settings_Field_HistoryLimit" xml:space="preserve">
+    <value>历史记录大小</value>
+  </data>
+  <data name="Core_Settings_Field_KeepHistory" xml:space="preserve">
+    <value>保存历史记录</value>
+  </data>
+  <data name="Core_Settings_Field_KeepRunningInTray" xml:space="preserve">
+    <value>在通知区域中继续运行</value>
+  </data>
+  <data name="Core_Settings_Field_Language" xml:space="preserve">
+    <value>语言</value>
+  </data>
+  <data name="Core_Settings_Field_LinkRules" xml:space="preserve">
+    <value>链接规则</value>
+  </data>
+  <data name="Core_Settings_Field_RepeatSuppress" xml:space="preserve">
+    <value>重复锁定</value>
+  </data>
+  <data name="Core_Settings_Field_ScreenActions" xml:space="preserve">
+    <value>操作（屏幕）</value>
+  </data>
+  <data name="Core_Settings_Field_ScreenHotkey" xml:space="preserve">
+    <value>快捷键</value>
+  </data>
+  <data name="Core_Settings_Field_Sound" xml:space="preserve">
+    <value>声音</value>
+  </data>
+  <data name="Core_Settings_Field_TrayHintShown" xml:space="preserve">
+    <value>通知区域提示</value>
+  </data>
+  <data name="Core_Settings_Field_TypeDelay" xml:space="preserve">
+    <value>输入速度</value>
+  </data>
+  <data name="Core_Settings_Field_TypeSuffix" xml:space="preserve">
+    <value>输入后按键</value>
+  </data>
+  <data name="Core_Settings_MessageAndNote" xml:space="preserve">
+    <value>{0}{1}</value>
+  </data>
+  <data name="Core_Settings_NoFreeFileName" xml:space="preserve">
+    <value>没有可用的文件名</value>
+  </data>
+  <data name="Core_Settings_ReadableAgain" xml:space="preserve">
+    <value>设置文件又可以读取了 – 现在使用其中的设置。</value>
+  </data>
+  <data name="Core_Settings_ReadableAgainMerged" xml:space="preserve">
+    <value>设置文件又可以读取了：您的更改已与已保存的设置合并。</value>
+  </data>
+  <data name="Core_Settings_ReadError" xml:space="preserve">
+    <value>无法读取“{0}”中的设置（{1}）。将使用默认值。</value>
+  </data>
+  <data name="Core_Settings_SaveError" xml:space="preserve">
+    <value>无法将设置保存到“{0}”（{1}）。</value>
+  </data>
+  <data name="Core_Settings_SaveFailedUntilExit" xml:space="preserve">
+    <value>{0} 更改在关闭 Lupe 之前有效。</value>
+  </data>
+  <data name="Core_Settings_SaveWhenReadable" xml:space="preserve">
+    <value>{0} 在文件重新可读之前不会保存任何内容 – 不会用默认值覆盖该文件。</value>
+  </data>
+  <data name="Core_Settings_SomeInvalid" xml:space="preserve">
+    <value>“{0}”中的部分设置无效。</value>
+  </data>
+  <data name="Core_Settings_StillUnreadable" xml:space="preserve">
+    <value>设置文件“{0}”仍无法读取 – 更改在关闭 Lupe 之前有效，并会在文件重新可读后立即保存。这样就不会用默认值覆盖任何内容。</value>
+  </data>
+  <data name="Core_Settings_StillUnreadableReason" xml:space="preserve">
+    <value>设置文件“{0}”仍无法读取 – 更改在关闭 Lupe 之前有效，并会在文件重新可读后立即保存。这样就不会用默认值覆盖任何内容。（{1}）</value>
+  </data>
+  <data name="Core_Typing_Interrupted" xml:space="preserve">
+    <value>输入被中断 – 只输入了部分文本。</value>
+  </data>
+  <data name="Language_System" xml:space="preserve">
+    <value>系统语言</value>
+  </data>
+  <data name="Linux_ActiveWindow_ActivateFailed" xml:space="preserve">
+    <value>无法将上一个窗口切换到前台 – 未输入任何内容。</value>
+  </data>
+  <data name="Linux_ActiveWindow_Gone" xml:space="preserve">
+    <value>上一个窗口已不存在 – 未输入任何内容。</value>
+  </data>
+  <data name="Linux_ActiveWindow_None" xml:space="preserve">
+    <value>前台没有窗口 – 未输入任何内容。</value>
+  </data>
+  <data name="Linux_ActiveWindow_NoXServer" xml:space="preserve">
+    <value>无法连接 X 服务器 – 未输入任何内容。</value>
+  </data>
+  <data name="Linux_Autostart_Comment" xml:space="preserve">
+    <value>从摄像头、屏幕和文件读取二维码和条码</value>
+  </data>
+  <data name="Linux_Autostart_DisableFailed" xml:space="preserve">
+    <value>无法取消开机自启动：{0}</value>
+  </data>
+  <data name="Linux_Autostart_EnableFailed" xml:space="preserve">
+    <value>无法设置开机自启动：{0}</value>
+  </data>
+  <data name="Linux_Autostart_PathUnknown" xml:space="preserve">
+    <value>Lupe 的路径未知 – 未设置开机自启动。</value>
+  </data>
+  <data name="Linux_Camera_AccessDenied" xml:space="preserve">
+    <value>无法访问摄像头“{0}” – 用户必须属于“video”组（然后重新登录）。</value>
+  </data>
+  <data name="Linux_Camera_Disconnected" xml:space="preserve">
+    <value>摄像头“{0}”已断开连接。</value>
+  </data>
+  <data name="Linux_Camera_InUse" xml:space="preserve">
+    <value>摄像头“{0}”正被其他程序使用。</value>
+  </data>
+  <data name="Linux_Camera_NotConnected" xml:space="preserve">
+    <value>摄像头“{0}”未连接。</value>
+  </data>
+  <data name="Linux_Camera_Stalled" xml:space="preserve">
+    <value>摄像头“{0}”不再提供图像 – 可能已断开连接或正被其他程序使用。</value>
+  </data>
+  <data name="Linux_Camera_StartFailed" xml:space="preserve">
+    <value>无法启动摄像头“{0}”（{1}）。</value>
+  </data>
+  <data name="Linux_Hotkey_AlreadyRegistered" xml:space="preserve">
+    <value>{0} 已被其他程序占用。</value>
+  </data>
+  <data name="Linux_Hotkey_Description" xml:space="preserve">
+    <value>扫描屏幕区域</value>
+  </data>
+  <data name="Linux_Hotkey_KeyNotInLayout" xml:space="preserve">
+    <value>当前键盘布局中不存在 {0} 的按键。</value>
+  </data>
+  <data name="Linux_Hotkey_NoPortalSession" xml:space="preserve">
+    <value>桌面门户未打开快捷键会话。</value>
+  </data>
+  <data name="Linux_Hotkey_NoSession" xml:space="preserve">
+    <value>没有图形会话就没有全局快捷键。</value>
+  </data>
+  <data name="Linux_Hotkey_NotAccepted" xml:space="preserve">
+    <value>桌面未接受该快捷键。</value>
+  </data>
+  <data name="Linux_Hotkey_PortalRegisterFailed" xml:space="preserve">
+    <value>无法在桌面中注册快捷键（{0}）。</value>
+  </data>
+  <data name="Linux_Hotkey_RegisterFailedReason" xml:space="preserve">
+    <value>无法注册快捷键 {0}：{1}</value>
+  </data>
+  <data name="Linux_Hotkey_RegisterFailedX11" xml:space="preserve">
+    <value>无法注册快捷键 {0}（X 错误 {1}）。</value>
+  </data>
+  <data name="Linux_Hotkey_Rejected" xml:space="preserve">
+    <value>快捷键在桌面对话框中被拒绝。</value>
+  </data>
+  <data name="Linux_Hotkey_Unregistered" xml:space="preserve">
+    <value>快捷键已注销。</value>
+  </data>
+  <data name="Linux_Hotkey_WaylandUnsupported" xml:space="preserve">
+    <value>此 Wayland 桌面不允许程序使用全局快捷键（没有 GlobalShortcuts 门户）– 请通过托盘图标或菜单打开 Lupe，或在系统设置中为“lupe --bildschirm”创建自定义快捷键。</value>
+  </data>
+  <data name="Linux_Image_Corrupt" xml:space="preserve">
+    <value>“{0}”已损坏或不是受支持的图像（{1}）。</value>
+  </data>
+  <data name="Linux_Image_Empty" xml:space="preserve">
+    <value>“{0}”不包含图像（0 像素）。</value>
+  </data>
+  <data name="Linux_Image_NotReadable" xml:space="preserve">
+    <value>无法将“{0}”作为图像读取（{1}）。</value>
+  </data>
+  <data name="Linux_Image_TooLarge" xml:space="preserve">
+    <value>“{0}”太大，无法打开。</value>
+  </data>
+  <data name="Linux_Image_Unsupported" xml:space="preserve">
+    <value>“{0}”不是受支持的图像（{1}）。</value>
+  </data>
+  <data name="Linux_Portal_BusConnectFailed" xml:space="preserve">
+    <value>无法连接会话总线（{0}）。</value>
+  </data>
+  <data name="Linux_Portal_ConnectionDisturbed" xml:space="preserve">
+    <value>与桌面门户的连接受到干扰（{0}）。</value>
+  </data>
+  <data name="Linux_Portal_ConnectionLost" xml:space="preserve">
+    <value>与桌面门户的连接已断开。</value>
+  </data>
+  <data name="Linux_Portal_Denied" xml:space="preserve">
+    <value>桌面门户拒绝了“{0}”。</value>
+  </data>
+  <data name="Linux_Portal_Error" xml:space="preserve">
+    <value>桌面门户报告“{0}”出错：{1}</value>
+  </data>
+  <data name="Linux_Portal_NoScreenshot" xml:space="preserve">
+    <value>桌面门户未提供屏幕截图。</value>
+  </data>
+  <data name="Linux_Portal_NoSessionBus" xml:space="preserve">
+    <value>没有会话总线（缺少 DBUS_SESSION_BUS_ADDRESS）– 无法访问桌面门户。</value>
+  </data>
+  <data name="Linux_Portal_NotOffered" xml:space="preserve">
+    <value>此会话的桌面门户不提供“{0}”。</value>
+  </data>
+  <data name="Linux_Portal_NotRunning" xml:space="preserve">
+    <value>xdg-desktop-portal 未运行 – 在 Wayland 下，屏幕截图、输入和快捷键都需要桌面门户。</value>
+  </data>
+  <data name="Linux_Portal_ScreenshotDenied" xml:space="preserve">
+    <value>屏幕截图被拒绝 – 请在系统设置中允许 Lupe（隐私 → 屏幕截图）。</value>
+  </data>
+  <data name="Linux_Portal_ScreenshotUnreadable" xml:space="preserve">
+    <value>无法读取桌面门户提供的屏幕截图。</value>
+  </data>
+  <data name="Linux_Portal_Timeout" xml:space="preserve">
+    <value>桌面门户未及时响应。</value>
+  </data>
+  <data name="Linux_Problem_NoCameraAccess" xml:space="preserve">
+    <value>无法访问摄像头（/dev/video*）– 用户必须属于“video”组：“sudo usermod -aG video $USER”，然后重新登录。</value>
+  </data>
+  <data name="Linux_Problem_NoSession" xml:space="preserve">
+    <value>没有图形会话（既不是 X11 也不是 Wayland）– 屏幕截图、输入和快捷键均不可用。</value>
+  </data>
+  <data name="Linux_Problem_NoSessionBus" xml:space="preserve">
+    <value>没有会话总线 – 在 Wayland 下，屏幕截图、输入和快捷键都需要桌面门户（xdg-desktop-portal）。</value>
+  </data>
+  <data name="Linux_Problem_NoXTest" xml:space="preserve">
+    <value>X 服务器缺少 XTest 扩展（软件包 libxtst6）– 无法输入，但可以复制。</value>
+  </data>
+  <data name="Linux_Problem_WaylandActiveWindow" xml:space="preserve">
+    <value>在 Wayland 下，Lupe 无法看到前台是哪个窗口 – 扫描后，文本会输入到当时拥有焦点的窗口中。</value>
+  </data>
+  <data name="Linux_Problem_X11Unavailable" xml:space="preserve">
+    <value>屏幕截图、输入和快捷键均不可用：{0}</value>
+  </data>
+  <data name="Linux_Screen_DepthUnsupported" xml:space="preserve">
+    <value>不支持屏幕的色深（{0} 位）。</value>
+  </data>
+  <data name="Linux_Screen_Monitor" xml:space="preserve">
+    <value>显示器</value>
+  </data>
+  <data name="Linux_Screen_MonitorNumbered" xml:space="preserve">
+    <value>显示器 {0}</value>
+  </data>
+  <data name="Linux_Screen_Unavailable" xml:space="preserve">
+    <value>屏幕截图不可用：{0}</value>
+  </data>
+  <data name="Linux_Screen_XNoScreenshot" xml:space="preserve">
+    <value>X 服务器未提供屏幕截图。</value>
+  </data>
+  <data name="Linux_Screen_XRejected" xml:space="preserve">
+    <value>X 服务器拒绝了屏幕截图（错误 {0}）。</value>
+  </data>
+  <data name="Linux_Typing_Failed" xml:space="preserve">
+    <value>无法输入：{0}</value>
+  </data>
+  <data name="Linux_Typing_KeyboardNotGranted" xml:space="preserve">
+    <value>桌面门户未授予键盘访问权限。</value>
+  </data>
+  <data name="Linux_Typing_NoPortalSession" xml:space="preserve">
+    <value>桌面门户未打开键盘会话。</value>
+  </data>
+  <data name="Linux_Typing_NoRemoteDesktop" xml:space="preserve">
+    <value>此会话的桌面门户不提供键盘远程控制（RemoteDesktop）– 请改为复制文本。</value>
+  </data>
+  <data name="Linux_Typing_NoSession" xml:space="preserve">
+    <value>无法输入：没有图形会话（既不是 X11 也不是 Wayland）– 请改为复制文本。</value>
+  </data>
+  <data name="Linux_Typing_NoSpareKey" xml:space="preserve">
+    <value>无法输入：键盘布局中没有可用于该字符的空闲键码。</value>
+  </data>
+  <data name="Linux_Typing_NoXServer" xml:space="preserve">
+    <value>无法输入：无法连接 X 服务器。</value>
+  </data>
+  <data name="Linux_Typing_NoXTest" xml:space="preserve">
+    <value>无法输入：X 服务器缺少 XTest 扩展。</value>
+  </data>
+  <data name="Linux_Typing_PortalRejected" xml:space="preserve">
+    <value>桌面门户未接受键盘输入。</value>
+  </data>
+  <data name="Linux_Typing_Rejected" xml:space="preserve">
+    <value>X 服务器未接受键盘输入。</value>
+  </data>
+  <data name="Linux_Typing_RemoteControlCancelled" xml:space="preserve">
+    <value>桌面门户取消了键盘远程控制。</value>
+  </data>
+  <data name="Linux_Typing_RemoteControlDenied" xml:space="preserve">
+    <value>键盘远程控制被拒绝 – 下次请选择“允许”以进行输入。</value>
+  </data>
+  <data name="Linux_X11_ConnectFailed" xml:space="preserve">
+    <value>无法连接 X 服务器“{0}”。</value>
+  </data>
+  <data name="Linux_X11_LibraryMissing" xml:space="preserve">
+    <value>缺少 X11 库（libX11）。</value>
+  </data>
+  <data name="Linux_X11_NoDisplay" xml:space="preserve">
+    <value>没有 X 服务器（未设置 DISPLAY）。</value>
+  </data>
+  <data name="Mac_ActiveWindow_ActivateFailed" xml:space="preserve">
+    <value>无法将上一个程序切换到前台 – 未输入任何内容。</value>
+  </data>
+  <data name="Mac_ActiveWindow_AppKitMissing" xml:space="preserve">
+    <value>无法将上一个程序切换到前台（缺少 AppKit）– 未输入任何内容。</value>
+  </data>
+  <data name="Mac_ActiveWindow_Gone" xml:space="preserve">
+    <value>上一个程序已不在运行 – 未输入任何内容。</value>
+  </data>
+  <data name="Mac_ActiveWindow_NotHere" xml:space="preserve">
+    <value>此处无法将上一个窗口切换到前台（仅限 macOS）– 未输入任何内容。</value>
+  </data>
+  <data name="Mac_ActiveWindow_Unknown" xml:space="preserve">
+    <value>不知道之前前台是哪个程序 – 未输入任何内容。</value>
+  </data>
+  <data name="Mac_Autostart_DisableFailed" xml:space="preserve">
+    <value>无法取消开机自启动：{0}</value>
+  </data>
+  <data name="Mac_Autostart_DotnetHost" xml:space="preserve">
+    <value>只能为发布版 Lupe 设置开机自启动，通过“dotnet”启动时不行。</value>
+  </data>
+  <data name="Mac_Autostart_EnableFailed" xml:space="preserve">
+    <value>无法设置开机自启动：{0}</value>
+  </data>
+  <data name="Mac_Camera_Denied" xml:space="preserve">
+    <value>Lupe 无权使用摄像头。请在“系统设置”的“隐私与安全性 → 摄像头”中允许 Lupe，然后重新启动 Lupe。</value>
+  </data>
+  <data name="Mac_Camera_Failed" xml:space="preserve">
+    <value>摄像头“{0}”出现故障 – 可能正被其他程序使用。</value>
+  </data>
+  <data name="Mac_Camera_LibraryMissing" xml:space="preserve">
+    <value>摄像头“{0}”不可用 – 缺少 libLupeCamera.dylib。</value>
+  </data>
+  <data name="Mac_Camera_NoFormat" xml:space="preserve">
+    <value>摄像头“{0}”不提供 Lupe 能读取的图像格式。</value>
+  </data>
+  <data name="Mac_Camera_NotConnected" xml:space="preserve">
+    <value>摄像头“{0}”未连接。</value>
+  </data>
+  <data name="Mac_Camera_Restricted" xml:space="preserve">
+    <value>此 Mac 上的摄像头已被阻止（屏幕使用时间或设备管理）– 请联系您的 IT 部门。</value>
+  </data>
+  <data name="Mac_Camera_StartFailed" xml:space="preserve">
+    <value>无法启动摄像头“{0}” – 可能正被其他程序使用。</value>
+  </data>
+  <data name="Mac_Hotkey_AlreadyRegistered" xml:space="preserve">
+    <value>{0} 已被其他程序占用 – 请选择其他快捷键。</value>
+  </data>
+  <data name="Mac_Hotkey_CarbonMissing" xml:space="preserve">
+    <value>此 Mac 上不支持全局快捷键（缺少 Carbon）。</value>
+  </data>
+  <data name="Mac_Hotkey_HandlerFailed" xml:space="preserve">
+    <value>无法设置全局快捷键（macOS 错误 {0}）。</value>
+  </data>
+  <data name="Mac_Hotkey_Invalid" xml:space="preserve">
+    <value>{0} 无法在 macOS 上注册 – 请选择其他快捷键。</value>
+  </data>
+  <data name="Mac_Hotkey_KeyMissing" xml:space="preserve">
+    <value>macOS 上不存在 {0} 的按键 – 请选择其他快捷键。</value>
+  </data>
+  <data name="Mac_Hotkey_NeedsModifier" xml:space="preserve">
+    <value>在 macOS 上，快捷键至少需要一个修饰键（⌘、⌥、⌃ 或 ⇧）。</value>
+  </data>
+  <data name="Mac_Hotkey_RegisterFailed" xml:space="preserve">
+    <value>无法注册 {0}（macOS 错误 {1}）。</value>
+  </data>
+  <data name="Mac_Image_ConvertFailed" xml:space="preserve">
+    <value>无法转换图像（CoreGraphics）。</value>
+  </data>
+  <data name="Mac_Image_Corrupt" xml:space="preserve">
+    <value>“{0}”已损坏或不是有效的图像。</value>
+  </data>
+  <data name="Mac_Image_Empty" xml:space="preserve">
+    <value>“{0}”不包含图像（0 像素）。</value>
+  </data>
+  <data name="Mac_Image_EmptyFile" xml:space="preserve">
+    <value>“{0}”为空。</value>
+  </data>
+  <data name="Mac_Image_ImageIOMissing" xml:space="preserve">
+    <value>无法读取“{0}”：此 Mac 上没有 ImageIO。</value>
+  </data>
+  <data name="Mac_Image_NotReadable" xml:space="preserve">
+    <value>无法将“{0}”作为图像读取（{1}）。</value>
+  </data>
+  <data name="Mac_Image_TooLarge" xml:space="preserve">
+    <value>“{0}”太大，无法加载。</value>
+  </data>
+  <data name="Mac_Image_Unsupported" xml:space="preserve">
+    <value>“{0}”不是受支持的图像格式（PNG、JPEG、BMP、GIF、TIFF、HEIC …）或已损坏。</value>
+  </data>
+  <data name="Mac_NotHere_Autostart" xml:space="preserve">
+    <value>此处不支持开机自启动（仅限 macOS）。</value>
+  </data>
+  <data name="Mac_NotHere_Camera" xml:space="preserve">
+    <value>此处不支持摄像头（仅限 macOS）。</value>
+  </data>
+  <data name="Mac_NotHere_Hotkeys" xml:space="preserve">
+    <value>此处不支持全局快捷键（仅限 macOS）。</value>
+  </data>
+  <data name="Mac_NotHere_Image" xml:space="preserve">
+    <value>无法读取“{0}”：此处不支持图像文件（仅限 macOS）。</value>
+  </data>
+  <data name="Mac_NotHere_Screenshots" xml:space="preserve">
+    <value>此处不支持屏幕截图（仅限 macOS）。</value>
+  </data>
+  <data name="Mac_NotHere_Typing" xml:space="preserve">
+    <value>此处不支持输入（仅限 macOS）。请改为复制文本。</value>
+  </data>
+  <data name="Mac_Screen_CoreGraphicsMissing" xml:space="preserve">
+    <value>无法查询显示器（缺少 CoreGraphics）。</value>
+  </data>
+  <data name="Mac_Screen_Denied" xml:space="preserve">
+    <value>Lupe 无权录制屏幕。请在“系统设置”的“隐私与安全性 → 录屏与系统录音”中允许 Lupe，然后重新启动 Lupe。</value>
+  </data>
+  <data name="Mac_Screen_ExitCode" xml:space="preserve">
+    <value>代码 {0}</value>
+  </data>
+  <data name="Mac_Screen_Failed" xml:space="preserve">
+    <value>屏幕截图失败：{0}</value>
+  </data>
+  <data name="Mac_Screen_MainMonitorNumbered" xml:space="preserve">
+    <value>显示器 {0}（主显示器）</value>
+  </data>
+  <data name="Mac_Screen_MonitorNumbered" xml:space="preserve">
+    <value>显示器 {0}</value>
+  </data>
+  <data name="Mac_Screen_NoDisplay" xml:space="preserve">
+    <value>macOS 未报告任何显示器。</value>
+  </data>
+  <data name="Mac_Screen_ScreenshotName" xml:space="preserve">
+    <value>屏幕截图</value>
+  </data>
+  <data name="Mac_Screen_ToolFailed" xml:space="preserve">
+    <value>屏幕截图失败（screencapture：{0}）。</value>
+  </data>
+  <data name="Mac_Screen_ToolStartFailed" xml:space="preserve">
+    <value>无法启动 screencapture。</value>
+  </data>
+  <data name="Mac_Screen_ToolTimeout" xml:space="preserve">
+    <value>屏幕截图耗时过长（screencapture 无响应）。</value>
+  </data>
+  <data name="Mac_Typing_AccessibilityDenied" xml:space="preserve">
+    <value>Lupe 尚无权在 macOS 上发送键盘输入。请在“系统设置”的“隐私与安全性 → 辅助功能”中允许 Lupe – 在此之前请改为复制文本。</value>
+  </data>
+  <data name="Mac_Typing_Rejected" xml:space="preserve">
+    <value>macOS 未接受键盘输入 – 请改为复制文本。</value>
+  </data>
+  <data name="Page_Camera_AimHelpTip" xml:space="preserve">
+    <value>图像中央的角标 – 请将代码保持在其中</value>
+  </data>
+  <data name="Page_Camera_CodesDetectedAt" xml:space="preserve">
+    <value>检测到 {0} 个代码 · {1}</value>
+  </data>
+  <data name="Page_Camera_GoFile" xml:space="preserve">
+    <value>文件</value>
+  </data>
+  <data name="Page_Camera_GoScreen" xml:space="preserve">
+    <value>屏幕</value>
+  </data>
+  <data name="Page_Camera_LastDetected" xml:space="preserve">
+    <value>最近检测到</value>
+  </data>
+  <data name="Page_Camera_LastDetectedAt" xml:space="preserve">
+    <value>最近检测到 · {0}</value>
+  </data>
+  <data name="Page_Camera_MultipleCodes" xml:space="preserve">
+    <value>图像中有多个代码 – 全部已记入历史记录。请复制或打开所需的那个。</value>
+  </data>
+  <data name="Page_Camera_NoCameraText" xml:space="preserve">
+    <value>“扫描区域”读取屏幕上的代码，“文件”页面读取照片和扫描件。请连接网络摄像头，然后单击上方的“重新搜索摄像头”。</value>
+  </data>
+  <data name="Page_Camera_NoCameraTextWithDetail" xml:space="preserve">
+    <value>“扫描区域”读取屏幕上的代码，“文件”页面读取照片和扫描件。请连接网络摄像头，然后单击上方的“重新搜索摄像头”。
+（{0}）</value>
+  </data>
+  <data name="Page_Camera_NoCameraTitle" xml:space="preserve">
+    <value>未找到摄像头 – 请使用“屏幕”或“文件”</value>
+  </data>
+  <data name="Page_Camera_NothingYet" xml:space="preserve">
+    <value>尚未检测到任何内容。</value>
+  </data>
+  <data name="Page_Camera_Off" xml:space="preserve">
+    <value>摄像头已关闭</value>
+  </data>
+  <data name="Page_Camera_OffText" xml:space="preserve">
+    <value>将代码保持在图像中央 – Lupe 会自动识别，发出提示音并将其记入历史记录。</value>
+  </data>
+  <data name="Page_Camera_ProcessHit" xml:space="preserve">
+    <value>处理检测到的代码</value>
+  </data>
+  <data name="Page_Camera_RefreshCameras" xml:space="preserve">
+    <value>重新搜索摄像头</value>
+  </data>
+  <data name="Page_Camera_ReleaseCameraFailed" xml:space="preserve">
+    <value>释放摄像头：{0}</value>
+  </data>
+  <data name="Page_Camera_SearchCameras" xml:space="preserve">
+    <value>搜索摄像头</value>
+  </data>
+  <data name="Page_Camera_Start" xml:space="preserve">
+    <value>启动</value>
+  </data>
+  <data name="Page_Camera_StartCamera" xml:space="preserve">
+    <value>启动摄像头</value>
+  </data>
+  <data name="Page_Camera_StartFailed" xml:space="preserve">
+    <value>无法启动摄像头。</value>
+  </data>
+  <data name="Page_Camera_Starting" xml:space="preserve">
+    <value>正在启动摄像头…</value>
+  </data>
+  <data name="Page_Camera_Stop" xml:space="preserve">
+    <value>停止</value>
+  </data>
+  <data name="Page_Camera_StopCamera" xml:space="preserve">
+    <value>停止摄像头</value>
+  </data>
+  <data name="Page_Camera_StopCameraFailed" xml:space="preserve">
+    <value>停止摄像头：{0}</value>
+  </data>
+  <data name="Page_Camera_TryAgain" xml:space="preserve">
+    <value>重试</value>
+  </data>
+  <data name="Page_Camera_TypeOffHint" xml:space="preserve">
+    <value>“输入”已关闭。要像手持扫描器一样输入到其他程序中：设置 › 检测到代码时 › 输入。或者复制代码。</value>
+  </data>
+  <data name="Page_Camera_TypeOnHint" xml:space="preserve">
+    <value>“输入”已开启：Lupe 会像手持扫描器一样将检测到的代码输入到前台程序中 – 请单击目标程序；Lupe 可以在后台或最小化状态下继续运行。</value>
+  </data>
+  <data name="Page_Camera_UnavailableTitle" xml:space="preserve">
+    <value>摄像头不可用</value>
+  </data>
+  <data name="Page_File_AllCodesInHistory" xml:space="preserve">
+    <value>所有代码均已记入历史记录。请复制或打开所需的那个 – 或者全部复制，每行一个。</value>
+  </data>
+  <data name="Page_File_ClipboardImageFailed" xml:space="preserve">
+    <value>无法读取剪贴板中的图像：{0}</value>
+  </data>
+  <data name="Page_File_ClipboardImageName" xml:space="preserve">
+    <value>剪贴板中的图像</value>
+  </data>
+  <data name="Page_File_ClipboardReadFailed" xml:space="preserve">
+    <value>无法读取剪贴板：{0}</value>
+  </data>
+  <data name="Page_File_CodesFound_One" xml:space="preserve">
+    <value>找到 1 个代码</value>
+  </data>
+  <data name="Page_File_CodesFound_Other" xml:space="preserve">
+    <value>找到 {0} 个代码</value>
+  </data>
+  <data name="Page_File_CodesFound_Zero" xml:space="preserve">
+    <value>未找到代码</value>
+  </data>
+  <data name="Page_File_DropHere" xml:space="preserve">
+    <value>将图像拖到此处</value>
+  </data>
+  <data name="Page_File_DropHintText" xml:space="preserve">
+    <value>照片、扫描件和屏幕截图 – PNG、JPEG、BMP、GIF、TIFF 以及系统能读取的其他格式。一张图像中也可以有多个代码。</value>
+  </data>
+  <data name="Page_File_DropHintTextWindows" xml:space="preserve">
+    <value>照片、扫描件和屏幕截图 – PNG、JPEG、BMP、GIF、TIFF 以及 Windows 能读取的其他格式。一张图像中也可以有多个代码。</value>
+  </data>
+  <data name="Page_File_DroppedImageName" xml:space="preserve">
+    <value>拖入的图像</value>
+  </data>
+  <data name="Page_File_FileReadFailed" xml:space="preserve">
+    <value>无法读取“{0}”：{1}</value>
+  </data>
+  <data name="Page_File_FoundCodes" xml:space="preserve">
+    <value>找到的代码</value>
+  </data>
+  <data name="Page_File_FromClipboard" xml:space="preserve">
+    <value>从剪贴板</value>
+  </data>
+  <data name="Page_File_ImagesFilter" xml:space="preserve">
+    <value>图像（{0}…）</value>
+  </data>
+  <data name="Page_File_LoadingImage" xml:space="preserve">
+    <value>正在加载图像…</value>
+  </data>
+  <data name="Page_File_MultipleFilesDropped" xml:space="preserve">
+    <value>拖入了多个文件 – 正在读取“{0}”。</value>
+  </data>
+  <data name="Page_File_NoCodeInImage" xml:space="preserve">
+    <value>Lupe 在此图像中未找到二维码或条码。</value>
+  </data>
+  <data name="Page_File_NoCodeTip" xml:space="preserve">
+    <value>提示：尽量将代码拍得大而清晰；对于屏幕截图，“扫描区域”效果更好。</value>
+  </data>
+  <data name="Page_File_NoImageInClipboard" xml:space="preserve">
+    <value>剪贴板中没有图像。提示：将屏幕截图复制到剪贴板 – 或直接使用“扫描区域”。</value>
+  </data>
+  <data name="Page_File_NoImageInClipboardWindows" xml:space="preserve">
+    <value>剪贴板中没有图像。提示：使用 Win+Shift+S 截图 – 或直接使用“扫描区域”。</value>
+  </data>
+  <data name="Page_File_NoImageYet" xml:space="preserve">
+    <value>尚未读取图像。</value>
+  </data>
+  <data name="Page_File_NotAnImage" xml:space="preserve">
+    <value>这不是 Lupe 能读取的图像。</value>
+  </data>
+  <data name="Page_File_OpenDialogFailed" xml:space="preserve">
+    <value>无法显示打开对话框：{0}</value>
+  </data>
+  <data name="Page_File_OpenDialogTitle" xml:space="preserve">
+    <value>打开含代码的图像</value>
+  </data>
+  <data name="Page_File_OpenImage" xml:space="preserve">
+    <value>打开图像…</value>
+  </data>
+  <data name="Page_File_OpenImageName" xml:space="preserve">
+    <value>打开图像</value>
+  </data>
+  <data name="Page_File_PasteShortcut" xml:space="preserve">
+    <value>Ctrl+V</value>
+  </data>
+  <data name="Page_File_ReadClipboard" xml:space="preserve">
+    <value>读取剪贴板</value>
+  </data>
+  <data name="Page_File_ReadImage" xml:space="preserve">
+    <value>读取图像</value>
+  </data>
+  <data name="Page_File_SearchingCodes" xml:space="preserve">
+    <value>正在查找代码…</value>
+  </data>
+  <data name="Page_File_SourceHint" xml:space="preserve">
+    <value>或按 Ctrl+V · 或将图像拖到此处</value>
+  </data>
+  <data name="Page_File_SourceInfo" xml:space="preserve">
+    <value>{0} · {1} × {2} 像素</value>
+  </data>
+  <data name="Page_History_ClearAll" xml:space="preserve">
+    <value>全部删除</value>
+  </data>
+  <data name="Page_History_Cleared" xml:space="preserve">
+    <value>历史记录已删除。</value>
+  </data>
+  <data name="Page_History_ClearFailed" xml:space="preserve">
+    <value>无法删除历史记录：{0}</value>
+  </data>
+  <data name="Page_History_ClearQuestion_One" xml:space="preserve">
+    <value>删除全部历史记录（1 个条目）？此操作无法撤销。</value>
+  </data>
+  <data name="Page_History_ClearQuestion_Other" xml:space="preserve">
+    <value>删除全部历史记录（{0} 个条目）？此操作无法撤销。</value>
+  </data>
+  <data name="Page_History_ClearTitle" xml:space="preserve">
+    <value>删除历史记录</value>
+  </data>
+  <data name="Page_History_ColumnContent" xml:space="preserve">
+    <value>内容</value>
+  </data>
+  <data name="Page_History_ColumnFormat" xml:space="preserve">
+    <value>格式</value>
+  </data>
+  <data name="Page_History_ColumnSource" xml:space="preserve">
+    <value>来源</value>
+  </data>
+  <data name="Page_History_ColumnTime" xml:space="preserve">
+    <value>时间</value>
+  </data>
+  <data name="Page_History_CsvFileType" xml:space="preserve">
+    <value>适用于 Excel 的 CSV（*.csv）</value>
+  </data>
+  <data name="Page_History_Delete" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="Page_History_DeleteEntry" xml:space="preserve">
+    <value>删除条目</value>
+  </data>
+  <data name="Page_History_DeleteEntryTip" xml:space="preserve">
+    <value>删除条目（Delete）</value>
+  </data>
+  <data name="Page_History_DeleteFailed" xml:space="preserve">
+    <value>无法删除条目：{0}</value>
+  </data>
+  <data name="Page_History_EmptyText" xml:space="preserve">
+    <value>Lupe 从摄像头、屏幕或文件读取的所有内容都会显示在这里。</value>
+  </data>
+  <data name="Page_History_EmptyTitle" xml:space="preserve">
+    <value>尚未检测到任何内容</value>
+  </data>
+  <data name="Page_History_EntryCount_One" xml:space="preserve">
+    <value>1 个条目</value>
+  </data>
+  <data name="Page_History_EntryCount_Other" xml:space="preserve">
+    <value>{0} 个条目</value>
+  </data>
+  <data name="Page_History_ExportCsv" xml:space="preserve">
+    <value>导出为 CSV…</value>
+  </data>
+  <data name="Page_History_ExportDialogTitle" xml:space="preserve">
+    <value>将历史记录导出为 CSV</value>
+  </data>
+  <data name="Page_History_Exported" xml:space="preserve">
+    <value>已导出：{0}</value>
+  </data>
+  <data name="Page_History_ExportFailed" xml:space="preserve">
+    <value>导出失败：{0}</value>
+  </data>
+  <data name="Page_History_ExportFileName" xml:space="preserve">
+    <value>Lupe-历史记录-{0}.csv</value>
+  </data>
+  <data name="Page_History_FilteredCount_One" xml:space="preserve">
+    <value>1 个条目中的 {0} 个</value>
+  </data>
+  <data name="Page_History_FilteredCount_Other" xml:space="preserve">
+    <value>{1} 个条目中的 {0} 个</value>
+  </data>
+  <data name="Page_History_GoSettings" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="Page_History_LinkTip" xml:space="preserve">
+    <value>链接：{0}</value>
+  </data>
+  <data name="Page_History_NoLinkRule" xml:space="preserve">
+    <value>没有与此内容匹配的链接规则</value>
+  </data>
+  <data name="Page_History_NoMatch" xml:space="preserve">
+    <value>没有条目包含“{0}”。</value>
+  </data>
+  <data name="Page_History_NoSelection" xml:space="preserve">
+    <value>未选择条目</value>
+  </data>
+  <data name="Page_History_NoSelectionHint" xml:space="preserve">
+    <value>单击条目可复制、打开其链接或删除。双击即复制。</value>
+  </data>
+  <data name="Page_History_NothingFound" xml:space="preserve">
+    <value>未找到任何内容</value>
+  </data>
+  <data name="Page_History_OffText" xml:space="preserve">
+    <value>此处的条目只保留到关闭 Lupe 为止 – 不会在磁盘上保存任何内容。</value>
+  </data>
+  <data name="Page_History_OffTitle" xml:space="preserve">
+    <value>历史记录未保存</value>
+  </data>
+  <data name="Page_History_ProblemTitle" xml:space="preserve">
+    <value>历史记录文件有问题</value>
+  </data>
+  <data name="Page_History_SaveDialogFailed" xml:space="preserve">
+    <value>无法显示保存对话框：{0}</value>
+  </data>
+  <data name="Page_History_SearchName" xml:space="preserve">
+    <value>搜索历史记录</value>
+  </data>
+  <data name="Page_History_SearchPlaceholder" xml:space="preserve">
+    <value>内容、格式或来源</value>
+  </data>
+  <data name="Page_History_SortedAscending" xml:space="preserve">
+    <value>{0}，升序</value>
+  </data>
+  <data name="Page_History_SortedDescending" xml:space="preserve">
+    <value>{0}，降序</value>
+  </data>
+  <data name="Page_Info_CommandExampleName" xml:space="preserve">
+    <value>命令行示例</value>
+  </data>
+  <data name="Page_Info_CommandHelp" xml:space="preserve">
+    <value>所有命令和选项：{0}</value>
+  </data>
+  <data name="Page_Info_CommandIntro" xml:space="preserve">
+    <value>同一个程序也可以在无窗口的情况下读取图像 – 每个代码输出一行“格式⇥内容”，适用于脚本和计划任务：</value>
+  </data>
+  <data name="Page_Info_CommandIntroWindows" xml:space="preserve">
+    <value>同一个 Lupe.exe 也可以在无窗口的情况下读取图像 – 每个代码输出一行“格式⇥内容”，适用于脚本和计划任务：</value>
+  </data>
+  <data name="Page_Info_CommandLine" xml:space="preserve">
+    <value>命令行</value>
+  </data>
+  <data name="Page_Info_Components" xml:space="preserve">
+    <value>识别与界面</value>
+  </data>
+  <data name="Page_Info_ComponentsText" xml:space="preserve">
+    <value>zxing-cpp 3.1.1（Apache-2.0），含 libzint 和 libzueci（BSD-3-Clause）– 支持 QR 和 Micro QR、Data Matrix、Aztec、PDF417、MaxiCode、EAN、UPC、Code 128/39/93、ITF、Codabar、GS1 DataBar 等。界面基于 Avalonia（MIT）构建。</value>
+  </data>
+  <data name="Page_Info_CtrlPrefix" xml:space="preserve">
+    <value>Ctrl+</value>
+  </data>
+  <data name="Page_Info_DataDemo" xml:space="preserve">
+    <value>演示：设置和历史记录仅保存在内存中，关闭 Lupe 后即消失。</value>
+  </data>
+  <data name="Page_Info_DataText" xml:space="preserve">
+    <value>设置和历史记录保存在 {0} 中 – 仅供您本人使用。Lupe 不会向互联网发送任何内容；只有在您如此设置时，链接才会在浏览器中打开。</value>
+  </data>
+  <data name="Page_Info_DataTextSplit" xml:space="preserve">
+    <value>设置保存在 {0} 中，历史记录保存在 {1} 中 – 仅供您本人使用。Lupe 不会向互联网发送任何内容；只有在您如此设置时，链接才会在浏览器中打开。</value>
+  </data>
+  <data name="Page_Info_ExitCode0" xml:space="preserve">
+    <value>退出代码 0</value>
+  </data>
+  <data name="Page_Info_ExitCode0Text" xml:space="preserve">
+    <value>至少找到一个代码</value>
+  </data>
+  <data name="Page_Info_ExitCode1" xml:space="preserve">
+    <value>退出代码 1</value>
+  </data>
+  <data name="Page_Info_ExitCode1Text" xml:space="preserve">
+    <value>未找到代码</value>
+  </data>
+  <data name="Page_Info_ExitCode3" xml:space="preserve">
+    <value>退出代码 3</value>
+  </data>
+  <data name="Page_Info_ExitCode3Text" xml:space="preserve">
+    <value>错误 – 图像缺失或无法读取、调用无效</value>
+  </data>
+  <data name="Page_Info_Imprint" xml:space="preserve">
+    <value>法律声明（Impressum）</value>
+  </data>
+  <data name="Page_Info_ImprintOpenName" xml:space="preserve">
+    <value>在浏览器中打开法律声明</value>
+  </data>
+  <data name="Page_Info_ImprintText" xml:space="preserve">
+    <value>网站上的 ICT-Baden 公司信息</value>
+  </data>
+  <data name="Page_Info_Keyboard" xml:space="preserve">
+    <value>键盘</value>
+  </data>
+  <data name="Page_Info_Keys" xml:space="preserve">
+    <value>{0} 扫描屏幕区域 – 可在任何程序中使用 · {1}1 至 {1}6 切换页面 · {1}V 读取剪贴板中的图像 · 在历史记录中：{1}C 复制，Enter 打开链接，Delete 删除</value>
+  </data>
+  <data name="Page_Info_License" xml:space="preserve">
+    <value>许可证</value>
+  </data>
+  <data name="Page_Info_LicenseMit" xml:space="preserve">
+    <value>MIT 许可证 – © 2026 ICT-Baden GmbH</value>
+  </data>
+  <data name="Page_Info_LicenseOpenName" xml:space="preserve">
+    <value>显示 MIT 许可证文本</value>
+  </data>
+  <data name="Page_Info_LicenseTexts" xml:space="preserve">
+    <value>许可证文本</value>
+  </data>
+  <data name="Page_Info_LicenseTextsName" xml:space="preserve">
+    <value>显示所含库的许可证文本</value>
+  </data>
+  <data name="Page_Info_OpenInBrowser" xml:space="preserve">
+    <value>在浏览器中打开</value>
+  </data>
+  <data name="Page_Info_Privacy" xml:space="preserve">
+    <value>数据与隐私</value>
+  </data>
+  <data name="Page_Info_PrivacyOpenName" xml:space="preserve">
+    <value>在浏览器中打开“数据与隐私”页面</value>
+  </data>
+  <data name="Page_Info_PrivacyText" xml:space="preserve">
+    <value>本软件不会向 ICT-Baden 发送任何数据。了解 Lupe 存储了什么、存储在哪里以及如何删除。</value>
+  </data>
+  <data name="Page_Info_Publisher" xml:space="preserve">
+    <value>发布者</value>
+  </data>
+  <data name="Page_Info_ShowText" xml:space="preserve">
+    <value>显示</value>
+  </data>
+  <data name="Page_Info_SourceCode" xml:space="preserve">
+    <value>源代码和问题</value>
+  </data>
+  <data name="Page_Info_Support" xml:space="preserve">
+    <value>帮助与支持</value>
+  </data>
+  <data name="Page_Info_SupportOpenName" xml:space="preserve">
+    <value>在浏览器中打开帮助与支持</value>
+  </data>
+  <data name="Page_Info_SupportText" xml:space="preserve">
+    <value>通过 GitHub 免费获得，签订 ICT-Baden 支持合同可获得保障。</value>
+  </data>
+  <data name="Page_Info_Tagline" xml:space="preserve">
+    <value>从网络摄像头、屏幕区域、文件和剪贴板读取二维码和条码。</value>
+  </data>
+  <data name="Page_Info_TheHotkey" xml:space="preserve">
+    <value>快捷键</value>
+  </data>
+  <data name="Page_Info_Version" xml:space="preserve">
+    <value>版本 {0} · .NET {1}</value>
+  </data>
+  <data name="Page_Info_VersionBuild" xml:space="preserve">
+    <value>版本 {0} · 构建 {1} · .NET {2}</value>
+  </data>
+  <data name="Page_Info_Website" xml:space="preserve">
+    <value>网站</value>
+  </data>
+  <data name="Page_Info_WebsiteOpenName" xml:space="preserve">
+    <value>在浏览器中打开 ICT-Baden 网站</value>
+  </data>
+  <data name="Page_Info_YourData" xml:space="preserve">
+    <value>您的数据</value>
+  </data>
+  <data name="Page_Screen_ActionCopy" xml:space="preserve">
+    <value>复制到剪贴板</value>
+  </data>
+  <data name="Page_Screen_ActionOpenLink" xml:space="preserve">
+    <value>如有匹配的规则则打开链接</value>
+  </data>
+  <data name="Page_Screen_ActionSeparator" xml:space="preserve">
+    <value>、</value>
+  </data>
+  <data name="Page_Screen_ActionsNone" xml:space="preserve">
+    <value>仅显示并记入历史记录 – 未设置任何操作。</value>
+  </data>
+  <data name="Page_Screen_ActionsSentence" xml:space="preserve">
+    <value>{0}。</value>
+  </data>
+  <data name="Page_Screen_ActionsSentenceWithType" xml:space="preserve">
+    <value>{0}。只有通过快捷键从其他程序发起扫描时才会输入。</value>
+  </data>
+  <data name="Page_Screen_ActionType" xml:space="preserve">
+    <value>输入到上一个窗口</value>
+  </data>
+  <data name="Page_Screen_ActionTypeThen" xml:space="preserve">
+    <value>输入到上一个窗口（然后按 {0}）</value>
+  </data>
+  <data name="Page_Screen_Change" xml:space="preserve">
+    <value>更改</value>
+  </data>
+  <data name="Page_Screen_ChangeLink" xml:space="preserve">
+    <value>更改</value>
+  </data>
+  <data name="Page_Screen_ChooseOther" xml:space="preserve">
+    <value>选择其他</value>
+  </data>
+  <data name="Page_Screen_HotkeyFromAnyProgram" xml:space="preserve">
+    <value>可在任何程序中使用</value>
+  </data>
+  <data name="Page_Screen_HotkeyNotAvailableNow" xml:space="preserve">
+    <value>当前不可用</value>
+  </data>
+  <data name="Page_Screen_HotkeyOffInDemo" xml:space="preserve">
+    <value>演示中已关闭 – 请使用此处的按钮</value>
+  </data>
+  <data name="Page_Screen_HotkeyUnavailable" xml:space="preserve">
+    <value>快捷键不可用</value>
+  </data>
+  <data name="Page_Screen_HowTo" xml:space="preserve">
+    <value>使用方法</value>
+  </data>
+  <data name="Page_Screen_Intro" xml:space="preserve">
+    <value>Lupe 会短暂隐藏，您在代码周围拖出一个矩形 – 即可完成。适用于所有显示器，可用于发票、网页、视频通话和照片。</value>
+  </data>
+  <data name="Page_Screen_NothingYet" xml:space="preserve">
+    <value>尚未扫描任何内容。</value>
+  </data>
+  <data name="Page_Screen_Recent" xml:space="preserve">
+    <value>最近的屏幕扫描</value>
+  </data>
+  <data name="Page_Screen_ScanArea" xml:space="preserve">
+    <value>扫描区域</value>
+  </data>
+  <data name="Page_Screen_Step1" xml:space="preserve">
+    <value>1  按下快捷键</value>
+  </data>
+  <data name="Page_Screen_Step1Text" xml:space="preserve">
+    <value>可在任何程序中使用 – 即使 Lupe 只在通知区域中运行。或者单击此处的按钮。</value>
+  </data>
+  <data name="Page_Screen_Step2" xml:space="preserve">
+    <value>2  拖出矩形</value>
+  </data>
+  <data name="Page_Screen_Step2Text" xml:space="preserve">
+    <value>用鼠标在代码周围拖动。单击而不拖动则选取整个屏幕，按 Esc 取消。</value>
+  </data>
+  <data name="Page_Screen_Step3" xml:space="preserve">
+    <value>3  使用结果</value>
+  </data>
+  <data name="Page_Screen_Step3Text" xml:space="preserve">
+    <value>根据设置复制、输入到上一个窗口或作为链接打开。有多个代码时：由您选择。</value>
+  </data>
+  <data name="Page_Screen_Title" xml:space="preserve">
+    <value>屏幕上有代码？</value>
+  </data>
+  <data name="Page_Settings_AfterTyping" xml:space="preserve">
+    <value>输入后</value>
+  </data>
+  <data name="Page_Settings_AfterTypingName" xml:space="preserve">
+    <value>输入后按键</value>
+  </data>
+  <data name="Page_Settings_AfterTypingText" xml:space="preserve">
+    <value>最后再按一个键 – 例如按 Enter 立即提交搜索框或表单。</value>
+  </data>
+  <data name="Page_Settings_AimHelpText" xml:space="preserve">
+    <value>在图像中央显示角标，标出代码应在的位置。</value>
+  </data>
+  <data name="Page_Settings_AllFormats" xml:space="preserve">
+    <value>识别所有格式</value>
+  </data>
+  <data name="Page_Settings_AllFormatsText" xml:space="preserve">
+    <value>仅识别特定格式：速度更快，在文字较多的图像中误识别更少。</value>
+  </data>
+  <data name="Page_Settings_AutostartLinux" xml:space="preserve">
+    <value>随会话启动</value>
+  </data>
+  <data name="Page_Settings_AutostartMac" xml:space="preserve">
+    <value>登录时启动</value>
+  </data>
+  <data name="Page_Settings_AutostartName" xml:space="preserve">
+    <value>随系统启动</value>
+  </data>
+  <data name="Page_Settings_AutostartText" xml:space="preserve">
+    <value>登录时 Lupe 会在通知区域中静默启动 – 快捷键立即可用。</value>
+  </data>
+  <data name="Page_Settings_AutostartWindows" xml:space="preserve">
+    <value>随 Windows 启动</value>
+  </data>
+  <data name="Page_Settings_CameraActions" xml:space="preserve">
+    <value>摄像头、文件和剪贴板</value>
+  </data>
+  <data name="Page_Settings_CameraActionsText" xml:space="preserve">
+    <value>“输入”（仅限摄像头）会像手持扫描器一样将代码输入到前台程序中，例如记事本。Lupe 在后台或最小化状态下继续运行。</value>
+  </data>
+  <data name="Page_Settings_DelayFast" xml:space="preserve">
+    <value>快（10 毫秒）</value>
+  </data>
+  <data name="Page_Settings_DelayNone" xml:space="preserve">
+    <value>即时</value>
+  </data>
+  <data name="Page_Settings_DelayNormal" xml:space="preserve">
+    <value>正常（20 毫秒）</value>
+  </data>
+  <data name="Page_Settings_DelaySlow" xml:space="preserve">
+    <value>慢（40 毫秒）</value>
+  </data>
+  <data name="Page_Settings_Entries" xml:space="preserve">
+    <value>个条目</value>
+  </data>
+  <data name="Page_Settings_FeatureActiveWindow" xml:space="preserve">
+    <value>前台窗口</value>
+  </data>
+  <data name="Page_Settings_FeatureAutostart" xml:space="preserve">
+    <value>开机自启动</value>
+  </data>
+  <data name="Page_Settings_FeatureScreen" xml:space="preserve">
+    <value>屏幕录制</value>
+  </data>
+  <data name="Page_Settings_Formats" xml:space="preserve">
+    <value>格式</value>
+  </data>
+  <data name="Page_Settings_FormatsAtLeastOne" xml:space="preserve">
+    <value>至少须保留一种格式。如需全部格式，请开启上方的“识别所有格式”。</value>
+  </data>
+  <data name="Page_Settings_HistoryLimit" xml:space="preserve">
+    <value>最多</value>
+  </data>
+  <data name="Page_Settings_HistoryLimitInvalid" xml:space="preserve">
+    <value>请输入 {0} 到 {1} 之间的数字。</value>
+  </data>
+  <data name="Page_Settings_HistoryLimitName" xml:space="preserve">
+    <value>历史记录条目的最大数量</value>
+  </data>
+  <data name="Page_Settings_HistoryLimitText" xml:space="preserve">
+    <value>较早的条目会被删除（10 到 10,000）。</value>
+  </data>
+  <data name="Page_Settings_HistoryOffQuestion" xml:space="preserve">
+    <value>停止保存历史记录？
+
+文件 {0} 将被删除，以免扫描内容留在磁盘上。此操作无法撤销。
+
+在关闭 Lupe 之前，这些条目仍会显示在此处。如需保留，请先导出（历史记录 → 导出为 CSV…）。</value>
+  </data>
+  <data name="Page_Settings_HistoryOffQuestion_One" xml:space="preserve">
+    <value>停止保存历史记录？
+
+包含 1 个条目的文件 {0} 将被删除，以免扫描内容留在磁盘上。此操作无法撤销。
+
+在关闭 Lupe 之前，这些条目仍会显示在此处。如需保留，请先导出（历史记录 → 导出为 CSV…）。</value>
+  </data>
+  <data name="Page_Settings_HistoryOffQuestion_Other" xml:space="preserve">
+    <value>停止保存历史记录？
+
+包含 {1} 个条目的文件 {0} 将被删除，以免扫描内容留在磁盘上。此操作无法撤销。
+
+在关闭 Lupe 之前，这些条目仍会显示在此处。如需保留，请先导出（历史记录 → 导出为 CSV…）。</value>
+  </data>
+  <data name="Page_Settings_HistoryOffTitle" xml:space="preserve">
+    <value>停止保存历史记录</value>
+  </data>
+  <data name="Page_Settings_HotkeyDefault" xml:space="preserve">
+    <value>默认</value>
+  </data>
+  <data name="Page_Settings_HotkeyKeyUnsupported" xml:space="preserve">
+    <value>此键不可用 – 请选择其他键</value>
+  </data>
+  <data name="Page_Settings_HotkeyName" xml:space="preserve">
+    <value>屏幕扫描快捷键</value>
+  </data>
+  <data name="Page_Settings_HotkeyNeedModifierLinux" xml:space="preserve">
+    <value>请使用 Ctrl、Alt 或 Super</value>
+  </data>
+  <data name="Page_Settings_HotkeyNeedModifierMac" xml:space="preserve">
+    <value>请使用 ⌃、⌥ 或 ⌘</value>
+  </data>
+  <data name="Page_Settings_HotkeyNeedModifierWindows" xml:space="preserve">
+    <value>请使用 Ctrl、Alt 或 Win</value>
+  </data>
+  <data name="Page_Settings_HotkeyNotRegistered" xml:space="preserve">
+    <value>快捷键尚未注册。</value>
+  </data>
+  <data name="Page_Settings_HotkeyOffInDemo" xml:space="preserve">
+    <value>演示中不注册快捷键 – 以免干扰正在运行的正式 Lupe。</value>
+  </data>
+  <data name="Page_Settings_HotkeyPress" xml:space="preserve">
+    <value>请按下组合键…</value>
+  </data>
+  <data name="Page_Settings_HotkeyReady" xml:space="preserve">
+    <value>{0} 已就绪 – 即使窗口已关闭也可使用。</value>
+  </data>
+  <data name="Page_Settings_HotkeyRecording" xml:space="preserve">
+    <value>录制期间快捷键已注销 – 组合键将输入到此字段中。按 Esc 取消。</value>
+  </data>
+  <data name="Page_Settings_HotkeyTextLinux" xml:space="preserve">
+    <value>单击该字段并按下组合键（带 Ctrl、Alt 或 Super；功能键也可单独使用）。</value>
+  </data>
+  <data name="Page_Settings_HotkeyTextMac" xml:space="preserve">
+    <value>单击该字段并按下组合键（带 ⌃、⌥ 或 ⌘；功能键也可单独使用）。</value>
+  </data>
+  <data name="Page_Settings_HotkeyTextWindows" xml:space="preserve">
+    <value>单击该字段并按下组合键（带 Ctrl、Alt 或 Win；功能键也可单独使用）。</value>
+  </data>
+  <data name="Page_Settings_KeepHistory" xml:space="preserve">
+    <value>保存历史记录</value>
+  </data>
+  <data name="Page_Settings_KeepHistoryText" xml:space="preserve">
+    <value>仅供您本人使用，保存在 {0} 中。关闭：只保留到关闭 Lupe 为止 – 确认后会删除已保存的文件。</value>
+  </data>
+  <data name="Page_Settings_KeepInTray" xml:space="preserve">
+    <value>关闭时在通知区域中继续运行</value>
+  </data>
+  <data name="Page_Settings_KeepInTrayName" xml:space="preserve">
+    <value>在通知区域中继续运行</value>
+  </data>
+  <data name="Page_Settings_KeepInTrayText" xml:space="preserve">
+    <value>窗口关闭后，Lupe 仍可通过快捷键使用。要退出，请使用通知区域中的图标。</value>
+  </data>
+  <data name="Page_Settings_Language" xml:space="preserve">
+    <value>语言</value>
+  </data>
+  <data name="Page_Settings_LanguageHint" xml:space="preserve">
+    <value>下次启动 Lupe 时生效。</value>
+  </data>
+  <data name="Page_Settings_LinkRules" xml:space="preserve">
+    <value>链接规则</value>
+  </data>
+  <data name="Page_Settings_LinkRulesText" xml:space="preserve">
+    <value>如果代码与正则表达式匹配，“打开链接”会在浏览器中打开“前缀 + 代码”（前缀为空：代码本身就是链接）。采用第一个匹配的已启用规则。只打开 http 和 https 链接。</value>
+  </data>
+  <data name="Page_Settings_Milliseconds" xml:space="preserve">
+    <value>{0} 毫秒</value>
+  </data>
+  <data name="Page_Settings_NotInDemo" xml:space="preserve">
+    <value>演示中不可用</value>
+  </data>
+  <data name="Page_Settings_NotOnThisSystem" xml:space="preserve">
+    <value>此系统上不可用</value>
+  </data>
+  <data name="Page_Settings_OneMinute" xml:space="preserve">
+    <value>1 分钟</value>
+  </data>
+  <data name="Page_Settings_ProblemTitle" xml:space="preserve">
+    <value>设置文件有问题</value>
+  </data>
+  <data name="Page_Settings_RepeatSuppress" xml:space="preserve">
+    <value>重复锁定</value>
+  </data>
+  <data name="Page_Settings_RepeatSuppressText" xml:space="preserve">
+    <value>在此期间摄像头不会再次报告同一代码 – 从最后一次看到该代码时开始计算。</value>
+  </data>
+  <data name="Page_Settings_RuleActive" xml:space="preserve">
+    <value>启用</value>
+  </data>
+  <data name="Page_Settings_RuleActiveName" xml:space="preserve">
+    <value>规则已启用</value>
+  </data>
+  <data name="Page_Settings_RuleAdd" xml:space="preserve">
+    <value>添加规则</value>
+  </data>
+  <data name="Page_Settings_RuleDelete" xml:space="preserve">
+    <value>删除规则</value>
+  </data>
+  <data name="Page_Settings_RuleDown" xml:space="preserve">
+    <value>下移</value>
+  </data>
+  <data name="Page_Settings_RulePattern" xml:space="preserve">
+    <value>正则表达式</value>
+  </data>
+  <data name="Page_Settings_RulePatternMissing" xml:space="preserve">
+    <value>请输入正则表达式。</value>
+  </data>
+  <data name="Page_Settings_RulePrefix" xml:space="preserve">
+    <value>前缀</value>
+  </data>
+  <data name="Page_Settings_RulePrefixHeader" xml:space="preserve">
+    <value>前缀（为空 = 代码即链接）</value>
+  </data>
+  <data name="Page_Settings_RuleTest" xml:space="preserve">
+    <value>要测试的代码</value>
+  </data>
+  <data name="Page_Settings_RuleTestNoMatch" xml:space="preserve">
+    <value>没有匹配的规则 – 无链接。</value>
+  </data>
+  <data name="Page_Settings_RuleUp" xml:space="preserve">
+    <value>上移</value>
+  </data>
+  <data name="Page_Settings_RuleUpTip" xml:space="preserve">
+    <value>上移（更早检查）</value>
+  </data>
+  <data name="Page_Settings_ScreenActions" xml:space="preserve">
+    <value>屏幕区域</value>
+  </data>
+  <data name="Page_Settings_ScreenActionsText" xml:space="preserve">
+    <value>“输入”会像键盘一样将内容输入到扫描前位于前台的窗口中（通过快捷键扫描）。</value>
+  </data>
+  <data name="Page_Settings_ScreenScan" xml:space="preserve">
+    <value>屏幕扫描</value>
+  </data>
+  <data name="Page_Settings_Seconds_One" xml:space="preserve">
+    <value>1 秒</value>
+  </data>
+  <data name="Page_Settings_Seconds_Other" xml:space="preserve">
+    <value>{0} 秒</value>
+  </data>
+  <data name="Page_Settings_Sound" xml:space="preserve">
+    <value>检测到时发出声音</value>
+  </data>
+  <data name="Page_Settings_SoundTest" xml:space="preserve">
+    <value>播放声音</value>
+  </data>
+  <data name="Page_Settings_SoundText" xml:space="preserve">
+    <value>Lupe 一识别到代码就发出短促的提示音。</value>
+  </data>
+  <data name="Page_Settings_StartSection" xml:space="preserve">
+    <value>启动和通知区域</value>
+  </data>
+  <data name="Page_Settings_StoreDemo" xml:space="preserve">
+    <value>演示：更改只在关闭 Lupe 之前有效，不会保存。</value>
+  </data>
+  <data name="Page_Settings_StoredIn" xml:space="preserve">
+    <value>保存在 {0}</value>
+  </data>
+  <data name="Page_Settings_SuffixNone" xml:space="preserve">
+    <value>无</value>
+  </data>
+  <data name="Page_Settings_SystemSettings" xml:space="preserve">
+    <value>系统设置</value>
+  </data>
+  <data name="Page_Settings_SystemSettingsFailed" xml:space="preserve">
+    <value>无法打开系统设置：{0}</value>
+  </data>
+  <data name="Page_Settings_Type" xml:space="preserve">
+    <value>输入</value>
+  </data>
+  <data name="Page_Settings_TypeDelay" xml:space="preserve">
+    <value>输入速度</value>
+  </data>
+  <data name="Page_Settings_TypeDelayText" xml:space="preserve">
+    <value>字符之间的停顿，类似手持扫描器。某些程序（例如 Windows 11 上的记事本）在字符输入过快时会丢失字符。</value>
+  </data>
+  <data name="Page_Shared_AimHelp" xml:space="preserve">
+    <value>瞄准辅助</value>
+  </data>
+  <data name="Page_Shared_Camera" xml:space="preserve">
+    <value>摄像头</value>
+  </data>
+  <data name="Page_Shared_CopiedAll" xml:space="preserve">
+    <value>已复制 {0} 个代码，每行一个。</value>
+  </data>
+  <data name="Page_Shared_Copy" xml:space="preserve">
+    <value>复制</value>
+  </data>
+  <data name="Page_Shared_CopyAll" xml:space="preserve">
+    <value>全部复制</value>
+  </data>
+  <data name="Page_Shared_CopyAllTip" xml:space="preserve">
+    <value>复制所有代码，每行一个</value>
+  </data>
+  <data name="Page_Shared_FolderMissing" xml:space="preserve">
+    <value>该文件夹尚不存在 – Lupe 第一次保存时会创建它。</value>
+  </data>
+  <data name="Page_Shared_History" xml:space="preserve">
+    <value>历史记录</value>
+  </data>
+  <data name="Page_Shared_Hotkey" xml:space="preserve">
+    <value>快捷键</value>
+  </data>
+  <data name="Page_Shared_OnHit" xml:space="preserve">
+    <value>检测到代码时</value>
+  </data>
+  <data name="Page_Shared_OpenFolder" xml:space="preserve">
+    <value>打开文件夹</value>
+  </data>
+  <data name="Page_Shared_OpenLink" xml:space="preserve">
+    <value>打开链接</value>
+  </data>
+  <data name="Win_ActiveWindow_ActivateFailed" xml:space="preserve">
+    <value>无法激活上一个窗口 – 未输入任何内容。</value>
+  </data>
+  <data name="Win_ActiveWindow_Gone" xml:space="preserve">
+    <value>上一个窗口已不存在。</value>
+  </data>
+  <data name="Win_Autostart_DisableFailed" xml:space="preserve">
+    <value>无法取消开机自启动：{0}</value>
+  </data>
+  <data name="Win_Autostart_EnableFailed" xml:space="preserve">
+    <value>无法设置开机自启动：{0}</value>
+  </data>
+  <data name="Win_Autostart_PathUnknown" xml:space="preserve">
+    <value>Lupe.exe 的路径未知 – 未设置开机自启动。</value>
+  </data>
+  <data name="Win_Camera_AccessDenied" xml:space="preserve">
+    <value>Windows 拒绝访问摄像头“{0}”。请在“设置 → 隐私和安全性 → 相机”中检查是否允许桌面应用访问相机，以及设备上的相机开关或遮挡盖是否处于启用状态。</value>
+  </data>
+  <data name="Win_Camera_AppsOff" xml:space="preserve">
+    <value>应用的相机访问权限已关闭。请在“设置 → 隐私和安全性 → 相机”中开启应用和桌面应用的访问权限，然后重新启动摄像头。</value>
+  </data>
+  <data name="Win_Camera_DesktopAppsOff" xml:space="preserve">
+    <value>Windows 不允许桌面应用访问相机。请在“设置 → 隐私和安全性 → 相机”中开启“允许桌面应用访问相机”，然后重新启动摄像头。</value>
+  </data>
+  <data name="Win_Camera_DeviceOff" xml:space="preserve">
+    <value>此设备的相机访问权限已关闭。请在“设置 → 隐私和安全性 → 相机”中开启“相机访问”（需要管理员权限）。</value>
+  </data>
+  <data name="Win_Camera_Disconnected" xml:space="preserve">
+    <value>无法再访问摄像头“{0}” – 是否已拔出？请重新插入并再次启动摄像头。</value>
+  </data>
+  <data name="Win_Camera_ErrorCode" xml:space="preserve">
+    <value>错误 0x{0:X8}</value>
+  </data>
+  <data name="Win_Camera_Failed" xml:space="preserve">
+    <value>摄像头“{0}”出现故障。请重新启动。</value>
+  </data>
+  <data name="Win_Camera_FormatNotSupported" xml:space="preserve">
+    <value>摄像头“{0}”不提供 Lupe 能读取的图像格式。请选择其他摄像头或更新摄像头驱动程序。</value>
+  </data>
+  <data name="Win_Camera_FrameEmpty" xml:space="preserve">
+    <value>摄像头图像为空。</value>
+  </data>
+  <data name="Win_Camera_FrameMemoryUnreadable" xml:space="preserve">
+    <value>无法读取摄像头图像内存。</value>
+  </data>
+  <data name="Win_Camera_FrameUnexpectedLayout" xml:space="preserve">
+    <value>摄像头图像的内存布局异常。</value>
+  </data>
+  <data name="Win_Camera_InUse" xml:space="preserve">
+    <value>摄像头“{0}”正被其他程序使用（例如 Teams、Zoom 或“相机”应用）。请关闭该程序，然后重新启动摄像头。</value>
+  </data>
+  <data name="Win_Camera_MediaFeaturesMissing" xml:space="preserve">
+    <value>此 Windows 缺少媒体功能（Windows“N”版本）。请在“设置 → 系统 → 可选功能”中安装“Media Feature Pack”，然后重新启动 Lupe。</value>
+  </data>
+  <data name="Win_Camera_NoCamera" xml:space="preserve">
+    <value>未找到摄像头。请连接摄像头，或改为扫描屏幕区域或图像文件。</value>
+  </data>
+  <data name="Win_Camera_NoColorStream" xml:space="preserve">
+    <value>摄像头“{0}”不提供彩色图像（例如仅用于 Windows Hello 的红外摄像头）。请选择其他摄像头。</value>
+  </data>
+  <data name="Win_Camera_NotFound" xml:space="preserve">
+    <value>未找到摄像头“{0}”。它是否已连接并打开？否则请选择其他摄像头。</value>
+  </data>
+  <data name="Win_Camera_PolicyBlocked" xml:space="preserve">
+    <value>此设备上的摄像头已被策略阻止。请联系您的 IT 部门。</value>
+  </data>
+  <data name="Win_Camera_Preempted" xml:space="preserve">
+    <value>摄像头“{0}”已被其他程序占用。请关闭该程序，然后重新启动摄像头。</value>
+  </data>
+  <data name="Win_Camera_StreamShutdown" xml:space="preserve">
+    <value>Windows 停止了摄像头“{0}” – 其他程序占用了它或它已被拔出。请检查后重新启动摄像头。</value>
+  </data>
+  <data name="Win_Camera_ThisAppOff" xml:space="preserve">
+    <value>Windows 已撤销 Lupe 的相机访问权限。请在“设置 → 隐私和安全性 → 相机”（桌面应用列表）中重新允许 Lupe 访问，然后重新启动摄像头。</value>
+  </data>
+  <data name="Win_Camera_Unknown" xml:space="preserve">
+    <value>无法使用摄像头“{0}”（{1}）。请拔下并重新插入摄像头或重新启动 Windows；如果仍无效，请选择其他摄像头。</value>
+  </data>
+  <data name="Win_Camera_UnknownError" xml:space="preserve">
+    <value>未知错误</value>
+  </data>
+  <data name="Win_Hotkey_AlreadyRegistered" xml:space="preserve">
+    <value>{0} 已被其他程序占用。</value>
+  </data>
+  <data name="Win_Hotkey_Invalid" xml:space="preserve">
+    <value>{0} 不是有效的快捷键。</value>
+  </data>
+  <data name="Win_Hotkey_NoInteractiveDesktop" xml:space="preserve">
+    <value>快捷键 {0} 在此处无效 – Lupe 在没有可见桌面的情况下运行（例如作为服务或在会话 0 中）。</value>
+  </data>
+  <data name="Win_Hotkey_RegisterFailed" xml:space="preserve">
+    <value>无法注册快捷键 {0}。</value>
+  </data>
+  <data name="Win_Hotkey_RegisterFailedReason" xml:space="preserve">
+    <value>无法注册快捷键 {0}（{1}）。</value>
+  </data>
+  <data name="Win_Hotkey_RegisterTimeout" xml:space="preserve">
+    <value>未能及时注册快捷键 {0}。</value>
+  </data>
+  <data name="Win_Image_CodecMissing" xml:space="preserve">
+    <value>无法读取“{0}”：Windows 缺少 {1} 的编解码器（Microsoft Store 中的图像扩展，例如“HEIF 图像扩展”或“Webp 图像扩展”）。</value>
+  </data>
+  <data name="Win_Image_Corrupt" xml:space="preserve">
+    <value>“{0}”已损坏或不是有效的图像。</value>
+  </data>
+  <data name="Win_Image_Empty" xml:space="preserve">
+    <value>“{0}”不包含图像（0 像素）。</value>
+  </data>
+  <data name="Win_Image_NotReadable" xml:space="preserve">
+    <value>无法将“{0}”作为图像读取（{1}）。</value>
+  </data>
+  <data name="Win_Image_ReadFailed" xml:space="preserve">
+    <value>无法读取“{0}”：{1}</value>
+  </data>
+  <data name="Win_Image_TooLarge" xml:space="preserve">
+    <value>“{0}”太大，无法加载。</value>
+  </data>
+  <data name="Win_Image_UnexpectedPixelCount" xml:space="preserve">
+    <value>无法读取“{0}”：图像解码器返回的像素数量异常。</value>
+  </data>
+  <data name="Win_Image_Unsupported" xml:space="preserve">
+    <value>“{0}”不是受支持的图像格式（PNG、JPEG、BMP、GIF、TIFF …）或已损坏。</value>
+  </data>
+  <data name="Win_Screen_DesktopUnreadable" xml:space="preserve">
+    <value>无法截取屏幕 – Windows 当前不允许读取桌面（已锁定、处于登录屏幕或没有可见会话）。</value>
+  </data>
+  <data name="Win_Screen_DesktopUnreadableCode" xml:space="preserve">
+    <value>无法截取屏幕 – Windows 当前不允许读取桌面（已锁定、处于登录屏幕或没有可见会话，Windows 错误 {0}）。</value>
+  </data>
+  <data name="Win_Screen_GdiError" xml:space="preserve">
+    <value>无法截取屏幕（GDI 错误 {0}）。</value>
+  </data>
+  <data name="Win_Screen_OutOfMemory" xml:space="preserve">
+    <value>可用内存不足，无法截取 {0} × {1} 像素的屏幕。</value>
+  </data>
+  <data name="Win_Screen_Unreadable" xml:space="preserve">
+    <value>无法截取屏幕 – 当前无法读取屏幕。</value>
+  </data>
+  <data name="Win_Typing_Error" xml:space="preserve">
+    <value>无法输入（Windows 错误 {0}）。</value>
+  </data>
+  <data name="Win_Typing_ForegroundElevated" xml:space="preserve">
+    <value>无法输入 – 前台窗口以高于 Lupe 的权限运行（例如以管理员身份），Windows 不允许向其发送键盘输入。请改为复制文本，或同样以管理员身份启动 Lupe。</value>
+  </data>
+  <data name="Win_Typing_InputBlocked" xml:space="preserve">
+    <value>无法输入 – Windows 未接受键盘输入（当前被其他程序阻止？）。</value>
+  </data>
+  <data name="Win_Typing_InputNotAccepted" xml:space="preserve">
+    <value>无法输入 – Windows 当前不接受键盘输入（屏幕已锁定、处于登录对话框或没有可见会话）。</value>
+  </data>
+</root>

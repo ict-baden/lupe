@@ -17,7 +17,7 @@ Which file to download, what it needs, how to let Lupe use the camera, and how t
 | **.NET** | None for the MSI and for `Lupe.exe` – both carry the .NET 10 runtime. The ZIP variant needs the **.NET 10 Runtime**. |
 | **Camera** (optional) | Any webcam that Windows offers to apps through `Windows.Media.Capture` with a colour image. Pure infrared cameras (Windows Hello) are not listed. Windows editions “N” and “KN” need the **Media Feature Pack** for the camera. |
 | **Image formats** | PNG, JPEG, BMP, GIF, TIFF, ICO and JPEG XR work out of the box. WebP, HEIC/HEIF, AVIF and JPEG XL work when the matching image extension from the Microsoft Store is installed. |
-| **Language** | English or German: follows the display language of the system (English for any other language), switchable under *Settings › Language* or preset with `"Language": "de"` in a distributed `einstellungen.json`. |
+| **Language** | English, German, Spanish, French or Chinese (simplified): follows the display language of the system (English for any other language), switchable under *Settings › Language* or preset with `"Language": "de"` (`en`, `de`, `es`, `fr`, `zh-Hans`) in a distributed `einstellungen.json`. Spanish, French and Chinese are machine translations, not yet reviewed. |
 
 ## Downloads
 

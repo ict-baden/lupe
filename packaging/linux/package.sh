@@ -17,7 +17,7 @@ trap 'rm -rf "$work"' EXIT
 # tar.gz: Ordner lupe/ mit Programm, Menüeintrag, Symbol und Einrichtung
 mkdir -p "$work/tar/lupe"
 cp -R "$pub"/. "$work/tar/lupe/"
-cp "$here/lupe.desktop" "$here/install.sh" "$here/LIESMICH.txt" "$work/tar/lupe/"
+cp "$here/lupe.desktop" "$here/install.sh" "$here/README.txt" "$here/LIESMICH.txt" "$work/tar/lupe/"
 cp "$repo/src/Lupe/Assets/lupe.png" "$work/tar/lupe/lupe.png"
 chmod 755 "$work/tar/lupe/Lupe" "$work/tar/lupe/install.sh"
 tar -C "$work/tar" --owner=0 --group=0 -czf "$out/Lupe$suffix-linux-$arch.tar.gz" lupe
@@ -74,9 +74,9 @@ glibc=$(find "$deb/opt/lupe" -type f \( -name '*.so' -o -name Lupe -o -name crea
     echo "Section: utils"
     echo "Priority: optional"
     echo "Homepage: https://github.com/ict-baden/lupe"
-    echo "Description: QR- und Barcodes lesen"
-    echo " Liest QR- und Barcodes per Webcam, Bildschirmausschnitt, Datei oder"
-    echo " Zwischenablage und kopiert, tippt oder öffnet den Inhalt."
+    echo "Description: QR and barcode reader"
+    echo " Reads QR codes and barcodes from the webcam, a screen region, image files"
+    echo " or the clipboard and copies, types or opens the content."
 } > "$deb/DEBIAN/control"
 find "$deb" -type d -exec chmod 755 {} +
 debname=lupe_amd64.deb

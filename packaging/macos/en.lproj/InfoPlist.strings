@@ -1,0 +1,3 @@
+/* SPDX-License-Identifier: MIT */
+/* Text der Kamera-Abfrage von macOS (Englisch) */
+"NSCameraUsageDescription" = "Lupe reads QR codes and barcodes from the camera image. The image stays on this Mac.";

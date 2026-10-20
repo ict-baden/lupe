@@ -10,14 +10,17 @@ namespace Lupe.Core.Localization;
 /// </summary>
 public static class UiLanguage
 {
-    /// <summary>Umgebungsvariable, die Einstellung und Systemsprache übersteuert (Skripte, Tests): "en" oder "de".</summary>
+    /// <summary>Umgebungsvariable, die Einstellung und Systemsprache übersteuert (Skripte, Tests): ein Code aus <see cref="Supported"/>.</summary>
     public const string EnvironmentVariable = "LUPE_LANGUAGE";
 
     /// <summary>Rückfallsprache, steht in Strings.resx.</summary>
     public const string Fallback = "en";
 
-    /// <summary>Sprachen mit eigener Sprachdatei, in der Reihenfolge der Auswahlliste.</summary>
-    public static IReadOnlyList<string> Supported { get; } = ["en", "de"];
+    /// <summary>
+    /// Sprachen mit eigener Sprachdatei, in der Reihenfolge der Auswahlliste (Richtlinie 13). es, fr und zh-Hans sind
+    /// maschinell vorübersetzt und noch nicht gegengelesen (Kopf der jeweiligen Strings.*.resx).
+    /// </summary>
+    public static IReadOnlyList<string> Supported { get; } = ["en", "de", "es", "fr", "zh-Hans"];
 
     /// <summary>Sprache des Systems beim Start, bevor Lupe sie überschreibt.</summary>
     public static CultureInfo System { get; } = CultureInfo.CurrentUICulture;
@@ -49,7 +52,17 @@ public static class UiLanguage
     public static CultureInfo Apply(string? setting)
     {
         var forced = Normalize(Environment.GetEnvironmentVariable(EnvironmentVariable));
-        var culture = CultureInfo.GetCultureInfo(Resolve(forced.Length > 0 ? forced : setting, System));
+        CultureInfo culture;
+        try
+        {
+            culture = CultureInfo.GetCultureInfo(Resolve(forced.Length > 0 ? forced : setting, System));
+        }
+        catch (CultureNotFoundException)
+        {
+            // Ohne Kulturdaten (DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1) gibt es keine Kultur „en“ – dann die neutrale
+            // Kultur, deren Texte aus Strings.resx (Englisch) kommen, statt beim Start abzustürzen
+            culture = CultureInfo.InvariantCulture;
+        }
         CultureInfo.DefaultThreadCurrentUICulture = culture;
         CultureInfo.CurrentUICulture = culture;
         return culture;
@@ -58,7 +71,15 @@ public static class UiLanguage
     /// <summary>Name einer Sprache in ihr selbst („Deutsch“, „English“), für die Auswahlliste.</summary>
     public static string NativeName(string code)
     {
-        var name = CultureInfo.GetCultureInfo(code).NativeName;
-        return name.Length == 0 ? code : char.ToUpper(name[0], CultureInfo.GetCultureInfo(code)) + name[1..];
+        try
+        {
+            var culture = CultureInfo.GetCultureInfo(code);
+            var name = culture.NativeName;
+            return name.Length == 0 ? code : char.ToUpper(name[0], culture) + name[1..];
+        }
+        catch (CultureNotFoundException)
+        {
+            return code; // ohne Kulturdaten (Invariant-Modus)
+        }
     }
 }

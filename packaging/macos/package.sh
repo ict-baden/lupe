@@ -21,8 +21,12 @@ mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp -R "$pub"/. "$app/Contents/MacOS/"
 chmod 755 "$app/Contents/MacOS/Lupe"
 short=${version%%-*}
-sed -e "s/@SHORTVERSION@/$short/" -e "s/@VERSION@/$version/" "$here/Info.plist" > "$app/Contents/Info.plist"
+# CFBundleVersion muss aus höchstens drei Zahlen bestehen (Apple): „0.1.0“ statt „0.1.0-ci.33“ – die volle Version
+# zeigen die Info-Seite und „Lupe --version“
+sed -e "s/@SHORTVERSION@/$short/" -e "s/@BUNDLEVERSION@/$short/" "$here/Info.plist" > "$app/Contents/Info.plist"
 plutil -lint "$app/Contents/Info.plist"
+# Texte der macOS-Abfragen (Kamera) in jeder Sprache der Oberfläche
+for lproj in "$here"/*.lproj; do cp -R "$lproj" "$app/Contents/Resources/"; done
 printf 'APPL????' > "$app/Contents/PkgInfo"
 
 # Symbol: lupe.png (256 px) → lupe.icns

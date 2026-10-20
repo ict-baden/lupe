@@ -2,7 +2,7 @@
 
 # Using the app
 
-A walk through every page of the Lupe window and the screen scan, followed by a few typical workflows. The interface is German; each section names the German labels you will see, with a translation.
+A walk through every page of the Lupe window and the screen scan, followed by a few typical workflows. The interface follows the system language (English, German, Spanish, French or Chinese); the screenshots and this guide still show the German labels, each with its English meaning.
 
 **Contents:** [Start and navigate](#start-and-navigate) · [The screen scan](#the-screen-scan) · [Bildschirm – screen](#bildschirm--screen) · [Kamera – camera](#kamera--camera) · [Datei – files and clipboard](#datei--files-and-clipboard) · [Verlauf – history](#verlauf--history) · [Einstellungen – settings](#einstellungen--settings) · [Info](#info) · [Workflows](#workflows) · [Glossary](#glossary)
 

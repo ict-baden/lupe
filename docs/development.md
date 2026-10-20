@@ -140,7 +140,7 @@ Following ICT-Baden guideline 13 (multilingual UI), no user-visible text is hard
 - `UiLanguage.Apply` sets the UI culture at the very start of `Main`: the environment variable `LUPE_LANGUAGE`, then the setting `Language` (*Settings › Language*, `""` = system), then the system language; anything without its own file falls back to English. Number and date formats follow the system's regional settings.
 - Trace/log messages, comments, command-line keywords (`lesen`, `--hilfe`, `hell|dunkel|beide`) and file names stay German.
 - The tests run in German (`tests/Lupe.Tests/TestCulture.cs`, also sets `LUPE_LANGUAGE=de` for child processes). `LocalizationTests` checks that every language has the same keys and placeholders as English and no empty texts.
-- Adding a language: add `Strings.<code>.resx`, the code to `UiLanguage.Supported` and to `SatelliteResourceLanguages` in `src/Lupe/Lupe.csproj`.
+- Adding a language: add `Strings.<code>.resx`, the code to `UiLanguage.Supported` and to `SatelliteResourceLanguages` in `Directory.Build.props`. `LocalizationTests` checks that every language file has the same keys and placeholders as `Strings.resx` and no empty texts. es, fr and zh-Hans are machine-translated and not yet reviewed by native speakers (see the comment at the top of each file).
 
 ## MSI
 

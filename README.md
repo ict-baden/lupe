@@ -9,7 +9,7 @@
   <img alt="macOS 12 or later, Apple Silicon and Intel" src="https://img.shields.io/badge/macOS-12%2B-111111?logo=apple&logoColor=white">
   <img alt=".NET 10" src="https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white">
   <img alt="Data stays on this PC" src="https://img.shields.io/badge/Data-stays%20local-2E7D32">
-  <img alt="User interface in English and German" src="https://img.shields.io/badge/UI-English%20%7C%20German-6B7280">
+  <img alt="User interface in English, German, Spanish, French and Chinese" src="https://img.shields.io/badge/UI-en%20%7C%20de%20%7C%20es%20%7C%20fr%20%7C%20zh--Hans-6B7280">
   <a href="LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/badge/Licence-MIT-blue"></a>
   <img alt="Status: pre-release" src="https://img.shields.io/badge/Status-pre--release-E3A008">
   <a href="https://github.com/ict-baden/lupe/actions/workflows/build.yml"><img alt="Build" src="https://github.com/ict-baden/lupe/actions/workflows/build.yml/badge.svg"></a>
@@ -37,10 +37,10 @@
 </p>
 
 > [!NOTE]
-> **Deutsch:** Lupe liest QR- und Barcodes per Webcam, aus einem Bildschirmausschnitt, aus Bilddateien und aus der Zwischenablage, unter Windows, Linux und macOS. Das Ergebnis wird kopiert, in das Programm vorn eingetippt oder als Link geöffnet. Download: [Release „latest“](https://github.com/ict-baden/lupe/releases/tag/latest). Die Oberfläche ist Deutsch oder Englisch und folgt der Sprache des Systems; diese Doku ist Englisch.
+> **Deutsch:** Lupe liest QR- und Barcodes per Webcam, aus einem Bildschirmausschnitt, aus Bilddateien und aus der Zwischenablage, unter Windows, Linux und macOS. Das Ergebnis wird kopiert, in das Programm vorn eingetippt oder als Link geöffnet. Download: [Release „latest“](https://github.com/ict-baden/lupe/releases/tag/latest). Die Oberfläche gibt es auf Deutsch, Englisch, Spanisch, Französisch und Chinesisch (die letzten drei maschinell übersetzt, noch nicht gegengelesen); sie folgt der Sprache des Systems. Diese Doku ist Englisch.
 
 > [!NOTE]
-> **The application speaks English and German.** It follows the language of the operating system (English for any other language) and can be switched under *Settings › Language*. This documentation still quotes the German labels with their English meaning, for example *Bildschirm* (Screen), *Eintippen* (Type) or *Link öffnen* (Open link).
+> **The application speaks English, German, Spanish, French and Chinese (simplified)** – the last three are machine translations that native speakers have not reviewed yet. It follows the language of the operating system (English for any other language) and can be switched under *Settings › Language*. This documentation still quotes the German labels with their English meaning, for example *Bildschirm* (Screen), *Eintippen* (Type) or *Link öffnen* (Open link).
 
 ## What Lupe does
 
