@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 // Rendert banner.html nach docs/assets/banner.png (2560×840, also 2× für scharfe Darstellung).
 // Nutzt das installierte Google Chrome; anderer Browser über CHROME_PATH.
 const { chromium } = require('playwright-core');

@@ -1073,7 +1073,7 @@ In cmd in eine Datei umgeleitet, ist die Ausgabe UTF-8 mit BOM.</value>
     <value>Keine Verbindung zum X-Server – nichts eingetippt.</value>
   </data>
   <data name="Linux_Autostart_Comment" xml:space="preserve">
-    <value>QR- und Strichcodes von Kamera, Bildschirm und Dateien lesen</value>
+    <value>QR- und Barcodes von Kamera, Bildschirm und Dateien lesen</value>
   </data>
   <data name="Linux_Autostart_DisableFailed" xml:space="preserve">
     <value>Autostart ließ sich nicht entfernen: {0}</value>

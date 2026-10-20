@@ -11,7 +11,7 @@ using Lupe.Platform.MacOS.Screen;
 namespace Lupe.Platform.MacOS;
 
 /// <summary>
-/// Lupe unter macOS: Kamera über FlashCap (AVFoundation), Bildschirm über /usr/sbin/screencapture, Tippen über CGEvent,
+/// Lupe unter macOS: Kamera über AVFoundation (Swift-Helfer libLupeCamera.dylib, Native/LupeCamera.swift), Bildschirm über /usr/sbin/screencapture, Tippen über CGEvent,
 /// Tastenkürzel über Carbon RegisterEventHotKey, Autostart über einen LaunchAgent, Bilddateien über ImageIO, Hinweise zu
 /// den Berechtigungen Kamera, Bildschirmaufnahme und Bedienungshilfen (siehe docs/architecture-platforms.md).
 /// </summary>

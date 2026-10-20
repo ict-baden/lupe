@@ -31,7 +31,7 @@
     <StandardDirectory Id="ProgramMenuFolder" />
 
     <Feature Id="Main" Title="Lupe" Level="1">
-      <!-- Alles aus dem Publish-Ordner (Lupe.exe, WPF-DLLs …) -->
+      <!-- Alles aus dem Publish-Ordner (Lupe.exe, native Bibliotheken von Skia, HarfBuzz, ANGLE und zxing-cpp, Lizenztexte) -->
       <Files Include="$(PublishDir)\**" Directory="INSTALLFOLDER">
         <Exclude Files="$(PublishDir)\*.pdb" />
       </Files>

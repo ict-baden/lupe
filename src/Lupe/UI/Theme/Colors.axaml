@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: MIT -->
 <!-- Farben im Windows-11-Stil (Schlüssel wie in WinUI/WPF-Fluent, Werte von dort), hell und dunkel. Die Akzentfarben
      (AccentFillColorDefaultBrush …) setzt ThemeManager aus der Systemfarbe; Schriften ebenfalls (je System). -->
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
