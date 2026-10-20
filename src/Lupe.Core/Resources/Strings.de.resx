@@ -499,6 +499,12 @@ an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.</v
   <data name="Core_Camera_FallbackName" xml:space="preserve">
     <value>Kamera</value>
   </data>
+  <data name="Core_Decoder_MissingFunctions" xml:space="preserve">
+    <value>in {0} fehlen die Funktionen {1}</value>
+  </data>
+  <data name="Core_Decoder_Unavailable" xml:space="preserve">
+    <value>Lupe kann auf diesem System keine Codes lesen, weil sich die Erkennungsbibliothek (zxing-cpp) nicht laden ließ. Bitte die Systemvoraussetzungen in der Installationsanleitung prüfen oder den Fehler mit diesem Code melden. Einzelheiten: {0}</value>
+  </data>
   <data name="Core_File_AccessDenied" xml:space="preserve">
     <value>Zugriff verweigert – keine Berechtigung, Datei schreibgeschützt oder in einem anderen Programm geöffnet</value>
   </data>

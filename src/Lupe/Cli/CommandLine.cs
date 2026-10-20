@@ -120,6 +120,13 @@ internal static class CommandLine
                     {
                         throw;
                     }
+                    catch (DecoderUnavailableException ex)
+                    {
+                        // Die Erkennung lädt auf diesem System nicht – kein „nichts gefunden“, und jedes weitere Bild
+                        // scheiterte genauso: abbrechen mit Fehlercode und Exitcode 3
+                        Console.Error.WriteLine(ex.Message);
+                        return ExitError;
+                    }
                     catch (Exception ex)
                     {
                         Console.Error.WriteLine(string.Format(Strings.App_Cli_ReadFailed, path, ex.Message));

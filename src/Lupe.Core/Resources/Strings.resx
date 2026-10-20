@@ -593,6 +593,14 @@ redirection on to Lupe, the file would stay empty. In .cmd files cmd waits by it
     <value>Camera</value>
     <comment>Name for a camera that reports no usable name</comment>
   </data>
+  <data name="Core_Decoder_MissingFunctions" xml:space="preserve">
+    <value>{0} lacks the functions {1}</value>
+    <comment>Reason inserted into Core_Decoder_Unavailable. {0} = library name (ZXing); {1} = technical function names</comment>
+  </data>
+  <data name="Core_Decoder_Unavailable" xml:space="preserve">
+    <value>Lupe cannot read codes on this system because the recognition library (zxing-cpp) could not be loaded. Check the system requirements in the installation guide, or report the error with this code. Details: {0}</value>
+    <comment>Error LUP-0001 (the code is put in front automatically). {0} = reason reported by the operating system, technical and usually English, e.g. 'version GLIBC_2.38 not found'</comment>
+  </data>
   <data name="Core_File_AccessDenied" xml:space="preserve">
     <value>Access denied – no permission, file is read-only or open in another program</value>
     <comment>Short reason</comment>

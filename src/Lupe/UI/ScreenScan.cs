@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 using Avalonia.Controls;
+using Lupe.Core.Decoding;
 using Lupe.Core.Model;
 using Lupe.Core.Platform;
 using Lupe.Core.Resources;
@@ -116,10 +117,12 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
         var crop = Images.Crop(desktop, chosenArea.X - area.X, chosenArea.Y - area.Y, chosenArea.Width, chosenArea.Height);
         IReadOnlyList<DecodedCode> codes = [];
         string? failure = null;
+        string? unavailable = null;
         if (crop is not null)
         {
             var decoder = state.CreateDecoder();
             try { codes = await Task.Run(() => decoder.Decode(crop)); }
+            catch (DecoderUnavailableException ex) { unavailable = ex.Message; }
             catch (Exception ex) when (ex is not OutOfMemoryException) { failure = ex.Message; }
         }
 
@@ -128,6 +131,18 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
         // Ergebnis im Fenster melden, wenn der Scan von dort kam und es zu sehen ist – sonst (Tastenkürzel, Infobereich)
         // als Hinweis unten rechts
         bool inWindow = fromLupe && main is { IsVisible: true } && main.WindowState != WindowState.Minimized;
+
+        if (unavailable is not null)
+        {
+            // Die Erkennung lädt auf diesem System nicht (Meldung mit Fehlercode): ein Fehler, kein „Kein Code gefunden“
+            if (inWindow) state.Report(NoticeKind.Error, unavailable);
+            else
+            {
+                ReturnFocus(typeTarget);
+                new ResultToast(state, null, Strings.App_Scan_NotPossible, "", unavailable, monitor).Present();
+            }
+            return;
+        }
 
         if (codes.Count == 0)
         {

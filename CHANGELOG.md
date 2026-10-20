@@ -18,3 +18,12 @@ Bisher nur Builds im Release „latest“ (`0.1.0-ci.N`), noch keine Version mit
 
 ### Geändert
 - Linux-Paket heißt jetzt `ictbaden-lupe` (vorher `lupe`) und ersetzt das alte Paket beim Installieren.
+- Jedes Paket enthält jetzt `LICENSE.txt`; das `.deb` hat eine `copyright`-Datei.
+- CI prüft jede mitgelieferte native Bibliothek (glibc, macOS-Mindestversion, VC++-Laufzeit) und liest mit jedem Paket einen Code, unter Linux auch auf Ubuntu 20.04/22.04 und Debian 12, unter Windows auch nach einer MSI-Installation.
+- macOS: Signatur mit Developer ID und Notarisierung sind vorbereitet; sie laufen, sobald die Zugangsdaten in den Secrets stehen.
+
+### Behoben
+- Linux: Auf Debian 12, Ubuntu 22.04 und anderen Systemen mit glibc unter 2.38 meldete jeder Scan „Kein Code gefunden“, danach brach Lupe ab. Die native zxing-cpp-Bibliothek wird jetzt selbst gebaut (glibc 2.28, x64 und arm64), das `.deb` nennt die nötige glibc-Version.
+- macOS: Die zxing-cpp-Bibliothek verlangte macOS 26 (Apple Silicon) bzw. 15 (Intel); jetzt wie die App selbst macOS 12.
+- Windows: Die zxing-cpp-Bibliothek brauchte die VC++-Laufzeit, die kein Paket mitbrachte; jetzt mit statisch gebundener Laufzeit.
+- Lädt die Erkennungsbibliothek nicht, meldet Lupe das jetzt als Fehler mit Code `LUP-0001` (Befehlszeile: Exitcode 3, Oberfläche: Hinweis beim Start und bei jedem Scan) statt „Kein Code gefunden“, und stürzt nicht mehr ab.

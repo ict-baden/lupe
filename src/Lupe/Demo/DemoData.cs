@@ -243,6 +243,8 @@ internal static class DemoData
         };
         bool linear = format is DemoFormat.Ean13 or DemoFormat.Code128;
         int margin = linear ? 6 : 1;
+        // Ohne ladbare native Bibliothek kein Objekt von ZXingCpp anlegen (sonst Absturz im Finalizer, siehe BarcodeDecoder)
+        if (Lupe.Core.Decoding.BarcodeDecoder.UnavailableReason is { } unavailable) throw new Lupe.Core.Decoding.DecoderUnavailableException(unavailable);
         using var creator = new CreatorOptions(zx, options);
         using var barcode = new Barcode(text, creator);
         using var writer = new WriterOptions { Scale = 1, AddQuietZones = false };

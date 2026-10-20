@@ -82,12 +82,13 @@ On stderr, one line each:
 | *„…“ ließ sich nicht lesen: …* | The file could not be read as an image – the reason follows, e.g. incomplete, missing codec, locked by another program. |
 | *Fehler: …* followed by *Hilfe: Lupe.exe --hilfe* | Wrong call: unknown command, option or format, or no image given. |
 | *Abgebrochen.* | Cancelled with <kbd>Ctrl</kbd>+<kbd>C</kbd>. |
+| *LUP-0001: …* | The recognition library (zxing-cpp) cannot be loaded on this system – Lupe stops at once instead of reporting *no code found* for every image. See [Error codes](error-codes.md#lup-0001). |
 
 | Exit code | Meaning |
 |---|---|
 | `0` | at least one code found, and every image could be read |
 | `1` | no code found in any image, and every image could be read |
-| `3` | error – an image is missing or unreadable, a pattern matched nothing, wrong call, cancelled. **Also when codes were found in other images**; their lines are printed anyway. |
+| `3` | error – an image is missing or unreadable, a pattern matched nothing, wrong call, cancelled, or the recognition cannot run on this system (`LUP-0001`). **Also when codes were found in other images**; their lines are printed anyway. |
 
 ## Waiting for the end
 

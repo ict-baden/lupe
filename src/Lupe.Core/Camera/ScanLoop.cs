@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 using System.Diagnostics;
+using Lupe.Core.Decoding;
 using Lupe.Core.Model;
 using Lupe.Core.Resources;
 
@@ -345,6 +346,12 @@ public sealed class ScanLoop : IAsyncDisposable
             }
             catch (OperationCanceledException)
             {
+                return;
+            }
+            catch (DecoderUnavailableException ex)
+            {
+                // Die Erkennung lädt auf diesem System nicht: Neustarten hilft nicht, die Meldung (mit Fehlercode) sagt warum
+                Fail(generation, ex.Message);
                 return;
             }
             catch (Exception ex)
