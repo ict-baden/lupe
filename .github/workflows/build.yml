@@ -62,7 +62,8 @@ jobs:
   # Native zxing-cpp-Bibliothek selbst gebaut (packaging/zxing): Die aus dem NuGet-Paket ZXingCpp braucht glibc 2.38,
   # macOS 26 bzw. die VC++-Laufzeit. Gebaut wird sie nur, wenn sich Version oder Skript ändern (Zwischenspeicher);
   # geprüft wird sie bei jedem Lauf.
-  zxing:
+  # Je Plattform ein eigener Job, damit Windows und Linux nicht auf einen freien macOS-Runner warten.
+  zxing-linux:
     name: zxing-cpp (${{ matrix.name }})
     strategy:
       fail-fast: false
@@ -70,7 +71,105 @@ jobs:
         include:
           - { name: linux-x64, os: ubuntu-latest, rids: linux-x64 }
           - { name: linux-arm64, os: ubuntu-24.04-arm, rids: linux-arm64 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Zwischenspeicher
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: zxing
+          key: zxing-${{ matrix.name }}-${{ hashFiles('packaging/zxing/build.sh', 'packaging/zxing/versions.env') }}
+
+      - name: Bauen
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        env:
+          ZXING_WORK_BASE: ${{ runner.temp }}
+        run: |
+          for rid in ${{ matrix.rids }}; do
+            ZXING_WORK="$ZXING_WORK_BASE/zxing-$rid" packaging/zxing/build.sh "$rid" zxing
+          done
+
+      - name: dumpbin bereitstellen
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property installationPath
+          $dumpbin = Get-ChildItem "$vs\VC\Tools\MSVC\*\bin\Hostx64\x64\dumpbin.exe" | Select-Object -First 1
+          $dumpbin.DirectoryName >> $env:GITHUB_PATH
+
+      - name: Prüfen (glibc, macOS-Mindestversion, keine VC++-Laufzeit, Exporte)
+        shell: bash
+        run: |
+          for rid in ${{ matrix.rids }}; do
+            packaging/zxing/check.sh "$rid" "$(ls zxing/$rid/*ZXing.*)"
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zxing-${{ matrix.name }}
+          path: zxing/
+          if-no-files-found: error
+          retention-days: 1
+
+  zxing-macos:
+    name: zxing-cpp (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
           - { name: macos, os: macos-latest, rids: osx-arm64 osx-x64 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Zwischenspeicher
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: zxing
+          key: zxing-${{ matrix.name }}-${{ hashFiles('packaging/zxing/build.sh', 'packaging/zxing/versions.env') }}
+
+      - name: Bauen
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: bash
+        env:
+          ZXING_WORK_BASE: ${{ runner.temp }}
+        run: |
+          for rid in ${{ matrix.rids }}; do
+            ZXING_WORK="$ZXING_WORK_BASE/zxing-$rid" packaging/zxing/build.sh "$rid" zxing
+          done
+
+      - name: dumpbin bereitstellen
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $vs = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property installationPath
+          $dumpbin = Get-ChildItem "$vs\VC\Tools\MSVC\*\bin\Hostx64\x64\dumpbin.exe" | Select-Object -First 1
+          $dumpbin.DirectoryName >> $env:GITHUB_PATH
+
+      - name: Prüfen (glibc, macOS-Mindestversion, keine VC++-Laufzeit, Exporte)
+        shell: bash
+        run: |
+          for rid in ${{ matrix.rids }}; do
+            packaging/zxing/check.sh "$rid" "$(ls zxing/$rid/*ZXing.*)"
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zxing-${{ matrix.name }}
+          path: zxing/
+          if-no-files-found: error
+          retention-days: 1
+
+  zxing-windows:
+    name: zxing-cpp (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
           - { name: windows, os: windows-latest, rids: win-x64 }
     runs-on: ${{ matrix.os }}
     steps:
@@ -116,7 +215,7 @@ jobs:
           retention-days: 1
 
   windows:
-    needs: [version, zxing]
+    needs: [version, zxing-windows]
     runs-on: windows-latest
     permissions:
       contents: read
@@ -322,7 +421,7 @@ jobs:
           retention-days: 1
 
   linux:
-    needs: [version, zxing]
+    needs: [version, zxing-linux]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -435,7 +534,7 @@ jobs:
           done
 
   macos:
-    needs: [version, zxing]
+    needs: [version, zxing-macos]
     runs-on: macos-latest
     env:
       # Developer-ID-Signatur und Notarisierung nur, wenn die Organisation die Zugangsdaten hinterlegt hat (Apple Developer
