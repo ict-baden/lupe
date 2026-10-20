@@ -364,6 +364,17 @@ jobs:
             python3 packaging/check-notices.py out/linux-$arch/Lupe.deps.json out/linux-$arch
           done
 
+      - name: SBOM (Stückliste aller Pakete)
+        run: |
+          # deps.json aller Plattformen (Windows und macOS nur veröffentlicht, nicht gepackt), dazu zxing-cpp und .NET
+          v='${{ needs.version.outputs.version }}'
+          for rid in win-x64 osx-arm64; do
+            dotnet publish src/Lupe/Lupe.csproj -c Release -r $rid --self-contained true -p:DebugType=none -o "$RUNNER_TEMP/sbom-$rid" > /dev/null
+          done
+          python3 packaging/sbom.py "$v" out/linux-x64/Lupe.deps.json out/linux-arm64/Lupe.deps.json \
+            "$RUNNER_TEMP/sbom-win-x64/Lupe.deps.json" "$RUNNER_TEMP/sbom-osx-arm64/Lupe.deps.json" > "dist/Lupe${{ needs.version.outputs.suffix }}-sbom.cdx.json"
+          python3 -c "import json,sys; b=json.load(open(sys.argv[1])); print(len(b['components']), 'Bestandteile')" dist/Lupe*-sbom.cdx.json
+
       - name: Rauchtest auf älteren Systemen (x64)
         run: |
           # .deb auf Ubuntu 22.04 (apt holt die Abhängigkeiten), tar.gz auf Ubuntu 20.04 (glibc 2.31) und Debian 12
@@ -566,8 +577,8 @@ jobs:
                    "**macOS** (12 oder neuer; noch nicht notarisiert: beim ersten Start unter Systemeinstellungen › Datenschutz & Sicherheit „Dennoch öffnen“ wählen, siehe [Installation](https://github.com/$env:GITHUB_REPOSITORY/blob/main/docs/installation.md#macos))`n`n" +
                    "- **[Lupe-macos-arm64.zip]($base/Lupe-macos-arm64.zip)**: Apple Silicon`n" +
                    "- **[Lupe-macos-x64.zip]($base/Lupe-macos-x64.zip)**: Intel`n`n" +
-                   "[SHA256SUMS.txt]($base/SHA256SUMS.txt): Prüfsummen aller Dateien"
+                   "[SHA256SUMS.txt]($base/SHA256SUMS.txt): Prüfsummen aller Dateien · [Lupe-sbom.cdx.json]($base/Lupe-sbom.cdx.json): Stückliste (CycloneDX)"
           $expected = 'SHA256SUMS.txt', 'Lupe-x64.msi', 'Lupe.exe', 'Lupe-win-x64-framework.zip', 'lupe_amd64.deb', 'Lupe-linux-x64.tar.gz',
-                      'Lupe-linux-arm64.tar.gz', 'Lupe-macos-arm64.zip', 'Lupe-macos-x64.zip'
+                      'Lupe-linux-arm64.tar.gz', 'Lupe-macos-arm64.zip', 'Lupe-macos-x64.zip', 'Lupe-sbom.cdx.json'
           # Die Version im Titel: GitHub zeigt beim Release das Datum der ersten Veröffentlichung, nicht das des Builds
           ./.github/scripts/release-latest.ps1 -Notes $notes -Title "Latest Build (main) – ${{ needs.version.outputs.version }}" -Expected $expected
