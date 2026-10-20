@@ -68,6 +68,24 @@ public static class UiLanguage
         return culture;
     }
 
+    /// <summary>
+    /// Die Kulturen aller Sprachen aus <see cref="Supported"/>, zum Nachschlagen von Texten in jeder Sprache. Ohne
+    /// Kulturdaten (DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1) gibt es nur die neutrale Kultur mit den englischen Texten.
+    /// </summary>
+    public static IReadOnlyList<CultureInfo> SupportedCultures => _supportedCultures.Value;
+
+    private static readonly Lazy<IReadOnlyList<CultureInfo>> _supportedCultures = new(() =>
+    {
+        var cultures = new List<CultureInfo>();
+        foreach (var code in Supported)
+        {
+            try { cultures.Add(CultureInfo.GetCultureInfo(code)); }
+            catch (CultureNotFoundException) { } // Invariant-Modus: diese Sprache gibt es dann nicht
+        }
+        if (cultures.Count == 0) cultures.Add(CultureInfo.InvariantCulture);
+        return cultures;
+    });
+
     /// <summary>Name einer Sprache in ihr selbst („Deutsch“, „English“), für die Auswahlliste.</summary>
     public static string NativeName(string code)
     {

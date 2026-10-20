@@ -381,8 +381,8 @@ public static class HotkeyText
     {
         var aliases = new Dictionary<string, Modifier>(StringComparer.Ordinal);
         foreach (var (resource, modifier) in new[] { ("Core_Key_Ctrl", Modifier.Ctrl), ("Core_Key_Alt", Modifier.Alt), ("Core_Key_Shift", Modifier.Shift), ("Core_Key_Win", Modifier.Win) })
-            foreach (var language in Localization.UiLanguage.Supported)
-                if (Strings.ResourceManager.GetString(resource, CultureInfo.GetCultureInfo(language)) is { Length: > 0 } name)
+            foreach (var culture in Localization.UiLanguage.SupportedCultures)
+                if (Strings.ResourceManager.GetString(resource, culture) is { Length: > 0 } name)
                     aliases.TryAdd(Normalize(name), modifier);
         return aliases;
     });
@@ -397,9 +397,9 @@ public static class HotkeyText
         foreach (var (vk, _) in NamedKeys)
         {
             if (KeyResource(vk) is not { } resource) continue;
-            foreach (var language in Localization.UiLanguage.Supported)
+            foreach (var culture in Localization.UiLanguage.SupportedCultures)
             {
-                if (Strings.ResourceManager.GetString(resource, CultureInfo.GetCultureInfo(language)) is { Length: > 0 } name)
+                if (Strings.ResourceManager.GetString(resource, culture) is { Length: > 0 } name)
                     aliases.TryAdd(Normalize(name), vk);
             }
         }

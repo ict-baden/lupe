@@ -44,9 +44,6 @@ public static class AppInfo
 /// <summary>Bezeichnungen für Formate, Quellen, Aktionen und Zeiten in der Sprache der Oberfläche.</summary>
 public static class Labels
 {
-    /// <summary>Nur noch für Aufrufer, die deutsche Zahlen brauchen; Anzeigen formatieren mit <see cref="CultureInfo.CurrentCulture"/>.</summary>
-    public static readonly CultureInfo German = CultureInfo.GetCultureInfo("de-DE");
-
     /// <summary>
     /// Anzeigenamen aller Formate der Erkennung (<c>BarcodeDecoder.AllFormats</c>) und früherer Formate, die noch im
     /// Verlauf stehen können (IMB las nur ZXing.Net; MSI, Plessey, Pharmacode und UPC/EAN-Zusatz las Lupe nie, sie
