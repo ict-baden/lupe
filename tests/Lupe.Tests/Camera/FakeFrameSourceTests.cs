@@ -99,8 +99,9 @@ public sealed class FakeFrameSourceTests
         long elapsedMs = sw.ElapsedMilliseconds;
 
         // 20 B/s = 1 Bild je 50 ms. Gemessen an der tatsächlich vergangenen Zeit: Auf Windows-Runnern dauerte das Warten
-        // von 1 s schon deutlich länger, mit entsprechend mehr Bildern. Untergrenze großzügig wegen Timer-Auflösung und Last.
-        Assert.InRange(Volatile.Read(ref count), (int)((elapsedMs - startedMs) / 50 * 0.4), (int)(elapsedMs / 50 * 1.5) + 2);
+        // von 1 s schon deutlich länger, mit entsprechend mehr Bildern – oder der Zeitgeber kam unter Last nur auf 6 Bilder
+        // in 1 s. Die Untergrenze prüft deshalb nur „läuft weiter, nicht nur das erste Bild“ (ein Fünftel der Rate).
+        Assert.InRange(Volatile.Read(ref count), Math.Max(3, (int)((elapsedMs - startedMs) / 50 * 0.2)), (int)(elapsedMs / 50 * 1.5) + 2);
         Assert.All(threads, pool => Assert.True(pool, "Bilder kommen auf einem Hintergrund-Thread (Thread-Pool)"));
     }
 
