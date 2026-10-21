@@ -12,7 +12,7 @@ What Lupe looks at, what it keeps where, and how to get rid of it. In short: pic
 |---|---|---|
 | Camera | only while the page *Camera* is visible and the camera is started | frames in memory only, never saved |
 | Screen | only after the shortcut, the button or the menu entry *Scan region* | one still image of all monitors in memory, discarded after the scan; only the rectangle you draw is searched |
-| Image files | files you open, drop or pass to `lesen` | read only, never modified |
+| Image files | files you open, drop or pass to `read` | read only, never modified |
 | Clipboard | only when you click *From clipboard* or press <kbd>Ctrl</kbd>+<kbd>V</kbd> in Lupe | read only |
 
 Lupe **never keeps a picture** – no camera frame, no screenshot, no copy of a file. On Windows and X11 the screenshot never touches the disk. On **macOS** and under **Wayland** the system hands the screenshot over as a PNG file (macOS: `screencapture` into the user's temporary folder; Wayland: the desktop portal, often in `~/Pictures`), which Lupe reads and deletes right away. (The developer switch `--screenshots` writes images of the built-in demo, not of your screen.)
@@ -126,7 +126,7 @@ What Lupe looks at and what the history contains is the same as on Windows. Sett
 | Temporary files | the hit sound `treffer.wav` in a new folder `lupe-…` of the temporary folder, removed when Lupe quits; under Wayland the portal's screenshot PNG, deleted after reading | the hit sound as on Linux; the screenshot PNG `lupe-<process>-….png` in the user's temporary folder, deleted after reading |
 | Licence texts | if the package has no `THIRD-PARTY-NOTICES.txt` or `LICENSE.txt` next to the program, Lupe writes a copy to `Lupe/` in the temporary folder before opening it | same |
 
-There is no registry. **Removing everything:** switch off autostart in the settings, quit Lupe, delete the folders and files above, then remove the program (`sudo apt remove ictbaden-lupe`, `~/.local/opt/lupe/install.sh --entfernen`, or move `Lupe.app` to the bin). On macOS also remove Lupe from *System Settings › Privacy & Security* (Camera, Screen Recording, Accessibility) if you like.
+There is no registry. **Removing everything:** switch off autostart in the settings, quit Lupe, delete the folders and files above, then remove the program (`sudo apt remove ictbaden-lupe`, `~/.local/opt/lupe/install.sh --remove` (`--entfernen` for an installation of 0.1.0), or move `Lupe.app` to the bin). On macOS also remove Lupe from *System Settings › Privacy & Security* (Camera, Screen Recording, Accessibility) if you like.
 
 ---
 

@@ -82,28 +82,28 @@
 Utilisation :
   {3}
       démarrer l’interface
-  {3} lesen &lt;image&gt; [&lt;image&gt; …] [--format &lt;format&gt;]
-  {3} --hintergrund
+  {3} read &lt;image&gt; [&lt;image&gt; …] [--format &lt;format&gt;]
+  {3} --background
       démarrer uniquement dans la zone de notification (démarrage automatique)
-  {3} --bildschirm
+  {3} --screen
       scanner tout de suite une zone de l’écran (si Lupe est déjà
       lancé, c’est lui qui scanne) – pour un raccourci personnalisé
   {3} --demo
       interface avec caméra de démonstration et historique d’exemple
       (n’enregistre rien, sans raccourci clavier global)
-  {3} --screenshots &lt;dossier&gt; [--theme hell|dunkel|beide]
-  {3} --hilfe
+  {3} --screenshots &lt;dossier&gt; [--theme light|dark|both]
+  {3} --help
   {3} --version
       version, pour les rapports de bogue
   {3} --info
       version, licence, site web, mentions légales (Impressum),
       confidentialité et support
-Les noms anglais fonctionnent aussi : read, --background, --screen, --help, --theme light|dark|both.
+Les noms allemands fonctionnent aussi : lesen, --hintergrund, --bildschirm, --hilfe, --theme hell|dunkel|beide.
 
 Scan d’écran : {1} (par défaut, modifiable dans les paramètres) lit une zone
 de l’écran – depuis n’importe quel programme, tant que Lupe est lancé.
 
-« lesen » cherche tous les codes de chaque image et écrit une ligne par code :
+« read » cherche tous les codes de chaque image et écrit une ligne par code :
   FORMAT&lt;Tab&gt;contenu                    p. ex. QR_CODE&lt;Tab&gt;https://example.org
 Les caractères de contrôle du contenu sont échappés : \n (saut de ligne), \r, \t
 (tabulation), les autres sous la forme \xHH – p. ex. \x1D, le séparateur des codes GS1.
@@ -115,7 +115,7 @@ ainsi facile à traiter.
 {4} Les caractères génériques sont autorisés
 dans le nom de fichier, p. ex. {5}.
 
-Options de « lesen » :
+Options de « read » :
   --format &lt;format&gt;   chercher uniquement ces formats (répéter ou séparer par des virgules),
                       p. ex. --format QR_CODE,EAN_13 (aussi en court : qr, ean13).
                       Par défaut : tous.
@@ -128,11 +128,14 @@ Codes de sortie :
      si des codes ont été trouvés dans d’autres images
 
 Exemples :
-  {3} lesen {7}
-  {3} lesen {5} --format QR_CODE &gt; codes.txt{6}</value>
+  {3} read {7}
+  {3} read {5} --format QR_CODE &gt; codes.txt{6}</value>
   </data>
   <data name="App_Cli_HelpHint" xml:space="preserve">
-    <value>Aide : {0} --hilfe</value>
+    <value>Aide : {0} --help</value>
+  </data>
+  <data name="App_Cli_HelpKeyword" xml:space="preserve">
+    <value>--help</value>
   </data>
   <data name="App_Cli_ImagesLinux" xml:space="preserve">
     <value>Images : PNG, JPEG, BMP, GIF, WebP et ICO (pas de TIFF).</value>
@@ -166,13 +169,16 @@ Support :               {8}</value>
     <value>Aucun code trouvé : {0}</value>
   </data>
   <data name="App_Cli_NoImage" xml:space="preserve">
-    <value>Indiquez au moins une image, p. ex. {0} lesen {1}</value>
+    <value>Indiquez au moins une image, p. ex. {0} read {1}</value>
   </data>
   <data name="App_Cli_NoMatch" xml:space="preserve">
     <value>Aucun fichier ne correspond à « {0} ».</value>
   </data>
   <data name="App_Cli_ReadFailed" xml:space="preserve">
     <value>Impossible de lire « {0} » : {1}</value>
+  </data>
+  <data name="App_Cli_ReadKeyword" xml:space="preserve">
+    <value>read</value>
   </data>
   <data name="App_Cli_StandsAlone" xml:space="preserve">
     <value>« {0} » s’utilise seul : {1} {0}</value>
@@ -187,14 +193,14 @@ Support :               {8}</value>
     <value>Option inconnue « {0} ».</value>
   </data>
   <data name="App_Cli_UsageScreenshots" xml:space="preserve">
-    <value>Utilisation : {0} --screenshots &lt;dossier&gt; [--theme hell|dunkel|beide]</value>
+    <value>Utilisation : {0} --screenshots &lt;dossier&gt; [--theme light|dark|both]</value>
   </data>
   <data name="App_Cli_WindowsWait" xml:space="preserve">
     <value>
 
 Lupe.exe est un programme à fenêtre ; pour que l’invite de commandes attende la fin :
-  start /wait Lupe.exe lesen …        (cmd, sortie dans la console)
-  Lupe.exe lesen … | Out-Default      (PowerShell)
+  start /wait Lupe.exe read …        (cmd, sortie dans la console)
+  Lupe.exe read … | Out-Default      (PowerShell)
 Avec une redirection (&gt; codes.txt), appelez-le sans « start » : « start » ne transmet pas
 la redirection à Lupe, le fichier resterait vide. Dans les fichiers .cmd, cmd attend de lui-même.
 Redirigée vers un fichier depuis cmd, la sortie est en UTF-8 avec BOM.</value>
@@ -308,7 +314,7 @@ Redirigée vers un fichier depuis cmd, la sortie est en UTF-8 avec BOM.</value>
     <value>Sous Wayland, la fenêtre a besoin de XWayland – activez-le dans la session de bureau (sway : « xwayland enable »).</value>
   </data>
   <data name="App_NoDisplay_Message" xml:space="preserve">
-    <value>Lupe ne peut pas ouvrir de fenêtre : aucun serveur X ({0}). {1} La lecture d’images fonctionne aussi sans fenêtre : lupe lesen &lt;fichier&gt;</value>
+    <value>Lupe ne peut pas ouvrir de fenêtre : aucun serveur X ({0}). {1} La lecture d’images fonctionne aussi sans fenêtre : lupe read &lt;fichier&gt;</value>
   </data>
   <data name="App_NoDisplay_NotSet" xml:space="preserve">
     <value>DISPLAY n’est pas défini</value>
@@ -1151,7 +1157,7 @@ Redirigée vers un fichier depuis cmd, la sortie est en UTF-8 avec BOM.</value>
     <value>Le raccourci a été désenregistré.</value>
   </data>
   <data name="Linux_Hotkey_WaylandUnsupported" xml:space="preserve">
-    <value>Ce bureau Wayland ne permet pas aux programmes d’utiliser des raccourcis globaux (pas de portail GlobalShortcuts) – ouvrez Lupe via l’icône de la zone de notification ou le menu, ou créez votre propre raccourci pour « lupe --bildschirm » dans les paramètres du système.</value>
+    <value>Ce bureau Wayland ne permet pas aux programmes d’utiliser des raccourcis globaux (pas de portail GlobalShortcuts) – ouvrez Lupe via l’icône de la zone de notification ou le menu, ou créez votre propre raccourci pour « lupe --screen » dans les paramètres du système.</value>
   </data>
   <data name="Linux_Image_Corrupt" xml:space="preserve">
     <value>« {0} » est endommagé ou n’est pas une image prise en charge ({1}).</value>

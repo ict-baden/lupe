@@ -130,6 +130,9 @@ Beispiele:
   <data name="App_Cli_HelpHint" xml:space="preserve">
     <value>Hilfe: {0} --hilfe</value>
   </data>
+  <data name="App_Cli_HelpKeyword" xml:space="preserve">
+    <value>--hilfe</value>
+  </data>
   <data name="App_Cli_ImagesLinux" xml:space="preserve">
     <value>Bilder: PNG, JPEG, BMP, GIF, WebP und ICO (kein TIFF).</value>
   </data>
@@ -169,6 +172,9 @@ Support:               {8}</value>
   </data>
   <data name="App_Cli_ReadFailed" xml:space="preserve">
     <value>„{0}“ ließ sich nicht lesen: {1}</value>
+  </data>
+  <data name="App_Cli_ReadKeyword" xml:space="preserve">
+    <value>lesen</value>
   </data>
   <data name="App_Cli_StandsAlone" xml:space="preserve">
     <value>„{0}“ steht allein: {1} {0}</value>

@@ -7,7 +7,7 @@ Which file to download, what it needs, how to let Lupe use the camera, and how t
 **Contents:** [Requirements](#requirements) · [Downloads](#downloads) · [MSI installer](#msi-installer) · [Single exe and ZIP](#single-exe-and-zip) · [First start](#first-start) · [Camera access in Windows](#camera-access-in-windows) · [Start with Windows](#start-with-windows) · [Running as administrator](#running-as-administrator) · [Updates and uninstalling](#updates-and-uninstalling) · [Linux](#linux) · [macOS](#macos)
 
 > [!IMPORTANT]
-> **Pre-release.** Lupe is built and tested in GitHub Actions on every push to `main` (and for pull requests and `v*` tags), but there is no stable release yet. Program and MSI are **not code-signed**; Windows SmartScreen may warn when you start them.
+> **Not code-signed yet.** Program and MSI carry no signature; Windows SmartScreen may warn when you start them, and macOS asks once before the first start (see [macOS](#macos)).
 
 ## Requirements
 
@@ -21,7 +21,10 @@ Which file to download, what it needs, how to let Lupe use the camera, and how t
 
 ## Downloads
 
-All files are attached to the release [**latest**](https://github.com/ict-baden/lupe/releases/tag/latest) – on the repository page under *Releases* on the right – which GitHub Actions updates on every push to `main`. The file names stay the same, so these links always deliver the newest build:
+There are two kinds of release, both on the repository page under *Releases* on the right:
+
+- **Versions** such as `v0.1.1` – the release marked [**Latest**](https://github.com/ict-baden/lupe/releases/latest) is the current one. The MSI, the ZIP and the Linux and macOS packages carry the version in their names (e.g. `Lupe-0.1.1-x64.msi`); `Lupe.exe` keeps its name, so scripts that call it and the autostart entry keep working when you replace it. What changed is in the [CHANGELOG](../CHANGELOG.md).
+- **The pre-release [latest](https://github.com/ict-baden/lupe/releases/tag/latest)** – GitHub Actions rebuilds it on every push to `main`. The file names stay the same, so these links always deliver the newest build:
 
 | File | Runtime | Use it for |
 |---|---|---|
@@ -29,7 +32,7 @@ All files are attached to the release [**latest**](https://github.com/ict-baden/
 | [`Lupe.exe`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe.exe) | included | Running without installation, e.g. from a user folder or a USB stick. |
 | [`Lupe-win-x64-framework.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-win-x64-framework.zip) | .NET 10 Runtime | A small download where the runtime is already installed. |
 
-Builds from `main` carry versions like `0.1.0-ci.12` (12 = the number of the build run); the release title names the version of the current files. Tagged versions (`v1.2.3`) get their own release, where the MSI and the ZIP carry the version in their names (e.g. `Lupe-1.2.3-x64.msi`) and `Lupe.exe` keeps its name.
+Builds from `main` carry the next version with the number of the build run, e.g. `0.1.2-ci.12` after version 0.1.1; the release title names the version of the current files. They are tested like a version but meant for trying out changes – for distribution, use a version.
 
 For scripted downloads, e.g. to package the MSI for Intune, the links work directly – with `curl`, `Invoke-WebRequest` or the [GitHub CLI](https://cli.github.com/):
 
@@ -45,7 +48,7 @@ Check the file against [`SHA256SUMS.txt`](https://github.com/ict-baden/lupe/rele
 The MSI installs per machine:
 
 - program files into `C:\Program Files\Lupe`,
-- one Start menu entry *Lupe* (*QR- und Barcodes lesen*),
+- one Start menu entry *Lupe* (*Read QR codes and barcodes*),
 - **no** autostart, no service, no scheduled task. Starting with Windows is a per-user choice inside the app – see [Start with Windows](#start-with-windows).
 
 ```powershell
@@ -124,7 +127,7 @@ If you regularly type into an elevated program, start Lupe with *Run as administ
 
 ## Updates and uninstalling
 
-- **MSI:** install the newer MSI over the old one. Builds from `main` replace each other – in either direction: Windows Installer compares only the first three parts of the version (`0.1.0`), and the package allows the same version to be installed again, so an older build from `main` also installs over a newer one. A release with a higher version replaces them as well. Only an MSI whose first three parts are *lower* than those of the installed version is refused (*Eine neuere Version von Lupe ist bereits installiert.*).
+- **MSI:** install the newer MSI over the old one. Builds from `main` replace each other – in either direction: Windows Installer compares only the first three parts of the version (`0.1.0`), and the package allows the same version to be installed again, so an older build from `main` also installs over a newer one. A release with a higher version replaces them as well. Only an MSI whose first three parts are *lower* than those of the installed version is refused (*A newer version of Lupe is already installed.*). The language of the installed package does not matter (version 0.1.0 was a German package, later ones are English). The way back is the exception: the 0.1.0 MSI only recognises German packages, so uninstall a later version before installing 0.1.0 again – otherwise both end up installed.
 - **Exe and ZIP:** replace the files. Keep the path if *Start with Windows* is on.
 - **Settings and history** stay where they are and are read by the new version.
 - **Uninstalling** (*Settings › Apps › Installed apps › Lupe* – on Windows 10 *Apps & features* –, or silently as shown under [MSI installer](#msi-installer)) removes the program files and the Start menu entry. It does **not** remove:
@@ -138,13 +141,13 @@ Lupe runs on X11 and Wayland desktops, x64 and arm64, on distributions with glib
 | File | Install |
 |---|---|
 | [`lupe_amd64.deb`](https://github.com/ict-baden/lupe/releases/download/latest/lupe_amd64.deb) | Debian, Ubuntu and derivatives (x64): `sudo apt install ./lupe_amd64.deb`. Installs to `/opt/lupe`, the command `lupe` and a menu entry; `sudo apt remove ictbaden-lupe` removes it (the package was called `lupe` before; installing the new one replaces it). |
-| [`Lupe-linux-x64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-x64.tar.gz), [`Lupe-linux-arm64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-arm64.tar.gz) | Any distribution with glibc 2.31 or later: `tar -xzf Lupe-linux-x64.tar.gz && lupe/install.sh`. Installs for the current user only (no root) into `~/.local/opt/lupe`, with the command `lupe` in `~/.local/bin` and a menu entry. `./Lupe` inside the folder also runs it without installing. Remove with `~/.local/opt/lupe/install.sh --entfernen`. |
+| [`Lupe-linux-x64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-x64.tar.gz), [`Lupe-linux-arm64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-arm64.tar.gz) | Any distribution with glibc 2.31 or later: `tar -xzf Lupe-linux-x64.tar.gz && lupe/install.sh`. Installs for the current user only (no root) into `~/.local/opt/lupe`, with the command `lupe` in `~/.local/bin` and a menu entry. `./Lupe` inside the folder also runs it without installing. Remove with `~/.local/opt/lupe/install.sh --remove` (an installation of version 0.1.0 only knows `--entfernen`). |
 
 Tagged releases name the package `lupe_1.2.3_amd64.deb`. The libraries Lupe needs are part of every desktop installation; on a minimal system install `libx11-6 libxtst6 libxrandr2 libxi6 libice6 libsm6 libfontconfig1` and ICU, e.g. `libicu72` on Debian 12 (`apt-cache search --names-only '^libicu[0-9]+$'` shows the name; the `.deb` pulls them in). Without ICU Lupe does not start; without fontconfig it cannot read image files. If Lupe reports `LUP-0001`, the recognition library cannot be loaded – see [Error codes](error-codes.md#lup-0001).
 
 - **Camera:** your user must be in the group `video` – `sudo usermod -aG video $USER`, then sign out and in again. Lupe says so on the page *Camera* when the device is there but not readable.
 - **X11:** the screen scan, typing (XTest) and the shortcut work without asking. If another program holds the shortcut, Lupe reports it as taken.
-- **Wayland:** the screen scan, typing and the shortcut go through `xdg-desktop-portal`. The desktop asks once for permission to take screenshots, to control the keyboard (*Remote Desktop*) and to register the shortcut; it may choose different keys. GNOME before 48 and some compositors (sway, other wlroots desktops) have no GlobalShortcuts portal – bind a shortcut to `lupe --bildschirm` in the desktop's own settings (sway: `bindsym $mod+Shift+q exec lupe --bildschirm`), or start the scan from the tray menu or the window. The window needs XWayland; without it Lupe ends with a message (`lupe lesen` still works). See [Limitations › Linux and macOS](limitations.md#linux-and-macos).
+- **Wayland:** the screen scan, typing and the shortcut go through `xdg-desktop-portal`. The desktop asks once for permission to take screenshots, to control the keyboard (*Remote Desktop*) and to register the shortcut; it may choose different keys. GNOME before 48 and some compositors (sway, other wlroots desktops) have no GlobalShortcuts portal – bind a shortcut to `lupe --screen` in the desktop's own settings (sway: `bindsym $mod+Shift+q exec lupe --screen`), or start the scan from the tray menu or the window. The window needs XWayland; without it Lupe ends with a message (`lupe read` still works). See [Limitations › Linux and macOS](limitations.md#linux-and-macos).
 - **Tray icon:** needs a StatusNotifier host. On GNOME install the extension *AppIndicator and KStatusNotifierItem Support*; without it, closing the window still keeps Lupe running, but there is no icon to bring it back – start `lupe` again.
 - **Start with the session:** the autostart setting writes `~/.config/autostart/lupe.desktop`.
 - **Data:** settings in `~/.config/lupe`, history in `~/.local/share/lupe` (or the `XDG_CONFIG_HOME` / `XDG_DATA_HOME` folders you set).

@@ -87,8 +87,9 @@ Backends that keep files of their own (the Linux RemoteDesktop restore token) pu
 on every OS. The one exception is the camera: `Native/LupeCamera.swift` is compiled into `libLupeCamera.dylib` (arm64 +
 x86_64, macOS 12+) when building on a Mac (needs Xcode or the Command Line Tools); built elsewhere, the library is missing
 and macOS reports no camera. Created on another OS (tests), every part reports "not available" without calling native code. The
-signatures in `Native/Native.cs` follow the macOS 14 SDK headers (each C declaration is quoted above its import); none
-of it has run on a Mac yet.
+signatures in `Native/Native.cs` follow the macOS 14 SDK headers (each C declaration is quoted above its import). On a
+real Mac (Apple Silicon) Lupe has started with its window, the demo camera and the command line; the screen capture,
+typing, the shortcut and a real camera have not run there yet.
 
 | Part | Implementation | Notes |
 | --- | --- | --- |

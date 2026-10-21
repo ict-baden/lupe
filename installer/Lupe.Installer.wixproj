@@ -2,16 +2,17 @@
   <!--
     MSI für Lupe. Erwartet die veröffentlichten Programmdateien in $(PublishDir):
       dotnet publish src/Lupe/Lupe.csproj -c Release -r win-x64 -p:PublishSingleFile=true -o publish
-      dotnet build installer/Lupe.Installer.wixproj -c Release -p:ProductVersion=0.1.0
+      dotnet build installer/Lupe.Installer.wixproj -c Release -p:ProductVersion=0.1.1
   -->
   <PropertyGroup>
     <OutputName>Lupe</OutputName>
     <OutputType>Package</OutputType>
     <InstallerPlatform>x64</InstallerPlatform>
-    <ProductVersion Condition="'$(ProductVersion)' == ''">0.1.0</ProductVersion>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">0.1.1</ProductVersion>
     <PublishDir Condition="'$(PublishDir)' == ''">$(MSBuildThisFileDirectory)..\publish\</PublishDir>
     <DefineConstants>ProductVersion=$(ProductVersion);PublishDir=$(PublishDir);AssetsDir=$(MSBuildThisFileDirectory)..\src\Lupe\Assets</DefineConstants>
-    <Cultures>de-DE</Cultures>
+    <!-- Bis 0.1.0 de-DE; das MSI ersetzt ältere Pakete trotzdem (MajorUpgrade IgnoreLanguage, siehe Package.wxs) -->
+    <Cultures>en-US</Cultures>
     <!-- ICE38/43/57 schlagen bei Startmenü-Verknüpfungen in perMachine-Paketen fälschlich an (ALLUSERS=1 → Startmenü aller Benutzer).
          ICE61 warnt vor AllowSameVersionUpgrades, das ist hier gewollt (siehe Package.wxs).
          ICE60 bemängelt native DLLs ohne Sprache in der Versionsinfo – für Programm-DLLs bedeutungslos. -->

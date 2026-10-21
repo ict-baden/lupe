@@ -11,7 +11,7 @@
   <img alt="Data stays on this PC" src="https://img.shields.io/badge/Data-stays%20local-2E7D32">
   <img alt="User interface in English, German, Spanish, French and Chinese" src="https://img.shields.io/badge/UI-en%20%7C%20de%20%7C%20es%20%7C%20fr%20%7C%20zh--Hans-6B7280">
   <a href="LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/badge/Licence-MIT-blue"></a>
-  <img alt="Status: pre-release" src="https://img.shields.io/badge/Status-pre--release-E3A008">
+  <img alt="Status: early version 0.x" src="https://img.shields.io/badge/Status-early%20version%200.x-E3A008">
   <a href="https://github.com/ict-baden/lupe/actions/workflows/build.yml"><img alt="Build" src="https://github.com/ict-baden/lupe/actions/workflows/build.yml/badge.svg"></a>
 </p>
 
@@ -37,7 +37,7 @@
 </p>
 
 > [!NOTE]
-> **Deutsch:** Lupe liest QR- und Barcodes per Webcam, aus einem Bildschirmausschnitt, aus Bilddateien und aus der Zwischenablage, unter Windows, Linux und macOS. Das Ergebnis wird kopiert, in das Programm vorn eingetippt oder als Link geöffnet. Download: [Release „latest“](https://github.com/ict-baden/lupe/releases/tag/latest). Die Oberfläche gibt es auf Deutsch, Englisch, Spanisch, Französisch und Chinesisch (die letzten drei maschinell übersetzt, noch nicht gegengelesen); sie folgt der Sprache des Systems. Diese Doku ist Englisch.
+> **Deutsch:** Lupe liest QR- und Barcodes per Webcam, aus einem Bildschirmausschnitt, aus Bilddateien und aus der Zwischenablage, unter Windows, Linux und macOS. Das Ergebnis wird kopiert, in das Programm vorn eingetippt oder als Link geöffnet. Download: die aktuelle Version unter [Releases](https://github.com/ict-baden/lupe/releases/latest), der neueste Build von `main` unter [„latest“](https://github.com/ict-baden/lupe/releases/tag/latest). Die Oberfläche gibt es auf Deutsch, Englisch, Spanisch, Französisch und Chinesisch (die letzten drei maschinell übersetzt, noch nicht gegengelesen); sie folgt der Sprache des Systems. Diese Doku ist Englisch.
 
 > [!NOTE]
 > **The application speaks English, German, Spanish, French and Chinese (simplified)** – the last three are machine translations that native speakers have not reviewed yet. It follows the language of the operating system (English for any other language) and can be switched under *Settings › Language*. This documentation quotes the English labels, for example *Screen*, *Type* or *Open link*; the German interface shows *Bildschirm*, *Eintippen* and *Link öffnen* in their place.
@@ -116,7 +116,7 @@
   </tr>
   <tr>
     <td valign="top"><b>Runs in the notification area</b><br>Closing the window keeps Lupe and its shortcut running; optionally it starts with Windows. One Lupe per Windows session</td>
-    <td valign="top"><b>Command line</b><br><code>Lupe.exe lesen C:\Scans\*.png</code> prints one line per code, <code>FORMAT⇥content</code>, with exit codes 0, 1 and 3 for scripts</td>
+    <td valign="top"><b>Command line</b><br><code>Lupe.exe read C:\Scans\*.png</code> prints one line per code, <code>FORMAT⇥content</code>, with exit codes 0, 1 and 3 for scripts</td>
   </tr>
 </table>
 
@@ -130,7 +130,7 @@
   </tr>
 </table>
 
-**① Download** – from the release [**latest**](https://github.com/ict-baden/lupe/releases/tag/latest) (also under *Releases* on the right of the repository page), rebuilt on every push to `main`. The file names stay the same, so these links always deliver the newest build:
+**① Download** – the current version is the release marked [**Latest**](https://github.com/ict-baden/lupe/releases/latest) under *Releases* on the right of the repository page; its file names carry the version (e.g. `Lupe-0.1.1-x64.msi`; only `Lupe.exe` keeps its name). The pre-release [**latest**](https://github.com/ict-baden/lupe/releases/tag/latest) is rebuilt on every push to `main` and keeps its file names, so these links always deliver the newest build:
 
 | File | What it is |
 |---|---|
@@ -154,7 +154,7 @@ Requirements, downloading from the command line, the camera and screen permissio
 The same `Lupe.exe` reads image files without opening a window. One line per code – the format, a tab, the content:
 
 ```bat
-Lupe.exe lesen lieferschein-4711.png
+Lupe.exe read delivery-note-4711.png
 ```
 
 ```text
@@ -217,7 +217,7 @@ Lupe is a rewrite of the earlier internal Barcode-Reader (.NET Framework 4.5.2, 
 | Image files, drag and drop, clipboard | – | ✔︎ |
 | History with search and CSV export | – | ✔︎ |
 | Settings | `config.xml` in *Documents* | *Settings* page, `%LocalAppData%\Lupe\einstellungen.json` |
-| Command line | – | ✔︎ `lesen` |
+| Command line | – | ✔︎ `read` |
 | EAN/UPC 2- and 5-digit add-ons | ✔︎ | – not part of the result |
 | Save camera image to disk, custom logo and colours, debug level | ✔︎ | – Lupe stores no images and follows the Windows light/dark setting |
 
@@ -235,7 +235,7 @@ Lupe is a rewrite of the earlier internal Barcode-Reader (.NET Framework 4.5.2, 
     <td valign="top"><a href="docs/link-rules.md"><b>Link rules</b></a><br><sub>Pattern and prefix, the three ways a link is built, examples, and the safety checks</sub></td>
   </tr>
   <tr>
-    <td valign="top"><a href="docs/command-line.md"><b>Command line</b></a><br><sub>Reading images with <code>lesen</code>, choosing formats, output and exit codes, encoding, waiting with <code>start /wait</code>, Linux and macOS, <code>--version</code> and <code>--info</code>, start switches</sub></td>
+    <td valign="top"><a href="docs/command-line.md"><b>Command line</b></a><br><sub>Reading images with <code>read</code>, choosing formats, output and exit codes, encoding, waiting with <code>start /wait</code>, Linux and macOS, <code>--version</code> and <code>--info</code>, start switches</sub></td>
     <td valign="top"><a href="docs/how-it-works.md"><b>How it works</b></a><br><sub>Decoding stages, live vs. thorough search, phantom-code protection, screen capture and DPI, typing, camera</sub></td>
   </tr>
   <tr>
@@ -255,8 +255,8 @@ Lupe is a rewrite of the earlier internal Barcode-Reader (.NET Framework 4.5.2, 
 - **Control characters are not typed.** The group separator in GS1 codes, for example, is dropped when typing; the command line shows it as `\x1D`.
 - **MaxiCode** is only found in clean, upright images.
 - **Command line into a pipe** uses the console's code page; characters outside it are replaced. Redirect into a file for lossless UTF-8.
-- **Linux and macOS are new and less tested than Windows.** On Wayland the screen scan, typing and the shortcut go through the desktop portals, which ask for permission and are not offered by every desktop; Lupe cannot see which window is in front there. The macOS build has not run on a real Mac yet. Details: [Limitations › Linux and macOS](docs/limitations.md#linux-and-macos).
-- **Pre-release 0.1.0, not code-signed.** SmartScreen may warn; macOS Gatekeeper asks once.
+- **Linux and macOS are new and less tested than Windows.** On Wayland the screen scan, typing and the shortcut go through the desktop portals, which ask for permission and are not offered by every desktop; Lupe cannot see which window is in front there. On a real Mac, Lupe has so far been started with its window, the demo camera and the command line; screen scan, typing, the shortcut and a real camera are untested there. Details: [Limitations › Linux and macOS](docs/limitations.md#linux-and-macos).
+- **Not code-signed yet.** SmartScreen may warn; macOS Gatekeeper asks once.
 - **Licence: MIT.** Lupe is under the [MIT licence](LICENSE), like all ICT-Baden software. The licences of the bundled third-party components (zxing-cpp with libzint and libzueci, Avalonia, SkiaSharp and HarfBuzzSharp with the libraries compiled into them, ANGLE, MicroCom, C#/WinRT, the Windows SDK projection, .NET and more) are in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which ships in every package and opens from *About › Recognition and user interface › License texts*.
 
 Everything else: **[Limitations →](docs/limitations.md)**
@@ -287,7 +287,7 @@ Third-party licences: <a href="THIRD-PARTY-NOTICES.txt">THIRD-PARTY-NOTICES.txt<
 Support: free via GitHub, guaranteed with a <a href="SUPPORT.md">support contract</a> &nbsp;·&nbsp;
 <a href="SECURITY.md">Security</a> &nbsp;·&nbsp;
 <a href="CHANGELOG.md">Changes</a> &nbsp;·&nbsp;
-Website: <a href="https://ict-baden.de/">ict-baden.de</a> &nbsp;·&nbsp;
+Website: <a href="https://ict-baden.de/produkte/lupe/">ict-baden.de</a> &nbsp;·&nbsp;
 <a href="https://ict-baden.de/impressum/">Impressum</a> &nbsp;·&nbsp;
-<a href="https://ict-baden.de/datenschutz/">Datenschutz</a>
+<a href="https://ict-baden.de/datenschutz/lupe/">Datenschutz</a>
 </sub>

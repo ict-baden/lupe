@@ -82,27 +82,27 @@
 用法：
   {3}
       启动界面
-  {3} lesen &lt;图像&gt; [&lt;图像&gt; …] [--format &lt;格式&gt;]
-  {3} --hintergrund
+  {3} read &lt;图像&gt; [&lt;图像&gt; …] [--format &lt;格式&gt;]
+  {3} --background
       仅在通知区域中启动（用于开机自启动）
-  {3} --bildschirm
+  {3} --screen
       立即扫描屏幕区域（如果 Lupe 已在运行，则由其扫描）
       – 用于自定义快捷键
   {3} --demo
       带演示摄像头和示例历史记录的界面
       （不保存任何内容，不注册全局快捷键）
-  {3} --screenshots &lt;文件夹&gt; [--theme hell|dunkel|beide]
-  {3} --hilfe
+  {3} --screenshots &lt;文件夹&gt; [--theme light|dark|both]
+  {3} --help
   {3} --version
       版本，用于错误报告
   {3} --info
       版本、许可证、网站、法律声明（Impressum）、隐私和支持
-英文名称同样可用：read、--background、--screen、--help、--theme light|dark|both。
+德文名称同样可用：lesen、--hintergrund、--bildschirm、--hilfe、--theme hell|dunkel|beide。
 
 屏幕扫描：{1}（默认，可在设置中更改）读取屏幕的一个区域
 – 可在任何程序中使用，只要 Lupe 正在运行。
 
-“lesen”在每个图像中查找所有代码，每个代码输出一行：
+“read”在每个图像中查找所有代码，每个代码输出一行：
   格式&lt;Tab&gt;内容                          例如 QR_CODE&lt;Tab&gt;https://example.org
 内容中的控制字符会被转义：\n（换行）、\r、\t（制表符），
 其他字符写作 \xHH – 例如 \x1D，即 GS1 代码中的分隔符。行分隔符、段落分隔符以及
@@ -111,7 +111,7 @@
 
 {4} 文件名中可以使用通配符，例如 {5}。
 
-“lesen”的选项：
+“read”的选项：
   --format &lt;格式&gt;     只查找这些格式（可重复或用逗号分隔），
                       例如 --format QR_CODE,EAN_13（也可简写：qr、ean13）。
                       默认：全部。
@@ -124,11 +124,14 @@
      找到了代码
 
 示例：
-  {3} lesen {7}
-  {3} lesen {5} --format QR_CODE &gt; codes.txt{6}</value>
+  {3} read {7}
+  {3} read {5} --format QR_CODE &gt; codes.txt{6}</value>
   </data>
   <data name="App_Cli_HelpHint" xml:space="preserve">
-    <value>帮助：{0} --hilfe</value>
+    <value>帮助：{0} --help</value>
+  </data>
+  <data name="App_Cli_HelpKeyword" xml:space="preserve">
+    <value>--help</value>
   </data>
   <data name="App_Cli_ImagesLinux" xml:space="preserve">
     <value>图像：PNG、JPEG、BMP、GIF、WebP 和 ICO（不支持 TIFF）。</value>
@@ -162,13 +165,16 @@
     <value>未找到代码：{0}</value>
   </data>
   <data name="App_Cli_NoImage" xml:space="preserve">
-    <value>请至少指定一个图像，例如 {0} lesen {1}</value>
+    <value>请至少指定一个图像，例如 {0} read {1}</value>
   </data>
   <data name="App_Cli_NoMatch" xml:space="preserve">
     <value>没有与“{0}”匹配的文件。</value>
   </data>
   <data name="App_Cli_ReadFailed" xml:space="preserve">
     <value>无法读取“{0}”：{1}</value>
+  </data>
+  <data name="App_Cli_ReadKeyword" xml:space="preserve">
+    <value>read</value>
   </data>
   <data name="App_Cli_StandsAlone" xml:space="preserve">
     <value>“{0}”不能带其他参数：{1} {0}</value>
@@ -183,14 +189,14 @@
     <value>未知选项“{0}”。</value>
   </data>
   <data name="App_Cli_UsageScreenshots" xml:space="preserve">
-    <value>用法：{0} --screenshots &lt;文件夹&gt; [--theme hell|dunkel|beide]</value>
+    <value>用法：{0} --screenshots &lt;文件夹&gt; [--theme light|dark|both]</value>
   </data>
   <data name="App_Cli_WindowsWait" xml:space="preserve">
     <value>
 
 Lupe.exe 是窗口程序；要让命令提示符等待其结束：
-  start /wait Lupe.exe lesen …        （cmd，输出在控制台中）
-  Lupe.exe lesen … | Out-Default      （PowerShell）
+  start /wait Lupe.exe read …        （cmd，输出在控制台中）
+  Lupe.exe read … | Out-Default      （PowerShell）
 使用重定向（&gt; codes.txt）时，请不要使用“start”调用 – “start”不会把重定向传给 Lupe，
 文件将为空。在 .cmd 文件中，cmd 会自动等待。
 从 cmd 重定向到文件时，输出为带 BOM 的 UTF-8。</value>
@@ -304,7 +310,7 @@ Lupe.exe 是窗口程序；要让命令提示符等待其结束：
     <value>在 Wayland 下窗口需要 XWayland – 请在桌面会话中启用（sway：“xwayland enable”）。</value>
   </data>
   <data name="App_NoDisplay_Message" xml:space="preserve">
-    <value>Lupe 无法打开窗口：没有 X 服务器（{0}）。{1} 读取图像也可以不用窗口：lupe lesen &lt;文件&gt;</value>
+    <value>Lupe 无法打开窗口：没有 X 服务器（{0}）。{1} 读取图像也可以不用窗口：lupe read &lt;文件&gt;</value>
   </data>
   <data name="App_NoDisplay_NotSet" xml:space="preserve">
     <value>未设置 DISPLAY</value>
@@ -1147,7 +1153,7 @@ Lupe.exe 是窗口程序；要让命令提示符等待其结束：
     <value>快捷键已注销。</value>
   </data>
   <data name="Linux_Hotkey_WaylandUnsupported" xml:space="preserve">
-    <value>此 Wayland 桌面不允许程序使用全局快捷键（没有 GlobalShortcuts 门户）– 请通过托盘图标或菜单打开 Lupe，或在系统设置中为“lupe --bildschirm”创建自定义快捷键。</value>
+    <value>此 Wayland 桌面不允许程序使用全局快捷键（没有 GlobalShortcuts 门户）– 请通过托盘图标或菜单打开 Lupe，或在系统设置中为“lupe --screen”创建自定义快捷键。</value>
   </data>
   <data name="Linux_Image_Corrupt" xml:space="preserve">
     <value>“{0}”已损坏或不是受支持的图像（{1}）。</value>

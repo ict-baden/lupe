@@ -14,13 +14,15 @@
            Compressed="yes">
 
     <!-- AllowSameVersionUpgrades: CI-Builds unterscheiden sich nur in der 4. Stelle, die Windows Installer beim Vergleich
-         ignoriert. Ohne die Option würden sie nebeneinander statt übereinander installiert. -->
-    <MajorUpgrade AllowSameVersionUpgrades="yes" DowngradeErrorMessage="Eine neuere Version von Lupe ist bereits installiert." />
+         ignoriert. Ohne die Option würden sie nebeneinander statt übereinander installiert.
+         IgnoreLanguage: Sonst ersetzt das MSI nur Pakete derselben Sprache – bis 0.1.0 war es deutsch (de-DE), jetzt en-US.
+         CI installiert dafür zuerst das MSI der letzten Version und prüft, dass danach genau ein Lupe installiert ist. -->
+    <MajorUpgrade AllowSameVersionUpgrades="yes" IgnoreLanguage="yes" DowngradeErrorMessage="A newer version of Lupe is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
     <Icon Id="LupeIcon" SourceFile="$(AssetsDir)\lupe.ico" />
     <Property Id="ARPPRODUCTICON" Value="LupeIcon" />
-    <Property Id="ARPURLINFOABOUT" Value="https://github.com/ict-baden/lupe" />
+    <Property Id="ARPURLINFOABOUT" Value="https://ict-baden.de/produkte/lupe/" />
 
     <!-- Laufende Instanzen beenden, sonst sind die Dateien gesperrt -->
     <util:CloseApplication Id="CloseLupe" Target="Lupe.exe" CloseMessage="yes" TerminateProcess="1" RebootPrompt="no" />
@@ -37,7 +39,7 @@
       </Files>
 
       <Component Id="StartMenu" Directory="ProgramMenuFolder" Guid="2E307A7E-CEA0-4E85-B1F8-832B537E0491">
-        <Shortcut Id="LupeShortcut" Name="Lupe" Description="QR- und Barcodes lesen"
+        <Shortcut Id="LupeShortcut" Name="Lupe" Description="Read QR codes and barcodes"
                   Target="[INSTALLFOLDER]Lupe.exe" WorkingDirectory="INSTALLFOLDER" Icon="LupeIcon" />
         <RegistryValue Root="HKLM" Key="SOFTWARE\ICT-Baden\Lupe" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
       </Component>

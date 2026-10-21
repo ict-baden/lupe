@@ -4,7 +4,7 @@ Lupe for Linux (X11 and Wayland)
 Run without installing:    ./Lupe
 Set up for this user (application menu, command "lupe"):
                            ./install.sh
-Remove again:              ~/.local/opt/lupe/install.sh --entfernen
+Remove again:              ~/.local/opt/lupe/install.sh --remove
 
 Needs glibc 2.31 or later (Ubuntu 20.04, Debian 11 and newer) and, usually already installed:
 libX11, libXtst, libXrandr, libXi, libICE, libSM, fontconfig and ICU. Without ICU Lupe does not start,

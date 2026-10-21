@@ -82,28 +82,28 @@
 Uso:
   {3}
       iniciar la interfaz
-  {3} lesen &lt;imagen&gt; [&lt;imagen&gt; …] [--format &lt;formato&gt;]
-  {3} --hintergrund
+  {3} read &lt;imagen&gt; [&lt;imagen&gt; …] [--format &lt;formato&gt;]
+  {3} --background
       iniciar solo en el área de notificación (para el inicio automático)
-  {3} --bildschirm
+  {3} --screen
       escanear de inmediato una región de la pantalla (si Lupe ya
       se está ejecutando, escanea esa instancia) – para un atajo propio
   {3} --demo
       interfaz con cámara de demostración e historial de ejemplo
       (no guarda nada, sin atajo de teclado global)
-  {3} --screenshots &lt;carpeta&gt; [--theme hell|dunkel|beide]
-  {3} --hilfe
+  {3} --screenshots &lt;carpeta&gt; [--theme light|dark|both]
+  {3} --help
   {3} --version
       versión, para informes de errores
   {3} --info
       versión, licencia, sitio web, aviso legal (Impressum),
       privacidad y soporte
-También valen los nombres en inglés: read, --background, --screen, --help, --theme light|dark|both.
+También valen los nombres en alemán: lesen, --hintergrund, --bildschirm, --hilfe, --theme hell|dunkel|beide.
 
 Escaneo de pantalla: {1} (predeterminado, se puede cambiar en la configuración) lee
 una región de la pantalla – desde cualquier programa, mientras Lupe esté en ejecución.
 
-"lesen" busca todos los códigos en cada imagen y escribe una línea por código:
+"read" busca todos los códigos en cada imagen y escribe una línea por código:
   FORMATO&lt;Tab&gt;contenido                 p. ej. QR_CODE&lt;Tab&gt;https://example.org
 Los caracteres de control del contenido aparecen escapados: \n (salto de línea), \r,
 \t (tabulador), los demás como \xHH – p. ej. \x1D, el separador de los códigos GS1.
@@ -115,7 +115,7 @@ sigue siendo fácil de procesar.
 {4} Se admiten comodines en el nombre de
 archivo, p. ej. {5}.
 
-Opciones de "lesen":
+Opciones de "read":
   --format &lt;formato&gt;  buscar solo estos formatos (repetir o separar con comas),
                       p. ej. --format QR_CODE,EAN_13 (también corto: qr, ean13).
                       Sin indicar: todos.
@@ -128,11 +128,14 @@ Códigos de salida:
      si se encontraron códigos en otras imágenes
 
 Ejemplos:
-  {3} lesen {7}
-  {3} lesen {5} --format QR_CODE &gt; codes.txt{6}</value>
+  {3} read {7}
+  {3} read {5} --format QR_CODE &gt; codes.txt{6}</value>
   </data>
   <data name="App_Cli_HelpHint" xml:space="preserve">
-    <value>Ayuda: {0} --hilfe</value>
+    <value>Ayuda: {0} --help</value>
+  </data>
+  <data name="App_Cli_HelpKeyword" xml:space="preserve">
+    <value>--help</value>
   </data>
   <data name="App_Cli_ImagesLinux" xml:space="preserve">
     <value>Imágenes: PNG, JPEG, BMP, GIF, WebP e ICO (sin TIFF).</value>
@@ -166,13 +169,16 @@ Soporte:                {8}</value>
     <value>No se encontró ningún código: {0}</value>
   </data>
   <data name="App_Cli_NoImage" xml:space="preserve">
-    <value>Indique al menos una imagen, p. ej. {0} lesen {1}</value>
+    <value>Indique al menos una imagen, p. ej. {0} read {1}</value>
   </data>
   <data name="App_Cli_NoMatch" xml:space="preserve">
     <value>Ningún archivo coincide con “{0}”.</value>
   </data>
   <data name="App_Cli_ReadFailed" xml:space="preserve">
     <value>No se pudo leer “{0}”: {1}</value>
+  </data>
+  <data name="App_Cli_ReadKeyword" xml:space="preserve">
+    <value>read</value>
   </data>
   <data name="App_Cli_StandsAlone" xml:space="preserve">
     <value>“{0}” no admite más argumentos: {1} {0}</value>
@@ -187,14 +193,14 @@ Soporte:                {8}</value>
     <value>Opción desconocida “{0}”.</value>
   </data>
   <data name="App_Cli_UsageScreenshots" xml:space="preserve">
-    <value>Uso: {0} --screenshots &lt;carpeta&gt; [--theme hell|dunkel|beide]</value>
+    <value>Uso: {0} --screenshots &lt;carpeta&gt; [--theme light|dark|both]</value>
   </data>
   <data name="App_Cli_WindowsWait" xml:space="preserve">
     <value>
 
 Lupe.exe es un programa con ventana; para que el símbolo del sistema espere a que termine:
-  start /wait Lupe.exe lesen …        (cmd, salida en la consola)
-  Lupe.exe lesen … | Out-Default      (PowerShell)
+  start /wait Lupe.exe read …        (cmd, salida en la consola)
+  Lupe.exe read … | Out-Default      (PowerShell)
 Con redirección (&gt; codes.txt), llámelo sin "start": "start" no pasa la redirección
 a Lupe y el archivo quedaría vacío. En archivos .cmd, cmd espera por sí mismo.
 Redirigida a un archivo desde cmd, la salida es UTF-8 con BOM.</value>
@@ -308,7 +314,7 @@ Redirigida a un archivo desde cmd, la salida es UTF-8 con BOM.</value>
     <value>En Wayland la ventana necesita XWayland: actívelo en la sesión de escritorio (sway: “xwayland enable”).</value>
   </data>
   <data name="App_NoDisplay_Message" xml:space="preserve">
-    <value>Lupe no puede abrir una ventana: no hay servidor X ({0}). {1} La lectura de imágenes también funciona sin ventana: lupe lesen &lt;archivo&gt;</value>
+    <value>Lupe no puede abrir una ventana: no hay servidor X ({0}). {1} La lectura de imágenes también funciona sin ventana: lupe read &lt;archivo&gt;</value>
   </data>
   <data name="App_NoDisplay_NotSet" xml:space="preserve">
     <value>DISPLAY no está definido</value>
@@ -1151,7 +1157,7 @@ Redirigida a un archivo desde cmd, la salida es UTF-8 con BOM.</value>
     <value>El atajo se ha anulado.</value>
   </data>
   <data name="Linux_Hotkey_WaylandUnsupported" xml:space="preserve">
-    <value>Este escritorio Wayland no permite a los programas usar atajos globales (no hay portal GlobalShortcuts): abra Lupe con el icono de la bandeja o el menú, o cree un atajo propio para “lupe --bildschirm” en la configuración del sistema.</value>
+    <value>Este escritorio Wayland no permite a los programas usar atajos globales (no hay portal GlobalShortcuts): abra Lupe con el icono de la bandeja o el menú, o cree un atajo propio para “lupe --screen” en la configuración del sistema.</value>
   </data>
   <data name="Linux_Image_Corrupt" xml:space="preserve">
     <value>“{0}” está dañado o no es una imagen compatible ({1}).</value>

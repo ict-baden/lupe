@@ -13,7 +13,7 @@ Some messages start with a code such as `LUP-0001`. The code is the same in ever
 **The recognition library (zxing-cpp) cannot be loaded.** Lupe reads codes with the native library `ZXing.dll` (Windows), `libZXing.so` (Linux) or `libZXing.dylib` (macOS) that ships next to the program. When the operating system refuses to load it, or it lacks functions Lupe needs, Lupe cannot read any code.
 
 - **App:** a red notice at the top of the window right after the start, and again for every scan, instead of *no code found*.
-- **Command line:** `lesen` prints the message on stderr and ends with exit code `3` without reading further images.
+- **Command line:** `read` prints the message on stderr and ends with exit code `3` without reading further images.
 
 The message ends with the reason the operating system gives, for example:
 

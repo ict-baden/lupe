@@ -8,9 +8,12 @@
     Workflow: Typografische Anführungszeichen beendeten dort in PowerShell den Text (ParserError im Release-Job).
     Die Dateinamen müssen zu denen im Workflow und in packaging/*/package.sh passen; release-latest.ps1 prüft mit
     -Expected, dass es sie gibt.
+    Tag-Releases bekommen den Abschnitt „## [Version]“ aus CHANGELOG.md (englisch) statt einer erzeugten Liste der
+    Pull Requests; fehlt er, bricht das Skript ab. Links in die Doku zeigen dort auf den Stand des Tags.
 
 .EXAMPLE
     ./.github/scripts/release-notes.ps1 -Tag latest -Version 0.1.1-ci.40 -Signed $false -Notarized $false
+    ./.github/scripts/release-notes.ps1 -Tag v0.1.1 -Version 0.1.1 -Suffix -0.1.1
 #>
 param(
     [Parameter(Mandatory)] [string] $Tag,
@@ -18,12 +21,14 @@ param(
     # Dateisuffix der Tag-Releases ("-1.2.3"), bei „latest“ leer
     [string] $Suffix = '',
     [bool] $Signed = $false,
-    [bool] $Notarized = $false
+    [bool] $Notarized = $false,
+    [string] $Changelog = (Join-Path $PSScriptRoot '../../CHANGELOG.md')
 )
 $ErrorActionPreference = 'Stop'
 $repo = $env:GITHUB_REPOSITORY
 $base = "https://github.com/$repo/releases/download/$Tag"
-$docs = "https://github.com/$repo/blob/main/docs"
+$ref = if ($Tag -eq 'latest') { 'main' } else { $Tag }
+$docs = "https://github.com/$repo/blob/$ref/docs"
 $deb = if ($Suffix) { "lupe_${Version}_amd64.deb" } else { 'lupe_amd64.deb' }
 $windowsSigned = if ($Signed) { 'Windows files are signed.' } else { 'Windows files are not signed yet: SmartScreen may warn on first start (*More info* › *Run anyway*).' }
 $macNote = if ($Notarized) { 'signed and notarized' } else { "not notarized yet: on first start, choose *Open Anyway* under System Settings › Privacy & Security, see [Installation]($docs/installation.md#macos)" }
@@ -35,8 +40,37 @@ if ($Tag -eq 'latest') {
               'The links stay the same and always point to the newest build. For a fixed version, use the release marked *Latest*.'
 }
 else {
-    $lines += "Lupe $Version – reads QR codes and barcodes from the webcam, a screen region, files or the clipboard. " +
-              "What changed: [CHANGELOG](https://github.com/$repo/blob/$Tag/CHANGELOG.md)."
+    $lines += "Lupe $Version – reads QR codes and barcodes from the webcam, a screen region, files or the clipboard."
+    $lines += ''
+    # Abschnitt der Version aus dem CHANGELOG, ohne die Überschrift „## [1.2.3] – Datum“, bis zum nächsten „## “.
+    # Vorabversionen (1.0.0-rc1) ohne eigenen Abschnitt nehmen den der Version (1.0.0) oder „Unreleased“.
+    function Get-Section([string] $name) {
+        $section = @()
+        $inside = $false
+        foreach ($line in Get-Content -LiteralPath $Changelog -Encoding utf8) {
+            if ($line -match '^## ') {
+                if ($inside) { break }
+                $inside = $line -match "^## \[$([regex]::Escape($name))\]"
+                continue
+            }
+            if ($inside) { $section += $line }
+        }
+        ($section -join "`n").Trim()
+    }
+    $names = @($Version)
+    if ($Version -match '^([^-+]+)-') { $names += $Matches[1], 'Unreleased' }
+    $text = ''
+    foreach ($name in $names) {
+        $text = Get-Section $name
+        if ($text) { break }
+    }
+    # Keine typografischen Anführungszeichen in PowerShell-Texten: Sie beenden den Text wie ein gerades "
+    if (-not $text) { throw "CHANGELOG.md hat keinen Abschnitt '## [$Version]' mit Inhalt - vor dem Tag eintragen." }
+    $lines += $text
+    $lines += ''
+    $lines += "All versions: [CHANGELOG](https://github.com/$repo/blob/$Tag/CHANGELOG.md)"
+    $lines += ''
+    $lines += '### Downloads'
 }
 $lines += ''
 $lines += $windowsSigned

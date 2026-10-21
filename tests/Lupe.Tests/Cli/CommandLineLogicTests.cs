@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
+using System.Globalization;
 using Lupe.Cli;
+using Lupe.Core.Resources;
 
 namespace Lupe.Tests.Cli;
 
@@ -87,5 +89,34 @@ public sealed class CommandLineLogicTests
         Assert.Contains("--info", help);
         Assert.DoesNotMatch(@"\{\d\}", help);
         Assert.Equal(OperatingSystem.IsWindows(), help.Contains("start /wait", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData("en", "read", "--help")]
+    [InlineData("de", "lesen", "--hilfe")]
+    [InlineData("es", "read", "--help")]
+    [InlineData("fr", "read", "--help")]
+    [InlineData("zh-Hans", "read", "--help")]
+    public void Hilfe_Hinweis_und_Info_Seite_nennen_die_Schluesselwoerter_der_Sprache(string language, string read, string help)
+    {
+        // Beide Namen gehen in jeder Sprache; gezeigt wird der deutsche nur in der deutschen Oberfläche
+        var previous = CultureInfo.CurrentUICulture;
+        try
+        {
+            CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo(language);
+            Assert.Equal(read, Strings.App_Cli_ReadKeyword);
+            Assert.Equal(help, Strings.App_Cli_HelpKeyword);
+            var text = CommandLine.HelpText("9.9.9", "Win+Shift+Q", "QR_CODE");
+            Assert.Contains($"{CommandLine.CommandName} {read} ", text);
+            Assert.Contains($"{CommandLine.CommandName} {help}", text);
+            Assert.EndsWith($" {help}", string.Format(Strings.App_Cli_HelpHint, CommandLine.CommandName));
+            Assert.Contains($" {read} ", string.Format(Strings.App_Cli_NoImage, CommandLine.CommandName, "x.png"));
+            var other = read == "read" ? " lesen " : " read ";
+            Assert.DoesNotContain($"{CommandLine.CommandName}{other}", text);
+        }
+        finally
+        {
+            CultureInfo.CurrentUICulture = previous;
+        }
     }
 }
