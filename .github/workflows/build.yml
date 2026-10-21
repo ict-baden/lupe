@@ -33,7 +33,7 @@ jobs:
       msi: ${{ steps.version.outputs.msi }}
       suffix: ${{ steps.version.outputs.suffix }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Version bestimmen
         id: version
@@ -73,7 +73,7 @@ jobs:
           - { name: linux-arm64, os: ubuntu-24.04-arm, rids: linux-arm64 }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Zwischenspeicher
         id: cache
@@ -123,7 +123,7 @@ jobs:
           - { name: macos, os: macos-latest, rids: osx-arm64 osx-x64 }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Zwischenspeicher
         id: cache
@@ -173,7 +173,7 @@ jobs:
           - { name: windows, os: windows-latest, rids: win-x64 }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Zwischenspeicher
         id: cache
@@ -221,7 +221,7 @@ jobs:
       contents: read
       id-token: write # für die Anmeldung bei Azure Artifact Signing (OIDC)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -424,7 +424,7 @@ jobs:
     needs: [version, zxing-linux]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -518,7 +518,7 @@ jobs:
     needs: linux
     runs-on: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/download-artifact@v4
         with:
@@ -537,7 +537,7 @@ jobs:
     needs: [version, zxing-macos]
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Signieren und Notarisieren eingerichtet?
         # Developer-ID-Signatur und Notarisierung nur, wenn die Organisation die Zugangsdaten hinterlegt hat (Apple Developer
@@ -677,7 +677,7 @@ jobs:
     permissions:
       contents: write # für die Releases
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/download-artifact@v4
         with:
