@@ -411,7 +411,7 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw "MSI von $previous ließ sich nicht laden" }
             Install (Get-ChildItem previous/*.msi).FullName 'msi-previous.log'
             $old = @(Related)
-            if ($old.Count -ne 1) { throw "Nach der Installation von $previous: $($old.Count) Lupe-Produkte" }
+            if ($old.Count -ne 1) { throw "Nach der Installation von ${previous}: $($old.Count) Lupe-Produkte" }
             Write-Host "Installiert: $previous ($($old[0]))"
           }
           Install $msi 'msi-install.log'
