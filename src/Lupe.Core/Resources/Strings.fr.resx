@@ -1069,6 +1069,9 @@ Redirigée vers un fichier depuis cmd, la sortie est en UTF-8 avec BOM.</value>
   <data name="Core_Typing_Interrupted" xml:space="preserve">
     <value>La saisie a été interrompue – seule une partie du texte est arrivée.</value>
   </data>
+  <data name="Language_MachineTranslated" xml:space="preserve">
+    <value>{0} (traduction automatique)</value>
+  </data>
   <data name="Language_System" xml:space="preserve">
     <value>Langue du système</value>
   </data>

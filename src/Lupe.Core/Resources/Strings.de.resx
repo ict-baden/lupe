@@ -1065,6 +1065,9 @@ In cmd in eine Datei umgeleitet, ist die Ausgabe UTF-8 mit BOM.</value>
   <data name="Core_Typing_Interrupted" xml:space="preserve">
     <value>Eintippen wurde unterbrochen – der Text kam nur teilweise an.</value>
   </data>
+  <data name="Language_MachineTranslated" xml:space="preserve">
+    <value>{0} (maschinell übersetzt)</value>
+  </data>
   <data name="Language_System" xml:space="preserve">
     <value>Systemsprache</value>
   </data>
