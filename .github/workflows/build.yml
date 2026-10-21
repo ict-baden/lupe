@@ -107,7 +107,7 @@ jobs:
             packaging/zxing/check.sh "$rid" "$(ls zxing/$rid/*ZXing.*)"
           done
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: zxing-${{ matrix.name }}
           path: zxing/
@@ -157,7 +157,7 @@ jobs:
             packaging/zxing/check.sh "$rid" "$(ls zxing/$rid/*ZXing.*)"
           done
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: zxing-${{ matrix.name }}
           path: zxing/
@@ -207,7 +207,7 @@ jobs:
             packaging/zxing/check.sh "$rid" "$(ls zxing/$rid/*ZXing.*)"
           done
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: zxing-${{ matrix.name }}
           path: zxing/
@@ -247,7 +247,7 @@ jobs:
         if: always()
         # Ein Upload-Problem (z. B. voller Artifact-Speicher) soll Publish und Release nicht blockieren
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Testergebnisse-windows
           path: TestResults/*.trx
@@ -290,7 +290,7 @@ jobs:
 
       - name: Screenshots hochladen
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Screenshots
           path: screenshots/*.png
@@ -412,7 +412,7 @@ jobs:
           timestamp-rfc3161: http://timestamp.acs.microsoft.com
           timestamp-digest: SHA256
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Pakete-windows
           path: dist/*
@@ -452,7 +452,7 @@ jobs:
         if: always()
         # Ein Upload-Problem (z. B. voller Artifact-Speicher) soll Publish und Release nicht blockieren
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Testergebnisse-linux
           path: TestResults/*.trx
@@ -506,7 +506,7 @@ jobs:
               'export DEBIAN_FRONTEND=noninteractive; apt-get update -qq && apt-get install -y -qq --no-install-recommends libfontconfig1 $(apt-cache search --names-only "^libicu[0-9]+$" | cut -d" " -f1 | head -n 1) >/dev/null && tar -xzf /dist/Lupe*-linux-x64.tar.gz -C /tmp && /p/smoke.sh /tmp/lupe/Lupe'
           done
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Pakete-linux
           path: dist/*
@@ -587,7 +587,7 @@ jobs:
         if: always()
         # Ein Upload-Problem (z. B. voller Artifact-Speicher) soll Publish und Release nicht blockieren
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Testergebnisse-macos
           path: TestResults/*.trx
@@ -662,7 +662,7 @@ jobs:
             done
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Pakete-macos
           path: dist/*
