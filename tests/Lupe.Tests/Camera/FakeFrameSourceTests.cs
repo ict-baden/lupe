@@ -91,7 +91,7 @@ public sealed class FakeFrameSourceTests
         };
 
         await source.StartAsync();
-        // „Sofort“: ohne erst eine ganze Bildperiode zu warten – mit Luft für einen ausgelasteten CI-Runner
+        // Großzügig für ausgelastete CI-Runner; dass nicht erst eine Bildperiode vergeht, prüft der Test darunter
         Assert.InRange(await first.Task.WaitAsync(TimeSpan.FromSeconds(5)), 0, 1000);
         long startedMs = sw.ElapsedMilliseconds;
         await Task.Delay(1000);
@@ -103,6 +103,20 @@ public sealed class FakeFrameSourceTests
         // in 1 s. Die Untergrenze prüft deshalb nur „läuft weiter, nicht nur das erste Bild“ (ein Fünftel der Rate).
         Assert.InRange(Volatile.Read(ref count), Math.Max(3, (int)((elapsedMs - startedMs) / 50 * 0.2)), (int)(elapsedMs / 50 * 1.5) + 2);
         Assert.All(threads, pool => Assert.True(pool, "Bilder kommen auf einem Hintergrund-Thread (Thread-Pool)"));
+    }
+
+    [Fact]
+    public async Task Erstes_Bild_kommt_vor_Ablauf_der_ersten_Bildperiode()
+    {
+        // 0,25 B/s = 4 s Periode: Käme das erste Bild erst nach einer Periode, lägen 4 s dazwischen
+        await using var source = new FakeFrameSource([Marker(1)], framesPerSecond: 0.25);
+        var first = new TaskCompletionSource<long>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var sw = Stopwatch.StartNew();
+        source.FrameArrived += (_, _) => first.TrySetResult(sw.ElapsedMilliseconds);
+
+        await source.StartAsync();
+        Assert.InRange(await first.Task.WaitAsync(TimeSpan.FromSeconds(10)), 0, 2000);
+        await source.StopAsync();
     }
 
     [Fact]

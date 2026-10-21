@@ -49,7 +49,7 @@ What Lupe cannot do, what was not tested the way it will be used, and the pitfal
 ## Typing
 
 - **Elevated windows.** Windows does not allow a normal program to type into a program running as administrator. Lupe detects it, types nothing and says so. Start Lupe as administrator too if you need it ([details](installation.md#running-as-administrator)).
-- **Line breaks become spaces.** A code – from the camera, a web page in the screen scan or a file – must not be able to press <kbd>Enter</kbd> in the program in front. Copy multi-line contents instead.
+- **Line breaks become spaces.** A code – held in front of the camera or on a web page caught by the screen scan – must not be able to press <kbd>Enter</kbd> in the program in front. Copy multi-line contents instead.
 - **Typing stops when the window changes.** If another window comes to the front while Lupe is typing, it stops and says so instead of typing the rest into that window.
 - **Control characters are dropped.** Tabs become <kbd>Tab</kbd>; everything else below code 32 – for example the group separator `0x1D` in GS1 codes – cannot be typed. The command line shows it as `\x1D`; the clipboard keeps it.
 - **Only with the shortcut from another program.** A scan started from the Lupe window or the notification-area menu does not type – the window in front would be Lupe.

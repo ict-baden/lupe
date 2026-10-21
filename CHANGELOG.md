@@ -25,7 +25,7 @@ Erste Version mit Tag. Davor gab es nur Builds im Release „latest“ (`0.1.0-c
 - Paketangaben standardmäßig Englisch: Menüeintrag unter Linux (mit de, es, fr, zh_CN), Beschreibung des `.deb`, `README.txt` neben `LIESMICH.txt` im tar.gz; die Kamera-Abfrage von macOS in allen fünf Sprachen; `CFBundleVersion` nur noch Zahlen.
 - CI prüft jede mitgelieferte native Bibliothek (glibc, macOS-Mindestversion, VC++-Laufzeit) und liest mit jedem Paket einen Code, unter Linux auch auf Ubuntu 20.04/22.04 und Debian 12, unter Windows auch nach einer MSI-Installation.
 - macOS: Signatur mit Developer ID und Notarisierung sind vorbereitet; sie laufen, sobald die Zugangsdaten in den Secrets stehen.
-- Eintippen: Zeilenumbrüche in einem Code werden aus jeder Quelle (Kamera, Bildschirm-Scan, Datei) als Leerzeichen getippt – ein Code vor der Kamera oder auf einer Webseite kann im Programm vorn kein Enter mehr drücken. Die eingestellte Taste nach dem Tippen kommt weiter.
+- Eintippen: Zeilenumbrüche in einem Code werden bei Kamera und Bildschirm-Scan als Leerzeichen getippt – ein Code vor der Kamera oder auf einer Webseite kann im Programm vorn kein Enter mehr drücken. Die eingestellte Taste nach dem Tippen kommt weiter.
 - Eintippen: Kommt beim Tippen ein anderes Fenster nach vorn, bricht Lupe ab und meldet es, statt den Rest dort einzutippen.
 - Sprachauswahl: Spanisch, Französisch und Chinesisch sind als „maschinell übersetzt“ gekennzeichnet.
 - Release-Text englisch; Doku und Screenshots zeigen die englische Oberfläche (deutsche Screenshots unter `docs/assets/screenshots/de`). Impressum unter https://ict-baden.de/impressum/, Support- und Sicherheitskontakt über die Kontaktseite.

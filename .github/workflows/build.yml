@@ -707,20 +707,27 @@ jobs:
         if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+          SUFFIX: ${{ needs.version.outputs.suffix }}
+          NOTARIZED: ${{ needs.macos.outputs.notarized }}
         shell: pwsh
         run: |
           # v1.0.0-rc1 und ähnliche: Vorabversion, nicht „Latest“
           $pre = if ($env:GITHUB_REF_NAME -match '-') { @('--prerelease') } else { @() }
-          $notes = ./.github/scripts/release-notes.ps1 -Tag $env:GITHUB_REF_NAME -Version '${{ needs.version.outputs.version }}' `
-            -Suffix '${{ needs.version.outputs.suffix }}' -Signed ($env:SIGN -eq 'true') -Notarized ('${{ needs.macos.outputs.notarized }}' -eq 'true')
+          $notes = ./.github/scripts/release-notes.ps1 -Tag $env:GITHUB_REF_NAME -Version $env:VERSION `
+            -Suffix $env:SUFFIX -Signed ($env:SIGN -eq 'true') -Notarized ($env:NOTARIZED -eq 'true')
           gh release create $env:GITHUB_REF_NAME (Get-ChildItem dist/*).FullName --title "Lupe $env:GITHUB_REF_NAME" --notes $notes --generate-notes @pre
           if ($LASTEXITCODE -ne 0) { throw "gh release create ist fehlgeschlagen (Exit $LASTEXITCODE)." }
           # Das rollierende „latest“ wird gleich zur Vorabversion (sonst erst beim nächsten Push auf main), das Tag-Release
           # bekommt den Platz in der Seitenleiste
           if (-not $pre) {
             gh release edit $env:GITHUB_REF_NAME --latest
+            if ($LASTEXITCODE -ne 0) { Write-Host "::warning::$env:GITHUB_REF_NAME ließ sich nicht als Latest markieren." }
             gh release view latest *> $null
-            if ($LASTEXITCODE -eq 0) { gh release edit latest --prerelease --latest=false }
+            if ($LASTEXITCODE -eq 0) {
+              gh release edit latest --prerelease --latest=false
+              if ($LASTEXITCODE -ne 0) { Write-Host "::warning::'latest' ließ sich nicht zur Vorabversion machen." }
+            }
             $global:LASTEXITCODE = 0
           }
 
@@ -728,12 +735,13 @@ jobs:
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+          NOTARIZED: ${{ needs.macos.outputs.notarized }}
         shell: pwsh
         run: |
           # Rollierendes Release: immer der neueste main-Stand, unter festen Links. Wird an Ort und Stelle
           # aktualisiert (kein Löschen und Neuanlegen), Vorabversion erst, wenn es Releases aus Tags gibt – Einzelheiten im Skript.
-          $notes = ./.github/scripts/release-notes.ps1 -Tag latest -Version '${{ needs.version.outputs.version }}' `
-            -Signed ($env:SIGN -eq 'true') -Notarized ('${{ needs.macos.outputs.notarized }}' -eq 'true')
+          $notes = ./.github/scripts/release-notes.ps1 -Tag latest -Version $env:VERSION -Signed ($env:SIGN -eq 'true') -Notarized ($env:NOTARIZED -eq 'true')
           $expected = 'SHA256SUMS.txt', 'Lupe-x64.msi', 'Lupe.exe', 'Lupe-win-x64-framework.zip', 'lupe_amd64.deb', 'Lupe-linux-x64.tar.gz',
                       'Lupe-linux-arm64.tar.gz', 'Lupe-macos-arm64.zip', 'Lupe-macos-x64.zip', 'Lupe-sbom.cdx.json'
           # Die Version im Titel: GitHub zeigt beim Release das Datum der ersten Veröffentlichung, nicht das des Builds
