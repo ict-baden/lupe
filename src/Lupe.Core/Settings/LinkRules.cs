@@ -25,7 +25,7 @@ namespace Lupe.Core.Settings;
 /// </list>
 /// <para>
 /// Ergebnis ist nur ein absoluter http(s)-Link mit Host, ohne Steuerzeichen, Backslash oder Benutzername/Kennwort
-/// („https://contoso.com@evil.example“) – also nie file:, javascript:, ms-settings:, data:, UNC-Pfade o. Ä.
+/// („https://contoso.com@example.com“) – also nie file:, javascript:, ms-settings:, data:, UNC-Pfade o. Ä.
 /// </para>
 /// </remarks>
 public static class LinkRules

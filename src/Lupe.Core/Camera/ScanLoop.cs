@@ -16,15 +16,15 @@ namespace Lupe.Core.Camera;
 /// Es gibt nie mehr als eine Erkennung gleichzeitig und keine Warteschlange.</para>
 /// <para>Die Wiederholungssperre gilt je Text + Format ab der <b>letzten</b> Sichtung und beginnt bei jedem Start neu.</para>
 /// <para>Fällt die Quelle aus oder wirft die Erkennung (außer <see cref="OperationCanceledException"/>), kommt
-/// <see cref="Failed"/> mit deutscher Meldung und die Schleife hält an (die Quelle wird angehalten); ein erneutes
+/// <see cref="Failed"/> mit einer Meldung in der Sprache der Oberfläche und die Schleife hält an (die Quelle wird angehalten); ein erneutes
 /// <see cref="StartAsync"/> startet beides wieder. Ein Ausfall schon während <see cref="StartAsync"/> wird gemeldet,
 /// nachdem die Schleife wieder aufgeräumt ist – noch bevor <see cref="StartAsync"/> zurückkehrt.</para>
 /// <para>Start, Stopp und Freigabe sind beliebig wiederholbar und threadsicher, auch aus den eigenen Ereignissen heraus
 /// (selbst synchron mit <c>.Wait()</c>, solange nicht zugleich ein anderer Thread mit <see cref="StopAsync"/> anhält:
 /// Der wartet auf genau dieses Ereignis). Nach Rückkehr von <see cref="StopAsync"/> kommen keine Ereignisse mehr (aus
 /// einem eigenen Ereignis heraus aufgerufen wirkt der Stopp sofort, das Aufräumen läuft im Hintergrund).
-/// <see cref="StartAsync"/> wartet nie auf ein laufendes Ereignis: Ein Treffer aus der Zeit vor einem Ausfall oder Stopp
-/// kann noch gemeldet werden, während schon neu gestartet wird. Die Quelle gehört dem Aufrufer: Stopp und Freigabe halten
+/// <see cref="StartAsync"/> wartet nie auf eine laufende Erkennung (ihr <see cref="Detected"/>): Ein Treffer aus der Zeit
+/// vor einem Ausfall oder Stopp kann noch gemeldet werden, während schon neu gestartet wird. Die Quelle gehört dem Aufrufer: Stopp und Freigabe halten
 /// sie nur an, geben sie aber nicht frei.</para>
 /// </remarks>
 public sealed class ScanLoop : IAsyncDisposable
@@ -185,6 +185,9 @@ public sealed class ScanLoop : IAsyncDisposable
         try
         {
             if (_attached) await DetachAsync(waitForDecode: true).ConfigureAwait(false);
+            // Schon abgemeldet (Ausfall beim Start, Stopp aus einem Ereignis): Auch dann kommt nach StopAsync kein
+            // Treffer mehr – eine Erkennung, die davor schon lief, wird abgewartet
+            else await WaitForDecodeAsync().ConfigureAwait(false);
         }
         finally
         {
@@ -280,16 +283,20 @@ public sealed class ScanLoop : IAsyncDisposable
                 Trace.TraceWarning($"Lupe: Anhalten der Bildquelle fehlgeschlagen: {ex}");
             }
         }
-        if (waitForDecode && t_callbackOwner != this)
+        if (waitForDecode) await WaitForDecodeAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>Die laufende Erkennung abwarten (samt ihrem <see cref="Detected"/>) – nie aus einem eigenen Ereignis heraus.</summary>
+    private async Task WaitForDecodeAsync()
+    {
+        if (t_callbackOwner == this) return;
+        try
         {
-            try
-            {
-                await Volatile.Read(ref _decodeTask).ConfigureAwait(false);
-            }
-            catch (Exception)
-            {
-                // Fehler der Erkennung sind schon gemeldet
-            }
+            await Volatile.Read(ref _decodeTask).ConfigureAwait(false);
+        }
+        catch (Exception)
+        {
+            // Fehler der Erkennung sind schon gemeldet
         }
     }
 

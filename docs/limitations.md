@@ -10,7 +10,7 @@ What Lupe cannot do, what was not tested the way it will be used, and the pitfal
 
 - **Early version (0.1).** The versions are the releases with a tag (the current one is marked *Latest*); the release `latest` is an automatic build of `main` for trying out changes.
 - **Not code-signed.** SmartScreen may warn about `Lupe.exe` and the MSI; macOS asks once before the first start.
-- **Spanish, French and Chinese are machine translations.** The interface comes in English, German, Spanish, French and Chinese (simplified); es, fr and zh-Hans were machine-translated and have not been reviewed by native speakers yet – that happens before the first public release (ICT-Baden guideline 13). The command line takes English and German keywords in every language (`read` or `lesen`, `--help` or `--hilfe`, `light|dark|both` or `hell|dunkel|beide` …); the help shows the German ones only in the German interface.
+- **Spanish, French and Chinese are machine translations.** The interface comes in English, German, Spanish, French and Chinese (simplified); es, fr and zh-Hans were machine-translated and have not been reviewed by native speakers yet. The command line takes English and German keywords in every language (`read` or `lesen`, `--help` or `--hilfe`, `light|dark|both` or `hell|dunkel|beide` …); the help shows the German ones only in the German interface.
 - **Windows x64** (Windows 10 1809 or later), **Linux** x64/arm64 (X11 and Wayland) and **macOS** 12 or later (Apple Silicon and Intel). Windows is the platform Lupe was built and tested on; see [Linux and macOS](#linux-and-macos).
 
 ## Not tested on real hardware

@@ -59,6 +59,14 @@ jobs:
           "suffix=$suffix" >> $env:GITHUB_OUTPUT
           Write-Host "Version: $v  MSI: $msi  Dateien: Lupe$suffix-x64.msi"
 
+      - name: Release-Text prüfen (nur bei Tag v*)
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        run: |
+          # Gleich hier statt erst im Release-Job nach allen Builds: fehlt der Abschnitt im CHANGELOG, bricht das Skript ab
+          ./.github/scripts/release-notes.ps1 -Tag $env:GITHUB_REF_NAME -Version '${{ steps.version.outputs.version }}' `
+            -Suffix '${{ steps.version.outputs.suffix }}' | Out-Null
+
   # Native zxing-cpp-Bibliothek selbst gebaut (packaging/zxing): Die aus dem NuGet-Paket ZXingCpp braucht glibc 2.38,
   # macOS 26 bzw. die VC++-Laufzeit. Gebaut wird sie nur, wenn sich Version oder Skript ändern (Zwischenspeicher);
   # geprüft wird sie bei jedem Lauf.
@@ -402,11 +410,17 @@ jobs:
             $p = Start-Process msiexec.exe -ArgumentList '/i', "`"$file`"", '/qn', '/l*v', $log -Wait -PassThru
             if ($p.ExitCode -ne 0) { Get-Content $log -Tail 40; throw "Installation von $(Split-Path $file -Leaf): Exitcode $($p.ExitCode)" }
           }
-          # Zuerst das MSI der letzten Version (Release „Latest“): Das neue muss es ersetzen, nicht daneben installiert
-          # werden – auch über die Sprache des Pakets hinweg (bis 0.1.0 de-DE, MajorUpgrade IgnoreLanguage)
-          $previous = gh release list -R $env:GITHUB_REPOSITORY --exclude-pre-releases --exclude-drafts --limit 1 --json tagName -q '.[0].tagName'
+          # Zuerst das MSI der letzten Version bis zu dieser (ohne Vorabversionen): Das neue muss es ersetzen, nicht daneben
+          # installiert werden – auch über die Sprache des Pakets hinweg (bis 0.1.0 de-DE, MajorUpgrade IgnoreLanguage).
+          # Ältere Zweige mit niedrigerer Version testen gegen die letzte Version darunter statt gegen ein Downgrade.
+          $build = [version]((('${{ needs.version.outputs.msi }}' -split '\.')[0..2]) -join '.')
+          $tags = gh release list -R $env:GITHUB_REPOSITORY --exclude-pre-releases --exclude-drafts --limit 100 --json tagName -q '.[].tagName'
+          if ($LASTEXITCODE -ne 0) { throw 'Die Releases ließen sich nicht abfragen' }
+          $previous = $tags | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' -and [version]($_.Substring(1)) -le $build } |
+            Sort-Object { [version]($_.Substring(1)) } -Descending | Select-Object -First 1
           $old = $null
-          if ($previous) {
+          if (-not $previous) { Write-Host "::warning::Keine veröffentlichte Version bis $build – das Ersetzen wird nicht geprüft." }
+          else {
             gh release download $previous -R $env:GITHUB_REPOSITORY -p '*-x64.msi' -D previous
             if ($LASTEXITCODE -ne 0) { throw "MSI von $previous ließ sich nicht laden" }
             Install (Get-ChildItem previous/*.msi).FullName 'msi-previous.log'

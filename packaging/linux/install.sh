@@ -13,6 +13,14 @@ case "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}" in
     *) german= ;;
 esac
 
+case "${1:-}" in
+    ""|--remove|--entfernen) ;;
+    *)
+        if [ -n "$german" ]; then echo "Unbekannte Angabe „$1“. Aufruf: install.sh [--entfernen]" >&2
+        else echo "Unknown argument \"$1\". Usage: install.sh [--remove]" >&2; fi
+        exit 2 ;;
+esac
+
 if [ "${1:-}" = "--remove" ] || [ "${1:-}" = "--entfernen" ]; then
     rm -rf "$opt" "$bin/lupe" "$dest/applications/lupe.desktop" "$dest/icons/hicolor/256x256/apps/lupe.png"
     if [ -n "$german" ]; then

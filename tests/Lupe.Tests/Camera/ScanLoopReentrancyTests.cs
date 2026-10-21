@@ -50,12 +50,14 @@ public sealed class ScanLoopReentrancyTests
         // bevor StartAsync fertig war, und sein Ereignis hielt die Schleife an und startete sie synchron neu. StartAsync
         // räumte danach auf und wartete dabei unter der Sperre auf die Erkennung – deren Ereignis wartete auf die Sperre.
         using var stopped = new ManualResetEventSlim();
+        bool stoppedDuringStart = false;
         var source = new ManualFrameSource();
         source.DuringStart = s =>
         {
             s.DuringStart = null;
             s.Push(Marker(1));
-            stopped.Wait(5000); // bis das Ereignis angehalten hat: StartAsync ist dann noch nicht zurück
+            // bis das Ereignis angehalten hat: StartAsync ist dann noch nicht zurück
+            stoppedDuringStart = stopped.Wait(5000);
         };
         await using var loop = new ScanLoop(source, _ => [Code("A")], repeatSuppressMs: 0);
         int detected = 0;
@@ -67,7 +69,9 @@ public sealed class ScanLoopReentrancyTests
             loop.StartAsync().Wait();
         };
 
-        await WithTimeout(Task.Run(() => loop.StartAsync()), 5000, "Start, während der erste Treffer synchron neu startet");
+        // Eigener Thread: Die Barriere in DuringStart belegt ihn (CLAUDE.md, TestSupport/OwnThreads)
+        await WithTimeout(OwnThreads.Start(() => loop.StartAsync().Wait()), 5000, "Start, während der erste Treffer synchron neu startet");
+        Assert.True(stoppedDuringStart, "Der Treffer kam nicht während des Starts – der Test prüft dann nicht den Fall");
         Assert.True(await WaitUntil(() => loop.IsRunning && source.StartCount == 2, 5000), "kein Neustart");
         // Die erste Erkennung endet erst, wenn ihr Ereignis zurück ist – bis dahin werden Bilder nur angezeigt
         Assert.True(await WaitUntil(() =>
@@ -77,6 +81,43 @@ public sealed class ScanLoopReentrancyTests
         }, 5000), "nach dem Neustart keine Treffer");
         Assert.Equal(1, source.FrameSubscribers);
         await WithTimeout(loop.StopAsync(), 5000, "Stopp");
+    }
+
+    [Fact(Timeout = TimeoutMs)]
+    public async Task StopAsync_wartet_auch_nach_Ausfall_beim_Start_auf_ein_laufendes_Detected()
+    {
+        // StartAsync räumt nach dem Ausfall ohne Warten auf; das Warten auf den Treffer, der schon unterwegs war, holt
+        // StopAsync nach – danach kommt keiner mehr
+        using var inDetected = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        bool detectedDuringStart = false;
+        var source = new ManualFrameSource();
+        source.DuringStart = s =>
+        {
+            s.DuringStart = null;
+            s.Push(Marker(1));
+            detectedDuringStart = inDetected.Wait(5000);
+            s.Fail("Kamera weg");
+        };
+        await using var loop = new ScanLoop(source, _ => [Code("A")], repeatSuppressMs: 0);
+        loop.Detected += (_, _) =>
+        {
+            inDetected.Set();
+            release.Wait(5000);
+        };
+        var failed = new ConcurrentQueue<string>();
+        loop.Failed += (_, msg) => failed.Enqueue(msg);
+
+        await WithTimeout(OwnThreads.Start(() => loop.StartAsync().Wait()), 5000, "Start mit Ausfall");
+        Assert.True(detectedDuringStart, "Der Treffer kam nicht während des Starts – der Test prüft dann nicht den Fall");
+        Assert.Equal(["Kamera weg"], failed);
+        Assert.False(loop.IsRunning);
+
+        var stop = loop.StopAsync();
+        await Task.Delay(200);
+        Assert.False(stop.IsCompleted, "StopAsync kehrte zurück, während Detected noch lief");
+        release.Set();
+        await WithTimeout(stop, 5000, "Stopp");
     }
 
     [Fact(Timeout = TimeoutMs)]

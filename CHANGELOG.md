@@ -10,11 +10,11 @@ All notable changes to Lupe. The format follows [Keep a Changelog](https://keepa
 - Command line in English, Spanish, French and Chinese: the help, its hints and the *About* page show the English keywords (`read`, `--help`, `--background`, `--screen`, `--theme light|dark|both`); the German interface keeps `lesen`, `--hilfe` and so on. Both work in every language, as before.
 - *About* page and `--info`: *Data and privacy* opens the privacy notice for Lupe on ict-baden.de (https://ict-baden.de/datenschutz/lupe/), *Website* the product page (https://ict-baden.de/produkte/lupe/).
 - MSI installer in English (Start menu description, messages). It replaces an installed 0.1.0 although that was a German package; CI now installs the MSI of the previous version first and checks that the new one replaces it.
-- Linux: `install.sh` also takes `--remove` (besides `--entfernen`) and reports in English unless the system language is German. The `.deb` names the product page as its homepage and no longer GitHub's address as its maintainer.
-- Release notes are the section of this changelog for the version; their links point to the documentation of that version. The changelog is now in English.
+- Linux: `install.sh` also takes `--remove` (besides `--entfernen`), refuses unknown arguments instead of installing, and reports in English unless the system language is German. The `.deb` names the product page as its homepage and no longer GitHub's address as its maintainer.
+- Release notes are the section of this changelog for the version (a pre-release without its own section uses the one of its version or *Unreleased*); a tag without a section stops the release run right at the start. Their links point to the documentation of that version. The changelog is now in English.
 
 ### Fixed
-- Camera loop: a handler of *Detected* that stopped and synchronously restarted the loop while the first `StartAsync` was still finishing could deadlock – seen once as a hanging test on Windows CI. `StartAsync` no longer waits for a running detection; only `StopAsync` does. Lupe itself was not affected: it never restarts the camera synchronously from an event.
+- Camera loop: a handler of *Detected* that stopped and synchronously restarted the loop while the first `StartAsync` was still finishing could deadlock – seen once as a hanging test on Windows CI. `StartAsync` no longer waits for a running detection; only `StopAsync` does – now also when the loop had already stopped after a failure during the start, so no hit is reported after `StopAsync` returns. Lupe itself was not affected: it never restarts the camera synchronously from an event.
 - Documentation: in the workflow “Scan from the screen, type into the ERP”, line breaks are typed as spaces (it still said <kbd>Enter</kbd>); the statements about the release status and about tests on a real Mac are up to date.
 
 ## [0.1.0] – 2026-10-21

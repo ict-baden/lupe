@@ -42,18 +42,28 @@ if ($Tag -eq 'latest') {
 else {
     $lines += "Lupe $Version – reads QR codes and barcodes from the webcam, a screen region, files or the clipboard."
     $lines += ''
-    # Abschnitt der Version aus dem CHANGELOG, ohne die Überschrift „## [1.2.3] – Datum“, bis zum nächsten „## “
-    $section = @()
-    $inside = $false
-    foreach ($line in Get-Content -LiteralPath $Changelog -Encoding utf8) {
-        if ($line -match '^## ') {
-            if ($inside) { break }
-            $inside = $line -match "^## \[$([regex]::Escape($Version))\]"
-            continue
+    # Abschnitt der Version aus dem CHANGELOG, ohne die Überschrift „## [1.2.3] – Datum“, bis zum nächsten „## “.
+    # Vorabversionen (1.0.0-rc1) ohne eigenen Abschnitt nehmen den der Version (1.0.0) oder „Unreleased“.
+    function Get-Section([string] $name) {
+        $section = @()
+        $inside = $false
+        foreach ($line in Get-Content -LiteralPath $Changelog -Encoding utf8) {
+            if ($line -match '^## ') {
+                if ($inside) { break }
+                $inside = $line -match "^## \[$([regex]::Escape($name))\]"
+                continue
+            }
+            if ($inside) { $section += $line }
         }
-        if ($inside) { $section += $line }
+        ($section -join "`n").Trim()
     }
-    $text = ($section -join "`n").Trim()
+    $names = @($Version)
+    if ($Version -match '^([^-+]+)-') { $names += $Matches[1], 'Unreleased' }
+    $text = ''
+    foreach ($name in $names) {
+        $text = Get-Section $name
+        if ($text) { break }
+    }
     # Keine typografischen Anführungszeichen in PowerShell-Texten: Sie beenden den Text wie ein gerades "
     if (-not $text) { throw "CHANGELOG.md hat keinen Abschnitt '## [$Version]' mit Inhalt - vor dem Tag eintragen." }
     $lines += $text

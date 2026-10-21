@@ -11,7 +11,7 @@
   <img alt="Data stays on this PC" src="https://img.shields.io/badge/Data-stays%20local-2E7D32">
   <img alt="User interface in English, German, Spanish, French and Chinese" src="https://img.shields.io/badge/UI-en%20%7C%20de%20%7C%20es%20%7C%20fr%20%7C%20zh--Hans-6B7280">
   <a href="LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/badge/Licence-MIT-blue"></a>
-  <img alt="Status: pre-release" src="https://img.shields.io/badge/Status-pre--release-E3A008">
+  <img alt="Status: early version 0.x" src="https://img.shields.io/badge/Status-early%20version%200.x-E3A008">
   <a href="https://github.com/ict-baden/lupe/actions/workflows/build.yml"><img alt="Build" src="https://github.com/ict-baden/lupe/actions/workflows/build.yml/badge.svg"></a>
 </p>
 
@@ -130,7 +130,7 @@
   </tr>
 </table>
 
-**① Download** – the current version is the release marked [**Latest**](https://github.com/ict-baden/lupe/releases/latest) under *Releases* on the right of the repository page; its file names carry the version (e.g. `Lupe-0.1.1-x64.msi`). The pre-release [**latest**](https://github.com/ict-baden/lupe/releases/tag/latest) is rebuilt on every push to `main` and keeps its file names, so these links always deliver the newest build:
+**① Download** – the current version is the release marked [**Latest**](https://github.com/ict-baden/lupe/releases/latest) under *Releases* on the right of the repository page; its file names carry the version (e.g. `Lupe-0.1.1-x64.msi`; only `Lupe.exe` keeps its name). The pre-release [**latest**](https://github.com/ict-baden/lupe/releases/tag/latest) is rebuilt on every push to `main` and keeps its file names, so these links always deliver the newest build:
 
 | File | What it is |
 |---|---|
@@ -255,7 +255,7 @@ Lupe is a rewrite of the earlier internal Barcode-Reader (.NET Framework 4.5.2, 
 - **Control characters are not typed.** The group separator in GS1 codes, for example, is dropped when typing; the command line shows it as `\x1D`.
 - **MaxiCode** is only found in clean, upright images.
 - **Command line into a pipe** uses the console's code page; characters outside it are replaced. Redirect into a file for lossless UTF-8.
-- **Linux and macOS are new and less tested than Windows.** On Wayland the screen scan, typing and the shortcut go through the desktop portals, which ask for permission and are not offered by every desktop; Lupe cannot see which window is in front there. On a real Mac, Lupe has so far only been started and has read images from the command line; screen scan, typing and camera are untested there. Details: [Limitations › Linux and macOS](docs/limitations.md#linux-and-macos).
+- **Linux and macOS are new and less tested than Windows.** On Wayland the screen scan, typing and the shortcut go through the desktop portals, which ask for permission and are not offered by every desktop; Lupe cannot see which window is in front there. On a real Mac, Lupe has so far been started with its window, the demo camera and the command line; screen scan, typing, the shortcut and a real camera are untested there. Details: [Limitations › Linux and macOS](docs/limitations.md#linux-and-macos).
 - **Not code-signed yet.** SmartScreen may warn; macOS Gatekeeper asks once.
 - **Licence: MIT.** Lupe is under the [MIT licence](LICENSE), like all ICT-Baden software. The licences of the bundled third-party components (zxing-cpp with libzint and libzueci, Avalonia, SkiaSharp and HarfBuzzSharp with the libraries compiled into them, ANGLE, MicroCom, C#/WinRT, the Windows SDK projection, .NET and more) are in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which ships in every package and opens from *About › Recognition and user interface › License texts*.
 
