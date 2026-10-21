@@ -31,13 +31,14 @@ All files are attached to the release [**latest**](https://github.com/ict-baden/
 
 Builds from `main` carry versions like `0.1.0-ci.12` (12 = the number of the build run); the release title names the version of the current files. Tagged versions (`v1.2.3`) get their own release, where the MSI and the ZIP carry the version in their names (e.g. `Lupe-1.2.3-x64.msi`) and `Lupe.exe` keeps its name.
 
-> [!IMPORTANT]
-> **The repository is private.** Downloads need a GitHub login with access to the organisation `ict-baden`; without it, every link ends on a GitHub 404 page. The links only work in a signed-in browser – `curl` or `Invoke-WebRequest` get a 404 even with a token. For scripted downloads, e.g. to package the MSI for Intune, use the [GitHub CLI](https://cli.github.com/):
->
-> ```powershell
-> gh auth login                                                       # once
-> gh release download latest -R ict-baden/lupe -p Lupe-x64.msi --clobber
-> ```
+For scripted downloads, e.g. to package the MSI for Intune, the links work directly – with `curl`, `Invoke-WebRequest` or the [GitHub CLI](https://cli.github.com/):
+
+```powershell
+Invoke-WebRequest https://github.com/ict-baden/lupe/releases/download/latest/Lupe-x64.msi -OutFile Lupe-x64.msi
+gh release download latest -R ict-baden/lupe -p Lupe-x64.msi --clobber
+```
+
+Check the file against [`SHA256SUMS.txt`](https://github.com/ict-baden/lupe/releases/download/latest/SHA256SUMS.txt) of the same release (`Get-FileHash Lupe-x64.msi`).
 
 ## MSI installer
 

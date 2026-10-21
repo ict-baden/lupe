@@ -2,7 +2,7 @@
 
 # Link rules
 
-A link rule decides whether a code becomes a link and which one. Lupe took the idea from Barcode-Reader's regex whitelist with prefix and made it strict: whatever a code contains, Lupe opens nothing but an `http` or `https` address – and a code behind a prefix with a host cannot change that host.
+A link rule decides whether a code becomes a link and which one. Lupe took the idea from the regex whitelist of the earlier internal Barcode-Reader with prefix and made it strict: whatever a code contains, Lupe opens nothing but an `http` or `https` address – and a code behind a prefix with a host cannot change that host.
 
 **Contents:** [Where links are used](#where-links-are-used) · [A rule](#a-rule) · [How the link is built](#how-the-link-is-built) · [Examples](#examples) · [Safety checks](#safety-checks) · [Writing patterns](#writing-patterns) · [Error messages](#error-messages)
 

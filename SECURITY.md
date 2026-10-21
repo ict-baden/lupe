@@ -5,9 +5,9 @@
 Bitte **kein öffentliches Issue**. Melden Sie Sicherheitslücken vertraulich:
 
 - über GitHub: [Private vulnerability report](https://github.com/ict-baden/lupe/security/advisories/new)
-- per E-Mail: Adresse folgt (security@…, noch nicht eingerichtet)
+- ohne GitHub-Konto: über die [Kontaktseite](https://ict-baden.de/#kontakt), zunächst ohne Einzelheiten – wir melden uns mit einem vertraulichen Weg
 
-Please **do not open a public issue**. Report vulnerabilities privately via the link above or by e-mail.
+Please **do not open a public issue**. Report vulnerabilities privately via the link above or, without a GitHub account, through the [contact page](https://ict-baden.de/#kontakt) (no details at first – we will reply with a confidential channel).
 
 Hilfreich sind: betroffene Version, Schritte zum Nachstellen, mögliche Auswirkung.
 

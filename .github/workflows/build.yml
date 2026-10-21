@@ -536,10 +536,13 @@ jobs:
   macos:
     needs: [version, zxing-macos]
     runs-on: macos-latest
+    outputs:
+      notarized: ${{ steps.signing.outputs.notarize }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Signieren und Notarisieren eingerichtet?
+        id: signing
         # Developer-ID-Signatur und Notarisierung nur, wenn die Organisation die Zugangsdaten hinterlegt hat (Apple Developer
         # Program, siehe docs/development.md) und nicht bei Pull Requests. Bis dahin ad hoc signiert wie bisher. Halbe
         # Angaben brechen den Lauf nicht ab (sonst bliebe „latest“ stehen), sondern fallen mit Warnung zurück:
@@ -565,6 +568,7 @@ jobs:
           echo "Developer ID: $sign, Notarisierung: $notarize"
           echo "MACOS_SIGN=$sign" >> "$GITHUB_ENV"
           echo "MACOS_NOTARIZE=$notarize" >> "$GITHUB_ENV"
+          echo "notarize=$notarize" >> "$GITHUB_OUTPUT"
 
       - uses: actions/setup-dotnet@v4
         with:
@@ -705,7 +709,18 @@ jobs:
         run: |
           # v1.0.0-rc1 und ähnliche: Vorabversion, nicht „Latest“
           $pre = if ($env:GITHUB_REF_NAME -match '-') { @('--prerelease') } else { @() }
-          gh release create $env:GITHUB_REF_NAME (Get-ChildItem dist/*).FullName --title "Lupe $env:GITHUB_REF_NAME" --generate-notes @pre
+          $notes = ./.github/scripts/release-notes.ps1 -Tag $env:GITHUB_REF_NAME -Version '${{ needs.version.outputs.version }}' `
+            -Suffix '${{ needs.version.outputs.suffix }}' -Signed ($env:SIGN -eq 'true') -Notarized ('${{ needs.macos.outputs.notarized }}' -eq 'true')
+          gh release create $env:GITHUB_REF_NAME (Get-ChildItem dist/*).FullName --title "Lupe $env:GITHUB_REF_NAME" --notes $notes --generate-notes @pre
+          if ($LASTEXITCODE -ne 0) { throw "gh release create ist fehlgeschlagen (Exit $LASTEXITCODE)." }
+          # Das rollierende „latest“ wird gleich zur Vorabversion (sonst erst beim nächsten Push auf main), das Tag-Release
+          # bekommt den Platz in der Seitenleiste
+          if (-not $pre) {
+            gh release edit $env:GITHUB_REF_NAME --latest
+            gh release view latest *> $null
+            if ($LASTEXITCODE -eq 0) { gh release edit latest --prerelease --latest=false }
+            $global:LASTEXITCODE = 0
+          }
 
       - name: "Release 'latest' aktualisieren (main)"
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
@@ -715,22 +730,8 @@ jobs:
         run: |
           # Rollierendes Release: immer der neueste main-Stand, unter festen Links. Wird an Ort und Stelle
           # aktualisiert (kein Löschen und Neuanlegen), Vorabversion erst, wenn es Releases aus Tags gibt – Einzelheiten im Skript.
-          $base = "https://github.com/$env:GITHUB_REPOSITORY/releases/download/latest"
-          $built = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm')
-          $signed = if ($env:SIGN -eq 'true') { 'Windows-Dateien signiert' } else { 'noch nicht signiert' }
-          $notes = "Automatischer Build von main ($($env:GITHUB_SHA.Substring(0,7))), Version ${{ needs.version.outputs.version }}, gebaut $built UTC, $signed.`n`n" +
-                   "Die Links bleiben gleich und zeigen immer auf den neuesten Build.`n`n" +
-                   "**Windows** (10 1809 oder neuer, x64)`n`n" +
-                   "- **[Lupe-x64.msi]($base/Lupe-x64.msi)**: Installer für alle Benutzer (Intune/GPO)`n" +
-                   "- **[Lupe.exe]($base/Lupe.exe)**: eine Datei, läuft ohne Installation und ohne .NET-Runtime`n" +
-                   "- **[Lupe-win-x64-framework.zip]($base/Lupe-win-x64-framework.zip)**: kleine Variante, braucht die .NET 10 Runtime`n`n" +
-                   "**Linux** (X11 und Wayland)`n`n" +
-                   "- **[lupe_amd64.deb]($base/lupe_amd64.deb)**: Paket für Debian/Ubuntu (x64)`n" +
-                   "- **[Lupe-linux-x64.tar.gz]($base/Lupe-linux-x64.tar.gz)** / **[Lupe-linux-arm64.tar.gz]($base/Lupe-linux-arm64.tar.gz)**: entpacken, ``lupe/install.sh`` (glibc 2.31 oder neuer: Ubuntu 20.04, Debian 11)`n`n" +
-                   "**macOS** (12 oder neuer; noch nicht notarisiert: beim ersten Start unter Systemeinstellungen › Datenschutz & Sicherheit „Dennoch öffnen“ wählen, siehe [Installation](https://github.com/$env:GITHUB_REPOSITORY/blob/main/docs/installation.md#macos))`n`n" +
-                   "- **[Lupe-macos-arm64.zip]($base/Lupe-macos-arm64.zip)**: Apple Silicon`n" +
-                   "- **[Lupe-macos-x64.zip]($base/Lupe-macos-x64.zip)**: Intel`n`n" +
-                   "[SHA256SUMS.txt]($base/SHA256SUMS.txt): Prüfsummen aller Dateien · [Lupe-sbom.cdx.json]($base/Lupe-sbom.cdx.json): Stückliste (CycloneDX)"
+          $notes = ./.github/scripts/release-notes.ps1 -Tag latest -Version '${{ needs.version.outputs.version }}' `
+            -Signed ($env:SIGN -eq 'true') -Notarized ('${{ needs.macos.outputs.notarized }}' -eq 'true')
           $expected = 'SHA256SUMS.txt', 'Lupe-x64.msi', 'Lupe.exe', 'Lupe-win-x64-framework.zip', 'lupe_amd64.deb', 'Lupe-linux-x64.tar.gz',
                       'Lupe-linux-arm64.tar.gz', 'Lupe-macos-arm64.zip', 'Lupe-macos-x64.zip', 'Lupe-sbom.cdx.json'
           # Die Version im Titel: GitHub zeigt beim Release das Datum der ersten Veröffentlichung, nicht das des Builds

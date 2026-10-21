@@ -143,7 +143,7 @@
 
 All variants include .NET except the framework ZIP. On macOS the default shortcut is <kbd>⌘</kbd>+<kbd>⌥</kbd>+<kbd>Q</kbd> (<kbd>⌘</kbd>+<kbd>⇧</kbd>+<kbd>Q</kbd> logs out there).
 
-The repository is private: sign in to GitHub with an account that has access to `ict-baden`, otherwise GitHub answers with a 404 page. Requirements, downloading from the command line, the camera and screen permissions on each system, autostart and uninstalling: **[Installation →](docs/installation.md)**
+Requirements, downloading from the command line, the camera and screen permissions on each system, autostart and uninstalling: **[Installation →](docs/installation.md)**
 
 **② Scan** – the shortcut works in every program as long as Lupe is running, also when its window is closed. The camera, files and the clipboard are on the pages *Kamera* and *Datei*. Walkthrough: **[Using the app →](docs/usage.md)**
 
@@ -205,7 +205,7 @@ Light codes on dark backgrounds – dark mode, displays – are read in every fo
 
 ## Compared with Barcode-Reader
 
-Lupe is a rewrite of Till's [Barcode-Reader](https://github.com/pieewiee/Barcode-Reader) (.NET Framework 4.5.2, AForge for the webcam, MIT licence) on a current stack: .NET 10, Avalonia (Windows, Linux, macOS) with the Windows 11 look of the sibling tools Vitrine and Zutritt, `Windows.Media.Capture` for the camera on Windows.
+Lupe is a rewrite of the earlier internal Barcode-Reader (.NET Framework 4.5.2, AForge for the webcam) on a current stack: .NET 10, Avalonia (Windows, Linux, macOS) with the Windows 11 look of the sibling tools Vitrine and Zutritt, `Windows.Media.Capture` for the camera on Windows.
 
 | | Barcode-Reader | Lupe |
 |---|---|---|
@@ -221,7 +221,7 @@ Lupe is a rewrite of Till's [Barcode-Reader](https://github.com/pieewiee/Barcode
 | EAN/UPC 2- and 5-digit add-ons | ✔︎ | – not part of the result |
 | Save camera image to disk, custom logo and colours, debug level | ✔︎ | – Lupe stores no images and follows the Windows light/dark setting |
 
-<sub>“–” = not available; for Barcode-Reader: not among the features listed in its README. Lupe does not read the old <code>config.xml</code> – link rules have to be entered again.</sub>
+<sub>“–” = not available; for Barcode-Reader: not among its documented features. Lupe does not read the old <code>config.xml</code> – link rules have to be entered again.</sub>
 
 ## Documentation
 
@@ -288,5 +288,6 @@ Support: free via GitHub, guaranteed with a <a href="SUPPORT.md">support contrac
 <a href="SECURITY.md">Security</a> &nbsp;·&nbsp;
 <a href="CHANGELOG.md">Changes</a> &nbsp;·&nbsp;
 Website: <a href="https://ict-baden.de/">ict-baden.de</a> &nbsp;·&nbsp;
-<a href="https://ict-baden.de/index.html?page=imprint">Impressum</a>
+<a href="https://ict-baden.de/impressum/">Impressum</a> &nbsp;·&nbsp;
+<a href="https://ict-baden.de/datenschutz/">Datenschutz</a>
 </sub>
