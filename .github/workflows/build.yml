@@ -241,7 +241,7 @@ jobs:
       - name: Tests
         # Tests, die eine Webcam oder einen sichtbaren Desktop brauchen, überspringen sich selbst.
         # Beide Test-Ziele nacheinander: parallel bremsen sie sich gegenseitig, und die Echtzeit-Tests verpassen ihre Zeitfenster
-        run: dotnet test Lupe.sln -c Release --no-build -p:TestTfmsInParallel=false --logger "trx;LogFileName=tests.trx" --results-directory TestResults
+        run: dotnet test Lupe.sln -c Release --no-build -p:TestTfmsInParallel=false --blame-hang-timeout 4m --blame-hang-dump-type none --logger "trx;LogFileName=tests.trx" --results-directory TestResults
 
       - name: Testergebnisse
         if: always()
@@ -447,8 +447,10 @@ jobs:
         run: dotnet build tests/Lupe.Tests -c Release -f net10.0
 
       - name: Tests (unter Xvfb)
-        # Plattformneutrale Tests, die Avalonia-Oberfläche ohne Bildschirm und die X11-Tests (XGetImage, XTest, XGrabKey)
-        run: xvfb-run -a -s "-screen 0 1280x1024x24" dotnet test tests/Lupe.Tests -c Release -f net10.0 --no-build --logger "trx;LogFileName=tests-linux.trx" --results-directory TestResults
+        # Plattformneutrale Tests, die Avalonia-Oberfläche ohne Bildschirm und die X11-Tests (XGetImage, XTest, XGrabKey).
+        # Wie unter macOS: ein hängender Test bricht nach 4 min ab und wird benannt (ein Lauf hing sonst unbegrenzt)
+        timeout-minutes: 20
+        run: xvfb-run -a -s "-screen 0 1280x1024x24" dotnet test tests/Lupe.Tests -c Release -f net10.0 --no-build --blame-hang-timeout 4m --blame-hang-dump-type none --logger "console;verbosity=normal" --logger "trx;LogFileName=tests-linux.trx" --results-directory TestResults
 
       - name: Testergebnisse
         if: always()
