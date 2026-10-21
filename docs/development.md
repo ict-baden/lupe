@@ -32,7 +32,7 @@ dotnet publish @common --self-contained true -p:IncludeNativeLibrariesForSelfExt
                -p:EnableCompressionInSingleFile=true -o out/standalone  # the single Lupe.exe
 ```
 
-The version comes from `<Version>` in `src/Lupe/Lupe.csproj` (currently `0.1.1`); the CI overrides it with `-p:Version=…`. Keep it at or above the newest release tag: set it to the version you are about to tag, and right after the tag raise it to the next patch version for the builds from `main` (with `ProductVersion` in `installer/Lupe.Installer.wixproj`, the default for local MSI builds). If it stays below a released version, MSIs from `main` are refused on PCs that have that release installed, and the app shows the lower version.
+The version comes from `<Version>` in `src/Lupe/Lupe.csproj` (currently `0.1.2`); the CI overrides it with `-p:Version=…`. Keep it at or above the newest release tag: set it to the version you are about to tag, and right after the tag raise it to the next patch version for the builds from `main` (with `ProductVersion` in `installer/Lupe.Installer.wixproj`, the default for local MSI builds). If it stays below a released version, MSIs from `main` are refused on PCs that have that release installed, and the app shows the lower version.
 
 ## Tests
 

@@ -12,7 +12,7 @@
     <AssemblyName>Lupe</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\lupe.ico</ApplicationIcon>
-    <Version>0.1.1</Version>
+    <Version>0.1.2</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Description>Liest QR- und Barcodes per Webcam, Bildschirmausschnitt, Datei oder Zwischenablage</Description>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
