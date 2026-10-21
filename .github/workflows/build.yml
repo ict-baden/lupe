@@ -227,7 +227,7 @@ jobs:
         with:
           global-json-file: global.json
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: zxing-windows
           path: zxing
@@ -430,7 +430,7 @@ jobs:
         with:
           global-json-file: global.json
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: zxing-linux-*
           path: zxing
@@ -520,7 +520,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: Pakete-linux
           path: dist
@@ -570,7 +570,7 @@ jobs:
         with:
           global-json-file: global.json
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: zxing-macos
           path: zxing
@@ -679,7 +679,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: Pakete-*
           path: dist
