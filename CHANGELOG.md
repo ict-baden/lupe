@@ -1,46 +1,59 @@
-# Änderungen
+# Changelog
 
-Alle wichtigen Änderungen an Lupe. Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/), Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
+All notable changes to Lupe. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [Semantic Versioning](https://semver.org/). The release notes of each version are its section below.
 
-## [Unveröffentlicht]
+## [Unreleased]
+
+## [0.1.1] – 2026-10-21
+
+### Changed
+- Command line in English, Spanish, French and Chinese: the help, its hints and the *About* page show the English keywords (`read`, `--help`, `--background`, `--screen`, `--theme light|dark|both`); the German interface keeps `lesen`, `--hilfe` and so on. Both work in every language, as before.
+- *About* page and `--info`: *Data and privacy* opens the privacy notice for Lupe on ict-baden.de (https://ict-baden.de/datenschutz/lupe/), *Website* the product page (https://ict-baden.de/produkte/lupe/).
+- MSI installer in English (Start menu description, messages). It replaces an installed 0.1.0 although that was a German package; CI now installs the MSI of the previous version first and checks that the new one replaces it.
+- Linux: `install.sh` also takes `--remove` (besides `--entfernen`) and reports in English unless the system language is German. The `.deb` names the product page as its homepage and no longer GitHub's address as its maintainer.
+- Release notes are the section of this changelog for the version; their links point to the documentation of that version. The changelog is now in English.
+
+### Fixed
+- Camera loop: a handler of *Detected* that stopped and synchronously restarted the loop while the first `StartAsync` was still finishing could deadlock – seen once as a hanging test on Windows CI. `StartAsync` no longer waits for a running detection; only `StopAsync` does. Lupe itself was not affected: it never restarts the camera synchronously from an event.
+- Documentation: in the workflow “Scan from the screen, type into the ERP”, line breaks are typed as spaces (it still said <kbd>Enter</kbd>); the statements about the release status and about tests on a real Mac are up to date.
 
 ## [0.1.0] – 2026-10-21
 
-Erste Version mit Tag. Davor gab es nur Builds im Release „latest“ (`0.1.0-ci.N`).
+First tagged version. Before, there were only builds in the release `latest` (`0.1.0-ci.N`).
 
-### Neu
-- Codes lesen per Webcam, Bildschirmausschnitt (Win+Umschalt+Q, auf dem Mac ⌘⌥Q), Bilddatei und Zwischenablage, Erkennung mit zxing-cpp.
-- Ergebnis kopieren, in das Programm vorn eintippen oder per Link-Regel als Link öffnen; Kamera als Handscanner.
-- Verlauf mit CSV-Export, Einstellungen als JSON, Autostart, Infobereich.
-- Befehlszeile mit dokumentierten Exitcodes, `--demo` und `--screenshots`.
-- Windows, Linux (X11 und Wayland, x64 und arm64) und macOS (Apple Silicon und Intel), Oberfläche mit Avalonia.
-- Pakete: MSI, Einzeldatei-Exe, ZIP mit Framework, `.deb`, `tar.gz`, `Lupe.app`; `SHA256SUMS.txt` im Release.
-- Oberfläche auf Englisch, Deutsch, Spanisch, Französisch und Chinesisch (vereinfacht), folgt der Systemsprache, umschaltbar. Spanisch, Französisch und Chinesisch sind maschinell vorübersetzt und noch nicht von Muttersprachlern gegengelesen.
-- Info-Seite mit Version, Build, Lizenz, Drittanbieter-Lizenzen, Webseite, Impressum, Datenschutz und Support; die Lizenz öffnet lokal statt im Browser.
-- `lupe --version` und `lupe --info` (Version, Lizenz, Links); englische Namen für Befehle und Schalter (`read`, `--background`, `--screen`, `--help`, `--theme light|dark|both`). Hilfe und Info-Seite nennen den Befehl je System (`Lupe.exe`, `lupe`, unter macOS das Programm in `Lupe.app`) und die dort lesbaren Bildformate.
+### Added
+- Reading codes from the webcam, a screen region (Win+Shift+Q, on the Mac ⌘⌥Q), image files and the clipboard, decoded with zxing-cpp.
+- Copy the result, type it into the program in front or open it as a link through a link rule; the camera works like a hand scanner.
+- History with CSV export, settings as JSON, autostart, notification-area icon.
+- Command line with documented exit codes, `--demo` and `--screenshots`.
+- Windows, Linux (X11 and Wayland, x64 and arm64) and macOS (Apple Silicon and Intel), user interface with Avalonia.
+- Packages: MSI, single-file exe, framework-dependent ZIP, `.deb`, `tar.gz`, `Lupe.app`; `SHA256SUMS.txt` in every release.
+- Interface in English, German, Spanish, French and Chinese (simplified), following the system language and switchable. Spanish, French and Chinese are machine translations, not yet reviewed by native speakers.
+- *About* page with version, build, licence, third-party licences, website, legal notice (Impressum), privacy and support; the licence opens locally instead of in the browser.
+- `lupe --version` and `lupe --info` (version, licence, links); English names for commands and switches (`read`, `--background`, `--screen`, `--help`, `--theme light|dark|both`). The help and the *About* page name the command of each system (`Lupe.exe`, `lupe`, on macOS the program inside `Lupe.app`) and the image formats it can read there.
 
-### Geändert
-- Linux-Paket heißt jetzt `ictbaden-lupe` (vorher `lupe`) und ersetzt das alte Paket beim Installieren.
-- Jedes Paket enthält jetzt `LICENSE.txt`; das `.deb` hat eine `copyright`-Datei.
-- Paketangaben standardmäßig Englisch: Menüeintrag unter Linux (mit de, es, fr, zh_CN), Beschreibung des `.deb`, `README.txt` neben `LIESMICH.txt` im tar.gz; die Kamera-Abfrage von macOS in allen fünf Sprachen; `CFBundleVersion` nur noch Zahlen.
-- CI prüft jede mitgelieferte native Bibliothek (glibc, macOS-Mindestversion, VC++-Laufzeit) und liest mit jedem Paket einen Code, unter Linux auch auf Ubuntu 20.04/22.04 und Debian 12, unter Windows auch nach einer MSI-Installation.
-- macOS: Signatur mit Developer ID und Notarisierung sind vorbereitet; sie laufen, sobald die Zugangsdaten in den Secrets stehen.
-- Eintippen: Zeilenumbrüche in einem Code werden bei Kamera und Bildschirm-Scan als Leerzeichen getippt – ein Code vor der Kamera oder auf einer Webseite kann im Programm vorn kein Enter mehr drücken. Die eingestellte Taste nach dem Tippen kommt weiter.
-- Eintippen: Kommt beim Tippen ein anderes Fenster nach vorn, bricht Lupe ab und meldet es, statt den Rest dort einzutippen.
-- Sprachauswahl: Spanisch, Französisch und Chinesisch sind als „maschinell übersetzt“ gekennzeichnet.
-- Release-Text englisch; Doku und Screenshots zeigen die englische Oberfläche (deutsche Screenshots unter `docs/assets/screenshots/de`). Impressum unter https://ict-baden.de/impressum/, Support- und Sicherheitskontakt über die Kontaktseite.
-- Linux und macOS: Einstellungen und Verlauf nur noch für den eigenen Benutzer lesbar (Ordner 0700, Dateien 0600). Ein CSV-Export folgt weiter der umask; eine überschriebene Datei behält ihre Rechte.
-- Befehlszeile: auch C1-Steuerzeichen (`\xHH`), Zeilentrenner U+2028/U+2029 und Zeichen zur Schreibrichtung (`\uXXXX`) werden maskiert; `--hilfe` beschreibt das.
-- Linux: Als Mindestversion nennt die Doku jetzt glibc 2.31 (Ubuntu 20.04, Debian 11) – die Grenze, die CI für jede Bibliothek prüft und testet; das `.deb` braucht ICU 66 oder neuer.
-- Release: `Lupe-sbom.cdx.json`, eine Stückliste (CycloneDX) aller Bestandteile.
-- Verlauf: breitere Zeitspalte (Datum wurde abgeschnitten).
+### Changed
+- The Linux package is now called `ictbaden-lupe` (was `lupe`) and replaces the old package on installation.
+- Every package contains `LICENSE.txt`; the `.deb` has a `copyright` file.
+- Package metadata in English by default: the Linux menu entry (with de, es, fr, zh_CN), the `.deb` description, `README.txt` next to `LIESMICH.txt` in the tar.gz; the macOS camera prompt in all five languages; `CFBundleVersion` numbers only.
+- CI checks every bundled native library (glibc, minimum macOS version, VC++ runtime) and reads a code with every package – on Linux also on Ubuntu 20.04/22.04 and Debian 12, on Windows also after an MSI installation.
+- macOS: signing with a Developer ID and notarisation are prepared and run as soon as the credentials are in the secrets.
+- Typing: line breaks in a code are typed as spaces for the camera and the screen scan – a code in front of the camera or on a web page can no longer press <kbd>Enter</kbd> in the program in front. The key chosen to follow the typing still comes.
+- Typing: if another window comes to the front while typing, Lupe stops and says so instead of typing the rest there.
+- Language selection: Spanish, French and Chinese are marked as machine-translated.
+- Release notes in English; documentation and screenshots show the English interface (German screenshots in `docs/assets/screenshots/de`). Legal notice at https://ict-baden.de/impressum/, support and security contact through the contact page.
+- Linux and macOS: settings and history are readable only by the own user (folders 0700, files 0600). A CSV export still follows the umask; an overwritten file keeps its permissions.
+- Command line: C1 control characters (`\xHH`), the line separators U+2028/U+2029 and characters that change the text direction (`\uXXXX`) are escaped as well; `--help` describes it.
+- Linux: the documentation names glibc 2.31 (Ubuntu 20.04, Debian 11) as the minimum – the limit CI checks and tests for every library; the `.deb` needs ICU 66 or later.
+- Release: `Lupe-sbom.cdx.json`, a software bill of materials (CycloneDX) of all components.
+- History: wider time column (the date was cut off).
 
-### Behoben
-- Linux: Auf Debian 12, Ubuntu 22.04 und anderen Systemen mit glibc unter 2.38 meldete jeder Scan „Kein Code gefunden“, danach brach Lupe ab. Die native zxing-cpp-Bibliothek wird jetzt selbst gebaut (glibc 2.28, x64 und arm64), das `.deb` nennt die nötige glibc-Version.
-- macOS: Die zxing-cpp-Bibliothek verlangte macOS 26 (Apple Silicon) bzw. 15 (Intel); jetzt wie die App selbst macOS 12.
-- Windows: Die zxing-cpp-Bibliothek brauchte die VC++-Laufzeit, die kein Paket mitbrachte; jetzt mit statisch gebundener Laufzeit.
-- Linux: Die Tondatei bei einem Treffer lag unter festem Namen im gemeinsamen /tmp; ein anderer Benutzer konnte dort einen Symlink anlegen, den Lupe überschrieb. Jetzt in einem eigenen, neu angelegten Ordner. Ebenso liegt der Socket für „nur eine Lupe“ im Laufzeitordner des Benutzers statt in /tmp und nimmt nur Verbindungen desselben Benutzers an.
-- Start ohne Kulturdaten (`DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1`) brach ab („… is an invalid culture identifier“), beim Start, bei `--hilfe` und beim Aufbau des Hauptfensters. Jetzt startet Lupe dann mit englischer Oberfläche; Tests starten Lupe in diesem Modus.
-- `THIRD-PARTY-NOTICES.txt` vollständig: ANGLE, MicroCom, Avalonia-Native, die WiX-Custom-Action der MSI, die Notices der SkiaSharp/HarfBuzzSharp-Native-Pakete und der .NET-Laufzeit im Wortlaut statt eines Links, Windows-SDK-Lizenz richtiggestellt; CI prüft jede ausgelieferte Datei.
-- Linux und macOS: Ein Fehler beim Annehmen eines Signals (etwa von einem fremden Benutzer am Socket) beendete das Lauschen für „nur eine Lupe“; danach kam `--bildschirm` bis zum Neustart nicht mehr an.
-- Lädt die Erkennungsbibliothek nicht, meldet Lupe das jetzt als Fehler mit Code `LUP-0001` (Befehlszeile: Exitcode 3, Oberfläche: Hinweis beim Start und bei jedem Scan) statt „Kein Code gefunden“, und stürzt nicht mehr ab.
+### Fixed
+- Linux: on Debian 12, Ubuntu 22.04 and other systems with glibc below 2.38, every scan reported “No code found”, then Lupe crashed. The native zxing-cpp library is now built in-house (glibc 2.28, x64 and arm64), and the `.deb` declares the glibc version it needs.
+- macOS: the zxing-cpp library required macOS 26 (Apple Silicon) or 15 (Intel); now macOS 12, like the app.
+- Windows: the zxing-cpp library needed the VC++ runtime, which no package shipped; it is now linked statically.
+- Linux: the hit sound was written under a fixed name to the shared /tmp, where another user could plant a symlink that Lupe then overwrote. It now goes to a new folder of its own. Likewise, the socket for “one Lupe per session” lives in the user's runtime folder instead of /tmp and only accepts connections of the same user.
+- Starting without culture data (`DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1`) failed (“… is an invalid culture identifier”) at start, with `--help` and when building the main window. Lupe now starts with the English interface in that case; tests start Lupe in this mode.
+- `THIRD-PARTY-NOTICES.txt` complete: ANGLE, MicroCom, Avalonia.Native, the WiX custom action of the MSI, the notices of the SkiaSharp/HarfBuzzSharp native packages and of the .NET runtime in full instead of a link, Windows SDK licence corrected; CI checks every shipped file.
+- Linux and macOS: an error while accepting a signal (for example from another user at the socket) ended the listening for “one Lupe per session”; after that, `--screen` no longer arrived until a restart.
+- If the recognition library cannot be loaded, Lupe now reports an error with the code `LUP-0001` (command line: exit code 3; interface: a hint at start and on every scan) instead of “No code found”, and no longer crashes.

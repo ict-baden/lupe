@@ -13,7 +13,7 @@ flowchart LR
     K["Camera<br>webcam frames"] --> L["Live search<br>whole picture only"]
     B["Screen<br>still image, rectangle"] --> T["Thorough search<br>two stages"]
     D["File / Clipboard<br>image file, PNG, bitmap"] --> T
-    C["Command line<br>lesen"] --> TC["Thorough search<br>two stages"]
+    C["Command line<br>read"] --> TC["Thorough search<br>two stages"]
     L --> R["Repeat suppression"]
     R --> H["Hit: beep,<br>history, actions"]
     T --> H

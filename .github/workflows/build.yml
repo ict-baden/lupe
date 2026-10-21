@@ -388,18 +388,43 @@ jobs:
           packaging/smoke.sh dist/Lupe.exe
           packaging/smoke.sh out/self-contained/Lupe.exe
 
-      - name: MSI installieren und deinstallieren
+      - name: MSI über die letzte Version installieren und deinstallieren
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           $msi = (Get-ChildItem dist/*.msi).FullName
-          $p = Start-Process msiexec.exe -ArgumentList '/i', "`"$msi`"", '/qn', '/l*v', 'msi-install.log' -Wait -PassThru
-          if ($p.ExitCode -ne 0) { Get-Content msi-install.log -Tail 40; throw "Installation: Exitcode $($p.ExitCode)" }
+          $upgradeCode = '{B5E63BC4-65DB-46E9-B6B1-5A3167B381D1}'
+          $installer = New-Object -ComObject WindowsInstaller.Installer
+          # Produktcodes aller installierten Lupe-Pakete (wie in docs/installation.md beim stillen Deinstallieren)
+          function Related { @(foreach ($product in $installer.RelatedProducts($upgradeCode)) { $product }) }
+          function Install([string] $file, [string] $log) {
+            $p = Start-Process msiexec.exe -ArgumentList '/i', "`"$file`"", '/qn', '/l*v', $log -Wait -PassThru
+            if ($p.ExitCode -ne 0) { Get-Content $log -Tail 40; throw "Installation von $(Split-Path $file -Leaf): Exitcode $($p.ExitCode)" }
+          }
+          # Zuerst das MSI der letzten Version (Release „Latest“): Das neue muss es ersetzen, nicht daneben installiert
+          # werden – auch über die Sprache des Pakets hinweg (bis 0.1.0 de-DE, MajorUpgrade IgnoreLanguage)
+          $previous = gh release list -R $env:GITHUB_REPOSITORY --exclude-pre-releases --exclude-drafts --limit 1 --json tagName -q '.[0].tagName'
+          $old = $null
+          if ($previous) {
+            gh release download $previous -R $env:GITHUB_REPOSITORY -p '*-x64.msi' -D previous
+            if ($LASTEXITCODE -ne 0) { throw "MSI von $previous ließ sich nicht laden" }
+            Install (Get-ChildItem previous/*.msi).FullName 'msi-previous.log'
+            $old = @(Related)
+            if ($old.Count -ne 1) { throw "Nach der Installation von $previous: $($old.Count) Lupe-Produkte" }
+            Write-Host "Installiert: $previous ($($old[0]))"
+          }
+          Install $msi 'msi-install.log'
+          $now = @(Related)
+          if ($now.Count -ne 1) { throw "Nach der Installation des neuen MSI: $($now.Count) Lupe-Produkte statt einem – die alte Version wurde nicht ersetzt" }
+          if ($old -and $now[0] -eq $old[0]) { throw "Das neue MSI hat $previous nicht ersetzt ($($now[0]))" }
           # Git Bash ausdrücklich: „bash“ allein kann unter Windows die WSL-Bash sein
           & "$env:ProgramFiles\Git\bin\bash.exe" packaging/smoke.sh "$env:ProgramFiles\Lupe\Lupe.exe"
           if ($LASTEXITCODE -ne 0) { throw 'Rauchtest der installierten Lupe fehlgeschlagen' }
           $p = Start-Process msiexec.exe -ArgumentList '/x', "`"$msi`"", '/qn' -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "Deinstallation: Exitcode $($p.ExitCode)" }
           if (Test-Path "$env:ProgramFiles\Lupe\Lupe.exe") { throw 'Lupe.exe ist nach der Deinstallation noch da' }
+          if (@(Related).Count -ne 0) { throw 'Nach der Deinstallation ist noch ein Lupe-Produkt registriert' }
 
       - name: MSI signieren
         if: env.SIGN == 'true'
@@ -718,7 +743,7 @@ jobs:
           $pre = if ($env:GITHUB_REF_NAME -match '-') { @('--prerelease') } else { @() }
           $notes = ./.github/scripts/release-notes.ps1 -Tag $env:GITHUB_REF_NAME -Version $env:VERSION `
             -Suffix $env:SUFFIX -Signed ($env:SIGN -eq 'true') -Notarized ($env:NOTARIZED -eq 'true')
-          gh release create $env:GITHUB_REF_NAME (Get-ChildItem dist/*).FullName --title "Lupe $env:GITHUB_REF_NAME" --notes $notes --generate-notes @pre
+          gh release create $env:GITHUB_REF_NAME (Get-ChildItem dist/*).FullName --title "Lupe $env:GITHUB_REF_NAME" --notes $notes @pre
           if ($LASTEXITCODE -ne 0) { throw "gh release create ist fehlgeschlagen (Exit $LASTEXITCODE)." }
           # Das rollierende „latest“ wird gleich zur Vorabversion (sonst erst beim nächsten Push auf main), das Tag-Release
           # bekommt den Platz in der Seitenleiste

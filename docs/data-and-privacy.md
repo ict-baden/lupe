@@ -12,7 +12,7 @@ What Lupe looks at, what it keeps where, and how to get rid of it. In short: pic
 |---|---|---|
 | Camera | only while the page *Camera* is visible and the camera is started | frames in memory only, never saved |
 | Screen | only after the shortcut, the button or the menu entry *Scan region* | one still image of all monitors in memory, discarded after the scan; only the rectangle you draw is searched |
-| Image files | files you open, drop or pass to `lesen` | read only, never modified |
+| Image files | files you open, drop or pass to `read` | read only, never modified |
 | Clipboard | only when you click *From clipboard* or press <kbd>Ctrl</kbd>+<kbd>V</kbd> in Lupe | read only |
 
 Lupe **never keeps a picture** – no camera frame, no screenshot, no copy of a file. On Windows and X11 the screenshot never touches the disk. On **macOS** and under **Wayland** the system hands the screenshot over as a PNG file (macOS: `screencapture` into the user's temporary folder; Wayland: the desktop portal, often in `~/Pictures`), which Lupe reads and deletes right away. (The developer switch `--screenshots` writes images of the built-in demo, not of your screen.)

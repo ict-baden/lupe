@@ -8,9 +8,9 @@ What Lupe cannot do, what was not tested the way it will be used, and the pitfal
 
 ## Status
 
-- **Pre-release 0.1.0.** Builds come from GitHub Actions; there is no stable release yet.
-- **Not code-signed.** SmartScreen may warn about `Lupe.exe` and the MSI.
-- **Spanish, French and Chinese are machine translations.** The interface comes in English, German, Spanish, French and Chinese (simplified); es, fr and zh-Hans were machine-translated and have not been reviewed by native speakers yet – that happens before the first public release (ICT-Baden guideline 13). The German command-line keywords (`lesen`, `--hilfe`, `hell|dunkel|beide` …) stay; English names (`read`, `--help`, `light|dark|both`) work as well. The MSI installer is German.
+- **Early version (0.1).** The versions are the releases with a tag (the current one is marked *Latest*); the release `latest` is an automatic build of `main` for trying out changes.
+- **Not code-signed.** SmartScreen may warn about `Lupe.exe` and the MSI; macOS asks once before the first start.
+- **Spanish, French and Chinese are machine translations.** The interface comes in English, German, Spanish, French and Chinese (simplified); es, fr and zh-Hans were machine-translated and have not been reviewed by native speakers yet – that happens before the first public release (ICT-Baden guideline 13). The command line takes English and German keywords in every language (`read` or `lesen`, `--help` or `--hilfe`, `light|dark|both` or `hell|dunkel|beide` …); the help shows the German ones only in the German interface.
 - **Windows x64** (Windows 10 1809 or later), **Linux** x64/arm64 (X11 and Wayland) and **macOS** 12 or later (Apple Silicon and Intel). Windows is the platform Lupe was built and tested on; see [Linux and macOS](#linux-and-macos).
 
 ## Not tested on real hardware
@@ -69,14 +69,14 @@ What Lupe cannot do, what was not tested the way it will be used, and the pitfal
 - **Pipes use the console's code page.** Characters outside it are replaced; redirect into a file for lossless UTF-8.
 - **PowerShell 7.4+** writes the console's code page into files with `> codes.txt`; use a `.cmd` file or set `[Console]::OutputEncoding` first.
 - **`> NUL`** does not silence the output.
-- **No file name in the output lines** – call `lesen` once per image if you need it ([example](command-line.md#examples)).
+- **No file name in the output lines** – call `read` once per image if you need it ([example](command-line.md#examples)).
 
 
 ## Linux and macOS
 
-- **New ports, less tested.** The Linux backend ran in containers only: X11 under Xvfb (screen capture, XTest typing, `XGrabKey`) and Wayland in a headless sway with `xdg-desktop-portal-wlr` (screenshot portal). No real webcam, no KDE or GNOME portals, no multi-monitor or HiDPI setup. **The macOS backend has not run on a Mac yet** – it builds, and its logic tests pass on CI; the native calls are untested.
+- **New ports, less tested.** The Linux backend ran in containers only: X11 under Xvfb (screen capture, XTest typing, `XGrabKey`) and Wayland in a headless sway with `xdg-desktop-portal-wlr` (screenshot portal). No real webcam, no KDE or GNOME portals, no multi-monitor or HiDPI setup. **On a real Mac (Apple Silicon), Lupe has only been started** – the window, the demo camera and reading images from the command line work, also the Intel build under Rosetta; the screen scan, typing, the shortcut and a real camera have not been tried there yet. Its logic tests pass on CI.
 - **Wayland: no foreground window.** Wayland does not tell programs which window is in front. Lupe cannot bring back “the window you came from”; it types into whatever has the focus after the selection closes.
-- **Wayland: everything through portals.** Screen scan (Screenshot portal), typing (RemoteDesktop portal) and the shortcut (GlobalShortcuts portal) need `xdg-desktop-portal` with a backend for the desktop. The desktop asks for permission and may pick other keys for the shortcut. Without the GlobalShortcuts portal (GNOME before 48, some wlroots compositors) there is no global shortcut – Lupe says so in the settings; a shortcut of the desktop itself can run `lupe --bildschirm`, and the tray menu and the window still start the scan. sway with `xdg-desktop-portal-wlr` has no RemoteDesktop portal, so *Type* reports that and only copies. The window runs through XWayland (Avalonia draws with X11); with XWayland switched off Lupe cannot open a window. Characters that are not on the active keyboard layout may not arrive through the RemoteDesktop portal, depending on the desktop – use *Copy* there.
+- **Wayland: everything through portals.** Screen scan (Screenshot portal), typing (RemoteDesktop portal) and the shortcut (GlobalShortcuts portal) need `xdg-desktop-portal` with a backend for the desktop. The desktop asks for permission and may pick other keys for the shortcut. Without the GlobalShortcuts portal (GNOME before 48, some wlroots compositors) there is no global shortcut – Lupe says so in the settings; a shortcut of the desktop itself can run `lupe --screen`, and the tray menu and the window still start the scan. sway with `xdg-desktop-portal-wlr` has no RemoteDesktop portal, so *Type* reports that and only copies. The window runs through XWayland (Avalonia draws with X11); with XWayland switched off Lupe cannot open a window. Characters that are not on the active keyboard layout may not arrive through the RemoteDesktop portal, depending on the desktop – use *Copy* there.
 - **Wayland: monitor layout.** The overlay is one full-screen window per monitor; monitor positions come from XWayland and are only known after the first screenshot.
 - **Linux tray icon.** GNOME shows no tray icon without the AppIndicator extension. Lupe cannot detect that; closing the window then leaves Lupe running in the background without a visible icon.
 - **Linux camera.** Needs the group `video`. Unplugging is detected by a watchdog (no frames for a while), not by a system event.

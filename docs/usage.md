@@ -162,7 +162,7 @@ Changes apply and are saved immediately – there is no *Save* button. The page 
   <img alt="About page: Lupe version 0.1.0 with build and .NET version; publisher ICT-Baden; licence “MIT licence – © 2026 ICT-Baden GmbH” with “Show”; website ict-baden.de, “Legal notice (Impressum)” and source code, each with “Open in browser”; “Recognition and user interface” with zxing-cpp and the button “License texts”; “Data and privacy” with “Open in browser”." src="assets/screenshots/about-light.png" width="900">
 </picture>
 
-Version, build (commit) and .NET version, publisher, *License* (*MIT licence – © 2026 ICT-Baden GmbH*) with *Show* (shows the licence text that ships with Lupe), *Website* and *Legal notice (Impressum)* on ict-baden.de, the source code link, the decoding and UI libraries (*Recognition and user interface*: zxing-cpp, Apache-2.0, with libzint and libzueci, BSD-3-Clause; *License texts* opens the licence texts of all bundled components), *Data and privacy* (“This software sends no data to ICT-Baden”, links to [Data & privacy](data-and-privacy.md)), *Help & support* (free via GitHub, guaranteed with a support contract, links to [SUPPORT.md](../SUPPORT.md)), *Your data* with *Open folder* for `%LocalAppData%\Lupe`, a short introduction to the command line with the exit codes, and the keyboard shortcuts (*Keyboard*).
+Version, build (commit) and .NET version, publisher, *License* (*MIT licence – © 2026 ICT-Baden GmbH*) with *Show* (shows the licence text that ships with Lupe), *Website* and *Legal notice (Impressum)* on ict-baden.de, the source code link, the decoding and UI libraries (*Recognition and user interface*: zxing-cpp, Apache-2.0, with libzint and libzueci, BSD-3-Clause; *License texts* opens the licence texts of all bundled components), *Data and privacy* (“This software sends no data to ICT-Baden”, links to the [privacy notice for Lupe](https://ict-baden.de/datenschutz/lupe/) on ict-baden.de; the details are in [Data & privacy](data-and-privacy.md)), *Help & support* (free via GitHub, guaranteed with a support contract, links to [SUPPORT.md](../SUPPORT.md)), *Your data* with *Open folder* for `%LocalAppData%\Lupe`, a short introduction to the command line with the exit codes, and the keyboard shortcuts (*Keyboard*).
 
 ## Workflows
 
@@ -175,7 +175,7 @@ A delivery note arrives as a PDF; the delivery note number is a Code 128 and sho
 3. Press <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>Q</kbd>, drag a rectangle around the barcode in the PDF.
 4. Lupe activates the ERP window again and types the number. The notification confirms *Copied · Typed*.
 
-Things to know: line breaks in the content are typed as <kbd>Enter</kbd> and tabs as <kbd>Tab</kbd>; other control characters are dropped. If the ERP runs as administrator, Lupe cannot type into it unless Lupe also runs as administrator ([details](installation.md#running-as-administrator)).
+Things to know: line breaks in the content are typed as spaces – a code must not be able to press <kbd>Enter</kbd> in the ERP – and tabs as <kbd>Tab</kbd>; other control characters are dropped. Use *Copy* for multi-line contents. If the ERP runs as administrator, Lupe cannot type into it unless Lupe also runs as administrator ([details](installation.md#running-as-administrator)).
 
 ### Open the item page for a barcode
 
@@ -193,7 +193,7 @@ A label or a PDF carries a QR code, a serial number as Data Matrix and an EAN. S
 
 ### Many image files
 
-For a folder of scans, use the command line – one line per code, ready for a script: `Lupe.exe lesen C:\Scans\*.jpg`. See [Command line](command-line.md).
+For a folder of scans, use the command line – one line per code, ready for a script: `Lupe.exe read C:\Scans\*.jpg`. See [Command line](command-line.md).
 
 ## Glossary
 
