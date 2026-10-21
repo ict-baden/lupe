@@ -112,37 +112,39 @@ public sealed class ScanLoopRealtimeTests
     [Fact]
     public async Task Langsame_Erkennung_kein_Stau_Vorschau_läuft_weiter()
     {
-        int running = 0, maxRunning = 0, decodes = 0;
+        int running = 0, maxRunning = 0, decodes = 0, frames = 0;
+        int framesDuringFirstDecode = -1;
         await using var source = new FakeFrameSource([Scene("Langsam")], framesPerSecond: 60);
         await using var loop = new ScanLoop(source, img =>
         {
             int now = Interlocked.Increment(ref running);
             if (now > Volatile.Read(ref maxRunning)) Volatile.Write(ref maxRunning, now);
-            Interlocked.Increment(ref decodes);
-            Thread.Sleep(150);
+            if (Interlocked.Increment(ref decodes) == 1)
+            {
+                // Die erste Erkennung wartet, bis währenddessen 3 weitere Bilder in der Vorschau angekommen sind. Ohne
+                // Entkopplung kann das nie passieren (das Bild, das die Erkennung trägt, hielte die Vorschau an) – ohne
+                // feste Zeitgrenzen, die auf ausgelasteten CI-Runnern nicht hielten (dort kamen in 1,2 s nur 3 Bilder).
+                int start = Volatile.Read(ref frames);
+                var wait = Stopwatch.StartNew();
+                while (Volatile.Read(ref frames) < start + 3 && wait.ElapsedMilliseconds < 10_000) Thread.Sleep(5);
+                Volatile.Write(ref framesDuringFirstDecode, Volatile.Read(ref frames) - start);
+            }
+            else Thread.Sleep(150);
             Interlocked.Decrement(ref running);
             return ZxingDecode(img);
         }, repeatSuppressMs: 10_000);
+        loop.Frame += (_, _) => Interlocked.Increment(ref frames);
         var rec = new Recorder();
         rec.Attach(loop);
 
-        var clock = Stopwatch.StartNew();
         await loop.StartAsync();
-        await Task.Delay(1200);
-        int framesWhileRunning = Volatile.Read(ref rec.Frames);
-        int decodesWhileRunning = Volatile.Read(ref decodes);
+        Assert.True(await WaitUntil(() => Volatile.Read(ref decodes) >= 3, 15_000), $"nur {decodes} Erkennungen");
         await loop.StopAsync();
-        long elapsedMs = clock.ElapsedMilliseconds;
         int decodesAtStop = Volatile.Read(ref decodes);
         await Task.Delay(400);
 
-        Assert.Equal(1, maxRunning);
-        // Ohne Entkopplung kämen nur so viele Bilder wie Erkennungen. Feste Schwellen in 1,2 s hielten auf CI-Runnern nicht:
-        // Dort dauerte das „Warten 1,2 s“ schon 4 s (Windows) oder der 60-fps-Zeitgeber lieferte nur ein Drittel. Deshalb
-        // Bilder gegen Erkennungen und Erkennungen gegen die gemessene Zeit.
-        Assert.True(framesWhileRunning >= decodesWhileRunning + 4,
-            $"Vorschau ruckelt: {framesWhileRunning} Bilder bei {decodesWhileRunning} Erkennungen in {elapsedMs} ms");
-        Assert.InRange(decodesAtStop, 2, (int)(elapsedMs / 150) + 2); // je Erkennung mindestens 150 ms, nie zwei gleichzeitig
+        Assert.Equal(1, maxRunning); // nie zwei Erkennungen gleichzeitig
+        Assert.True(framesDuringFirstDecode >= 3, $"Vorschau steht während der Erkennung: {framesDuringFirstDecode} Bilder");
         Assert.Equal(decodesAtStop, Volatile.Read(ref decodes)); // kein Rückstau nach dem Stopp
         Assert.Single(rec.Detections);
     }
