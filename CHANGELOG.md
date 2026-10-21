@@ -4,6 +4,9 @@ All notable changes to Lupe. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+### Fixed
+- Windows: the program files carry the build number in their file version in every build, releases included (e.g. `0.1.2.70` instead of `0.1.2.0`). A release used to have the same file version as the builds of `latest` before it, and Windows Installer only replaces files with a higher version during an update – an MSI update from such a build to the release could leave files out. CI now tests a fresh installation and the updates from the newest build in `latest` and from the last version, and checks every installed file.
+
 ## [0.1.1] – 2026-10-21
 
 ### Changed
