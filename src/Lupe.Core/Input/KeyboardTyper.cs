@@ -50,9 +50,9 @@ public static class KeyboardTyper
     private const ushort ScanReturn = 0x1C;
     private const char ReplacementCharacter = (char)0xFFFD;
     /// <summary>
-    /// Für Codes vor der Kamera: Zeilenumbrüche (CR, LF, CRLF, NEL, U+2028, U+2029) als je ein Leerzeichen. Die Kamera
-    /// tippt wie ein Handscanner in das Programm vorn, auch wenn Lupe unbeaufsichtigt läuft – ein mehrzeiliger Code darf
-    /// dort nicht selbst Enter drücken (etwa Befehle in ein Terminal). Die eingestellte Taste nach dem Tippen kommt weiter.
+    /// Für gelesene Codes: Zeilenumbrüche (CR, LF, CRLF, NEL, U+2028, U+2029) als je ein Leerzeichen. Lupe tippt wie ein
+    /// Handscanner in das Programm vorn – ein mehrzeiliger Code (vor der Kamera oder auf einer Webseite im Bildschirm-Scan)
+    /// darf dort nicht selbst Enter drücken (etwa Befehle in ein Terminal). Die eingestellte Taste nach dem Tippen kommt weiter.
     /// </summary>
     public static string WithoutLineBreaks(string text)
     {
@@ -93,13 +93,18 @@ public static class KeyboardTyper
     /// Windows 11 – verarbeiten Unicode-Eingaben verzögert und lesen das Zeichen erst dann; kommen die Zeichen schneller,
     /// bekommen sie nur noch das zuletzt gesendete. Mit Pause geht jedes Zeichen einzeln hinaus, wie bei einem Handscanner.
     /// </param>
-    public static bool TryType(string text, string suffix, int delayMs, out string? error, CancellationToken ct = default)
+    /// <param name="stillOnTarget">
+    /// Vor jedem Paket gefragt (bei Zeichenpause also vor jedem Zeichen): Ist das Zielfenster noch vorn? Wenn nicht, bricht
+    /// das Tippen ab – sonst landete der Rest in dem Fenster, das inzwischen vorn ist. null = nicht prüfen.
+    /// </param>
+    public static bool TryType(string text, string suffix, int delayMs, out string? error, CancellationToken ct = default, Func<bool>? stillOnTarget = null)
     {
         // Zwei gleichzeitige Aufrufe würden ihre Pakete ineinander verschränken – nacheinander tippen.
-        lock (TypingGate) return TypeCore(text, suffix, LupePlatform.Current.Keyboard, out error, ct, delayMs);
+        lock (TypingGate) return TypeCore(text, suffix, LupePlatform.Current.Keyboard, out error, ct, delayMs, stillOnTarget);
     }
 
-    internal static bool TypeCore(string text, string? suffix, IKeyboardOutput keyboard, out string? error, CancellationToken ct, int delayMs = 0)
+    internal static bool TypeCore(string text, string? suffix, IKeyboardOutput keyboard, out string? error, CancellationToken ct, int delayMs = 0,
+        Func<bool>? stillOnTarget = null)
     {
         ArgumentNullException.ThrowIfNull(text);
         ct.ThrowIfCancellationRequested();
@@ -126,6 +131,11 @@ public static class KeyboardTyper
             ct.ThrowIfCancellationRequested();
             if (typed) keyboard.Pause(pause, ct);
             ct.ThrowIfCancellationRequested();
+            if (stillOnTarget is not null && !stillOnTarget())
+            {
+                error = typed ? Strings.Core_Typing_TargetChangedPartly : Strings.Core_Typing_TargetChanged;
+                return false;
+            }
             if (!Send(keyboard, inputs.AsSpan(offset, count), typed, out error)) return false;
             typed = true;
         }

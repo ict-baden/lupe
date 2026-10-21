@@ -2,7 +2,7 @@
 
 # Link rules
 
-A link rule decides whether a code becomes a link and which one. Lupe took the idea from Barcode-Reader's regex whitelist with prefix and made it strict: whatever a code contains, Lupe opens nothing but an `http` or `https` address – and a code behind a prefix with a host cannot change that host.
+A link rule decides whether a code becomes a link and which one. Lupe took the idea from the regex whitelist of the earlier internal Barcode-Reader with prefix and made it strict: whatever a code contains, Lupe opens nothing but an `http` or `https` address – and a code behind a prefix with a host cannot change that host.
 
 **Contents:** [Where links are used](#where-links-are-used) · [A rule](#a-rule) · [How the link is built](#how-the-link-is-built) · [Examples](#examples) · [Safety checks](#safety-checks) · [Writing patterns](#writing-patterns) · [Error messages](#error-messages)
 
@@ -10,8 +10,8 @@ A link rule decides whether a code becomes a link and which one. Lupe took the i
 
 A link exists for a code when an active rule matches it. Then:
 
-- **Automatically**, if *Link öffnen* is ticked under *Einstellungen › Bei einem Treffer* – separately for *Kamera, Datei und Zwischenablage* and for *Bildschirmausschnitt*. The link opens in the default browser after copying and typing. Off by default.
-- **On request**, regardless of that setting: every matching result has a *Link öffnen* button – on the pages *Kamera*, *Bildschirm* and *Datei*, in the result notification, and in the history (<kbd>Enter</kbd> opens it there). In the history, a link symbol marks matching entries.
+- **Automatically**, if *Open link* is ticked under *Settings › On a detected code* – separately for *Camera, file and clipboard* and for *Screen region*. The link opens in the default browser after copying and typing. Off by default.
+- **On request**, regardless of that setting: every matching result has an *Open link* button – on the pages *Camera*, *Screen* and *File*, in the result notification, and in the history (<kbd>Enter</kbd> opens it there). In the history, a link symbol marks matching entries.
 
 Links are worked out with the rules **as they are now**, so a history entry gets a link as soon as you add a matching rule.
 
@@ -19,13 +19,13 @@ Links are worked out with the rules **as they are now**, so a history entry gets
 
 | Column on the page | Meaning |
 |---|---|
-| *Aktiv* | Only active rules are applied. |
-| *Regulärer Ausdruck* | A .NET regular expression the code is tested against. |
-| *Präfix (leer = Code ist der Link)* | Text placed in front of the code. Empty: the code itself is the link. |
+| *Active* | Only active rules are applied. |
+| *Regular expression* | A .NET regular expression the code is tested against. |
+| *Prefix (empty = code is the link)* | Text placed in front of the code. Empty: the code itself is the link. |
 
-**Order matters.** Rules are checked from top to bottom; the first active rule that matches **and** yields a safe link wins. If a rule matches but the result is not a safe link, the next rule is tried. The arrow buttons move a rule up (*Nach oben (wird früher geprüft)*) or down; the bin deletes it; *Regel hinzufügen* adds an empty row.
+**Order matters.** Rules are checked from top to bottom; the first active rule that matches **and** yields a safe link wins. If a rule matches but the result is not a safe link, the next rule is tried. The arrow buttons move a rule up (*Move up (checked earlier)*) or down; the bin deletes it; *Add rule* adds an empty row.
 
-***Code zum Ausprobieren*** (code to try) below the table shows what a code would open – `→ https://…` – or *Keine Regel passt – kein Link.* (no rule matches – no link). It uses the rules exactly as Lupe applies them.
+***Code to try out*** below the table shows what a code would open – `→ https://…` – or *No rule matches – no link.* It uses the rules exactly as Lupe applies them.
 
 **The default** is one rule: pattern `^https://\S+$`, no prefix. A code that consists of exactly one `https://` address is opened as it is; `http://` addresses are not covered.
 
@@ -85,7 +85,7 @@ The browser is started only for `http` and `https`; this is checked a second tim
 - **Case matters.** `^https://` does not match `HTTPS://EXAMPLE.ORG`. Add `(?i)` at the start to ignore case: `(?i)^https?://\S+$`.
 - **Escape dots and other special characters:** `www\.example\.com`, not `www.example.com`.
 - **`\S+` instead of `.+`** for addresses: no spaces, no line breaks.
-- **Test with *Code zum Ausprobieren*** before ticking *Link öffnen*.
+- **Test with *Code to try out*** before ticking *Open link*.
 
 ## Error messages
 
@@ -93,12 +93,12 @@ Shown below the row while you type:
 
 | Message | Meaning |
 |---|---|
-| *Bitte einen regulären Ausdruck eingeben.* | A prefix without a pattern. Rows with an empty pattern are not saved. |
-| *Das Muster ist kein gültiger regulärer Ausdruck: … (bei Zeichen N).* | Syntax error at position N, e.g. *es fehlt eine schließende Klammer „)“*. The rule is saved, so your input is not lost, but not applied. |
-| *Das Präfix muss leer sein oder mit http:// bzw. https:// beginnen …* | Another scheme, e.g. `javascript:`. |
-| *Nach dem Hostnamen fehlt ein „/“ – z. B.* `https://example.com/` *statt* `https://example.com`*.* | The host is not closed with `/`, `?` or `#`. |
-| *Das Präfix darf keinen Benutzernamen und kein Kennwort enthalten.* | `https://user:pw@example.com/` |
-| *Das Präfix darf keine Steuerzeichen und keinen Backslash (\\) enthalten.* | Control character or `\` in the prefix. |
+| *Please enter a regular expression.* | A prefix without a pattern. Rows with an empty pattern are not saved. |
+| *The pattern is not a valid regular expression: … (at character N).* | Syntax error at position N, e.g. *a closing parenthesis “)” is missing*. The rule is saved, so your input is not lost, but not applied. |
+| *The prefix must be empty or start with http:// or https:// …* | Another scheme, e.g. `javascript:`. |
+| *A “/” is missing after the host name – e.g.* `https://example.com/` *instead of* `https://example.com`*.* | The host is not closed with `/`, `?` or `#`. |
+| *The prefix must not contain a user name or password.* | `https://user:pw@example.com/` |
+| *The prefix must not contain control characters or a backslash (\\).* | Control character or `\` in the prefix. |
 
 ---
 

@@ -21,7 +21,8 @@ Mit einem Supportvertrag von ICT-Baden bekommen Sie:
 - Vorrang bei Fehlerbehebungen und Sicherheitsinformationen vorab
 - Anpassungen und Schulungen nach Absprache
 
-Kontakt: Adresse für Supportverträge folgt (support@…, noch nicht eingerichtet).
+Kontakt für Supportverträge: über die [Kontaktseite von ICT-Baden](https://ict-baden.de/#kontakt). Bis dahin gern auch ein [Issue](https://github.com/ict-baden/lupe/issues/new/choose) mit dem Hinweis „Supportvertrag“.
+Contact for support contracts: the [ICT-Baden contact page](https://ict-baden.de/#kontakt).
 
 ## Was hilft / What helps
 

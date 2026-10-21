@@ -1056,8 +1056,17 @@ Lupe.exe 是窗口程序；要让命令提示符等待其结束：
   <data name="Core_Settings_StillUnreadableReason" xml:space="preserve">
     <value>设置文件“{0}”仍无法读取 – 更改在关闭 Lupe 之前有效，并会在文件重新可读后立即保存。这样就不会用默认值覆盖任何内容。（{1}）</value>
   </data>
+  <data name="Core_Typing_TargetChanged" xml:space="preserve">
+    <value>输入已取消 – 另一个窗口切换到了前台。未输入任何内容。</value>
+  </data>
+  <data name="Core_Typing_TargetChangedPartly" xml:space="preserve">
+    <value>输入已取消 – 另一个窗口切换到了前台；只输入了部分文本。</value>
+  </data>
   <data name="Core_Typing_Interrupted" xml:space="preserve">
     <value>输入被中断 – 只输入了部分文本。</value>
+  </data>
+  <data name="Language_MachineTranslated" xml:space="preserve">
+    <value>{0}（机器翻译）</value>
   </data>
   <data name="Language_System" xml:space="preserve">
     <value>系统语言</value>

@@ -1060,8 +1060,17 @@ Redirigida a un archivo desde cmd, la salida es UTF-8 con BOM.</value>
   <data name="Core_Settings_StillUnreadableReason" xml:space="preserve">
     <value>El archivo de configuración “{0}” sigue sin poder leerse: el cambio se aplica hasta que se cierre Lupe y se guardará en cuanto el archivo vuelva a ser legible. Así no se sobrescribe nada con valores predeterminados. ({1})</value>
   </data>
+  <data name="Core_Typing_TargetChanged" xml:space="preserve">
+    <value>Escritura cancelada: otra ventana pasó a primer plano. No se escribió nada.</value>
+  </data>
+  <data name="Core_Typing_TargetChangedPartly" xml:space="preserve">
+    <value>Escritura cancelada: otra ventana pasó a primer plano; solo llegó parte del texto.</value>
+  </data>
   <data name="Core_Typing_Interrupted" xml:space="preserve">
     <value>La escritura se interrumpió: solo llegó parte del texto.</value>
+  </data>
+  <data name="Language_MachineTranslated" xml:space="preserve">
+    <value>{0} (traducción automática)</value>
   </data>
   <data name="Language_System" xml:space="preserve">
     <value>Idioma del sistema</value>

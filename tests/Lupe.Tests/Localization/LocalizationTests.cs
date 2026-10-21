@@ -25,6 +25,15 @@ public sealed partial class LocalizationTests
         new(Placeholder().Matches(text.Replace("{{", "").Replace("}}", "")).Select(m => int.Parse(m.Groups[1].Value, CultureInfo.InvariantCulture)));
 
     [Fact]
+    public void Maschinell_uebersetzte_Sprachen_sind_in_der_Auswahl_gekennzeichnet()
+    {
+        Assert.Equal("Deutsch", UiLanguage.DisplayName("de"));
+        Assert.Equal("English", UiLanguage.DisplayName("en"));
+        Assert.Equal("Español (maschinell übersetzt)", UiLanguage.DisplayName("es"));
+        Assert.All(UiLanguage.MachineTranslated, code => Assert.Contains(code, UiLanguage.Supported));
+    }
+
+    [Fact]
     public void Jede_Sprache_hat_dieselben_Schluessel_wie_Englisch()
     {
         var en = Load("Strings.resx");

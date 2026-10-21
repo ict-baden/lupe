@@ -40,7 +40,7 @@
 > **Deutsch:** Lupe liest QR- und Barcodes per Webcam, aus einem Bildschirmausschnitt, aus Bilddateien und aus der Zwischenablage, unter Windows, Linux und macOS. Das Ergebnis wird kopiert, in das Programm vorn eingetippt oder als Link geöffnet. Download: [Release „latest“](https://github.com/ict-baden/lupe/releases/tag/latest). Die Oberfläche gibt es auf Deutsch, Englisch, Spanisch, Französisch und Chinesisch (die letzten drei maschinell übersetzt, noch nicht gegengelesen); sie folgt der Sprache des Systems. Diese Doku ist Englisch.
 
 > [!NOTE]
-> **The application speaks English, German, Spanish, French and Chinese (simplified)** – the last three are machine translations that native speakers have not reviewed yet. It follows the language of the operating system (English for any other language) and can be switched under *Settings › Language*. This documentation still quotes the German labels with their English meaning, for example *Bildschirm* (Screen), *Eintippen* (Type) or *Link öffnen* (Open link).
+> **The application speaks English, German, Spanish, French and Chinese (simplified)** – the last three are machine translations that native speakers have not reviewed yet. It follows the language of the operating system (English for any other language) and can be switched under *Settings › Language*. This documentation quotes the English labels, for example *Screen*, *Type* or *Open link*; the German interface shows *Bildschirm*, *Eintippen* and *Link öffnen* in their place.
 
 ## What Lupe does
 
@@ -49,19 +49,19 @@
     <td width="33%" align="center" valign="middle">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshots/selection-dark.png">
-        <img alt="The selection overlay over a darkened still image of the desktop: a PDF invoice with a QR code, a blue rectangle drawn around the code, and the hint “Rechteck um den Code aufziehen · Klick: ganzer Bildschirm · Esc: abbrechen”." src="docs/assets/screenshots/selection-light.png" width="290">
+        <img alt="The selection overlay over a darkened still image of the desktop: a PDF invoice with a QR code, a blue rectangle drawn around the code, and the hint “Drag a rectangle around the code · Click: whole screen · Esc: cancel”." src="docs/assets/screenshots/selection-light.png" width="290">
       </picture>
     </td>
     <td width="33%" align="center" valign="middle">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshots/result-dark.png">
-        <img alt="Result notification “QR-Code erkannt” with the link https://example.org/rechnung/2026-118, the status “Kopiert · Eingetippt” and the buttons Kopieren, Link öffnen and In Lupe zeigen." src="docs/assets/screenshots/result-light.png" width="290">
+        <img alt="Result notification “QR code recognized” with the link https://example.org/rechnung/2026-118, the status “Copied · Typed” and the buttons Copy, Open link and Show in Lupe." src="docs/assets/screenshots/result-light.png" width="290">
       </picture>
     </td>
     <td width="33%" align="center" valign="middle">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshots/camera-dark.png">
-        <img alt="Kamera page: live image of the demo camera with a QR code on a label, marked “QR-Code”, aim corners in the centre, and below it “Zuletzt erkannt” with the link and the buttons Kopieren and Link öffnen." src="docs/assets/screenshots/camera-light.png" width="290">
+        <img alt="Camera page: live image of the demo camera with a QR code on a label, marked “QR code”, aim corners in the centre, and below it “Last detected” with the link and the buttons Copy and Open link." src="docs/assets/screenshots/camera-light.png" width="290">
       </picture>
     </td>
   </tr>
@@ -69,7 +69,7 @@
     <td valign="top"><b>Any part of the screen</b><br>
       Press <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>Q</kbd> in any program and drag a rectangle around the code – across all monitors, also with the Lupe window closed.</td>
     <td valign="top"><b>Typed into the app you came from</b><br>
-      With <i>Eintippen</i> switched on, the content goes into the window that was active before the scan – as keyboard input, optionally followed by <kbd>Enter</kbd> or <kbd>Tab</kbd>.</td>
+      With <i>Type</i> switched on, the content goes into the window that was active before the scan – as keyboard input, optionally followed by <kbd>Enter</kbd> or <kbd>Tab</kbd>.</td>
     <td valign="top"><b>Webcam</b><br>
       Hold a code in front of the camera. Lupe marks it and beeps; the same code is reported again only after it has been out of sight for 3 seconds.</td>
   </tr>
@@ -77,25 +77,25 @@
     <td align="center" valign="middle">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshots/file-dark.png">
-        <img alt="Datei page: a delivery note with four codes marked 1 QR-Code, 2 Code 128, 3 EAN-13 and 4 Data Matrix, and the list “4 Codes gefunden” with Kopieren and Link öffnen per row." src="docs/assets/screenshots/file-light.png" width="290">
+        <img alt="File page: a delivery note with four codes marked 1 QR code, 2 Code 128, 3 EAN-13 and 4 Data Matrix, and the list “4 codes found” with Copy and Open link per row." src="docs/assets/screenshots/file-light.png" width="290">
       </picture>
     </td>
     <td align="center" valign="middle">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshots/settings-dark.png">
-        <img alt="Einstellungen page: actions per source (Kopieren, Eintippen, Link öffnen), the key after typing, the shortcut Win+Umschalt+Q marked as ready, and the link-rule table with regular expression and prefix." src="docs/assets/screenshots/settings-light.png" width="290">
+        <img alt="Settings page: actions per source (Copy, Type, Open link), the key after typing, the shortcut Win+Shift+Q marked as ready, and the link-rule table with regular expression and prefix." src="docs/assets/screenshots/settings-light.png" width="290">
       </picture>
     </td>
     <td align="center" valign="middle">
       <picture>
         <source media="(prefers-color-scheme: dark)" srcset="docs/assets/screenshots/history-dark.png">
-        <img alt="Verlauf page: twelve entries with time, source (Kamera, Bildschirm, Datei, Zwischenablage), format and content, a search box, and the buttons “Als CSV exportieren …” and “Alles löschen”." src="docs/assets/screenshots/history-light.png" width="290">
+        <img alt="History page: twelve entries with time, source (Camera, Screen, File, Clipboard), format and content, a search box, and the buttons “Export as CSV …” and “Delete all”." src="docs/assets/screenshots/history-light.png" width="290">
       </picture>
     </td>
   </tr>
   <tr>
     <td valign="top"><b>Files and clipboard</b><br>
-      Open an image, drag it onto the <i>Datei</i> page or press <kbd>Ctrl</kbd>+<kbd>V</kbd>. Every code in the picture is found and numbered.</td>
+      Open an image, drag it onto the <i>File</i> page or press <kbd>Ctrl</kbd>+<kbd>V</kbd>. Every code in the picture is found and numbered.</td>
     <td valign="top"><b>Link rules</b><br>
       A regular expression and an optional prefix turn a code into a link, e.g. an EAN into the item page of your ERP. Only <code>http</code> and <code>https</code> are ever opened.</td>
     <td valign="top"><b>History</b><br>
@@ -107,7 +107,7 @@
 
 <table>
   <tr>
-    <td width="50%" valign="top"><b>Every code in the picture</b><br>Several codes are reported in reading order. After a screen scan you pick one (<i>N Codes gefunden – welcher?</i>) or copy them all, one per line</td>
+    <td width="50%" valign="top"><b>Every code in the picture</b><br>Several codes are reported in reading order. After a screen scan you pick one (<i>N codes found – which one?</i>) or copy them all, one per line</td>
     <td width="50%" valign="top"><b>Small codes on big screens</b><br>4K screenshots are searched as an overview plus overlapping tiles in full resolution; if nothing turns up, a thorough second pass tries rotated versions (smaller pictures also enlarged or halved)</td>
   </tr>
   <tr>
@@ -126,7 +126,7 @@
   <tr>
     <td width="33%" valign="top"><b>① Download</b><br>MSI for all users, or the single <code>Lupe.exe</code> that runs without installation and without a .NET runtime.</td>
     <td width="33%" valign="top"><b>② Scan</b><br>Press <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>Q</kbd> and drag a rectangle around a code. A click without dragging takes the whole monitor, <kbd>Esc</kbd> cancels.</td>
-    <td width="33%" valign="top"><b>③ Use the result</b><br>The content is on the clipboard. To have it typed into the window you came from, tick <i>Eintippen</i> under <i>Einstellungen › Bildschirmausschnitt</i>.</td>
+    <td width="33%" valign="top"><b>③ Use the result</b><br>The content is on the clipboard. To have it typed into the window you came from, tick <i>Type</i> under <i>Settings › Screen region</i>.</td>
   </tr>
 </table>
 
@@ -143,11 +143,11 @@
 
 All variants include .NET except the framework ZIP. On macOS the default shortcut is <kbd>⌘</kbd>+<kbd>⌥</kbd>+<kbd>Q</kbd> (<kbd>⌘</kbd>+<kbd>⇧</kbd>+<kbd>Q</kbd> logs out there).
 
-The repository is private: sign in to GitHub with an account that has access to `ict-baden`, otherwise GitHub answers with a 404 page. Requirements, downloading from the command line, the camera and screen permissions on each system, autostart and uninstalling: **[Installation →](docs/installation.md)**
+Requirements, downloading from the command line, the camera and screen permissions on each system, autostart and uninstalling: **[Installation →](docs/installation.md)**
 
-**② Scan** – the shortcut works in every program as long as Lupe is running, also when its window is closed. The camera, files and the clipboard are on the pages *Kamera* and *Datei*. Walkthrough: **[Using the app →](docs/usage.md)**
+**② Scan** – the shortcut works in every program as long as Lupe is running, also when its window is closed. The camera, files and the clipboard are on the pages *Camera* and *File*. Walkthrough: **[Using the app →](docs/usage.md)**
 
-**③ Use the result** – by default Lupe only copies. What happens with a result is set separately for the screen scan and for camera, file and clipboard: *Kopieren* (copy), *Eintippen* (type – after a screen scan into the window you came from, from the camera like a hand scanner into the program in front) and *Link öffnen* (open link). Every setting with its default: **[Settings →](docs/settings.md)** – and how links are built: **[Link rules →](docs/link-rules.md)**
+**③ Use the result** – by default Lupe only copies. What happens with a result is set separately for the screen scan and for camera, file and clipboard: *Copy*, *Type* (after a screen scan into the window you came from, from the camera like a hand scanner into the program in front) and *Open link*. Every setting with its default: **[Settings →](docs/settings.md)** – and how links are built: **[Link rules →](docs/link-rules.md)**
 
 ### From the command line
 
@@ -174,7 +174,7 @@ Wildcards, `--format`, encoding and why a command prompt needs `start /wait`: **
 
 ## Supported formats
 
-Lupe reads 22 formats with [zxing-cpp](https://github.com/zxing-cpp/zxing-cpp) 3.1.1 (NuGet package `ZXingCpp` 0.5.3). All are active by default; *Einstellungen › Formate* can limit them. The column *Name* is what the option `--format` and the settings file expect – the names of the earlier versions are unchanged.
+Lupe reads 22 formats with [zxing-cpp](https://github.com/zxing-cpp/zxing-cpp) 3.1.1 (NuGet package `ZXingCpp` 0.5.3). All are active by default; *Settings › Formats* can limit them. The column *Name* is what the option `--format` and the settings file expect – the names of the earlier versions are unchanged.
 
 | Format | Name | Kind | Notes |
 |---|---|---|---|
@@ -205,30 +205,30 @@ Light codes on dark backgrounds – dark mode, displays – are read in every fo
 
 ## Compared with Barcode-Reader
 
-Lupe is a rewrite of Till's [Barcode-Reader](https://github.com/pieewiee/Barcode-Reader) (.NET Framework 4.5.2, AForge for the webcam, MIT licence) on a current stack: .NET 10, Avalonia (Windows, Linux, macOS) with the Windows 11 look of the sibling tools Vitrine and Zutritt, `Windows.Media.Capture` for the camera on Windows.
+Lupe is a rewrite of the earlier internal Barcode-Reader (.NET Framework 4.5.2, AForge for the webcam) on a current stack: .NET 10, Avalonia (Windows, Linux, macOS) with the Windows 11 look of the sibling tools Vitrine and Zutritt, `Windows.Media.Capture` for the camera on Windows.
 
 | | Barcode-Reader | Lupe |
 |---|---|---|
-| Webcam scan with marking, aim help and beep | ✔︎ | ✔︎ *Zielhilfe*, *Ton bei Treffer* |
-| Freeze time for repeated codes | ✔︎ | ✔︎ *Wiederholungssperre*, counted from the last sighting |
-| Open links by regex whitelist with prefix | ✔︎ | ✔︎ several *Link-Regeln*, only `http`/`https`, code percent-encoded behind a host |
+| Webcam scan with marking, aim help and beep | ✔︎ | ✔︎ *Aim guide*, *Sound on detection* |
+| Freeze time for repeated codes | ✔︎ | ✔︎ *Repeat lock*, counted from the last sighting |
+| Open links by regex whitelist with prefix | ✔︎ | ✔︎ several *Link rules*, only `http`/`https`, code percent-encoded behind a host |
 | Hand the content to another program | ✔︎ paste | ✔︎ Unicode typing into the window that was active before the screen scan, optional <kbd>Enter</kbd>/<kbd>Tab</kbd> |
 | Screen region with a global shortcut, all monitors | – | ✔︎ |
 | Image files, drag and drop, clipboard | – | ✔︎ |
 | History with search and CSV export | – | ✔︎ |
-| Settings | `config.xml` in *Documents* | *Einstellungen* page, `%LocalAppData%\Lupe\einstellungen.json` |
+| Settings | `config.xml` in *Documents* | *Settings* page, `%LocalAppData%\Lupe\einstellungen.json` |
 | Command line | – | ✔︎ `lesen` |
 | EAN/UPC 2- and 5-digit add-ons | ✔︎ | – not part of the result |
 | Save camera image to disk, custom logo and colours, debug level | ✔︎ | – Lupe stores no images and follows the Windows light/dark setting |
 
-<sub>“–” = not available; for Barcode-Reader: not among the features listed in its README. Lupe does not read the old <code>config.xml</code> – link rules have to be entered again.</sub>
+<sub>“–” = not available; for Barcode-Reader: not among its documented features. Lupe does not read the old <code>config.xml</code> – link rules have to be entered again.</sub>
 
 ## Documentation
 
 <table>
   <tr>
     <td width="50%" valign="top"><a href="docs/installation.md"><b>Installation</b></a><br><sub>Windows (MSI, single exe, ZIP), Linux (.deb, tar.gz), macOS (Lupe.app), requirements, permissions, autostart, updates and uninstalling</sub></td>
-    <td width="50%" valign="top"><a href="docs/usage.md"><b>Using the app</b></a><br><sub>Every page with screenshots, the screen scan step by step, workflows such as “scan from the screen, type into the ERP” – German labels explained</sub></td>
+    <td width="50%" valign="top"><a href="docs/usage.md"><b>Using the app</b></a><br><sub>Every page with screenshots, the screen scan step by step, workflows such as “scan from the screen, type into the ERP”</sub></td>
   </tr>
   <tr>
     <td valign="top"><a href="docs/settings.md"><b>Settings</b></a><br><sub>Every setting with its default, where it applies, the settings file and what happens when it is broken or locked</sub></td>
@@ -257,7 +257,7 @@ Lupe is a rewrite of Till's [Barcode-Reader](https://github.com/pieewiee/Barcode
 - **Command line into a pipe** uses the console's code page; characters outside it are replaced. Redirect into a file for lossless UTF-8.
 - **Linux and macOS are new and less tested than Windows.** On Wayland the screen scan, typing and the shortcut go through the desktop portals, which ask for permission and are not offered by every desktop; Lupe cannot see which window is in front there. The macOS build has not run on a real Mac yet. Details: [Limitations › Linux and macOS](docs/limitations.md#linux-and-macos).
 - **Pre-release 0.1.0, not code-signed.** SmartScreen may warn; macOS Gatekeeper asks once.
-- **Licence: MIT.** Lupe is under the [MIT licence](LICENSE), like all ICT-Baden software. The licences of the bundled third-party components (zxing-cpp with libzint and libzueci, Avalonia, SkiaSharp and HarfBuzzSharp with the libraries compiled into them, ANGLE, MicroCom, C#/WinRT, the Windows SDK projection, .NET and more) are in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which ships in every package and opens from *Info › Recognition and user interface › License texts* (*Erkennung und Oberfläche › Lizenztexte*).
+- **Licence: MIT.** Lupe is under the [MIT licence](LICENSE), like all ICT-Baden software. The licences of the bundled third-party components (zxing-cpp with libzint and libzueci, Avalonia, SkiaSharp and HarfBuzzSharp with the libraries compiled into them, ANGLE, MicroCom, C#/WinRT, the Windows SDK projection, .NET and more) are in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which ships in every package and opens from *About › Recognition and user interface › License texts*.
 
 Everything else: **[Limitations →](docs/limitations.md)**
 
@@ -288,5 +288,6 @@ Support: free via GitHub, guaranteed with a <a href="SUPPORT.md">support contrac
 <a href="SECURITY.md">Security</a> &nbsp;·&nbsp;
 <a href="CHANGELOG.md">Changes</a> &nbsp;·&nbsp;
 Website: <a href="https://ict-baden.de/">ict-baden.de</a> &nbsp;·&nbsp;
-<a href="https://ict-baden.de/index.html?page=imprint">Impressum</a>
+<a href="https://ict-baden.de/impressum/">Impressum</a> &nbsp;·&nbsp;
+<a href="https://ict-baden.de/datenschutz/">Datenschutz</a>
 </sub>

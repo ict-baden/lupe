@@ -31,13 +31,14 @@ All files are attached to the release [**latest**](https://github.com/ict-baden/
 
 Builds from `main` carry versions like `0.1.0-ci.12` (12 = the number of the build run); the release title names the version of the current files. Tagged versions (`v1.2.3`) get their own release, where the MSI and the ZIP carry the version in their names (e.g. `Lupe-1.2.3-x64.msi`) and `Lupe.exe` keeps its name.
 
-> [!IMPORTANT]
-> **The repository is private.** Downloads need a GitHub login with access to the organisation `ict-baden`; without it, every link ends on a GitHub 404 page. The links only work in a signed-in browser – `curl` or `Invoke-WebRequest` get a 404 even with a token. For scripted downloads, e.g. to package the MSI for Intune, use the [GitHub CLI](https://cli.github.com/):
->
-> ```powershell
-> gh auth login                                                       # once
-> gh release download latest -R ict-baden/lupe -p Lupe-x64.msi --clobber
-> ```
+For scripted downloads, e.g. to package the MSI for Intune, the links work directly – with `curl`, `Invoke-WebRequest` or the [GitHub CLI](https://cli.github.com/):
+
+```powershell
+Invoke-WebRequest https://github.com/ict-baden/lupe/releases/download/latest/Lupe-x64.msi -OutFile Lupe-x64.msi
+gh release download latest -R ict-baden/lupe -p Lupe-x64.msi --clobber
+```
+
+Check the file against [`SHA256SUMS.txt`](https://github.com/ict-baden/lupe/releases/download/latest/SHA256SUMS.txt) of the same release (`Get-FileHash Lupe-x64.msi`).
 
 ## MSI installer
 
@@ -76,59 +77,59 @@ All variants behave the same: same features, same command line, same settings an
 
 ## First start
 
-Lupe opens on the page *Kamera* and registers the global shortcut <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>Q</kbd> for the screen scan. The card at the top left shows the state:
+Lupe opens on the page *Camera* and registers the global shortcut <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>Q</kbd> for the screen scan. The card at the top left shows the state:
 
 | Card shows | Meaning |
 |---|---|
-| *Win+Umschalt+Q*, below it *scannt einen Ausschnitt* | The shortcut is registered and works in every program. (*Umschalt* is German for <kbd>Shift</kbd>.) |
-| *belegt – siehe Einstellungen* | Another program already uses this combination. Choose a different one under *Einstellungen › Tastenkürzel* – see [Settings](settings.md#screen-scan). |
+| *Win+Shift+Q*, below it *scans a screen region* | The shortcut is registered and works in every program. |
+| *not available – see Settings* | Another program already uses this combination. Choose a different one under *Settings › Keyboard shortcut* – see [Settings](settings.md#screen-scan). |
 
 Only **one Lupe runs per Windows session.** Starting it a second time brings the existing window to the front instead of opening another one. On a terminal server, every signed-in user has their own Lupe.
 
-When you close the window, Lupe keeps running in the notification area so that the shortcut stays available. The first time, a notification says so (*Lupe läuft weiter*). To quit, right-click the Lupe icon in the notification area and choose *Beenden*. If you prefer closing to quit, switch off *Beim Schließen im Infobereich weiterlaufen* in the settings.
+When you close the window, Lupe keeps running in the notification area so that the shortcut stays available. The first time, a notification says so (*Lupe is still running*). To quit, right-click the Lupe icon in the notification area and choose *Quit*. If you prefer closing to quit, switch off *Keep running in the notification area when closed* in the settings.
 
 ## Camera access in Windows
 
-Windows decides whether desktop programs may use the camera. If access is blocked, Lupe does not show a generic error but names the switch that is off, with the path *Einstellungen → Datenschutz und Sicherheit → Kamera*. In English Windows that is *Settings › Privacy & security › Camera*:
+Windows decides whether desktop programs may use the camera. If access is blocked, Lupe does not show a generic error but names the switch that is off, with the path *Settings → Privacy & security → Camera* (in German Windows *Einstellungen → Datenschutz und Sicherheit → Kamera*):
 
 | Switch in Windows (English / German) | Needed | Lupe's message when it is off |
 |---|---|---|
-| *Camera access* / *Kamerazugriff* | on – changing it needs administrator rights | *Der Kamerazugriff ist für dieses Gerät ausgeschaltet. …* |
-| *Let apps access your camera* / *Zugriff von Apps auf die Kamera* | on | *Der Kamerazugriff für Apps ist ausgeschaltet. …* |
-| *Let desktop apps access your camera* / *Desktop-Apps den Zugriff auf die Kamera erlauben* | on | *Windows erlaubt Desktop-Apps keinen Kamerazugriff. …* |
-| Lupe in the list of desktop apps below | not blocked | *Windows hat Lupe den Kamerazugriff entzogen. …* |
-| Group policy (*AllowCamera* = 0 or *LetAppsAccessCamera* = Force Deny) | not set | *Die Kamera ist auf diesem Gerät per Richtlinie gesperrt. Wenden Sie sich an Ihre IT-Abteilung.* |
+| *Camera access* / *Kamerazugriff* | on – changing it needs administrator rights | *Camera access is turned off for this device. …* |
+| *Let apps access your camera* / *Zugriff von Apps auf die Kamera* | on | *Camera access for apps is turned off. …* |
+| *Let desktop apps access your camera* / *Desktop-Apps den Zugriff auf die Kamera erlauben* | on | *Windows does not allow desktop apps to access the camera. …* |
+| Lupe in the list of desktop apps below | not blocked | *Windows has revoked Lupe's camera access. …* |
+| Group policy (*AllowCamera* = 0 or *LetAppsAccessCamera* = Force Deny) | not set | *The camera is blocked on this device by policy. Contact your IT department.* |
 
 Lupe only **reads** these settings to explain the problem; it never changes them. If none of them is off, the message suggests checking a hardware camera switch or a cover.
 
-Other camera problems get their own message as well, for example when another program such as Teams or Zoom holds the camera (*wird gerade von einem anderen Programm benutzt*), when it was unplugged, or when Windows lacks the media features (*Media Feature Pack*). If the camera cannot be opened exclusively – typically because another program holds it – Lupe tries once more in shared read-only mode before it reports the problem. Details: [How it works › Camera](how-it-works.md#camera).
+Other camera problems get their own message as well, for example when another program such as Teams or Zoom holds the camera (*is being used by another program*), when it was unplugged, or when Windows lacks the media features (*Media Feature Pack*). If the camera cannot be opened exclusively – typically because another program holds it – Lupe tries once more in shared read-only mode before it reports the problem. Details: [How it works › Camera](how-it-works.md#camera).
 
 > [!NOTE]
 > The camera code was developed without a real webcam and is tested against a simulated frame source only – see [Limitations](limitations.md#not-tested-on-real-hardware).
 
 ## Start with Windows
 
-*Einstellungen › Start und Infobereich › Mit Windows starten* makes Lupe start at sign-in, invisible in the notification area, with the shortcut ready.
+*Settings › Startup and notification area › Start with Windows* makes Lupe start at sign-in, invisible in the notification area, with the shortcut ready.
 
 - It is **per user**: Lupe writes the value `Lupe` under `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run` with the content `"<path>\Lupe.exe" --hintergrund`. No administrator rights are needed, and the MSI never sets it.
 - The entry points to the `Lupe.exe` that was running when you switched it on. If you move or rename `Lupe.exe`, switch the setting off and on again – the same applies if a copy in another folder should be the one that starts.
 - With `--hintergrund` Lupe shows no window. If the notification area is not available, it opens the window anyway so that it is not running invisibly and unreachable.
-- A Lupe started as `dotnet Lupe.dll` cannot register itself and says so (*Der Pfad von Lupe.exe ist nicht bekannt – Autostart nicht eingerichtet.*).
+- A Lupe started as `dotnet Lupe.dll` cannot register itself and says so (*The path of Lupe.exe is unknown – autostart was not set up.*).
 
 ## Running as administrator
 
-Lupe does not request administrator rights (manifest level `asInvoker`) and does not need them. The one exception is **typing into programs that run as administrator**: Windows blocks keyboard input from a normal program into an elevated window (User Interface Privilege Isolation). Lupe detects this, types nothing and says so in the result notification: *Eintippen nicht möglich – das Fenster im Vordergrund läuft mit höheren Rechten als Lupe (z. B. als Administrator) …*
+Lupe does not request administrator rights (manifest level `asInvoker`) and does not need them. The one exception is **typing into programs that run as administrator**: Windows blocks keyboard input from a normal program into an elevated window (User Interface Privilege Isolation). Lupe detects this, types nothing and says so in the result notification: *Cannot type – the window in the foreground runs with higher privileges than Lupe (e.g. as administrator) …*
 
 If you regularly type into an elevated program, start Lupe with *Run as administrator* as well. Note that the autostart entry starts Lupe without elevation.
 
 ## Updates and uninstalling
 
 - **MSI:** install the newer MSI over the old one. Builds from `main` replace each other – in either direction: Windows Installer compares only the first three parts of the version (`0.1.0`), and the package allows the same version to be installed again, so an older build from `main` also installs over a newer one. A release with a higher version replaces them as well. Only an MSI whose first three parts are *lower* than those of the installed version is refused (*Eine neuere Version von Lupe ist bereits installiert.*).
-- **Exe and ZIP:** replace the files. Keep the path if *Mit Windows starten* is on.
+- **Exe and ZIP:** replace the files. Keep the path if *Start with Windows* is on.
 - **Settings and history** stay where they are and are read by the new version.
 - **Uninstalling** (*Settings › Apps › Installed apps › Lupe* – on Windows 10 *Apps & features* –, or silently as shown under [MSI installer](#msi-installer)) removes the program files and the Start menu entry. It does **not** remove:
   - `%LocalAppData%\Lupe` of each user (settings and history) – delete that folder to remove them;
-  - the autostart entry of users who switched on *Mit Windows starten*. Switch it off before uninstalling, or delete the value `Lupe` under `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`.
+  - the autostart entry of users who switched on *Start with Windows*. Switch it off before uninstalling, or delete the value `Lupe` under `HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run`.
 
 ## Linux
 
@@ -141,7 +142,7 @@ Lupe runs on X11 and Wayland desktops, x64 and arm64, on distributions with glib
 
 Tagged releases name the package `lupe_1.2.3_amd64.deb`. The libraries Lupe needs are part of every desktop installation; on a minimal system install `libx11-6 libxtst6 libxrandr2 libxi6 libice6 libsm6 libfontconfig1` and ICU, e.g. `libicu72` on Debian 12 (`apt-cache search --names-only '^libicu[0-9]+$'` shows the name; the `.deb` pulls them in). Without ICU Lupe does not start; without fontconfig it cannot read image files. If Lupe reports `LUP-0001`, the recognition library cannot be loaded – see [Error codes](error-codes.md#lup-0001).
 
-- **Camera:** your user must be in the group `video` – `sudo usermod -aG video $USER`, then sign out and in again. Lupe says so on the page *Kamera* when the device is there but not readable.
+- **Camera:** your user must be in the group `video` – `sudo usermod -aG video $USER`, then sign out and in again. Lupe says so on the page *Camera* when the device is there but not readable.
 - **X11:** the screen scan, typing (XTest) and the shortcut work without asking. If another program holds the shortcut, Lupe reports it as taken.
 - **Wayland:** the screen scan, typing and the shortcut go through `xdg-desktop-portal`. The desktop asks once for permission to take screenshots, to control the keyboard (*Remote Desktop*) and to register the shortcut; it may choose different keys. GNOME before 48 and some compositors (sway, other wlroots desktops) have no GlobalShortcuts portal – bind a shortcut to `lupe --bildschirm` in the desktop's own settings (sway: `bindsym $mod+Shift+q exec lupe --bildschirm`), or start the scan from the tray menu or the window. The window needs XWayland; without it Lupe ends with a message (`lupe lesen` still works). See [Limitations › Linux and macOS](limitations.md#linux-and-macos).
 - **Tray icon:** needs a StatusNotifier host. On GNOME install the extension *AppIndicator and KStatusNotifierItem Support*; without it, closing the window still keeps Lupe running, but there is no icon to bring it back – start `lupe` again.
@@ -150,18 +151,18 @@ Tagged releases name the package `lupe_1.2.3_amd64.deb`. The libraries Lupe need
 
 ## macOS
 
-Lupe runs on macOS 12 or later. Download [`Lupe-macos-arm64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-arm64.zip) for Apple Silicon (M1 and later) or [`Lupe-macos-x64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-x64.zip) for Intel Macs, unzip it and move `Lupe.app` to *Programme* (*Applications*). .NET is included. Unzip with the Finder (double-click) or `ditto -x -k Lupe-macos-arm64.zip .` – the command-line tool `unzip` drops the extended attributes that carry the signatures of the bundled .NET files, and macOS then refuses the app as damaged.
+Lupe runs on macOS 12 or later. Download [`Lupe-macos-arm64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-arm64.zip) for Apple Silicon (M1 and later) or [`Lupe-macos-x64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-x64.zip) for Intel Macs, unzip it and move `Lupe.app` to *Applications*. .NET is included. Unzip with the Finder (double-click) or `ditto -x -k Lupe-macos-arm64.zip .` – the command-line tool `unzip` drops the extended attributes that carry the signatures of the bundled .NET files, and macOS then refuses the app as damaged.
 
 - **Gatekeeper:** the app is only ad-hoc signed, not yet signed with a Developer ID and not notarised, so macOS refuses the first start with *“Lupe.app” cannot be opened* (or *Apple could not verify …*). Once per download:
   1. Open `Lupe.app` once and close the message with *Done* / *OK*.
-  2. Open *System Settings › Privacy & Security* (*Systemeinstellungen › Datenschutz & Sicherheit*), scroll to *Security* – there is a line about Lupe with the button ***Open Anyway*** (*Dennoch öffnen*). Click it and confirm with your password or Touch ID.
-  3. Start Lupe again and click *Open* (*Öffnen*).
+  2. Open *System Settings › Privacy & Security*, scroll to *Security* – there is a line about Lupe with the button ***Open Anyway***. Click it and confirm with your password or Touch ID.
+  3. Start Lupe again and click *Open*.
 
   On macOS 12 to 14, *right-click `Lupe.app` → Open* and confirming also works; macOS 15 and later only offer the way above. Alternatively, in Terminal: `xattr -dr com.apple.quarantine /Applications/Lupe.app`. The CI is prepared to sign and notarise Lupe as soon as ICT-Baden has an Apple Developer ID; then this step disappears.
 - **Permissions** – macOS asks for each one the first time Lupe needs it; when one is missing, Lupe shows a hint with a button to the right page in *System Settings › Privacy & Security*:
-  - *Kamera* (Camera) for the page *Kamera*,
-  - *Bildschirmaufnahme* (Screen Recording) for the screen scan – after allowing it, quit and start Lupe again,
-  - *Bedienungshilfen* (Accessibility) for typing.
+  - *Camera* for the page *Camera*,
+  - *Screen Recording* for the screen scan – after allowing it, quit and start Lupe again,
+  - *Accessibility* for typing.
 
   Because each build has a new ad-hoc signature, macOS treats an updated `Lupe.app` as a different app: after an update, grant *Screen Recording* and *Accessibility* again (remove the old *Lupe* entry with − and add the new one). This ends with the Developer ID signature.
 - **Shortcut:** the default is <kbd>⌘</kbd>+<kbd>⌥</kbd>+<kbd>Q</kbd>; <kbd>⌘</kbd>+<kbd>⇧</kbd>+<kbd>Q</kbd> is *Log Out* on macOS.

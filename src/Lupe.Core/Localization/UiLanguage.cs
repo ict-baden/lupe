@@ -22,6 +22,15 @@ public static class UiLanguage
     /// </summary>
     public static IReadOnlyList<string> Supported { get; } = ["en", "de", "es", "fr", "zh-Hans"];
 
+    /// <summary>Maschinell übersetzt und noch nicht von Muttersprachlern gegengelesen – so in der Auswahlliste gekennzeichnet.</summary>
+    public static IReadOnlyList<string> MachineTranslated { get; } = ["es", "fr", "zh-Hans"];
+
+    /// <summary>Eintrag der Auswahlliste: Name der Sprache in ihr selbst, bei <see cref="MachineTranslated"/> mit Vermerk.</summary>
+    public static string DisplayName(string code) =>
+        MachineTranslated.Contains(code, StringComparer.OrdinalIgnoreCase)
+            ? string.Format(CultureInfo.CurrentCulture, Resources.Strings.Language_MachineTranslated, NativeName(code))
+            : NativeName(code);
+
     /// <summary>Sprache des Systems beim Start, bevor Lupe sie überschreibt.</summary>
     public static CultureInfo System { get; } = CultureInfo.CurrentUICulture;
 

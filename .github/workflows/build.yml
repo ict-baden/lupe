@@ -33,7 +33,7 @@ jobs:
       msi: ${{ steps.version.outputs.msi }}
       suffix: ${{ steps.version.outputs.suffix }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Version bestimmen
         id: version
@@ -73,11 +73,11 @@ jobs:
           - { name: linux-arm64, os: ubuntu-24.04-arm, rids: linux-arm64 }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Zwischenspeicher
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: zxing
           key: zxing-${{ matrix.name }}-${{ hashFiles('packaging/zxing/build.sh', 'packaging/zxing/versions.env') }}
@@ -107,7 +107,7 @@ jobs:
             packaging/zxing/check.sh "$rid" "$(ls zxing/$rid/*ZXing.*)"
           done
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: zxing-${{ matrix.name }}
           path: zxing/
@@ -123,11 +123,11 @@ jobs:
           - { name: macos, os: macos-latest, rids: osx-arm64 osx-x64 }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Zwischenspeicher
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: zxing
           key: zxing-${{ matrix.name }}-${{ hashFiles('packaging/zxing/build.sh', 'packaging/zxing/versions.env') }}
@@ -157,7 +157,7 @@ jobs:
             packaging/zxing/check.sh "$rid" "$(ls zxing/$rid/*ZXing.*)"
           done
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: zxing-${{ matrix.name }}
           path: zxing/
@@ -173,11 +173,11 @@ jobs:
           - { name: windows, os: windows-latest, rids: win-x64 }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Zwischenspeicher
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: zxing
           key: zxing-${{ matrix.name }}-${{ hashFiles('packaging/zxing/build.sh', 'packaging/zxing/versions.env') }}
@@ -207,7 +207,7 @@ jobs:
             packaging/zxing/check.sh "$rid" "$(ls zxing/$rid/*ZXing.*)"
           done
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: zxing-${{ matrix.name }}
           path: zxing/
@@ -221,13 +221,13 @@ jobs:
       contents: read
       id-token: write # für die Anmeldung bei Azure Artifact Signing (OIDC)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: zxing-windows
           path: zxing
@@ -241,13 +241,13 @@ jobs:
       - name: Tests
         # Tests, die eine Webcam oder einen sichtbaren Desktop brauchen, überspringen sich selbst.
         # Beide Test-Ziele nacheinander: parallel bremsen sie sich gegenseitig, und die Echtzeit-Tests verpassen ihre Zeitfenster
-        run: dotnet test Lupe.sln -c Release --no-build -p:TestTfmsInParallel=false --logger "trx;LogFileName=tests.trx" --results-directory TestResults
+        run: dotnet test Lupe.sln -c Release --no-build -p:TestTfmsInParallel=false --blame-hang-timeout 4m --blame-hang-dump-type none --logger "trx;LogFileName=tests.trx" --results-directory TestResults
 
       - name: Testergebnisse
         if: always()
         # Ein Upload-Problem (z. B. voller Artifact-Speicher) soll Publish und Release nicht blockieren
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Testergebnisse-windows
           path: TestResults/*.trx
@@ -277,23 +277,25 @@ jobs:
           timestamp-digest: SHA256
 
       - name: Screenshots der Doku rendern
-        # Wie tools/screenshots/make-assets.ps1 (ohne Banner): jede Seite hell und dunkel, deutsche Oberfläche wie in der
-        # Doku. Prüft nebenbei, dass jede Seite zeichnet; die Bilder liegen einen Tag als Artifact zum Übernehmen bereit.
+        # Wie tools/screenshots/make-assets.ps1 (ohne Banner): jede Seite hell und dunkel, englisch für die Doku, deutsch
+        # zusätzlich (docs/assets/screenshots/de). Prüft nebenbei, dass jede Seite zeichnet; die Bilder liegen einen Tag als
+        # Artifact zum Übernehmen bereit.
         shell: pwsh
-        env:
-          LUPE_LANGUAGE: de
         run: |
           $exe = 'src/Lupe/bin/Release/net10.0-windows10.0.19041.0/Lupe.exe'
-          $p = Start-Process $exe -ArgumentList '--screenshots', "`"$PWD\screenshots`"" -Wait -PassThru -NoNewWindow
-          if ($p.ExitCode -ne 0) { throw "Screenshots: Exitcode $($p.ExitCode)" }
-          Get-ChildItem screenshots | Format-Table Name, Length
+          foreach ($lang in 'en', 'de') {
+            $env:LUPE_LANGUAGE = $lang
+            $p = Start-Process $exe -ArgumentList '--screenshots', "`"$PWD\screenshots\$lang`"" -Wait -PassThru -NoNewWindow
+            if ($p.ExitCode -ne 0) { throw "Screenshots ($lang): Exitcode $($p.ExitCode)" }
+          }
+          Get-ChildItem screenshots -Recurse -File | Format-Table FullName, Length
 
       - name: Screenshots hochladen
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Screenshots
-          path: screenshots/*.png
+          path: screenshots/
           if-no-files-found: error
           retention-days: 1
 
@@ -412,7 +414,7 @@ jobs:
           timestamp-rfc3161: http://timestamp.acs.microsoft.com
           timestamp-digest: SHA256
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Pakete-windows
           path: dist/*
@@ -424,13 +426,13 @@ jobs:
     needs: [version, zxing-linux]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: zxing-linux-*
           path: zxing
@@ -445,14 +447,16 @@ jobs:
         run: dotnet build tests/Lupe.Tests -c Release -f net10.0
 
       - name: Tests (unter Xvfb)
-        # Plattformneutrale Tests, die Avalonia-Oberfläche ohne Bildschirm und die X11-Tests (XGetImage, XTest, XGrabKey)
-        run: xvfb-run -a -s "-screen 0 1280x1024x24" dotnet test tests/Lupe.Tests -c Release -f net10.0 --no-build --logger "trx;LogFileName=tests-linux.trx" --results-directory TestResults
+        # Plattformneutrale Tests, die Avalonia-Oberfläche ohne Bildschirm und die X11-Tests (XGetImage, XTest, XGrabKey).
+        # Wie unter macOS: ein hängender Test bricht nach 4 min ab und wird benannt (ein Lauf hing sonst unbegrenzt)
+        timeout-minutes: 20
+        run: xvfb-run -a -s "-screen 0 1280x1024x24" dotnet test tests/Lupe.Tests -c Release -f net10.0 --no-build --blame-hang-timeout 4m --blame-hang-dump-type none --logger "console;verbosity=normal" --logger "trx;LogFileName=tests-linux.trx" --results-directory TestResults
 
       - name: Testergebnisse
         if: always()
         # Ein Upload-Problem (z. B. voller Artifact-Speicher) soll Publish und Release nicht blockieren
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Testergebnisse-linux
           path: TestResults/*.trx
@@ -506,7 +510,7 @@ jobs:
               'export DEBIAN_FRONTEND=noninteractive; apt-get update -qq && apt-get install -y -qq --no-install-recommends libfontconfig1 $(apt-cache search --names-only "^libicu[0-9]+$" | cut -d" " -f1 | head -n 1) >/dev/null && tar -xzf /dist/Lupe*-linux-x64.tar.gz -C /tmp && /p/smoke.sh /tmp/lupe/Lupe'
           done
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Pakete-linux
           path: dist/*
@@ -518,9 +522,9 @@ jobs:
     needs: linux
     runs-on: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: Pakete-linux
           path: dist
@@ -536,10 +540,13 @@ jobs:
   macos:
     needs: [version, zxing-macos]
     runs-on: macos-latest
+    outputs:
+      notarized: ${{ steps.signing.outputs.notarize }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Signieren und Notarisieren eingerichtet?
+        id: signing
         # Developer-ID-Signatur und Notarisierung nur, wenn die Organisation die Zugangsdaten hinterlegt hat (Apple Developer
         # Program, siehe docs/development.md) und nicht bei Pull Requests. Bis dahin ad hoc signiert wie bisher. Halbe
         # Angaben brechen den Lauf nicht ab (sonst bliebe „latest“ stehen), sondern fallen mit Warnung zurück:
@@ -565,12 +572,13 @@ jobs:
           echo "Developer ID: $sign, Notarisierung: $notarize"
           echo "MACOS_SIGN=$sign" >> "$GITHUB_ENV"
           echo "MACOS_NOTARIZE=$notarize" >> "$GITHUB_ENV"
+          echo "notarize=$notarize" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: zxing-macos
           path: zxing
@@ -587,7 +595,7 @@ jobs:
         if: always()
         # Ein Upload-Problem (z. B. voller Artifact-Speicher) soll Publish und Release nicht blockieren
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Testergebnisse-macos
           path: TestResults/*.trx
@@ -662,7 +670,7 @@ jobs:
             done
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Pakete-macos
           path: dist/*
@@ -677,9 +685,9 @@ jobs:
     permissions:
       contents: write # für die Releases
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: Pakete-*
           path: dist
@@ -701,36 +709,41 @@ jobs:
         if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+          SUFFIX: ${{ needs.version.outputs.suffix }}
+          NOTARIZED: ${{ needs.macos.outputs.notarized }}
         shell: pwsh
         run: |
           # v1.0.0-rc1 und ähnliche: Vorabversion, nicht „Latest“
           $pre = if ($env:GITHUB_REF_NAME -match '-') { @('--prerelease') } else { @() }
-          gh release create $env:GITHUB_REF_NAME (Get-ChildItem dist/*).FullName --title "Lupe $env:GITHUB_REF_NAME" --generate-notes @pre
+          $notes = ./.github/scripts/release-notes.ps1 -Tag $env:GITHUB_REF_NAME -Version $env:VERSION `
+            -Suffix $env:SUFFIX -Signed ($env:SIGN -eq 'true') -Notarized ($env:NOTARIZED -eq 'true')
+          gh release create $env:GITHUB_REF_NAME (Get-ChildItem dist/*).FullName --title "Lupe $env:GITHUB_REF_NAME" --notes $notes --generate-notes @pre
+          if ($LASTEXITCODE -ne 0) { throw "gh release create ist fehlgeschlagen (Exit $LASTEXITCODE)." }
+          # Das rollierende „latest“ wird gleich zur Vorabversion (sonst erst beim nächsten Push auf main), das Tag-Release
+          # bekommt den Platz in der Seitenleiste
+          if (-not $pre) {
+            gh release edit $env:GITHUB_REF_NAME --latest
+            if ($LASTEXITCODE -ne 0) { Write-Host "::warning::$env:GITHUB_REF_NAME ließ sich nicht als Latest markieren." }
+            gh release view latest *> $null
+            if ($LASTEXITCODE -eq 0) {
+              gh release edit latest --prerelease --latest=false
+              if ($LASTEXITCODE -ne 0) { Write-Host "::warning::'latest' ließ sich nicht zur Vorabversion machen." }
+            }
+            $global:LASTEXITCODE = 0
+          }
 
       - name: "Release 'latest' aktualisieren (main)"
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+          NOTARIZED: ${{ needs.macos.outputs.notarized }}
         shell: pwsh
         run: |
           # Rollierendes Release: immer der neueste main-Stand, unter festen Links. Wird an Ort und Stelle
           # aktualisiert (kein Löschen und Neuanlegen), Vorabversion erst, wenn es Releases aus Tags gibt – Einzelheiten im Skript.
-          $base = "https://github.com/$env:GITHUB_REPOSITORY/releases/download/latest"
-          $built = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd HH:mm')
-          $signed = if ($env:SIGN -eq 'true') { 'Windows-Dateien signiert' } else { 'noch nicht signiert' }
-          $notes = "Automatischer Build von main ($($env:GITHUB_SHA.Substring(0,7))), Version ${{ needs.version.outputs.version }}, gebaut $built UTC, $signed.`n`n" +
-                   "Die Links bleiben gleich und zeigen immer auf den neuesten Build.`n`n" +
-                   "**Windows** (10 1809 oder neuer, x64)`n`n" +
-                   "- **[Lupe-x64.msi]($base/Lupe-x64.msi)**: Installer für alle Benutzer (Intune/GPO)`n" +
-                   "- **[Lupe.exe]($base/Lupe.exe)**: eine Datei, läuft ohne Installation und ohne .NET-Runtime`n" +
-                   "- **[Lupe-win-x64-framework.zip]($base/Lupe-win-x64-framework.zip)**: kleine Variante, braucht die .NET 10 Runtime`n`n" +
-                   "**Linux** (X11 und Wayland)`n`n" +
-                   "- **[lupe_amd64.deb]($base/lupe_amd64.deb)**: Paket für Debian/Ubuntu (x64)`n" +
-                   "- **[Lupe-linux-x64.tar.gz]($base/Lupe-linux-x64.tar.gz)** / **[Lupe-linux-arm64.tar.gz]($base/Lupe-linux-arm64.tar.gz)**: entpacken, ``lupe/install.sh`` (glibc 2.31 oder neuer: Ubuntu 20.04, Debian 11)`n`n" +
-                   "**macOS** (12 oder neuer; noch nicht notarisiert: beim ersten Start unter Systemeinstellungen › Datenschutz & Sicherheit „Dennoch öffnen“ wählen, siehe [Installation](https://github.com/$env:GITHUB_REPOSITORY/blob/main/docs/installation.md#macos))`n`n" +
-                   "- **[Lupe-macos-arm64.zip]($base/Lupe-macos-arm64.zip)**: Apple Silicon`n" +
-                   "- **[Lupe-macos-x64.zip]($base/Lupe-macos-x64.zip)**: Intel`n`n" +
-                   "[SHA256SUMS.txt]($base/SHA256SUMS.txt): Prüfsummen aller Dateien · [Lupe-sbom.cdx.json]($base/Lupe-sbom.cdx.json): Stückliste (CycloneDX)"
+          $notes = ./.github/scripts/release-notes.ps1 -Tag latest -Version $env:VERSION -Signed ($env:SIGN -eq 'true') -Notarized ($env:NOTARIZED -eq 'true')
           $expected = 'SHA256SUMS.txt', 'Lupe-x64.msi', 'Lupe.exe', 'Lupe-win-x64-framework.zip', 'lupe_amd64.deb', 'Lupe-linux-x64.tar.gz',
                       'Lupe-linux-arm64.tar.gz', 'Lupe-macos-arm64.zip', 'Lupe-macos-x64.zip', 'Lupe-sbom.cdx.json'
           # Die Version im Titel: GitHub zeigt beim Release das Datum der ersten Veröffentlichung, nicht das des Builds

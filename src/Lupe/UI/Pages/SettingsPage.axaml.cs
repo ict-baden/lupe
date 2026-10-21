@@ -570,7 +570,7 @@ public partial class SettingsPage : UserControl, IPage
     private void BuildLanguages()
     {
         var choices = new List<LanguageChoice> { new("", Strings.Language_System) };
-        choices.AddRange(UiLanguage.Supported.Select(code => new LanguageChoice(code, UiLanguage.NativeName(code))));
+        choices.AddRange(UiLanguage.Supported.Select(code => new LanguageChoice(code, UiLanguage.DisplayName(code))));
         LanguageBox.ItemsSource = choices;
     }
 

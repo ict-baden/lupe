@@ -15,8 +15,8 @@ public static class AppInfo
     public const string PrivacyUrl = RepositoryUrl + "/blob/main/docs/data-and-privacy.md";
     public const string SupportUrl = RepositoryUrl + "/blob/main/SUPPORT.md";
     public const string WebsiteUrl = "https://ict-baden.de/";
-    /// <summary>Das eine Impressum auf der Webseite (Richtlinie 07); die neue Seite leitet diese Adresse später weiter.</summary>
-    public const string ImprintUrl = "https://ict-baden.de/index.html?page=imprint";
+    /// <summary>Das eine Impressum auf der Webseite (Richtlinie 07).</summary>
+    public const string ImprintUrl = "https://ict-baden.de/impressum/";
 
     /// <summary>„© 2026 …“ aus den Assembly-Angaben (Directory.Build.props).</summary>
     public static string Copyright { get; } =

@@ -1317,8 +1317,18 @@ Redirected into a file from cmd, the output is UTF-8 with BOM.</value>
     <value>The settings file “{0}” is still not readable – the change applies until Lupe is closed and will be saved as soon as the file is readable again. This way nothing is overwritten with default values. ({1})</value>
     <comment>{0} = path of the settings file; {1} = detailed problem description</comment>
   </data>
+  <data name="Core_Typing_TargetChanged" xml:space="preserve">
+    <value>Typing stopped – another window came to the front. Nothing was typed.</value>
+  </data>
+  <data name="Core_Typing_TargetChangedPartly" xml:space="preserve">
+    <value>Typing stopped – another window came to the front; only part of the text arrived.</value>
+  </data>
   <data name="Core_Typing_Interrupted" xml:space="preserve">
     <value>Typing was interrupted – only part of the text arrived.</value>
+  </data>
+  <data name="Language_MachineTranslated" xml:space="preserve">
+    <value>{0} (machine translation)</value>
+    <comment>Language list in the settings; {0} = name of the language in itself, e.g. "Español"</comment>
   </data>
   <data name="Language_System" xml:space="preserve">
     <value>System language</value>

@@ -1060,8 +1060,17 @@ Redirigée vers un fichier depuis cmd, la sortie est en UTF-8 avec BOM.</value>
   <data name="Core_Settings_StillUnreadableReason" xml:space="preserve">
     <value>Le fichier de paramètres « {0} » n’est toujours pas lisible – la modification s’applique jusqu’à la fermeture de Lupe et sera enregistrée dès que le fichier sera de nouveau lisible. Ainsi, rien n’est écrasé par des valeurs par défaut. ({1})</value>
   </data>
+  <data name="Core_Typing_TargetChanged" xml:space="preserve">
+    <value>Saisie annulée – une autre fenêtre est passée au premier plan. Rien n’a été saisi.</value>
+  </data>
+  <data name="Core_Typing_TargetChangedPartly" xml:space="preserve">
+    <value>Saisie annulée – une autre fenêtre est passée au premier plan ; seule une partie du texte est arrivée.</value>
+  </data>
   <data name="Core_Typing_Interrupted" xml:space="preserve">
     <value>La saisie a été interrompue – seule une partie du texte est arrivée.</value>
+  </data>
+  <data name="Language_MachineTranslated" xml:space="preserve">
+    <value>{0} (traduction automatique)</value>
   </data>
   <data name="Language_System" xml:space="preserve">
     <value>Langue du système</value>

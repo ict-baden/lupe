@@ -2,9 +2,9 @@
 
 # Settings
 
-Every setting on the page *Einstellungen*, its default and where it applies – and the settings file behind it.
+Every setting on the page *Settings*, its default and where it applies – and the settings file behind it.
 
-**Contents:** [Overview](#overview) · [On a hit](#on-a-hit) · [Screen scan](#screen-scan) · [Link rules](#link-rules) · [Formats](#formats) · [Camera](#camera) · [History](#history) · [Start and notification area](#start-and-notification-area) · [The settings file](#the-settings-file) · [Rolling out settings](#rolling-out-settings) · [Broken or locked file](#broken-or-locked-file)
+**Contents:** [Overview](#overview) · [On a detected code](#on-a-detected-code) · [Screen scan](#screen-scan) · [Link rules](#link-rules) · [Formats](#formats) · [Camera](#camera) · [History](#history) · [Startup and notification area](#startup-and-notification-area) · [The settings file](#the-settings-file) · [Rolling out settings](#rolling-out-settings) · [Broken or locked file](#broken-or-locked-file)
 
 ## Overview
 
@@ -12,95 +12,95 @@ Changes apply and are saved **immediately**; there is no *Save* button. Settings
 
 | Section | Setting | Default | Key in the settings file |
 |---|---|---|---|
-| *Bei einem Treffer* | *Kamera, Datei und Zwischenablage* | *Kopieren* | `Actions` |
-| | *Bildschirmausschnitt* | *Kopieren* | `ScreenActions` |
-| | *Nach dem Eintippen* | *Nichts* | `TypeSuffix` |
-| | *Tempo beim Eintippen* | *Normal (20 ms)* | `TypeDelayMs` |
-| *Bildschirm-Scan* | *Tastenkürzel* | *Win+Umschalt+Q* | `ScreenHotkey` |
-| *Link-Regeln* | rule table | one rule: `^https://\S+$`, no prefix | `LinkRules` |
-| *Formate* | *Alle Formate erkennen* | on | `Formats` |
-| *Kamera* | *Ton bei Treffer* | on | `Sound` |
-| | *Zielhilfe* | on | `AimHelp` |
-| | *Wiederholungssperre* | 3 seconds | `RepeatSuppressMs` |
-| | camera (chosen on the page *Kamera*) | the first camera | `Camera` |
-| *Verlauf* | *Verlauf speichern* | on | `KeepHistory` |
-| | *Höchstens … Einträge* | 1,000 | `HistoryLimit` |
-| *Start und Infobereich* | *Mit Windows starten* | off | – (Windows registry, see below) |
-| | *Beim Schließen im Infobereich weiterlaufen* | on | `KeepRunningInTray` |
+| *On a detected code* | *Camera, file and clipboard* | *Copy* | `Actions` |
+| | *Screen region* | *Copy* | `ScreenActions` |
+| | *After typing* | *Nothing* | `TypeSuffix` |
+| | *Typing speed* | *Normal (20 ms)* | `TypeDelayMs` |
+| *Screen scan* | *Keyboard shortcut* | *Win+Shift+Q* | `ScreenHotkey` |
+| *Link rules* | rule table | one rule: `^https://\S+$`, no prefix | `LinkRules` |
+| *Formats* | *Recognize all formats* | on | `Formats` |
+| *Camera* | *Sound on detection* | on | `Sound` |
+| | *Aim guide* | on | `AimHelp` |
+| | *Repeat lock* | 3 seconds | `RepeatSuppressMs` |
+| | camera (chosen on the page *Camera*) | the first camera | `Camera` |
+| *History* | *Save history* | on | `KeepHistory` |
+| | *At most … entries* | 1,000 | `HistoryLimit` |
+| *Startup and notification area* | *Start with Windows* | off | – (Windows registry, see below) |
+| | *Keep running in the notification area when closed* | on | `KeepRunningInTray` |
 
-## On a hit
+## On a detected code
 
-*Bei einem Treffer* – what happens with a recognised code. The actions are set **separately for two groups of sources**:
+What happens with a recognised code. The actions are set **separately for two groups of sources**:
 
 | Group | Offers | Default |
 |---|---|---|
-| ***Kamera, Datei und Zwischenablage*** | *Kopieren*, *Eintippen* (camera only), *Link öffnen* | *Kopieren* |
-| ***Bildschirmausschnitt*** | *Kopieren*, *Eintippen*, *Link öffnen* | *Kopieren* |
+| ***Camera, file and clipboard*** | *Copy*, *Type* (camera only), *Open link* | *Copy* |
+| ***Screen region*** | *Copy*, *Type*, *Open link* | *Copy* |
 
-- ***Kopieren*** (copy) puts the content on the clipboard.
-- ***Eintippen*** (type) writes the content as keyboard input. For the **screen scan** it goes into the window that was active before the scan – only when the scan was started with the shortcut from another program ([details](usage.md#the-screen-scan)). For the **camera** Lupe works like a hand scanner and types into the program that is in front when the code is recognised; Lupe can run behind it or minimised ([details](usage.md#kamera--camera)). A file or the clipboard is never typed – there, Lupe itself is in front.
-- ***Link öffnen*** (open link) opens the content in the default browser when a [link rule](link-rules.md) matches. Without a matching rule nothing opens. Independent of this setting, every matching result has a *Link öffnen* button.
+- ***Copy*** puts the content on the clipboard.
+- ***Type*** writes the content as keyboard input. For the **screen scan** it goes into the window that was active before the scan – only when the scan was started with the shortcut from another program ([details](usage.md#the-screen-scan)). For the **camera** Lupe works like a hand scanner and types into the program that is in front when the code is recognised; Lupe can run behind it or minimised ([details](usage.md#camera)). A file or the clipboard is never typed – there, Lupe itself is in front.
+- ***Open link*** opens the content in the default browser when a [link rule](link-rules.md) matches. Without a matching rule nothing opens. Independent of this setting, every matching result has an *Open link* button.
 - No action ticked: the result is shown and added to the history, nothing else.
 
-The actions run for **one** code. When a picture contains several, the camera and the page *Datei* run no action, and the screen scan asks which code to take.
+The actions run for **one** code. When a picture contains several, the camera and the page *File* run no action, and the screen scan asks which code to take.
 
-***Nach dem Eintippen*** (after typing) – a key sent after the typed text: *Nichts* (nothing), *Enter* or *Tab*. *Enter* submits a search field or a form, *Tab* moves to the next field.
+***After typing*** – a key sent after the typed text: *Nothing*, *Enter* or *Tab*. *Enter* submits a search field or a form, *Tab* moves to the next field.
 
-***Tempo beim Eintippen*** (typing speed) – the pause between two typed characters, like the character delay of a hand scanner: *Sofort* (immediately, 0 ms), *Schnell* (10 ms), *Normal* (20 ms, default) or *Langsam* (40 ms); in the settings file `TypeDelayMs`, 0 to 500. Notepad on Windows 11 loses characters with *Sofort* – it reads a typed character only when it processes it and then sees the last one sent. A 50-character link takes about one second at 20 ms ([details](how-it-works.md#typing)).
+***Typing speed*** – the pause between two typed characters, like the character delay of a hand scanner: *Instant* (0 ms), *Fast (10 ms)*, *Normal (20 ms)* (default) or *Slow (40 ms)*; in the settings file `TypeDelayMs`, 0 to 500. Notepad on Windows 11 loses characters with *Instant* – it reads a typed character only when it processes it and then sees the last one sent. A 50-character link takes about one second at 20 ms ([details](how-it-works.md#typing)).
 
 ## Screen scan
 
-***Tastenkürzel*** – the global shortcut for the screen scan. Default: *Win+Umschalt+Q* (<kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>Q</kbd>), built like Windows' own <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>.
+***Keyboard shortcut*** – the global shortcut for the screen scan. Default: *Win+Shift+Q* (<kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>Q</kbd>), built like Windows' own <kbd>Win</kbd>+<kbd>Shift</kbd>+<kbd>S</kbd>.
 
-- **Change it:** click into the field (*Kombination drücken …*) and press the new combination. While you record, the current shortcut is switched off so that pressing it lands in the field instead of starting a scan. <kbd>Esc</kbd> cancels, <kbd>Tab</kbd> leaves the field. *Standard* restores *Win+Umschalt+Q*.
-- **Allowed:** a key together with <kbd>Ctrl</kbd>, <kbd>Alt</kbd> or <kbd>Win</kbd> (<kbd>Shift</kbd> may be added). Alone, only <kbd>F1</kbd>–<kbd>F24</kbd>, <kbd>Print Screen</kbd> (*Druck*) and <kbd>Pause</kbd> are accepted – a shortcut on a normal letter would stop you from typing that letter anywhere (*Bitte mit Strg, Alt oder Win*).
-- **Status:** below the field, *… ist bereit – auch wenn das Fenster geschlossen ist.* (ready, also with the window closed), or the reason why it could not be registered, typically *… ist schon von einem anderen Programm belegt.* (already used by another program). Then choose another combination.
+- **Change it:** click into the field (*Press the combination …*) and press the new combination. While you record, the current shortcut is switched off so that pressing it lands in the field instead of starting a scan. <kbd>Esc</kbd> cancels, <kbd>Tab</kbd> leaves the field. *Default* restores *Win+Shift+Q*.
+- **Allowed:** a key together with <kbd>Ctrl</kbd>, <kbd>Alt</kbd> or <kbd>Win</kbd> (<kbd>Shift</kbd> may be added). Alone, only <kbd>F1</kbd>–<kbd>F24</kbd>, <kbd>Print Screen</kbd> and <kbd>Pause</kbd> are accepted – a shortcut on a normal letter would stop you from typing that letter anywhere (*Please use Ctrl, Alt or Win*).
+- **Status:** below the field, *… is ready – even when the window is closed.*, or the reason why it could not be registered, typically *… is already in use by another program.* Then choose another combination.
 
 > [!WARNING]
-> **Shortcuts with <kbd>Ctrl</kbd>+<kbd>Alt</kbd> collide with <kbd>AltGr</kbd>.** Windows reports <kbd>AltGr</kbd> as <kbd>Ctrl</kbd>+<kbd>Alt</kbd>, so on a German keyboard a global <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Q</kbd> would swallow <kbd>AltGr</kbd>+<kbd>Q</kbd> = `@`. The settings show a warning for such shortcuts (*… kann auf deutschen Tastaturen mit AltGr-Zeichen kollidieren …*), naming the character if the keyboard layout has one on that key. Lupe protects you anyway: if the shortcut arrives while the right <kbd>Alt</kbd> key (<kbd>AltGr</kbd>) is held and the layout of the window in front produces a character for it, Lupe types that character instead of starting a scan. With the left <kbd>Alt</kbd> key, the shortcut works as usual. A shortcut with <kbd>Win</kbd> avoids the question entirely – that is why the default uses it.
+> **Shortcuts with <kbd>Ctrl</kbd>+<kbd>Alt</kbd> collide with <kbd>AltGr</kbd>.** Windows reports <kbd>AltGr</kbd> as <kbd>Ctrl</kbd>+<kbd>Alt</kbd>, so on a German keyboard a global <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Q</kbd> would swallow <kbd>AltGr</kbd>+<kbd>Q</kbd> = `@`. The settings show a warning for such shortcuts (*… may collide with AltGr characters on German keyboards …*), naming the character if the keyboard layout has one on that key. Lupe protects you anyway: if the shortcut arrives while the right <kbd>Alt</kbd> key (<kbd>AltGr</kbd>) is held and the layout of the window in front produces a character for it, Lupe types that character instead of starting a scan. With the left <kbd>Alt</kbd> key, the shortcut works as usual. A shortcut with <kbd>Win</kbd> avoids the question entirely – that is why the default uses it.
 
 ## Link rules
 
-*Link-Regeln* – which codes become links and how. Default: one active rule, pattern `^https://\S+$` without prefix: a code that is exactly one `https://` address is its own link. Plain `http://` addresses are not covered by the default rule.
+*Link rules* – which codes become links and how. Default: one active rule, pattern `^https://\S+$` without prefix: a code that is exactly one `https://` address is its own link. Plain `http://` addresses are not covered by the default rule.
 
-The table has, per rule, *Aktiv* (active), *Regulärer Ausdruck* (regular expression), *Präfix (leer = Code ist der Link)* (prefix, empty = the code is the link), buttons to move the rule up or down (earlier rules are checked first) and to delete it, and *Regel hinzufügen* (add rule) below. *Code zum Ausprobieren* (code to try) shows the resulting link for any text you type in, or *Keine Regel passt – kein Link.*
+The table has, per rule, *Active*, *Regular expression*, *Prefix (empty = code is the link)*, buttons to move the rule up or down (earlier rules are checked first) and to delete it, and *Add rule* below. *Code to try out* shows the resulting link for any text you type in, or *No rule matches – no link.*
 
 How links are built, examples and the safety checks: **[Link rules](link-rules.md)**.
 
 ## Formats
 
-***Alle Formate erkennen*** (recognise all formats) – on by default. Switched off, all 22 formats are listed, with only the common ones ticked at first: QR Code, Data Matrix, EAN-13, EAN-8, Code 128, Code 39, ITF and UPC-A. At least one format has to stay ticked; ticking all of them is the same as *Alle Formate erkennen*.
+***Recognize all formats*** – on by default. Switched off, all 22 formats are listed, with only the common ones ticked at first: QR Code, Data Matrix, EAN-13, EAN-8, Code 128, Code 39, ITF and UPC-A. At least one format has to stay ticked; ticking all of them is the same as *Recognize all formats*.
 
-Fewer formats mean a faster search and fewer chances for a false hit in pictures with a lot of text (*schneller und weniger Fehlerkennungen bei Bildern mit viel Text*). The selection applies to the camera, the screen scan, files and the clipboard. The command line has its own option, `--format`, and ignores this setting.
+Fewer formats mean a faster search and fewer chances for a false hit in pictures with a lot of text (*faster and fewer false detections in images with a lot of text*). The selection applies to the camera, the screen scan, files and the clipboard. The command line has its own option, `--format`, and ignores this setting.
 
 ## Camera
 
 | Setting | Default | Meaning |
 |---|---|---|
-| ***Ton bei Treffer*** (sound on hit) | on | A short beep when a code is recognised. Although listed under *Kamera*, it applies to every source. The play button next to it (*Ton anhören*) plays it. |
-| ***Zielhilfe*** (aim help) | on | Corners in the middle of the camera picture showing where to hold the code. Also switchable directly on the page *Kamera*. |
-| ***Wiederholungssperre*** (repeat suppression) | 3 seconds | How long the camera does not report the same code (same content and format) again – counted from the **last** time it was seen. A code that stays in view is therefore reported once. Choices: 1, 2, 3, 5, 10 or 30 seconds, or 1 minute. |
-| camera | the first camera | The camera chosen in the list on the page *Kamera* is remembered. |
+| ***Sound on detection*** | on | A short beep when a code is recognised. Although listed under *Camera*, it applies to every source. The play button next to it (*Play sound*) plays it. |
+| ***Aim guide*** | on | Corners in the middle of the camera picture showing where to hold the code. Also switchable directly on the page *Camera*. |
+| ***Repeat lock*** | 3 seconds | How long the camera does not report the same code (same content and format) again – counted from the **last** time it was seen. A code that stays in view is therefore reported once. Choices: 1, 2, 3, 5, 10 or 30 seconds, or 1 minute. |
+| camera | the first camera | The camera chosen in the list on the page *Camera* is remembered. |
 
 ## History
 
 | Setting | Default | Meaning |
 |---|---|---|
-| ***Verlauf speichern*** (save history) | on | Keeps the history in `%LocalAppData%\Lupe\verlauf.json`, only for you. |
-| ***Höchstens … Einträge*** (at most … entries) | 1,000 | Older entries drop out. Allowed: 10 to 10,000. |
+| ***Save history*** | on | Keeps the history in `%LocalAppData%\Lupe\verlauf.json`, only for you. |
+| ***At most … entries*** | 1,000 | Older entries drop out. Allowed: 10 to 10,000. |
 
-**Switching *Verlauf speichern* off** asks first (*Den Verlauf nicht mehr speichern?*) and then **deletes the file** `verlauf.json` – scanned contents can be confidential and should not stay on disk. The entries remain visible until Lupe quits. If you want to keep them, export them first (*Verlauf › Als CSV exportieren …*). If the file cannot be deleted at that moment, Lupe says so and tries again at the next start. Switching it back on writes the entries of the current session into a new file.
+**Switching *Save history* off** asks first (*Stop saving the history?*) and then **deletes the file** `verlauf.json` – scanned contents can be confidential and should not stay on disk. The entries remain visible until Lupe quits. If you want to keep them, export them first (*History › Export as CSV …*). If the file cannot be deleted at that moment, Lupe says so and tries again at the next start. Switching it back on writes the entries of the current session into a new file.
 
-## Start and notification area
+## Startup and notification area
 
 | Setting | Default | Meaning |
 |---|---|---|
-| ***Mit Windows starten*** (start with Windows) | off | Lupe starts at sign-in, invisible in the notification area, with the shortcut ready. Stored as a per-user autostart entry in the Windows registry, not in the settings file – see [Installation › Start with Windows](installation.md#start-with-windows). Not available in the demo. |
-| ***Beim Schließen im Infobereich weiterlaufen*** (keep running in the notification area when closed) | on | Closing the window only hides it; Lupe and the shortcut stay available. Quit with *Beenden* in the notification-area menu. Switched off, closing the window quits Lupe – and the shortcut is gone. |
+| ***Start with Windows*** | off | Lupe starts at sign-in, invisible in the notification area, with the shortcut ready. Stored as a per-user autostart entry in the Windows registry, not in the settings file – see [Installation › Start with Windows](installation.md#start-with-windows). Not available in the demo. |
+| ***Keep running in the notification area when closed*** | on | Closing the window only hides it; Lupe and the shortcut stay available. Quit with *Quit* in the notification-area menu. Switched off, closing the window quits Lupe – and the shortcut is gone. |
 
 ## The settings file
 
-Path: `%LocalAppData%\Lupe\einstellungen.json` – shown at the bottom of the page, with *Ordner öffnen* (open folder). It is created at the first change – closing the window for the first time counts, because Lupe remembers that it has shown the note *Lupe läuft weiter*. With all defaults the file looks like this:
+Path: `%LocalAppData%\Lupe\einstellungen.json` – shown at the bottom of the page, with *Open folder*. It is created at the first change – closing the window for the first time counts, because Lupe remembers that it has shown the note *Lupe is still running*. With all defaults the file looks like this:
 
 ```json
 {
@@ -144,7 +144,7 @@ Path: `%LocalAppData%\Lupe\einstellungen.json` – shown at the bottom of the pa
 | `RepeatSuppressMs` | milliseconds, 0 to 3,600,000 |
 | `Camera` | the camera's identifier, `""` = the first camera |
 | `HistoryLimit` | 1 to 10,000 (the page accepts 10 to 10,000) |
-| `TrayHintShown` | internal: the note *Lupe läuft weiter* has been shown once |
+| `TrayHintShown` | internal: the note *Lupe is still running* has been shown once |
 
 Reading is tolerant: missing keys get their default, unknown keys are ignored, a single unusable value falls back to its default without losing the others, and in lists only the unusable elements are dropped. Out-of-range numbers are clamped, unknown format names removed, a shortcut without a usable key (or a plain letter without <kbd>Ctrl</kbd>, <kbd>Alt</kbd> or <kbd>Win</kbd>) is replaced by the default. A link rule with an invalid regular expression stays in the table, marked with the error, but is not applied.
 
@@ -161,11 +161,11 @@ Lupe never silently overwrites a settings file it could not read properly:
 | Situation | What Lupe does |
 |---|---|
 | **Broken** – not valid JSON, or not an object | Starts with the defaults and says so. Before the next save, the file is copied unchanged to `einstellungen.json.defekt-YYYYMMDD-hhmmss` next to it. If that copy fails, nothing is saved. |
-| **Partly unusable** – single values of the wrong type | Uses the defaults for those values and names them (*Standardwert verwendet für: …*). Before the next save, the original is backed up the same way. |
+| **Partly unusable** – single values of the wrong type | Uses the defaults for those values and names them (*Default value used for: …*). Before the next save, the original is backed up the same way. |
 | **Not readable** – locked by another program, no permission | Starts with the defaults but does **not** write the file. Lupe tries to read it again every 5 seconds for about two minutes. Once it is readable, your changes from this session are applied field by field on top of its content; what you did not change stays as it was. A last attempt is made when Lupe quits. If there is no history file yet, the history stays in memory until then – Lupe cannot know whether saving it is allowed. |
 | **Cannot be written** – disk full, no permission | The change applies until Lupe quits; the reason is shown. |
 
-Problems appear as *Problem mit der Einstellungsdatei* at the top of the page and as a message when Lupe starts.
+Problems appear as *Problem with the settings file* at the top of the page and as a message when Lupe starts.
 
 ---
 
