@@ -91,12 +91,16 @@ public sealed class FakeFrameSourceTests
         };
 
         await source.StartAsync();
-        Assert.InRange(await first.Task.WaitAsync(TimeSpan.FromSeconds(5)), 0, 500);
+        // „Sofort“: ohne erst eine ganze Bildperiode zu warten – mit Luft für einen ausgelasteten CI-Runner
+        Assert.InRange(await first.Task.WaitAsync(TimeSpan.FromSeconds(5)), 0, 1000);
+        long startedMs = sw.ElapsedMilliseconds;
         await Task.Delay(1000);
         await source.StopAsync();
+        long elapsedMs = sw.ElapsedMilliseconds;
 
-        // 20 B/s über ~1 s: großzügig wegen Timer-Auflösung und Last auf dem Testrechner
-        Assert.InRange(Volatile.Read(ref count), 8, 30);
+        // 20 B/s = 1 Bild je 50 ms. Gemessen an der tatsächlich vergangenen Zeit: Auf Windows-Runnern dauerte das Warten
+        // von 1 s schon deutlich länger, mit entsprechend mehr Bildern. Untergrenze großzügig wegen Timer-Auflösung und Last.
+        Assert.InRange(Volatile.Read(ref count), (int)((elapsedMs - startedMs) / 50 * 0.4), (int)(elapsedMs / 50 * 1.5) + 2);
         Assert.All(threads, pool => Assert.True(pool, "Bilder kommen auf einem Hintergrund-Thread (Thread-Pool)"));
     }
 

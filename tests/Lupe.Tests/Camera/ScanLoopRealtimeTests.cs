@@ -126,19 +126,23 @@ public sealed class ScanLoopRealtimeTests
         var rec = new Recorder();
         rec.Attach(loop);
 
+        var clock = Stopwatch.StartNew();
         await loop.StartAsync();
         await Task.Delay(1200);
         int framesWhileRunning = Volatile.Read(ref rec.Frames);
+        int decodesWhileRunning = Volatile.Read(ref decodes);
         await loop.StopAsync();
+        long elapsedMs = clock.ElapsedMilliseconds;
         int decodesAtStop = Volatile.Read(ref decodes);
         await Task.Delay(400);
 
         Assert.Equal(1, maxRunning);
-        // Ohne Entkopplung kämen nur so viele Bilder wie Erkennungen (≈ 8). Auf langsamen CI-Runnern liefert der
-        // 60-fps-Zeitgeber deutlich weniger Bilder, deshalb dort eine niedrigere, aber immer noch eindeutige Schwelle.
-        int minFrames = string.Equals(Environment.GetEnvironmentVariable("CI"), "true", StringComparison.OrdinalIgnoreCase) ? 12 : 25;
-        Assert.True(framesWhileRunning >= minFrames, $"Vorschau ruckelt: nur {framesWhileRunning} Bilder in 1,2 s");
-        Assert.InRange(decodesAtStop, 2, 10); // 1,2 s / 150 ms ≈ 8
+        // Ohne Entkopplung kämen nur so viele Bilder wie Erkennungen. Feste Schwellen in 1,2 s hielten auf CI-Runnern nicht:
+        // Dort dauerte das „Warten 1,2 s“ schon 4 s (Windows) oder der 60-fps-Zeitgeber lieferte nur ein Drittel. Deshalb
+        // Bilder gegen Erkennungen und Erkennungen gegen die gemessene Zeit.
+        Assert.True(framesWhileRunning >= decodesWhileRunning + 4,
+            $"Vorschau ruckelt: {framesWhileRunning} Bilder bei {decodesWhileRunning} Erkennungen in {elapsedMs} ms");
+        Assert.InRange(decodesAtStop, 2, (int)(elapsedMs / 150) + 2); // je Erkennung mindestens 150 ms, nie zwei gleichzeitig
         Assert.Equal(decodesAtStop, Volatile.Read(ref decodes)); // kein Rückstau nach dem Stopp
         Assert.Single(rec.Detections);
     }
