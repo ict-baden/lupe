@@ -287,7 +287,7 @@ Third-party licences: <a href="THIRD-PARTY-NOTICES.txt">THIRD-PARTY-NOTICES.txt<
 Support: free via GitHub, guaranteed with a <a href="SUPPORT.md">support contract</a> &nbsp;·&nbsp;
 <a href="SECURITY.md">Security</a> &nbsp;·&nbsp;
 <a href="CHANGELOG.md">Changes</a> &nbsp;·&nbsp;
-Website: <a href="https://ict-baden.de/">ict-baden.de</a> &nbsp;·&nbsp;
+Website: <a href="https://ict-baden.de/produkte/lupe/">ict-baden.de</a> &nbsp;·&nbsp;
 <a href="https://ict-baden.de/impressum/">Impressum</a> &nbsp;·&nbsp;
-<a href="https://ict-baden.de/datenschutz/">Datenschutz</a>
+<a href="https://ict-baden.de/datenschutz/lupe/">Datenschutz</a>
 </sub>

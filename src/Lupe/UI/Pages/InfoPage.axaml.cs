@@ -28,8 +28,8 @@ public partial class InfoPage : UserControl, IPage
         var command = Lupe.Cli.CommandLine.CommandName;
         if (command.Contains(' ', StringComparison.Ordinal)) command = $"\"{command}\"";
         var folder = OperatingSystem.IsWindows() ? @"C:\Scans\" : "~/Scans/";
-        CommandExample.Text = $"{command} lesen {folder}{Strings.App_Cli_ExampleFile} --format QR_CODE";
-        CommandHelp.Text = string.Format(Strings.Page_Info_CommandHelp, $"{command} --hilfe");
+        CommandExample.Text = $"{command} {Strings.App_Cli_ReadKeyword} {folder}{Strings.App_Cli_ExampleFile} --format QR_CODE";
+        CommandHelp.Text = string.Format(Strings.Page_Info_CommandHelp, $"{command} {Strings.App_Cli_HelpKeyword}");
         if (OperatingSystem.IsWindows())
         {
             DataCard.Description = string.Format(Strings.Page_Info_DataText, "%LocalAppData%\\Lupe");

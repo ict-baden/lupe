@@ -90,28 +90,28 @@
 Usage:
   {3}
       start the user interface
-  {3} lesen &lt;image&gt; [&lt;image&gt; …] [--format &lt;format&gt;]
-  {3} --hintergrund
+  {3} read &lt;image&gt; [&lt;image&gt; …] [--format &lt;format&gt;]
+  {3} --background
       start in the notification area only (for autostart)
-  {3} --bildschirm
+  {3} --screen
       scan a screen region right away (if Lupe is already
       running, it scans) – for a custom keyboard shortcut
   {3} --demo
       user interface with demo camera and sample history
       (saves nothing, no global keyboard shortcut)
-  {3} --screenshots &lt;folder&gt; [--theme hell|dunkel|beide]
-  {3} --hilfe
+  {3} --screenshots &lt;folder&gt; [--theme light|dark|both]
+  {3} --help
   {3} --version
       version, for bug reports
   {3} --info
       version, licence, website, legal notice (Impressum),
       privacy and support
-English names work as well: read, --background, --screen, --help, --theme light|dark|both.
+German names work as well: lesen, --hintergrund, --bildschirm, --hilfe, --theme hell|dunkel|beide.
 
 Screen scan: {1} (default, can be changed in the settings) reads a region
 of the screen – from any program, as long as Lupe is running.
 
-"lesen" finds all codes in each image and writes one line per code:
+"read" finds all codes in each image and writes one line per code:
   FORMAT&lt;Tab&gt;content                    e.g. QR_CODE&lt;Tab&gt;https://example.org
 Control characters in the content are escaped: \n (line break), \r, \t (tab),
 others as \xHH – such as \x1D, the separator in GS1 codes. Line and paragraph
@@ -122,7 +122,7 @@ output stays easy to process further.
 {4} Wildcards are allowed in the file
 name, e.g. {5}.
 
-Options for "lesen":
+Options for "read":
   --format &lt;format&gt;   only look for these formats (repeat or separate with commas),
                       e.g. --format QR_CODE,EAN_13 (also short: qr, ean13).
                       Default: all.
@@ -135,13 +135,17 @@ Exit codes:
      if codes were found in other images
 
 Examples:
-  {3} lesen {7}
-  {3} lesen {5} --format QR_CODE &gt; codes.txt{6}</value>
-    <comment>{0} = version; {1} = default screen-scan shortcut; {2} = list of formats; {3} = command (Lupe.exe, lupe or the path in Lupe.app); {4} = App_Cli_Images* for this system; {5} = example path with wildcard; {6} = App_Cli_WindowsWait on Windows, else empty; {7} = App_Cli_ExampleFile. Command names and options (lesen, --format, --hilfe …) and hell|dunkel|beide are keywords, do not translate.</comment>
+  {3} read {7}
+  {3} read {5} --format QR_CODE &gt; codes.txt{6}</value>
+    <comment>{0} = version; {1} = default screen-scan shortcut; {2} = list of formats; {3} = command (Lupe.exe, lupe or the path in Lupe.app); {4} = App_Cli_Images* for this system; {5} = example path with wildcard; {6} = App_Cli_WindowsWait on Windows, else empty; {7} = App_Cli_ExampleFile. Command names and options (read, --format, --help …) and light|dark|both are keywords, do not translate. Both the English and the German keywords (lesen, --hilfe, hell|dunkel|beide) work in every language; the German text names the German ones.</comment>
   </data>
   <data name="App_Cli_HelpHint" xml:space="preserve">
-    <value>Help: {0} --hilfe</value>
+    <value>Help: {0} --help</value>
     <comment>{0} = command (Lupe.exe or lupe)</comment>
+  </data>
+  <data name="App_Cli_HelpKeyword" xml:space="preserve">
+    <value>--help</value>
+    <comment>Command-line keyword for the help in this language: only --help or --hilfe (both always work)</comment>
   </data>
   <data name="App_Cli_ImagesLinux" xml:space="preserve">
     <value>Images: PNG, JPEG, BMP, GIF, WebP and ICO (no TIFF).</value>
@@ -181,7 +185,7 @@ Support:               {8}</value>
     <comment>{0} = file</comment>
   </data>
   <data name="App_Cli_NoImage" xml:space="preserve">
-    <value>Please specify at least one image, e.g. {0} lesen {1}</value>
+    <value>Please specify at least one image, e.g. {0} read {1}</value>
     <comment>{0} = command (Lupe.exe or lupe); {1} = App_Cli_ExampleFile</comment>
   </data>
   <data name="App_Cli_NoMatch" xml:space="preserve">
@@ -190,6 +194,10 @@ Support:               {8}</value>
   <data name="App_Cli_ReadFailed" xml:space="preserve">
     <value>“{0}” could not be read: {1}</value>
     <comment>{0} = path, {1} = error message</comment>
+  </data>
+  <data name="App_Cli_ReadKeyword" xml:space="preserve">
+    <value>read</value>
+    <comment>Command-line keyword for reading images in this language: only read or lesen (both always work)</comment>
   </data>
   <data name="App_Cli_StandsAlone" xml:space="preserve">
     <value>“{0}” takes no further arguments: {1} {0}</value>
@@ -206,15 +214,15 @@ Support:               {8}</value>
     <value>Unknown option “{0}”.</value>
   </data>
   <data name="App_Cli_UsageScreenshots" xml:space="preserve">
-    <value>Usage: {0} --screenshots &lt;folder&gt; [--theme hell|dunkel|beide]</value>
-    <comment>{0} = command (Lupe.exe or lupe). hell|dunkel|beide are command-line keywords, do not translate</comment>
+    <value>Usage: {0} --screenshots &lt;folder&gt; [--theme light|dark|both]</value>
+    <comment>{0} = command (Lupe.exe or lupe). light|dark|both are command-line keywords, do not translate</comment>
   </data>
   <data name="App_Cli_WindowsWait" xml:space="preserve">
     <value>
 
 Lupe.exe is a GUI program; to make the command prompt wait for it to finish:
-  start /wait Lupe.exe lesen …        (cmd, output in the console)
-  Lupe.exe lesen … | Out-Default      (PowerShell)
+  start /wait Lupe.exe read …        (cmd, output in the console)
+  Lupe.exe read … | Out-Default      (PowerShell)
 With redirection (&gt; codes.txt), call it without "start" – "start" does not pass the
 redirection on to Lupe, the file would stay empty. In .cmd files cmd waits by itself.
 Redirected into a file from cmd, the output is UTF-8 with BOM.</value>
@@ -356,8 +364,8 @@ Redirected into a file from cmd, the output is UTF-8 with BOM.</value>
     <value>Under Wayland the window needs XWayland – turn it on in the desktop session (sway: “xwayland enable”).</value>
   </data>
   <data name="App_NoDisplay_Message" xml:space="preserve">
-    <value>Lupe cannot open a window: no X server ({0}). {1} Reading images also works without a window: lupe lesen &lt;file&gt;</value>
-    <comment>Linux without X server. {0} = App_NoDisplay_NotSet/Unreachable, {1} = App_NoDisplay_Hint* sentence. 'lupe lesen' is a command, keep.</comment>
+    <value>Lupe cannot open a window: no X server ({0}). {1} Reading images also works without a window: lupe read &lt;file&gt;</value>
+    <comment>Linux without X server. {0} = App_NoDisplay_NotSet/Unreachable, {1} = App_NoDisplay_Hint* sentence. 'lupe read' is a command, keep.</comment>
   </data>
   <data name="App_NoDisplay_NotSet" xml:space="preserve">
     <value>DISPLAY is not set</value>
@@ -1424,8 +1432,8 @@ Redirected into a file from cmd, the output is UTF-8 with BOM.</value>
     <value>The shortcut was unregistered.</value>
   </data>
   <data name="Linux_Hotkey_WaylandUnsupported" xml:space="preserve">
-    <value>This Wayland desktop does not allow programs to use global shortcuts (no GlobalShortcuts portal) – open Lupe via the tray icon or the menu, or create your own shortcut for “lupe --bildschirm” in the system settings.</value>
-    <comment>“lupe --bildschirm” is a command line, do not translate</comment>
+    <value>This Wayland desktop does not allow programs to use global shortcuts (no GlobalShortcuts portal) – open Lupe via the tray icon or the menu, or create your own shortcut for “lupe --screen” in the system settings.</value>
+    <comment>“lupe --screen” is a command line, do not translate</comment>
   </data>
   <data name="Linux_Image_Corrupt" xml:space="preserve">
     <value>“{0}” is damaged or not a supported image ({1}).</value>
@@ -2124,7 +2132,7 @@ Redirected into a file from cmd, the output is UTF-8 with BOM.</value>
   </data>
   <data name="Page_Info_CommandHelp" xml:space="preserve">
     <value>All commands and options: {0}</value>
-    <comment>{0} = help command, e.g. lupe --hilfe</comment>
+    <comment>{0} = help command, e.g. lupe --help (App_Cli_HelpKeyword)</comment>
   </data>
   <data name="Page_Info_CommandIntro" xml:space="preserve">
     <value>The same program also reads images without a window – one line “FORMAT⇥content” per code, for scripts and scheduled tasks:</value>

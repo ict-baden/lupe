@@ -73,7 +73,7 @@ glibc=$(find "$deb/opt/lupe" -type f \( -name '*.so' -o -name Lupe -o -name crea
     echo "Depends: libc6 (>= $glibc), libstdc++6, libgcc-s1 | libgcc1, libx11-6, libxtst6, libxrandr2, libxi6, libice6, libsm6, libfontconfig1, libicu78 | libicu76 | libicu74 | libicu72 | libicu71 | libicu70 | libicu67 | libicu66"
     echo "Section: utils"
     echo "Priority: optional"
-    echo "Homepage: https://github.com/ict-baden/lupe"
+    echo "Homepage: https://ict-baden.de/produkte/lupe/"
     echo "Description: QR and barcode reader"
     echo " Reads QR codes and barcodes from the webcam, a screen region, image files"
     echo " or the clipboard and copies, types or opens the content."
