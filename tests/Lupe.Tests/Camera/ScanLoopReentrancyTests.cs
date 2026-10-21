@@ -11,12 +11,16 @@ namespace Lupe.Tests.Camera;
 /// Synchrones Starten/Anhalten aus den Ereignissen der Schleife heraus (der schlimmste Fall für Verklemmungen), mit
 /// fernsteuerbarer Quelle und mit der Demo-Kamera. Vorher verklemmten sich ein synchroner Neustart aus Failed während
 /// des Starts und einer aus dem Frame-Ereignis (Aufräumer hielt die Sperre und wartete auf genau dieses Ereignis).
-/// Die Demo-Kamera taktet über den Thread-Pool, daher in der Sammlung „Echtzeit“ (siehe dort).
+/// Die Demo-Kamera taktet über den Thread-Pool, daher in der Sammlung „Echtzeit“ (siehe dort). Dort laufen die Tests
+/// allein, deshalb wirkt das Zeitlimit von xUnit: Eine Verklemmung – auch beim Aufräumen am Ende (<c>await using</c>) –
+/// lässt den Test scheitern, statt den Testlauf anzuhalten.
 /// </summary>
 [Collection(EchtzeitCollection.Name)]
 public sealed class ScanLoopReentrancyTests
 {
-    [Fact]
+    private const int TimeoutMs = 30_000;
+
+    [Fact(Timeout = TimeoutMs)]
     public async Task Synchroner_Neustart_aus_Failed_während_des_Starts_verklemmt_nicht()
     {
         var source = new ManualFrameSource { DuringStart = s => s.Fail("Kamera belegt") };
@@ -39,7 +43,43 @@ public sealed class ScanLoopReentrancyTests
         Assert.Equal(1, source.FrameSubscribers);
     }
 
-    [Fact]
+    [Fact(Timeout = TimeoutMs)]
+    public async Task Synchroner_Neustart_aus_Detected_während_StartAsync_noch_läuft_verklemmt_nicht()
+    {
+        // So hing der Demo-Kamera-Test unten einmal in der Windows-CI (beide Testziele, je 4 min): Der erste Treffer kam,
+        // bevor StartAsync fertig war, und sein Ereignis hielt die Schleife an und startete sie synchron neu. StartAsync
+        // räumte danach auf und wartete dabei unter der Sperre auf die Erkennung – deren Ereignis wartete auf die Sperre.
+        using var stopped = new ManualResetEventSlim();
+        var source = new ManualFrameSource();
+        source.DuringStart = s =>
+        {
+            s.DuringStart = null;
+            s.Push(Marker(1));
+            stopped.Wait(5000); // bis das Ereignis angehalten hat: StartAsync ist dann noch nicht zurück
+        };
+        await using var loop = new ScanLoop(source, _ => [Code("A")], repeatSuppressMs: 0);
+        int detected = 0;
+        loop.Detected += (_, _) =>
+        {
+            if (Interlocked.Increment(ref detected) != 1) return;
+            loop.StopAsync().Wait();
+            stopped.Set();
+            loop.StartAsync().Wait();
+        };
+
+        await WithTimeout(Task.Run(() => loop.StartAsync()), 5000, "Start, während der erste Treffer synchron neu startet");
+        Assert.True(await WaitUntil(() => loop.IsRunning && source.StartCount == 2, 5000), "kein Neustart");
+        // Die erste Erkennung endet erst, wenn ihr Ereignis zurück ist – bis dahin werden Bilder nur angezeigt
+        Assert.True(await WaitUntil(() =>
+        {
+            source.Push(Marker(2));
+            return Volatile.Read(ref detected) >= 2;
+        }, 5000), "nach dem Neustart keine Treffer");
+        Assert.Equal(1, source.FrameSubscribers);
+        await WithTimeout(loop.StopAsync(), 5000, "Stopp");
+    }
+
+    [Fact(Timeout = TimeoutMs)]
     public async Task Ausfall_auf_anderem_Thread_während_des_Starts_wird_nach_dem_Aufräumen_gemeldet()
     {
         // Die Quelle meldet den Ausfall während StartAsync von einem anderen Thread (wie Media Foundation)
@@ -61,7 +101,7 @@ public sealed class ScanLoopReentrancyTests
         Assert.False(loop.IsRunning);
     }
 
-    [Fact]
+    [Fact(Timeout = TimeoutMs)]
     public async Task Synchroner_Neustart_aus_Failed_bei_Ausfall_der_Demo_Kamera()
     {
         await using var source = new FakeFrameSource([Marker(1)], framesPerSecond: 100);
@@ -88,7 +128,7 @@ public sealed class ScanLoopReentrancyTests
         await WithTimeout(loop.StopAsync(), 5000, "Stopp");
     }
 
-    [Fact]
+    [Fact(Timeout = TimeoutMs)]
     public async Task Synchroner_Neustart_aus_dem_Frame_Ereignis_mit_Demo_Kamera_verklemmt_nicht()
     {
         for (int round = 0; round < 5; round++)
@@ -114,7 +154,7 @@ public sealed class ScanLoopReentrancyTests
         }
     }
 
-    [Fact]
+    [Fact(Timeout = TimeoutMs)]
     public async Task Synchroner_Neustart_aus_Detected_mit_Demo_Kamera_verklemmt_nicht()
     {
         await using var source = new FakeFrameSource([Marker(1)], framesPerSecond: 100);
