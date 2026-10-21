@@ -4,7 +4,9 @@ Alle wichtigen Änderungen an Lupe. Format nach [Keep a Changelog](https://keepa
 
 ## [Unveröffentlicht]
 
-Bisher nur Builds im Release „latest“ (`0.1.0-ci.N`), noch keine Version mit Tag.
+## [0.1.0] – 2026-10-21
+
+Erste Version mit Tag. Davor gab es nur Builds im Release „latest“ (`0.1.0-ci.N`).
 
 ### Neu
 - Codes lesen per Webcam, Bildschirmausschnitt (Win+Umschalt+Q, auf dem Mac ⌘⌥Q), Bilddatei und Zwischenablage, Erkennung mit zxing-cpp.
@@ -23,7 +25,10 @@ Bisher nur Builds im Release „latest“ (`0.1.0-ci.N`), noch keine Version mit
 - Paketangaben standardmäßig Englisch: Menüeintrag unter Linux (mit de, es, fr, zh_CN), Beschreibung des `.deb`, `README.txt` neben `LIESMICH.txt` im tar.gz; die Kamera-Abfrage von macOS in allen fünf Sprachen; `CFBundleVersion` nur noch Zahlen.
 - CI prüft jede mitgelieferte native Bibliothek (glibc, macOS-Mindestversion, VC++-Laufzeit) und liest mit jedem Paket einen Code, unter Linux auch auf Ubuntu 20.04/22.04 und Debian 12, unter Windows auch nach einer MSI-Installation.
 - macOS: Signatur mit Developer ID und Notarisierung sind vorbereitet; sie laufen, sobald die Zugangsdaten in den Secrets stehen.
-- Kamera: Beim Eintippen werden Zeilenumbrüche in einem Code als Leerzeichen getippt – ein Code vor der Kamera kann im Programm vorn kein Enter mehr drücken. Die eingestellte Taste nach dem Tippen kommt weiter.
+- Eintippen: Zeilenumbrüche in einem Code werden aus jeder Quelle (Kamera, Bildschirm-Scan, Datei) als Leerzeichen getippt – ein Code vor der Kamera oder auf einer Webseite kann im Programm vorn kein Enter mehr drücken. Die eingestellte Taste nach dem Tippen kommt weiter.
+- Eintippen: Kommt beim Tippen ein anderes Fenster nach vorn, bricht Lupe ab und meldet es, statt den Rest dort einzutippen.
+- Sprachauswahl: Spanisch, Französisch und Chinesisch sind als „maschinell übersetzt“ gekennzeichnet.
+- Release-Text englisch; Doku und Screenshots zeigen die englische Oberfläche (deutsche Screenshots unter `docs/assets/screenshots/de`). Impressum unter https://ict-baden.de/impressum/, Support- und Sicherheitskontakt über die Kontaktseite.
 - Linux und macOS: Einstellungen und Verlauf nur noch für den eigenen Benutzer lesbar (Ordner 0700, Dateien 0600). Ein CSV-Export folgt weiter der umask; eine überschriebene Datei behält ihre Rechte.
 - Befehlszeile: auch C1-Steuerzeichen (`\xHH`), Zeilentrenner U+2028/U+2029 und Zeichen zur Schreibrichtung (`\uXXXX`) werden maskiert; `--hilfe` beschreibt das.
 - Linux: Als Mindestversion nennt die Doku jetzt glibc 2.31 (Ubuntu 20.04, Debian 11) – die Grenze, die CI für jede Bibliothek prüft und testet; das `.deb` braucht ICU 66 oder neuer.

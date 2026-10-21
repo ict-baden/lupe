@@ -10,20 +10,20 @@ What happens between a picture and a result: how Lupe gets images from the camer
 
 ```mermaid
 flowchart LR
-    K["Kamera<br>webcam frames"] --> L["Live search<br>whole picture only"]
-    B["Bildschirm<br>still image, rectangle"] --> T["Thorough search<br>two stages"]
-    D["Datei / Zwischenablage<br>image file, PNG, bitmap"] --> T
-    C["Befehlszeile<br>lesen"] --> TC["Thorough search<br>two stages"]
+    K["Camera<br>webcam frames"] --> L["Live search<br>whole picture only"]
+    B["Screen<br>still image, rectangle"] --> T["Thorough search<br>two stages"]
+    D["File / Clipboard<br>image file, PNG, bitmap"] --> T
+    C["Command line<br>lesen"] --> TC["Thorough search<br>two stages"]
     L --> R["Repeat suppression"]
     R --> H["Hit: beep,<br>history, actions"]
     T --> H
     TC --> O["stdout<br>FORMAT⇥content"]
-    H --> A["Kopieren"]
-    H --> E["Eintippen<br>screen scan, camera"]
-    H --> N["Link öffnen<br>if a rule matches"]
+    H --> A["Copy"]
+    H --> E["Type<br>screen scan, camera"]
+    H --> N["Open link<br>if a rule matches"]
 ```
 
-Every source ends up as the same thing – a picture of 32-bit pixels – and goes through the same decoder ([zxing-cpp](https://github.com/zxing-cpp/zxing-cpp) 3.1.1 with Lupe's own search around it). The camera uses a lighter variant of it. For a hit in the app, Lupe beeps (*Ton bei Treffer*), adds every code to the history and runs the actions for one code – the only one, or the one you choose after a screen scan – in a fixed order: copy, type, open the link last, because the browser takes the focus. The command line only prints.
+Every source ends up as the same thing – a picture of 32-bit pixels – and goes through the same decoder ([zxing-cpp](https://github.com/zxing-cpp/zxing-cpp) 3.1.1 with Lupe's own search around it). The camera uses a lighter variant of it. For a hit in the app, Lupe beeps (*Sound on detection*), adds every code to the history and runs the actions for one code – the only one, or the one you choose after a screen scan – in a fixed order: copy, type, open the link last, because the browser takes the focus. The command line only prints.
 
 ## Decoding
 
@@ -79,36 +79,36 @@ Barcode readers sometimes “find” a valid-looking code in noise, text or a sl
 
 Files and clipboard images are loaded through `Windows.Graphics.Imaging`:
 
-- **Formats:** PNG, JPEG, BMP, GIF, TIFF, ICO and JPEG XR are always there. WebP, HEIC/HEIF, AVIF and JPEG XL need the matching image extension from the Microsoft Store; without it Lupe names the missing codec (*Für WEBP fehlt Windows der passende Codec …*). The open dialog offers what Windows can decode on this PC.
+- **Formats:** PNG, JPEG, BMP, GIF, TIFF, ICO and JPEG XR are always there. WebP, HEIC/HEIF, AVIF and JPEG XL need the matching image extension from the Microsoft Store; without it Lupe names the missing codec (*… Windows lacks the codec for WEBP …*). The open dialog offers what Windows can decode on this PC.
 - **Orientation and colour:** the EXIF rotation of photos is applied, colours are converted to sRGB (without colour management if a profile is broken).
 - **Transparency** is flattened onto white, so a black code on a transparent PNG stays readable.
 - **Several frames:** GIF and TIFF – the first; ICO – the largest.
-- **Incomplete files:** Windows reads a truncated PNG, JPEG or GIF without complaint and fills the rest grey or white – Lupe would then report “no code” for a broken file. Lupe checks the structure first (PNG up to its end block, JPEG up to its end marker across all scans, GIF up to the end of the first image) and reports *… ist unvollständig – die Datei endet mitten im Bild (abgebrochener Download oder Kopiervorgang?)*.
+- **Incomplete files:** Windows reads a truncated PNG, JPEG or GIF without complaint and fills the rest grey or white – Lupe would then report “no code” for a broken file. Lupe checks the structure first (PNG up to its end block, JPEG up to its end marker across all scans, GIF up to the end of the first image) and reports *… is incomplete – the file ends in the middle of the image (interrupted download or copy?).*
 - **Size limit:** pictures above **40 megapixels** are reduced to 40 megapixels while loading (about 160 MB in memory) instead of failing.
 - **Clipboard:** an image file copied in Explorer is read as a file; otherwise the PNG data that browsers, Office and the Snipping Tool put on the clipboard (lossless, with transparency); otherwise the clipboard bitmap.
 
 ## Screen capture
 
 1. **Get out of the way.** Lupe hides its own window – without the fade animation, which would otherwise end up half-transparent in the still image – and closes an open result notification. It waits until Windows has really removed them from the screen.
-2. **Capture.** One still image of the whole virtual desktop – all monitors – is copied with GDI (`BitBlt` with `CAPTUREBLT`). All coordinates are **physical pixels**: the capturing thread switches to per-monitor DPI awareness (v2), regardless of scaling, so nothing is blurred or shifted on monitors with 125 %, 150 % or mixed scaling. Areas outside all monitors stay black. If Windows refuses the capture – locked desktop, sign-in screen, no visible session – Lupe stops here and says why (*Bildschirm-Scan nicht möglich*).
+2. **Capture.** One still image of the whole virtual desktop – all monitors – is copied with GDI (`BitBlt` with `CAPTUREBLT`). All coordinates are **physical pixels**: the capturing thread switches to per-monitor DPI awareness (v2), regardless of scaling, so nothing is blurred or shifted on monitors with 125 %, 150 % or mixed scaling. Areas outside all monitors stay black. If Windows refuses the capture – locked desktop, sign-in screen, no visible session – Lupe stops here and says why (*Screen scan not possible*).
 3. **Select.** The overlay is a single window across the virtual desktop, placed in physical pixels; its content is scaled so that every pixel of the still image lies exactly on its screen pixel, also with different scaling per monitor. A click without dragging (less than 4 pixels of movement) selects the monitor under the pointer.
 4. **Search** the selected part of the still image – not the live screen – with the thorough search.
 5. **Report** in the result notification at the bottom right of the monitor where the rectangle was – or in the message bar of the Lupe window, if a Lupe window was in front when the scan started (the button, the notification-area menu, or the shortcut pressed inside Lupe) and the main window is open and not minimised.
 
 ## Typing
 
-*Eintippen* sends the content as keyboard input (`SendInput`) to the window that was in front before the scan:
+*Type* sends the content as keyboard input (`SendInput`) to the window that was in front before the scan:
 
 - **Unicode, layout-independent.** Every character goes out as a Unicode keystroke, not as a key of the current keyboard layout – umlauts, `€`, `@` and emoji arrive as they are, also with a US layout. Characters outside the basic plane (emoji) are sent as one surrogate pair.
 - **Line breaks and tabs.** Line breaks in a code (`\r\n`, `\n`, `\r`, U+0085, U+2028, U+2029) are typed as spaces, from every source: the camera types into whatever program is in front, also unattended, and a QR code on a web page caught by the screen scan is no more trustworthy – a code must not be able to press <kbd>Enter</kbd> there (for example run a command in a terminal). Tabs become the <kbd>Tab</kbd> key. **Other control characters cannot be typed and are dropped** – for example the group separator (GS, `0x1D`) in GS1 codes.
 - **Wait until the keys are released.** Before typing, Lupe waits until no key is pressed any more – otherwise “a” with a still-held <kbd>Ctrl</kbd> from the shortcut would become <kbd>Ctrl</kbd>+<kbd>A</kbd>. Modifier keys still held after 1.5 seconds are released artificially for the typing; for <kbd>Alt</kbd> and <kbd>Win</kbd> an unused key is pressed first so that releasing them does not open a menu or the Start menu.
-- **One character at a time.** By default every character goes out on its own, with a pause of 20 ms (*Tempo beim Eintippen*), like a hand scanner. Notepad on Windows 11 – and other programs that process keyboard input late – read the character of a Unicode key press only when they get to it; with characters arriving faster than that, they only see the last one sent (*Wikipédia,eeeeee…*). Measured in Notepad: up to 8 ms per character faulty, from about 16 ms reliable. The pause is timed with a high-resolution timer, because ordinary waits are rounded up to 15.6 ms steps. With *Sofort* (immediately) the text goes out in packets of about 200 characters, which most programs handle, but Notepad does not. Two typing jobs never interleave.
-- **Activate first, then type.** Lupe brings the previous window to the front and types only once it really is in front. If it no longer exists or cannot be activated, nothing is typed (*Das Fenster von vorher ließ sich nicht aktivieren – nichts eingetippt.*).
-- **Elevated windows.** If the window in front runs with a higher integrity level than Lupe (as administrator), Windows silently discards the input (User Interface Privilege Isolation) – `SendInput` would even report success. Lupe compares the integrity levels beforehand, types nothing and reports it (*Eintippen nicht möglich – das Fenster im Vordergrund läuft mit höheren Rechten als Lupe (z. B. als Administrator) …*); the result does not count as typed.
-- **Window changes while typing.** Before every packet (with a pause per character: before every character) Lupe checks that the target window is still in front. If another window came to the front, it stops and reports it (*Eintippen abgebrochen – ein anderes Fenster ist nach vorn gekommen.*) instead of typing the rest there.
-- **Partial input.** If Windows stops accepting input midway, Lupe releases any key it left pressed, stops and reports it (*Eintippen wurde unterbrochen – der Text kam nur teilweise an.*).
+- **One character at a time.** By default every character goes out on its own, with a pause of 20 ms (*Typing speed*), like a hand scanner. Notepad on Windows 11 – and other programs that process keyboard input late – read the character of a Unicode key press only when they get to it; with characters arriving faster than that, they only see the last one sent (*Wikipédia,eeeeee…*). Measured in Notepad: up to 8 ms per character faulty, from about 16 ms reliable. The pause is timed with a high-resolution timer, because ordinary waits are rounded up to 15.6 ms steps. With *Instant* the text goes out in packets of about 200 characters, which most programs handle, but Notepad does not. Two typing jobs never interleave.
+- **Activate first, then type.** Lupe brings the previous window to the front and types only once it really is in front. If it no longer exists or cannot be activated, nothing is typed (*Could not activate the previous window – nothing was typed.*).
+- **Elevated windows.** If the window in front runs with a higher integrity level than Lupe (as administrator), Windows silently discards the input (User Interface Privilege Isolation) – `SendInput` would even report success. Lupe compares the integrity levels beforehand, types nothing and reports it (*Cannot type – the window in the foreground runs with higher privileges than Lupe (e.g. as administrator) …*); the result does not count as typed.
+- **Window changes while typing.** Before every packet (with a pause per character: before every character) Lupe checks that the target window is still in front. If another window came to the front, it stops and reports it (*Typing stopped – another window came to the front.*) instead of typing the rest there.
+- **Partial input.** If Windows stops accepting input midway, Lupe releases any key it left pressed, stops and reports it (*Typing was interrupted – only part of the text arrived.*).
 
-Afterwards, the key from *Nach dem Eintippen* (<kbd>Enter</kbd> or <kbd>Tab</kbd>) is sent.
+Afterwards, the key from *After typing* (<kbd>Enter</kbd> or <kbd>Tab</kbd>) is sent.
 
 ## Global shortcut
 

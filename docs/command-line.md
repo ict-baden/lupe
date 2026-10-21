@@ -21,8 +21,8 @@ Lupe.exe --hilfe                      help (also --help, -h, -?, /?, /h, hilfe)
 English names work as well: `read` for `lesen`, `--help`, `--background` for `--hintergrund`, `--screen` for `--bildschirm`, and the theme values `light`, `dark`, `both` for `hell`, `dunkel`, `beide`. `--version` prints the version (for bug reports), `--info` the version, licence, website, legal notice (Impressum), privacy and support links. Commands and options are not case-sensitive. An unknown command or option ends with an error message and exit code 3, for example:
 
 ```text
-Fehler: Unbekannter Befehl „frobnicate“.
-Hilfe: Lupe.exe --hilfe
+Error: Unknown command “frobnicate”.
+Help: Lupe.exe --hilfe
 ```
 
 The command line works on its own: it does not need a running Lupe, does not touch the settings or the history, and runs no actions – nothing is copied, typed or opened.
@@ -35,22 +35,22 @@ Lupe.exe lesen C:\Scans\*.jpg D:\Eingang\lieferschein.png
 Lupe.exe lesen C:\Scans\*.png --format QR_CODE,EAN_13
 ```
 
-**Images.** Any number of files. Each is read like on the page *Datei*: PNG, JPEG, BMP, GIF, TIFF, ICO, JPEG XR and, with the matching Windows extension, WebP, HEIC/HEIF, AVIF and JPEG XL – see [How it works › Image files](how-it-works.md#image-files).
+**Images.** Any number of files. Each is read like on the page *File*: PNG, JPEG, BMP, GIF, TIFF, ICO, JPEG XR and, with the matching Windows extension, WebP, HEIC/HEIF, AVIF and JPEG XL – see [How it works › Image files](how-it-works.md#image-files).
 
 - **Wildcards** `*` and `?` are allowed in the file name, not in folder names: `C:\Scans\*.jpg`. The folder is not searched recursively; matching files are read in alphabetical order.
 - **Environment variables** such as `%USERPROFILE%\Scans\*.png` are expanded by Lupe itself, so they also work in PowerShell.
-- **A folder** is not accepted – give a pattern instead: *„C:\Scans“ ist ein Ordner – bitte Bilder angeben, z. B. C:\Scans\\\*.png*.
+- **A folder** is not accepted – give a pattern instead: *“C:\Scans” is a folder – please specify images, e.g. C:\Scans\\\*.png*.
 
 **`--format <format>`** – search only these formats. Several can be given with commas, semicolons or by repeating the option; `--format=QR_CODE` works as well. Upper/lower case, hyphens and underscores do not matter (`qr-code`, `EAN13`); `qr`, `microqr` and `rmqr` stand for `QR_CODE`, `MICRO_QR_CODE` and `RMQR_CODE`. The names are the ones in the [format table](../README.md#supported-formats). An unknown name stops the call before any image is read:
 
 ```text
-Fehler: Unbekanntes Format „foo“. Möglich: QR_CODE, DATA_MATRIX, AZTEC, PDF_417, … TELEPEN, DX_FILM_EDGE.
-Hilfe: Lupe.exe --hilfe
+Error: Unknown format “foo”. Possible: QR_CODE, DATA_MATRIX, AZTEC, PDF_417, … TELEPEN, DX_FILM_EDGE.
+Help: Lupe.exe --hilfe
 ```
 
 Without `--format`, all formats are searched. The format selection in the app's settings does not apply here.
 
-**Search.** Every image gets the thorough search of the app – stage 2 if stage 1 finds nothing, on all cores ([details](how-it-works.md#decoding)). <kbd>Ctrl</kbd>+<kbd>C</kbd> cancels cleanly with *Abgebrochen.* and exit code 3.
+**Search.** Every image gets the thorough search of the app – stage 2 if stage 1 finds nothing, on all cores ([details](how-it-works.md#decoding)). <kbd>Ctrl</kbd>+<kbd>C</kbd> cancels cleanly with *Cancelled.* and exit code 3.
 
 ## Output
 
@@ -74,14 +74,14 @@ On stderr, one line each:
 
 | Message | Meaning |
 |---|---|
-| *Kein Code gefunden: …* | The image was read, but contains no code (a hint, not an error). |
-| *Datei nicht gefunden: …* | The file does not exist. |
-| *Keine Datei passt zu „…“.* | A wildcard pattern matched nothing. |
-| *Ordner nicht gefunden: …* | The folder of a pattern does not exist. |
-| *„…“ ist ein Ordner – bitte Bilder angeben, z. B. …* | A folder was given instead of images. |
-| *„…“ ließ sich nicht lesen: …* | The file could not be read as an image – the reason follows, e.g. incomplete, missing codec, locked by another program. |
-| *Fehler: …* followed by *Hilfe: Lupe.exe --hilfe* | Wrong call: unknown command, option or format, or no image given. |
-| *Abgebrochen.* | Cancelled with <kbd>Ctrl</kbd>+<kbd>C</kbd>. |
+| *No code found: …* | The image was read, but contains no code (a hint, not an error). |
+| *File not found: …* | The file does not exist. |
+| *No file matches “…”.* | A wildcard pattern matched nothing. |
+| *Folder not found: …* | The folder of a pattern does not exist. |
+| *“…” is a folder – please specify images, e.g. …* | A folder was given instead of images. |
+| *“…” could not be read: …* | The file could not be read as an image – the reason follows, e.g. incomplete, missing codec, locked by another program. |
+| *Error: …* followed by *Help: Lupe.exe --hilfe* | Wrong call: unknown command, option or format, or no image given. |
+| *Cancelled.* | Cancelled with <kbd>Ctrl</kbd>+<kbd>C</kbd>. |
 | *LUP-0001: …* | The recognition library (zxing-cpp) cannot be loaded on this system – Lupe stops at once instead of reporting *no code found* for every image. See [Error codes](error-codes.md#lup-0001). |
 
 | Exit code | Meaning |
@@ -169,7 +169,7 @@ Each of these stands alone; combined with anything else, Lupe answers with an er
 
 | Switch | Does |
 |---|---|
-| `--hintergrund` | Starts Lupe in the notification area without a window – used by *Mit Windows starten*. If Lupe already runs, it ends without doing anything. If there is no notification area, the window opens anyway. |
+| `--hintergrund` | Starts Lupe in the notification area without a window – used by *Start with Windows*. If Lupe already runs, it ends without doing anything. If there is no notification area, the window opens anyway. |
 | `--bildschirm` | Starts a screen scan straight away. If Lupe already runs, that Lupe scans and the new start ends. Meant for a shortcut set up in the desktop's own settings where programs may not register global shortcuts (Wayland without the GlobalShortcuts portal, e.g. sway: `bindsym $mod+Shift+q exec lupe --bildschirm`). After the scan Lupe stays in the notification area (or opens its window if there is none). |
 | `--demo` | Opens the window with a demo camera, a sample history and sample settings. Nothing is saved, no global shortcut is registered, there is no notification-area icon, and the demo ends with its window. It can run next to a normal Lupe. |
 | `--screenshots <folder>` | Renders every page of the demo, the selection overlay and the result notification as PNG files into the folder – light, dark or both (default; choose with `--theme hell\|dunkel\|beide`). Used for this documentation; works without a visible desktop. Exit code 0, or 3 on errors. |

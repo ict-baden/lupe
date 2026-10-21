@@ -10,21 +10,21 @@ What Lupe looks at, what it keeps where, and how to get rid of it. In short: pic
 
 | Source | When | Kept |
 |---|---|---|
-| Camera | only while the page *Kamera* is visible and the camera is started | frames in memory only, never saved |
-| Screen | only after the shortcut, the button or the menu entry *Ausschnitt scannen* | one still image of all monitors in memory, discarded after the scan; only the rectangle you draw is searched |
+| Camera | only while the page *Camera* is visible and the camera is started | frames in memory only, never saved |
+| Screen | only after the shortcut, the button or the menu entry *Scan region* | one still image of all monitors in memory, discarded after the scan; only the rectangle you draw is searched |
 | Image files | files you open, drop or pass to `lesen` | read only, never modified |
-| Clipboard | only when you click *Aus Zwischenablage* or press <kbd>Ctrl</kbd>+<kbd>V</kbd> in Lupe | read only |
+| Clipboard | only when you click *From clipboard* or press <kbd>Ctrl</kbd>+<kbd>V</kbd> in Lupe | read only |
 
 Lupe **never keeps a picture** – no camera frame, no screenshot, no copy of a file. On Windows and X11 the screenshot never touches the disk. On **macOS** and under **Wayland** the system hands the screenshot over as a PNG file (macOS: `screencapture` into the user's temporary folder; Wayland: the desktop portal, often in `~/Pictures`), which Lupe reads and deletes right away. (The developer switch `--screenshots` writes images of the built-in demo, not of your screen.)
 
 ## What is stored where
 
-Everything lives **per user** in `%LocalAppData%\Lupe` – usually `C:\Users\<name>\AppData\Local\Lupe`. The folder inherits the permissions of your profile: you, *SYSTEM* and the administrators of the PC. *Info › Ihre Daten › Ordner öffnen* opens it.
+Everything lives **per user** in `%LocalAppData%\Lupe` – usually `C:\Users\<name>\AppData\Local\Lupe`. The folder inherits the permissions of your profile: you, *SYSTEM* and the administrators of the PC. *About › Your data › Open folder* opens it.
 
 | File | Content |
 |---|---|
 | `einstellungen.json` | the settings, including your link rules and the identifier of the chosen camera – see [Settings › The settings file](settings.md#the-settings-file) |
-| `verlauf.json` | the history, if *Verlauf speichern* is on – see below |
+| `verlauf.json` | the history, if *Save history* is on – see below |
 | `einstellungen.json.defekt-YYYYMMDD-hhmmss` | only if a broken settings file had to be replaced – the unchanged old file |
 | `*.tmp` | for a moment while a file is written atomically; removed afterwards |
 
@@ -53,17 +53,17 @@ Each Windows user has their own settings and history. The demo (`--demo`) saves 
 
 It does **not** contain pictures, file names, window titles or the name of the program you typed into.
 
-- **Size:** at most *Höchstens … Einträge* entries (default 1,000, up to 10,000); older ones drop out.
+- **Size:** as set under *At most … entries* (default 1,000, up to 10,000); older ones drop out.
 - **Writing:** after every change the whole file is written anew – to a temporary file, flushed to disk, then swapped in. A crash or a full disk never leaves half a file.
-- **Switched off** (*Verlauf speichern*): after a confirmation the file is **deleted**, because scanned contents can be confidential. The entries stay visible until Lupe quits. If the file is locked at that moment, Lupe says so and tries again at the next start; until then, delete it by hand.
-- **Deleting entries:** single entries with *Löschen* or <kbd>Del</kbd> on the page *Verlauf*, all of them with *Alles löschen*. The file is rewritten immediately.
+- **Switched off** (*Save history*): after a confirmation the file is **deleted**, because scanned contents can be confidential. The entries stay visible until Lupe quits. If the file is locked at that moment, Lupe says so and tries again at the next start; until then, delete it by hand.
+- **Deleting entries:** single entries with *Delete* or <kbd>Del</kbd> on the page *History*, all of them with *Delete all*. The file is rewritten immediately.
 - **Broken file** (not valid JSON): the history starts empty and Lupe says so. The file stays untouched until the next code is added – **then it is replaced**, without a backup. Single unreadable entries are skipped; the others are kept.
 - **Locked file** (another program, no permission): Lupe does not overwrite it. At the next change it reads it again and merges.
 - **Cannot be saved** (disk full): the entries stay in memory until Lupe quits, and a warning says why.
 
 ## CSV export
 
-*Verlauf › Als CSV exportieren …* writes the whole history – independent of the search box – as a CSV file the way Excel in German-speaking countries expects it: UTF-8 with byte order mark, semicolons, Windows line ends.
+*History › Export as CSV …* writes the whole history – independent of the search box – as a CSV file the way Excel in German-speaking countries expects it – with German column names and source names, whatever the language of the interface: UTF-8 with byte order mark, semicolons, Windows line ends.
 
 ```text
 Zeit;Format;Quelle;Inhalt
@@ -75,7 +75,7 @@ Zeit;Format;Quelle;Inhalt
 |---|---|
 | `Zeit` | local time, `dd.MM.yyyy HH:mm:ss` |
 | `Format` | the format name as in `--format`, e.g. `QR_CODE` |
-| `Quelle` | *Kamera*, *Bildschirm*, *Datei* or *Zwischenablage* |
+| `Quelle` | `Kamera`, `Bildschirm`, `Datei` or `Zwischenablage` |
 | `Inhalt` | the content |
 
 What was done with a code (*ActionsDone*) is not exported.
@@ -84,9 +84,9 @@ What was done with a code (*ActionsDone*) is not exported.
 
 ## Clipboard and typing
 
-- ***Kopieren*** puts the content on the Windows clipboard, where it stays after Lupe quits until something else is copied. If Windows' clipboard history (<kbd>Win</kbd>+<kbd>V</kbd>) or clipboard sync across devices is switched on, Windows keeps or syncs it like any other copied text – that is a Windows setting, not Lupe's.
-- ***Eintippen*** types the content into another program. Whatever that program does with typed text – save it, send it – happens there.
-- ***Link öffnen*** passes the link to your default browser; from then on the browser's privacy rules apply.
+- ***Copy*** puts the content on the Windows clipboard, where it stays after Lupe quits until something else is copied. If Windows' clipboard history (<kbd>Win</kbd>+<kbd>V</kbd>) or clipboard sync across devices is switched on, Windows keeps or syncs it like any other copied text – that is a Windows setting, not Lupe's.
+- ***Type*** types the content into another program. Whatever that program does with typed text – save it, send it – happens there.
+- ***Open link*** passes the link to your default browser; from then on the browser's privacy rules apply.
 
 ## Registry
 
@@ -94,19 +94,19 @@ Lupe reads and writes very little:
 
 | Key | Access | Why |
 |---|---|---|
-| `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, value `Lupe` | read on the settings page; written only when you switch *Mit Windows starten* on or off | autostart for your user |
+| `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`, value `Lupe` | read on the settings page; written only when you switch *Start with Windows* on or off | autostart for your user |
 | `HKCU\…\CurrentVersion\Themes\Personalize`, value `AppsUseLightTheme` | read | to follow the Windows light/dark setting |
 | `…\CapabilityAccessManager\ConsentStore\webcam` (HKLM and HKCU) and the camera policies under `HKLM\SOFTWARE\Policies\Microsoft` | read, only when the camera is refused | to name the Windows switch that blocks the camera |
 | `HKLM\SOFTWARE\ICT-Baden\Lupe` | written by the MSI | marker for the Start menu shortcut |
 
 ## Network connections
 
-**None.** Lupe contains no network code: no telemetry, no update check, no licence check, no cloud decoding. The only things that reach the internet are links you open – automatically through a link rule with *Link öffnen* ticked, or by clicking *Link öffnen*, *Im Browser öffnen* or *Ansehen* – and those are opened by your browser, not by Lupe.
+**None.** Lupe contains no network code: no telemetry, no update check, no licence check, no cloud decoding. The only things that reach the internet are links you open – automatically through a link rule with *Open link* ticked, or by clicking *Open link* or *Open in browser* – and those are opened by your browser, not by Lupe.
 
 ## Removing everything
 
-1. Switch off *Einstellungen › Mit Windows starten* (removes the autostart entry).
-2. Quit Lupe: notification-area icon › *Beenden*.
+1. Switch off *Settings › Start with Windows* (removes the autostart entry).
+2. Quit Lupe: notification-area icon › *Quit*.
 3. Delete `%LocalAppData%\Lupe` – settings and history.
 4. Uninstall the MSI, or delete `Lupe.exe`.
 
