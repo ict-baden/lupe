@@ -77,7 +77,7 @@ jobs:
 
       - name: Zwischenspeicher
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: zxing
           key: zxing-${{ matrix.name }}-${{ hashFiles('packaging/zxing/build.sh', 'packaging/zxing/versions.env') }}
@@ -127,7 +127,7 @@ jobs:
 
       - name: Zwischenspeicher
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: zxing
           key: zxing-${{ matrix.name }}-${{ hashFiles('packaging/zxing/build.sh', 'packaging/zxing/versions.env') }}
@@ -177,7 +177,7 @@ jobs:
 
       - name: Zwischenspeicher
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: zxing
           key: zxing-${{ matrix.name }}-${{ hashFiles('packaging/zxing/build.sh', 'packaging/zxing/versions.env') }}
