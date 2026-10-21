@@ -432,6 +432,13 @@ jobs:
           $now = @(Related)
           if ($now.Count -ne 1) { throw "Nach der Installation des neuen MSI: $($now.Count) Lupe-Produkte statt einem – die alte Version wurde nicht ersetzt" }
           if ($old -and $now[0] -eq $old[0]) { throw "Das neue MSI hat $previous nicht ersetzt ($($now[0]))" }
+          # Die Dateien sind die neuen, nicht die der alten Version (Lupe.exe meldet ihre Version)
+          $p = Start-Process "$env:ProgramFiles\Lupe\Lupe.exe" -ArgumentList '--version' -RedirectStandardOutput installed-version.txt -Wait -PassThru -NoNewWindow
+          $installedVersion = (Get-Content installed-version.txt -Raw).Trim()
+          Write-Host "Installiert: $installedVersion"
+          if ($p.ExitCode -ne 0 -or $installedVersion -notmatch [regex]::Escape(' ${{ needs.version.outputs.version }} ')) {
+            throw "Lupe.exe nach dem Update meldet nicht ${{ needs.version.outputs.version }}: $installedVersion"
+          }
           # Git Bash ausdrücklich: „bash“ allein kann unter Windows die WSL-Bash sein
           & "$env:ProgramFiles\Git\bin\bash.exe" packaging/smoke.sh "$env:ProgramFiles\Lupe\Lupe.exe"
           if ($LASTEXITCODE -ne 0) { throw 'Rauchtest der installierten Lupe fehlgeschlagen' }
