@@ -33,7 +33,7 @@ jobs:
       msi: ${{ steps.version.outputs.msi }}
       suffix: ${{ steps.version.outputs.suffix }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Version bestimmen
         id: version
@@ -73,11 +73,11 @@ jobs:
           - { name: linux-arm64, os: ubuntu-24.04-arm, rids: linux-arm64 }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Zwischenspeicher
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: zxing
           key: zxing-${{ matrix.name }}-${{ hashFiles('packaging/zxing/build.sh', 'packaging/zxing/versions.env') }}
@@ -107,7 +107,7 @@ jobs:
             packaging/zxing/check.sh "$rid" "$(ls zxing/$rid/*ZXing.*)"
           done
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: zxing-${{ matrix.name }}
           path: zxing/
@@ -123,11 +123,11 @@ jobs:
           - { name: macos, os: macos-latest, rids: osx-arm64 osx-x64 }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Zwischenspeicher
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: zxing
           key: zxing-${{ matrix.name }}-${{ hashFiles('packaging/zxing/build.sh', 'packaging/zxing/versions.env') }}
@@ -157,7 +157,7 @@ jobs:
             packaging/zxing/check.sh "$rid" "$(ls zxing/$rid/*ZXing.*)"
           done
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: zxing-${{ matrix.name }}
           path: zxing/
@@ -173,11 +173,11 @@ jobs:
           - { name: windows, os: windows-latest, rids: win-x64 }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Zwischenspeicher
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: zxing
           key: zxing-${{ matrix.name }}-${{ hashFiles('packaging/zxing/build.sh', 'packaging/zxing/versions.env') }}
@@ -207,7 +207,7 @@ jobs:
             packaging/zxing/check.sh "$rid" "$(ls zxing/$rid/*ZXing.*)"
           done
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: zxing-${{ matrix.name }}
           path: zxing/
@@ -221,13 +221,13 @@ jobs:
       contents: read
       id-token: write # für die Anmeldung bei Azure Artifact Signing (OIDC)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: zxing-windows
           path: zxing
@@ -247,7 +247,7 @@ jobs:
         if: always()
         # Ein Upload-Problem (z. B. voller Artifact-Speicher) soll Publish und Release nicht blockieren
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Testergebnisse-windows
           path: TestResults/*.trx
@@ -292,7 +292,7 @@ jobs:
 
       - name: Screenshots hochladen
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Screenshots
           path: screenshots/
@@ -414,7 +414,7 @@ jobs:
           timestamp-rfc3161: http://timestamp.acs.microsoft.com
           timestamp-digest: SHA256
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Pakete-windows
           path: dist/*
@@ -426,13 +426,13 @@ jobs:
     needs: [version, zxing-linux]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: zxing-linux-*
           path: zxing
@@ -454,7 +454,7 @@ jobs:
         if: always()
         # Ein Upload-Problem (z. B. voller Artifact-Speicher) soll Publish und Release nicht blockieren
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Testergebnisse-linux
           path: TestResults/*.trx
@@ -508,7 +508,7 @@ jobs:
               'export DEBIAN_FRONTEND=noninteractive; apt-get update -qq && apt-get install -y -qq --no-install-recommends libfontconfig1 $(apt-cache search --names-only "^libicu[0-9]+$" | cut -d" " -f1 | head -n 1) >/dev/null && tar -xzf /dist/Lupe*-linux-x64.tar.gz -C /tmp && /p/smoke.sh /tmp/lupe/Lupe'
           done
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Pakete-linux
           path: dist/*
@@ -520,9 +520,9 @@ jobs:
     needs: linux
     runs-on: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: Pakete-linux
           path: dist
@@ -541,7 +541,7 @@ jobs:
     outputs:
       notarized: ${{ steps.signing.outputs.notarize }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Signieren und Notarisieren eingerichtet?
         id: signing
@@ -572,11 +572,11 @@ jobs:
           echo "MACOS_NOTARIZE=$notarize" >> "$GITHUB_ENV"
           echo "notarize=$notarize" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           global-json-file: global.json
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: zxing-macos
           path: zxing
@@ -593,7 +593,7 @@ jobs:
         if: always()
         # Ein Upload-Problem (z. B. voller Artifact-Speicher) soll Publish und Release nicht blockieren
         continue-on-error: true
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Testergebnisse-macos
           path: TestResults/*.trx
@@ -668,7 +668,7 @@ jobs:
             done
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: Pakete-macos
           path: dist/*
@@ -683,9 +683,9 @@ jobs:
     permissions:
       contents: write # für die Releases
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: Pakete-*
           path: dist
