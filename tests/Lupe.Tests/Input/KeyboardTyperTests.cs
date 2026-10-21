@@ -12,7 +12,7 @@ public sealed class KeyboardTyperInputTests
     [InlineData("a\nb\rc\u0085d\u2028e\u2029f", "a b c d e f")]
     [InlineData("rm -rf ~\n", "rm -rf ~ ")]
     [InlineData("ohne Umbruch\tmit Tab", "ohne Umbruch\tmit Tab")]
-    public void Kamera_tippt_Zeilenumbrueche_als_Leerzeichen(string text, string expected)
+    public void Zeilenumbrueche_werden_zu_Leerzeichen(string text, string expected)
     {
         Assert.Equal(expected, KeyboardTyper.WithoutLineBreaks(text));
         // Danach erzeugt das Tippen kein Enter mehr
@@ -268,6 +268,43 @@ public sealed class KeyboardTyperFlowTests
         Assert.Empty(keyboard.Pauses);
         Assert.Single(keyboard.Sent);
         Assert.Equal(Keys.Describe(KeyboardTyper.BuildInputs("Hallo", "Enter")), Keys.Describe(keyboard.Sent[0]));
+    }
+
+    [Fact]
+    public void Bricht_ab_bevor_etwas_getippt_ist_wenn_das_Zielfenster_nicht_mehr_vorn_ist()
+    {
+        var keyboard = new FakeKeyboard();
+
+        Assert.False(KeyboardTyper.TypeCore("Hallo", "Enter", keyboard, out string? error, default, stillOnTarget: () => false));
+
+        Assert.Empty(keyboard.Sent);
+        Assert.Equal(Lupe.Core.Resources.Strings.Core_Typing_TargetChanged, error);
+    }
+
+    [Fact]
+    public void Fensterwechsel_waehrend_des_Tippens_stoppt_vor_dem_naechsten_Zeichen()
+    {
+        var keyboard = new FakeKeyboard();
+        int checks = 0;
+
+        // Mit Zeichenpause geht jedes Zeichen einzeln hinaus; nach dem zweiten kommt ein anderes Fenster nach vorn
+        Assert.False(KeyboardTyper.TypeCore("abcdef", "Enter", keyboard, out string? error, default, delayMs: 20, stillOnTarget: () => ++checks <= 2));
+
+        Assert.Equal(2, keyboard.Sent.Count);
+        Assert.Equal(Keys.Chars("b"), Keys.Describe(keyboard.Sent[1]));
+        Assert.Equal(Lupe.Core.Resources.Strings.Core_Typing_TargetChangedPartly, error);
+    }
+
+    [Fact]
+    public void Bleibt_das_Zielfenster_vorn_kommt_alles_an()
+    {
+        var keyboard = new FakeKeyboard();
+        int checks = 0;
+
+        Assert.True(KeyboardTyper.TypeCore("abc", "", keyboard, out _, default, delayMs: 5, stillOnTarget: () => { checks++; return true; }));
+
+        Assert.Equal(3, keyboard.Sent.Count);
+        Assert.Equal(3, checks);
     }
 
     [Fact]

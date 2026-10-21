@@ -1056,6 +1056,12 @@ In cmd in eine Datei umgeleitet, ist die Ausgabe UTF-8 mit BOM.</value>
   <data name="Core_Settings_StillUnreadableReason" xml:space="preserve">
     <value>Die Einstellungsdatei „{0}“ ist noch immer nicht lesbar – die Änderung gilt, bis Lupe beendet wird, und wird gespeichert, sobald die Datei wieder lesbar ist. So wird nichts mit Standardwerten überschrieben. ({1})</value>
   </data>
+  <data name="Core_Typing_TargetChanged" xml:space="preserve">
+    <value>Eintippen abgebrochen – ein anderes Fenster ist nach vorn gekommen. Nichts eingetippt.</value>
+  </data>
+  <data name="Core_Typing_TargetChangedPartly" xml:space="preserve">
+    <value>Eintippen abgebrochen – ein anderes Fenster ist nach vorn gekommen; der Text kam nur teilweise an.</value>
+  </data>
   <data name="Core_Typing_Interrupted" xml:space="preserve">
     <value>Eintippen wurde unterbrochen – der Text kam nur teilweise an.</value>
   </data>

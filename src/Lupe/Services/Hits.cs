@@ -134,9 +134,9 @@ internal sealed class Hits(AppState state)
             if (typeTarget == 0) problems.Add(source == ScanSource.Kamera
                 ? Strings.App_Hits_NotTypedLupeActive
                 : Strings.App_Hits_NotTypedFromLupe);
-            // Kamera: Zeilenumbrüche im Code als Leerzeichen – ein Code vor der Kamera soll im Programm vorn kein Enter
-            // drücken können (Lupe tippt dort auch unbeaufsichtigt). Der Bildschirm-Scan startet der Benutzer selbst.
-            else if (await Typing.TypeIntoAsync(typeTarget, source == ScanSource.Kamera ? KeyboardTyper.WithoutLineBreaks(code.Text) : code.Text,
+            // Zeilenumbrüche im Code als Leerzeichen, bei jeder Quelle: Ein Code vor der Kamera oder auf einer Webseite im
+            // Bildschirm-Scan soll im Programm vorn kein Enter drücken können (etwa Befehle in ein Terminal).
+            else if (await Typing.TypeIntoAsync(typeTarget, KeyboardTyper.WithoutLineBreaks(code.Text),
                          state.Settings.TypeSuffix, state.Settings.TypeDelayMs) is { } error) problems.Add(error);
             else done |= ResultActions.Eintippen;
         }

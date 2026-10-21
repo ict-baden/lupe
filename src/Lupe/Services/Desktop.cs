@@ -229,7 +229,13 @@ internal static class Typing
         {
             // Wartet im Core, bis Strg/Alt des Tastenkürzels losgelassen sind – nicht auf dem Oberflächen-Thread. TryType statt
             // Type: Verwirft das System die Eingabe (Zielfenster mit höheren Rechten, gesperrter Desktop), steht der Grund in der Meldung.
-            return await Task.Run(() => KeyboardTyper.TryType(text, suffix, delayMs, out string? error) ? null : error ?? Strings.App_Shell_TypingFailed);
+            // Kommt beim Tippen ein anderes Fenster nach vorn, bricht es ab. 0 (unbekannt, kurz beim Fensterwechsel) zählt nicht als Wechsel.
+            var active = LupePlatform.Current.ActiveWindow;
+            Func<bool>? stillOnTarget = target != TypeTargets.FocusedWindow && active.IsSupported
+                ? () => active.Foreground() is var now && (now == 0 || now == target)
+                : null;
+            return await Task.Run(() => KeyboardTyper.TryType(text, suffix, delayMs, out string? error, stillOnTarget: stillOnTarget)
+                ? null : error ?? Strings.App_Shell_TypingFailed);
         }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
