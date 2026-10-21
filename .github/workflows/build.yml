@@ -32,6 +32,7 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       msi: ${{ steps.version.outputs.msi }}
       suffix: ${{ steps.version.outputs.suffix }}
+      file: ${{ steps.version.outputs.file }}
     steps:
       - uses: actions/checkout@v7
 
@@ -51,13 +52,19 @@ jobs:
           # (AllowSameVersionUpgrades), und ein Release v0.1.1 ist immer neuer als jeder 0.1.0-CI-Build.
           $core = $v -replace '[-+].*$', ''
           $msi = if ($env:GITHUB_REF_TYPE -eq 'tag') { $core } else { "$core.$env:GITHUB_RUN_NUMBER" }
+          # Dateiversion der Programmdateien immer mit Lauf-Nummer, auch beim Tag (0.1.2.70): Windows Installer ersetzt
+          # beim Update nur Dateien mit höherer Version. Mit x.y.z.0 im Tag-Release war die Exe gleich alt wie im
+          # CI-Build davor (latest) – oder älter – und ein Update konnte sie auslassen. Die Lauf-Nummer steigt immer
+          # (höchstens 65535 in der vierten Stelle).
+          $file = "$core.$env:GITHUB_RUN_NUMBER"
           # Dateinamen: Releases aus einem Tag mit Version (Lupe-1.2.3-x64.msi), sonst fest (Lupe-x64.msi), damit die
           # Links auf 'latest' dauerhaft gelten – die Version steht dort im Release-Text
           $suffix = if ($env:GITHUB_REF_TYPE -eq 'tag') { "-$v" } else { '' }
           "version=$v" >> $env:GITHUB_OUTPUT
           "msi=$msi" >> $env:GITHUB_OUTPUT
           "suffix=$suffix" >> $env:GITHUB_OUTPUT
-          Write-Host "Version: $v  MSI: $msi  Dateien: Lupe$suffix-x64.msi"
+          "file=$file" >> $env:GITHUB_OUTPUT
+          Write-Host "Version: $v  MSI: $msi  Dateiversion: $file  Dateien: Lupe$suffix-x64.msi"
 
       - name: Release-Text prüfen (nur bei Tag v*)
         if: github.ref_type == 'tag'
@@ -312,7 +319,7 @@ jobs:
         run: |
           $v = '${{ needs.version.outputs.version }}'
           # ZXing.dll aus dem Job zxing statt aus dem NuGet-Paket (statische C/C++-Laufzeit, keine VC++-Laufzeit nötig)
-          $common = @('src/Lupe/Lupe.csproj', '-c', 'Release', '-r', 'win-x64', '-p:PublishSingleFile=true', "-p:Version=$v", '-p:DebugType=none', "-p:LupeZXingDir=$PWD/zxing")
+          $common = @('src/Lupe/Lupe.csproj', '-c', 'Release', '-r', 'win-x64', '-p:PublishSingleFile=true', "-p:Version=$v", '-p:FileVersion=${{ needs.version.outputs.file }}', '-p:DebugType=none', "-p:LupeZXingDir=$PWD/zxing")
           # Benötigt .NET 10 Runtime auf dem Zielgerät
           dotnet publish @common --self-contained false -o out/framework
           # Ohne Runtime-Abhängigkeit, Grundlage für die MSI
@@ -396,56 +403,87 @@ jobs:
           packaging/smoke.sh dist/Lupe.exe
           packaging/smoke.sh out/self-contained/Lupe.exe
 
-      - name: MSI über die letzte Version installieren und deinstallieren
+      - name: MSI installieren, Updates von latest und von der letzten Version, deinstallieren
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           $msi = (Get-ChildItem dist/*.msi).FullName
+          $version = '${{ needs.version.outputs.version }}'
+          $fileVersion = '${{ needs.version.outputs.file }}'
+          $build = [version]((('${{ needs.version.outputs.msi }}' -split '\.')[0..2]) -join '.')
           $upgradeCode = '{B5E63BC4-65DB-46E9-B6B1-5A3167B381D1}'
+          $target = "$env:ProgramFiles\Lupe"
           $installer = New-Object -ComObject WindowsInstaller.Installer
           # Produktcodes aller installierten Lupe-Pakete (wie in docs/installation.md beim stillen Deinstallieren)
           function Related { @(foreach ($product in $installer.RelatedProducts($upgradeCode)) { $product }) }
-          function Install([string] $file, [string] $log) {
-            $p = Start-Process msiexec.exe -ArgumentList '/i', "`"$file`"", '/qn', '/l*v', $log -Wait -PassThru
-            if ($p.ExitCode -ne 0) { Get-Content $log -Tail 40; throw "Installation von $(Split-Path $file -Leaf): Exitcode $($p.ExitCode)" }
+          function Invoke-Msi([string] $action, [string] $item, [string] $what, [string] $log) {
+            $p = Start-Process msiexec.exe -ArgumentList $action, "`"$item`"", '/qn', '/l*v', $log -Wait -PassThru
+            if ($p.ExitCode -ne 0) { Get-Content $log -Tail 40; throw "${what}: Exitcode $($p.ExitCode)" }
           }
-          # Zuerst das MSI der letzten Version bis zu dieser (ohne Vorabversionen): Das neue muss es ersetzen, nicht daneben
-          # installiert werden – auch über die Sprache des Pakets hinweg (bis 0.1.0 de-DE, MajorUpgrade IgnoreLanguage).
-          # Ältere Zweige mit niedrigerer Version testen gegen die letzte Version darunter statt gegen ein Downgrade.
-          $build = [version]((('${{ needs.version.outputs.msi }}' -split '\.')[0..2]) -join '.')
+          function Remove-All {
+            foreach ($product in @(Related)) { Invoke-Msi '/x' $product "Deinstallation $product" 'msi-uninstall.log' }
+            if (@(Related).Count -ne 0) { throw 'Nach der Deinstallation ist noch ein Lupe-Produkt registriert' }
+            if (Test-Path "$target\Lupe.exe") { throw 'Lupe.exe ist nach der Deinstallation noch da' }
+          }
+          # Alles aus dem Publish-Ordner muss nach jeder Installation und jedem Update da sein (das MSI nimmt ihn ohne .pdb).
+          # Windows Installer ersetzt beim Update nur Dateien mit höherer Version; ist die alte gleich alt oder neuer und
+          # entfernt das Update danach die alte Version, fehlt die Datei – deshalb trägt jede Dateiversion die Lauf-Nummer.
+          $source = (Resolve-Path out/self-contained).Path
+          $expected = @(Get-ChildItem $source -Recurse -File | Where-Object Extension -ne '.pdb' |
+            ForEach-Object { [IO.Path]::GetRelativePath($source, $_.FullName) })
+          function Test-Installed([string] $what) {
+            $products = @(Related)
+            if ($products.Count -ne 1) { throw "${what}: $($products.Count) Lupe-Produkte statt einem - die alte Version wurde nicht ersetzt" }
+            $missing = @($expected | Where-Object { -not (Test-Path -LiteralPath (Join-Path $target $_)) })
+            if ($missing) { throw "${what}: Dateien fehlen: $($missing -join ', ')" }
+            $exeVersion = (Get-Item "$target\Lupe.exe").VersionInfo.FileVersion
+            if ($exeVersion -ne $fileVersion) { throw "${what}: Lupe.exe hat die Dateiversion $exeVersion statt $fileVersion" }
+            $p = Start-Process "$target\Lupe.exe" -ArgumentList '--version' -RedirectStandardOutput installed-version.txt -Wait -PassThru -NoNewWindow
+            $reported = (Get-Content installed-version.txt -Raw).Trim()
+            if ($p.ExitCode -ne 0 -or $reported -notmatch [regex]::Escape(" $version ")) { throw "${what}: Lupe.exe meldet nicht ${version}: $reported" }
+            # Git Bash ausdrücklich: „bash“ allein kann unter Windows die WSL-Bash sein
+            & "$env:ProgramFiles\Git\bin\bash.exe" packaging/smoke.sh "$target\Lupe.exe"
+            if ($LASTEXITCODE -ne 0) { throw "${what}: Rauchtest der installierten Lupe fehlgeschlagen" }
+            Write-Host "${what}: ok - $($expected.Count) Dateien, Lupe.exe $exeVersion, $reported"
+          }
+          function Test-Update([string] $what, [string] $oldMsi) {
+            Invoke-Msi '/i' $oldMsi "Installation $what" 'msi-old.log'
+            $old = @(Related)
+            if ($old.Count -ne 1) { throw "Nach der Installation $what $($old.Count) Lupe-Produkte" }
+            Invoke-Msi '/i' $msi "Update von $what" 'msi-update.log'
+            if (@(Related)[0] -eq $old[0]) { throw "Das neue MSI hat $what nicht ersetzt ($($old[0]))" }
+            Test-Installed "Update von $what"
+            Remove-All
+          }
+
+          Invoke-Msi '/i' $msi 'Neuinstallation' 'msi-install.log'
+          Test-Installed 'Neuinstallation'
+          Remove-All
+
+          # Update vom neuesten Build aus „latest“ (bei einem Tag: der Build von main kurz davor, gleiche Basisversion)
+          $latest = gh release view latest -R $env:GITHUB_REPOSITORY --json name -q '.name'
+          if ($LASTEXITCODE -ne 0) { throw 'Das Release latest ließ sich nicht abfragen' }
+          if ($latest -match '(\d+\.\d+\.\d+)-ci\.\d+' -and [version]$Matches[1] -le $build) {
+            $from = $Matches[0]
+            gh release download latest -R $env:GITHUB_REPOSITORY -p 'Lupe-x64.msi' -D from-latest
+            if ($LASTEXITCODE -ne 0) { throw 'MSI aus latest ließ sich nicht laden' }
+            Test-Update "latest ($from)" (Resolve-Path from-latest/Lupe-x64.msi).Path
+          }
+          else { Write-Host "::warning::latest ($latest) ist neuer als $build oder ohne Version - Update von latest nicht geprüft." }
+
+          # Update von der letzten Version bis zu dieser (ohne Vorabversionen) – auch über die Sprache des Pakets hinweg
+          # (bis 0.1.0 de-DE, MajorUpgrade IgnoreLanguage). Ältere Zweige testen gegen die letzte Version darunter.
           $tags = gh release list -R $env:GITHUB_REPOSITORY --exclude-pre-releases --exclude-drafts --limit 100 --json tagName -q '.[].tagName'
           if ($LASTEXITCODE -ne 0) { throw 'Die Releases ließen sich nicht abfragen' }
           $previous = $tags | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' -and [version]($_.Substring(1)) -le $build } |
             Sort-Object { [version]($_.Substring(1)) } -Descending | Select-Object -First 1
-          $old = $null
-          if (-not $previous) { Write-Host "::warning::Keine veröffentlichte Version bis $build – das Ersetzen wird nicht geprüft." }
+          if (-not $previous) { Write-Host "::warning::Keine veröffentlichte Version bis $build - Update von einer Version nicht geprüft." }
           else {
-            gh release download $previous -R $env:GITHUB_REPOSITORY -p '*-x64.msi' -D previous
+            gh release download $previous -R $env:GITHUB_REPOSITORY -p '*-x64.msi' -D from-release
             if ($LASTEXITCODE -ne 0) { throw "MSI von $previous ließ sich nicht laden" }
-            Install (Get-ChildItem previous/*.msi).FullName 'msi-previous.log'
-            $old = @(Related)
-            if ($old.Count -ne 1) { throw "Nach der Installation von ${previous}: $($old.Count) Lupe-Produkte" }
-            Write-Host "Installiert: $previous ($($old[0]))"
+            Test-Update $previous (Get-ChildItem from-release/*.msi).FullName
           }
-          Install $msi 'msi-install.log'
-          $now = @(Related)
-          if ($now.Count -ne 1) { throw "Nach der Installation des neuen MSI: $($now.Count) Lupe-Produkte statt einem – die alte Version wurde nicht ersetzt" }
-          if ($old -and $now[0] -eq $old[0]) { throw "Das neue MSI hat $previous nicht ersetzt ($($now[0]))" }
-          # Die Dateien sind die neuen, nicht die der alten Version (Lupe.exe meldet ihre Version)
-          $p = Start-Process "$env:ProgramFiles\Lupe\Lupe.exe" -ArgumentList '--version' -RedirectStandardOutput installed-version.txt -Wait -PassThru -NoNewWindow
-          $installedVersion = (Get-Content installed-version.txt -Raw).Trim()
-          Write-Host "Installiert: $installedVersion"
-          if ($p.ExitCode -ne 0 -or $installedVersion -notmatch [regex]::Escape(' ${{ needs.version.outputs.version }} ')) {
-            throw "Lupe.exe nach dem Update meldet nicht ${{ needs.version.outputs.version }}: $installedVersion"
-          }
-          # Git Bash ausdrücklich: „bash“ allein kann unter Windows die WSL-Bash sein
-          & "$env:ProgramFiles\Git\bin\bash.exe" packaging/smoke.sh "$env:ProgramFiles\Lupe\Lupe.exe"
-          if ($LASTEXITCODE -ne 0) { throw 'Rauchtest der installierten Lupe fehlgeschlagen' }
-          $p = Start-Process msiexec.exe -ArgumentList '/x', "`"$msi`"", '/qn' -Wait -PassThru
-          if ($p.ExitCode -ne 0) { throw "Deinstallation: Exitcode $($p.ExitCode)" }
-          if (Test-Path "$env:ProgramFiles\Lupe\Lupe.exe") { throw 'Lupe.exe ist nach der Deinstallation noch da' }
-          if (@(Related).Count -ne 0) { throw 'Nach der Deinstallation ist noch ein Lupe-Produkt registriert' }
 
       - name: MSI signieren
         if: env.SIGN == 'true'
@@ -514,7 +552,7 @@ jobs:
           v='${{ needs.version.outputs.version }}'
           for arch in x64 arm64; do
             # libZXing.so aus dem Job zxing (glibc 2.28) statt aus dem NuGet-Paket (glibc 2.38)
-            dotnet publish src/Lupe/Lupe.csproj -c Release -r linux-$arch --self-contained true "-p:Version=$v" -p:DebugType=none "-p:LupeZXingDir=$PWD/zxing" -o out/linux-$arch
+            dotnet publish src/Lupe/Lupe.csproj -c Release -r linux-$arch --self-contained true "-p:Version=$v" -p:FileVersion=${{ needs.version.outputs.file }} -p:DebugType=none "-p:LupeZXingDir=$PWD/zxing" -o out/linux-$arch
             packaging/linux/package.sh out/linux-$arch $arch "$v" dist '${{ needs.version.outputs.suffix }}'
           done
           ls -l dist
@@ -676,7 +714,7 @@ jobs:
           v='${{ needs.version.outputs.version }}'
           for arch in arm64 x64; do
             # libZXing.dylib aus dem Job zxing (ab macOS 12) statt aus dem NuGet-Paket (macOS 26 bzw. 15)
-            dotnet publish src/Lupe/Lupe.csproj -c Release -r osx-$arch --self-contained true "-p:Version=$v" -p:DebugType=none "-p:LupeZXingDir=$PWD/zxing" -o out/osx-$arch
+            dotnet publish src/Lupe/Lupe.csproj -c Release -r osx-$arch --self-contained true "-p:Version=$v" -p:FileVersion=${{ needs.version.outputs.file }} -p:DebugType=none "-p:LupeZXingDir=$PWD/zxing" -o out/osx-$arch
             packaging/macos/package.sh out/osx-$arch $arch "$v" dist '${{ needs.version.outputs.suffix }}'
           done
           ls -l dist
