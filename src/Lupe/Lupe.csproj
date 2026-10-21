@@ -60,6 +60,9 @@
   <ItemGroup>
     <None Include="..\..\THIRD-PARTY-NOTICES.txt" Link="THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <EmbeddedResource Include="..\..\THIRD-PARTY-NOTICES.txt" LogicalName="THIRD-PARTY-NOTICES.txt" />
+    <!-- Lupes eigene Lizenz ebenso: in jedem Paket neben dem Programm und für die Info-Seite eingebettet -->
+    <None Include="..\..\LICENSE" Link="LICENSE.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <EmbeddedResource Include="..\..\LICENSE" LogicalName="LICENSE.txt" />
   </ItemGroup>
 
   <ItemGroup>
@@ -71,5 +74,29 @@
     <ItemGroup>
       <ResolvedFileToPublish Remove="@(ResolvedFileToPublish)" Condition="'%(Extension)' == '.pdb' and $([System.String]::Copy('%(Filename)').StartsWith('lib'))" />
     </ItemGroup>
+  </Target>
+
+  <!-- Selbst gebaute zxing-cpp-Bibliothek statt der aus dem NuGet-Paket ZXingCpp (packaging/zxing/build.sh): Die aus dem
+       Paket braucht glibc 2.38, macOS 26 bzw. die VC++-Laufzeit. CI veröffentlicht mit -p:LupeZXingDir=<ordner>, darin
+       <rid>/ZXing.dll, libZXing.so oder libZXing.dylib. Ohne die Eigenschaft (Entwicklung, Tests) bleibt die aus dem Paket. -->
+  <Target Name="LupeEigenesZXing" AfterTargets="ComputeResolvedFilesToPublishList" Condition="'$(LupeZXingDir)' != ''">
+    <PropertyGroup>
+      <_LupeZXingName Condition="$(RuntimeIdentifier.StartsWith('win'))">ZXing.dll</_LupeZXingName>
+      <_LupeZXingName Condition="$(RuntimeIdentifier.StartsWith('linux'))">libZXing.so</_LupeZXingName>
+      <_LupeZXingName Condition="$(RuntimeIdentifier.StartsWith('osx'))">libZXing.dylib</_LupeZXingName>
+      <_LupeZXingFile>$([System.IO.Path]::GetFullPath('$(LupeZXingDir)/$(RuntimeIdentifier)/$(_LupeZXingName)'))</_LupeZXingFile>
+    </PropertyGroup>
+    <Error Condition="'$(_LupeZXingName)' == ''" Text="LupeZXingDir: unbekannte Runtime-Kennung '$(RuntimeIdentifier)'" />
+    <Error Condition="!Exists('$(_LupeZXingFile)')" Text="LupeZXingDir: $(_LupeZXingFile) fehlt (packaging/zxing/build.sh $(RuntimeIdentifier) …)" />
+    <ItemGroup>
+      <_LupeZXingAusPaket Include="@(ResolvedFileToPublish)" Condition="'%(Filename)%(Extension)' == '$(_LupeZXingName)'" />
+    </ItemGroup>
+    <Error Condition="'@(_LupeZXingAusPaket)' == ''" Text="LupeZXingDir: $(_LupeZXingName) aus dem NuGet-Paket ZXingCpp nicht unter den veröffentlichten Dateien – hat sich das Paket geändert?" />
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(_LupeZXingAusPaket)" />
+      <!-- Gleiche Metadaten (RelativePath, AssetType …) wie die Datei aus dem Paket, nur eine andere Quelle -->
+      <ResolvedFileToPublish Include="@(_LupeZXingAusPaket->'$(_LupeZXingFile)')" />
+    </ItemGroup>
+    <Message Importance="high" Text="zxing-cpp: $(_LupeZXingFile)" />
   </Target>
 </Project>

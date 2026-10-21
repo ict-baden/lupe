@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
     Erzeugt alle Bilder der Doku neu: Screenshots der echten App und das Banner.
@@ -10,7 +11,6 @@
 .EXAMPLE
     cd tools\screenshots; npm install; .\make-assets.ps1
 #>
-# SPDX-License-Identifier: MIT
 $ErrorActionPreference = 'Stop'
 $repo = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $shots = Join-Path $repo 'docs\assets\screenshots'

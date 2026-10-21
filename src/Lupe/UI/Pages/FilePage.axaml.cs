@@ -214,6 +214,12 @@ public partial class FilePage : UserControl, IPage
         {
             return;
         }
+        catch (DecoderUnavailableException ex)
+        {
+            // Die Erkennung lädt auf diesem System nicht (Meldung mit Fehlercode) – kein „Kein Code gefunden“
+            _state.Report(NoticeKind.Error, ex.Message);
+            return;
+        }
         finally
         {
             if (!ct.IsCancellationRequested) SetBusy(null);

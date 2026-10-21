@@ -30,6 +30,11 @@
     <PackageReference Include="Avalonia.Headless" Version="12.1.4" />
   </ItemGroup>
 
+  <!-- QR-Code des Rauchtests der Pakete, für InvariantGlobalizationTests (lesen im eigenen Prozess) -->
+  <ItemGroup>
+    <None Include="..\..\packaging\smoke-qr.png" Link="TestData\smoke-qr.png" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <!-- Sprachdateien für LocalizationTests (Schlüssel, Platzhalter, leere Texte) -->
   <ItemGroup>
     <None Include="..\..\src\Lupe.Core\Resources\Strings*.resx" Link="Resources\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />

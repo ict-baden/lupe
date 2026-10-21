@@ -74,6 +74,12 @@ public sealed class BarcodeDecoder
     /// <summary>Höchstzahl gleichzeitig laufender Aufgaben (-1 = so viele, wie der Thread-Pool hergibt).</summary>
     internal int MaxParallelism { get; init; } = -1;
 
+    /// <summary>
+    /// Null, wenn die Erkennung auf diesem System verfügbar ist; sonst die Meldung mit Fehlercode, warum die native
+    /// zxing-cpp-Bibliothek nicht lädt (für einen Hinweis gleich beim Start). Prüft beim ersten Aufruf.
+    /// </summary>
+    public static string? UnavailableReason => ZXingLibrary.Problem;
+
     /// <summary>Alle unterstützten Formate in ZXing-Schreibweise.</summary>
     public static IReadOnlyList<string> AllFormats => FormatCatalog.AllNames;
 
@@ -83,8 +89,9 @@ public sealed class BarcodeDecoder
     /// <summary>
     /// Alle Codes im Bild, ohne Doppelte (gleicher Text und gleiches Format), in Lesereihenfolge (oben vor unten,
     /// links vor rechts); leer, wenn keiner gefunden wurde. Punkte in Pixeln des übergebenen Bildes.
-    /// Wirft nur bei <c>null</c> und beim Abbruch über <paramref name="ct"/> (<see cref="OperationCanceledException"/>);
-    /// Fehler eines einzelnen Lesevorgangs kosten nur dessen Teilergebnis.
+    /// Wirft nur bei <c>null</c>, beim Abbruch über <paramref name="ct"/> (<see cref="OperationCanceledException"/>) und wenn
+    /// die Erkennung auf diesem System nicht verfügbar ist (<see cref="DecoderUnavailableException"/>: die native
+    /// zxing-cpp-Bibliothek lädt nicht); andere Fehler eines einzelnen Lesevorgangs kosten nur dessen Teilergebnis.
     /// Rechnet auf mehreren Kernen und blockiert den aufrufenden Thread bis zum Ergebnis (Full HD typisch 30–100 ms) –
     /// aus der Oberfläche also über <c>Task.Run</c> aufrufen.
     /// </summary>
@@ -104,14 +111,26 @@ public sealed class BarcodeDecoder
         return Decode(gray, ct);
     }
 
+    /// <summary>
+    /// Prüft vor dem ersten Lesevorgang, ob die native Bibliothek lädt (null = ja, sonst die Meldung). Tests setzen hier
+    /// einen Ladefehler ein; sonst <see cref="ZXingLibrary.Problem"/>.
+    /// </summary>
+    internal Func<string?> NativeProblem { get; init; } = static () => ZXingLibrary.Problem;
+
+    /// <summary>Ein Lesevorgang auf einer Bildvariante; Tests setzen hier etwa einen Ladefehler mitten im parallelen Lesen ein.</summary>
+    internal Func<GrayImage, ReadSettings, List<NativeCode>> Reader { get; init; } = NativeReader.Read;
+
     internal IReadOnlyList<DecodedCode> Decode(GrayImage gray, CancellationToken ct)
     {
+        // Vor jedem Objekt von ZXingCpp: Ein Ladefehler ist kein „nichts gefunden“ (und ein halb angelegtes Objekt
+        // brächte den Prozess später im Finalizer zum Absturz, siehe ZXingLibrary)
+        if (NativeProblem() is { } problem) throw new DecoderUnavailableException(problem);
         var hits = new List<Hit>();
         int order = 0;
         foreach (var stage in Stages(gray, _formats, Live))
         {
             if (stage.OnlyIfNothingFound && hits.Exists(h => h.Solid)) break;
-            foreach (var (found, map) in RunStage(stage.Tasks, MaxParallelism, ct))
+            foreach (var (found, map) in RunStage(stage.Tasks, Reader, MaxParallelism, ct))
             {
                 foreach (var f in found) Add(hits, ToHit(f, map, gray.Width, gray.Height, _formats, order));
                 order++;
@@ -267,7 +286,8 @@ public sealed class BarcodeDecoder
         }
     }
 
-    private static (List<NativeCode> Found, PointMap Map)[] RunStage(IReadOnlyList<ScanTask> tasks, int maxParallelism, CancellationToken ct)
+    private static (List<NativeCode> Found, PointMap Map)[] RunStage(IReadOnlyList<ScanTask> tasks, Func<GrayImage, ReadSettings, List<NativeCode>> reader,
+        int maxParallelism, CancellationToken ct)
     {
         var results = new (List<NativeCode>, PointMap)[tasks.Count];
         try
@@ -275,30 +295,44 @@ public sealed class BarcodeDecoder
             // Einzeln verteilen (keine Blöcke), damit ungleich lange Aufgaben die Kerne gleichmäßig auslasten
             var partitioner = Partitioner.Create(Enumerable.Range(0, tasks.Count), EnumerablePartitionerOptions.NoBuffering);
             var options = new ParallelOptions { CancellationToken = ct, MaxDegreeOfParallelism = maxParallelism };
-            Parallel.ForEach(partitioner, options, i => results[i] = RunTask(tasks[i], ct));
+            Parallel.ForEach(partitioner, options, i => results[i] = RunTask(tasks[i], reader, ct));
         }
         catch (AggregateException ex) when (IsCancellation(ex, ct))
         {
             throw new OperationCanceledException(ct);
         }
+        catch (AggregateException ex) when (ex.Flatten().InnerExceptions.OfType<DecoderUnavailableException>().FirstOrDefault() is { } unavailable)
+        {
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(unavailable).Throw();
+        }
         ct.ThrowIfCancellationRequested();
         return results;
     }
 
-    private static (List<NativeCode>, PointMap) RunTask(ScanTask task, CancellationToken ct)
+    private static (List<NativeCode>, PointMap) RunTask(ScanTask task, Func<GrayImage, ReadSettings, List<NativeCode>> reader, CancellationToken ct)
     {
         try
         {
             ct.ThrowIfCancellationRequested();
-            return (NativeReader.Read(task.Variant.Image, task.Settings), task.Variant.ToOriginal);
+            return (reader(task.Variant.Image, task.Settings), task.Variant.ToOriginal);
         }
-        catch (Exception ex) when (ex is not (OperationCanceledException or OutOfMemoryException))
+        catch (Exception ex) when (IsLoadFailure(ex))
+        {
+            // Die Bibliothek lädt nicht oder es fehlen Funktionen – das betrifft jeden Lesevorgang, nicht nur diesen
+            throw new DecoderUnavailableException(ZXingLibrary.Message((ex.InnerException ?? ex).Message));
+        }
+        catch (Exception ex) when (ex is not (OperationCanceledException or OutOfMemoryException or DecoderUnavailableException))
         {
             // Unerwartete Fehler (zxing-cpp meldet etwa zu große Bilder als Ausnahme) kosten nur diese eine Aufgabe
             Debug.WriteLine($"Erkennung „{task.Variant.Name}“ fehlgeschlagen: {ex}");
             return ([], PointMap.Identity);
         }
     }
+
+    /// <summary>Ausnahmen, mit denen .NET eine nicht ladbare native Bibliothek meldet (auch verpackt in einen Typinitialisierer).</summary>
+    internal static bool IsLoadFailure(Exception ex) =>
+        ex is DllNotFoundException or EntryPointNotFoundException or BadImageFormatException
+        || ex is TypeInitializationException { InnerException: DllNotFoundException or EntryPointNotFoundException or BadImageFormatException };
 
     private static bool IsCancellation(AggregateException ex, CancellationToken ct) =>
         ct.IsCancellationRequested && ex.Flatten().InnerExceptions.All(e => e is OperationCanceledException);

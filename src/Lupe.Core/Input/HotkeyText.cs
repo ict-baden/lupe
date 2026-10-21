@@ -173,7 +173,7 @@ public static class HotkeyText
         {
             if (token.Length == 0) return false;
             string normalized = Normalize(token);
-            if (ModifierAliases.TryGetValue(normalized, out var modifier))
+            if (ModifierAliases.TryGetValue(normalized, out var modifier) || LocalizedModifiers.Value.TryGetValue(normalized, out modifier))
             {
                 modifiers |= modifier;
                 continue;
@@ -373,6 +373,20 @@ public static class HotkeyText
         return sb.ToString();
     }
 
+    /// <summary>
+    /// Die angezeigten Namen der Umschalttasten in jeder Sprache (Mayús, Maj …), damit ein angezeigtes Kürzel in jeder
+    /// Sprache wieder eingelesen werden kann.
+    /// </summary>
+    private static readonly Lazy<Dictionary<string, Modifier>> LocalizedModifiers = new(() =>
+    {
+        var aliases = new Dictionary<string, Modifier>(StringComparer.Ordinal);
+        foreach (var (resource, modifier) in new[] { ("Core_Key_Ctrl", Modifier.Ctrl), ("Core_Key_Alt", Modifier.Alt), ("Core_Key_Shift", Modifier.Shift), ("Core_Key_Win", Modifier.Win) })
+            foreach (var culture in Localization.UiLanguage.SupportedCultures)
+                if (Strings.ResourceManager.GetString(resource, culture) is { Length: > 0 } name)
+                    aliases.TryAdd(Normalize(name), modifier);
+        return aliases;
+    });
+
     private static Dictionary<string, int> BuildAliases()
     {
         var aliases = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -383,9 +397,9 @@ public static class HotkeyText
         foreach (var (vk, _) in NamedKeys)
         {
             if (KeyResource(vk) is not { } resource) continue;
-            foreach (var language in Localization.UiLanguage.Supported)
+            foreach (var culture in Localization.UiLanguage.SupportedCultures)
             {
-                if (Strings.ResourceManager.GetString(resource, CultureInfo.GetCultureInfo(language)) is { Length: > 0 } name)
+                if (Strings.ResourceManager.GetString(resource, culture) is { Length: > 0 } name)
                     aliases.TryAdd(Normalize(name), vk);
             }
         }

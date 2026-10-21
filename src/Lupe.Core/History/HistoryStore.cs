@@ -218,7 +218,8 @@ public sealed class HistoryStore
         var bytes = HistoryCsv.Build(Entries);
         try
         {
-            AtomicFile.Write(path, bytes);
+            // Ein Ort, den der Benutzer gewählt hat: nicht auf 0600 setzen (Rechte einer vorhandenen Datei bleiben, sonst umask)
+            AtomicFile.Write(path, bytes, ownerOnly: false);
         }
         catch (Exception ex) when (FileProblems.IsExpected(ex) || ex is ArgumentException)
         {

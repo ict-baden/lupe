@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Lupe.Core.Decoding;
 using Lupe.Core.Input;
 using Lupe.Core.Resources;
 using Lupe.Interop;
@@ -80,6 +81,9 @@ public partial class MainWindow : Window
                 Native.DisableTransitions(this);
             }
             if (state.StartupProblem is { } problem) ShowNotice(NoticeKind.Warning, problem);
+            // Lädt die Erkennung nicht (z. B. zu altes System), gleich sagen – sonst hieße jeder Scan „Kein Code gefunden“.
+            // Fehler bleiben stehen, bis man sie schließt.
+            if (!_screenshot && BarcodeDecoder.UnavailableReason is { } unavailable) ShowNotice(NoticeKind.Error, unavailable);
         };
         AddHandler(KeyDownEvent, OnPreviewKeyDown, RoutingStrategies.Tunnel);
         if (state.IsDemo && !screenshotMode)

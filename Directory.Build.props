@@ -13,7 +13,7 @@
     <Copyright>© 2026 ICT-Baden GmbH</Copyright>
     <!-- Strings.resx ist Englisch und Rückfallsprache, siehe richtlinien/13 -->
     <NeutralLanguage>en</NeutralLanguage>
-    <!-- Nur die Sprachen mitliefern, für die es Sprachdateien gibt (eigene und fremde Pakete); es, fr, zh-Hans folgen -->
-    <SatelliteResourceLanguages>en;de</SatelliteResourceLanguages>
+    <!-- Nur die Sprachen mitliefern, für die es Sprachdateien gibt (eigene und fremde Pakete), wie UiLanguage.Supported -->
+    <SatelliteResourceLanguages>en;de;es;fr;zh-Hans</SatelliteResourceLanguages>
   </PropertyGroup>
 </Project>

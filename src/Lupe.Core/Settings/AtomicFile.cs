@@ -8,31 +8,44 @@ namespace Lupe.Core.Settings;
 /// dann per Umbenennen (MoveFileEx mit REPLACE_EXISTING, auf NTFS atomar) an die Zielstelle. Ein Absturz oder
 /// voller Datenträger hinterlässt damit nie eine halbe Datei – entweder steht der alte oder der neue Inhalt da.
 /// Kurze Sperren durch Virenscanner oder Indexdienst werden mit wenigen Wiederholungen abgefangen.
+/// <para>Unter Linux und macOS für Einstellungen und Verlauf nur für den eigenen Benutzer lesbar: neue Ordner 0700,
+/// Dateien 0600 – sie können vertrauliche Inhalte enthalten. Ein Export an einen selbst gewählten Ort
+/// (<c>ownerOnly: false</c>) behält die Rechte einer vorhandenen Datei, eine neue folgt der umask.</para>
 /// </summary>
 internal static class AtomicFile
 {
     /// <summary>Wartezeiten zwischen den Versuchen (ms); insgesamt höchstens eine Viertelsekunde.</summary>
     private static readonly int[] RetryDelaysMs = [15, 30, 60, 120];
 
-    /// <summary>Schreibt <paramref name="content"/> atomar nach <paramref name="path"/> und legt den Ordner bei Bedarf an.</summary>
-    public static void Write(string path, byte[] content) => Write(path, stream => stream.Write(content));
+    /// <summary>
+    /// Schreibt <paramref name="content"/> atomar nach <paramref name="path"/> und legt den Ordner bei Bedarf an.
+    /// <paramref name="ownerOnly"/>: unter Linux und macOS Datei 0600 und neuer Ordner 0700 (Einstellungen, Verlauf);
+    /// false für Exporte (Rechte einer vorhandenen Datei bleiben, sonst umask).
+    /// </summary>
+    public static void Write(string path, byte[] content, bool ownerOnly = true) => Write(path, stream => stream.Write(content), ownerOnly);
 
     /// <summary>
     /// Wie <see cref="Write(string, byte[])"/>, der Inhalt kommt aus <paramref name="writeContent"/>. Wirft der Rückruf,
     /// bleibt die Zieldatei unverändert und die Temp-Datei wird entfernt.
     /// </summary>
-    public static void Write(string path, Action<Stream> writeContent)
+    public static void Write(string path, Action<Stream> writeContent, bool ownerOnly = true)
     {
         var full = Path.GetFullPath(path);
         var dir = Path.GetDirectoryName(full) ?? throw new IOException(string.Format(Strings.Core_File_NoFolder, full));
-        Directory.CreateDirectory(dir);
+        if (OperatingSystem.IsWindows() || !ownerOnly) Directory.CreateDirectory(dir);
+        else if (!Directory.Exists(dir)) Directory.CreateDirectory(dir, OwnerOnlyFolder);
+        // Export über eine vorhandene Datei: deren Rechte übernehmen (das Umbenennen ersetzt sie sonst durch die der Temp-Datei)
+        UnixFileMode? keepMode = OperatingSystem.IsWindows() || ownerOnly ? null : ExistingMode(full);
 
         // Eindeutiger Name im selben Ordner (gleiches Volume → Umbenennen statt Kopieren)
         var tmp = Path.Combine(dir, $"{Path.GetFileName(full)}.{Guid.NewGuid():N}.tmp");
         try
         {
-            using (var stream = new FileStream(tmp, FileMode.CreateNew, FileAccess.Write, FileShare.None, bufferSize: 64 * 1024))
+            var options = new FileStreamOptions { Mode = FileMode.CreateNew, Access = FileAccess.Write, Share = FileShare.None, BufferSize = 64 * 1024 };
+            if (!OperatingSystem.IsWindows() && ownerOnly) options.UnixCreateMode = OwnerOnlyFile;
+            using (var stream = new FileStream(tmp, options))
             {
+                if (!OperatingSystem.IsWindows() && keepMode is { } mode) File.SetUnixFileMode(stream.SafeFileHandle, mode);
                 writeContent(stream);
                 // Erst auf die Platte, dann umbenennen – sonst kann nach einem Stromausfall eine leere Datei übrig bleiben
                 stream.Flush(flushToDisk: true);
@@ -56,8 +69,22 @@ internal static class AtomicFile
         return buffer;
     });
 
+    /// <summary>Rechte neuer Ordner unter Linux und macOS: nur der Benutzer (0700).</summary>
+    internal const UnixFileMode OwnerOnlyFolder = UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute;
+
+    /// <summary>Rechte neuer Dateien unter Linux und macOS: nur der Benutzer (0600).</summary>
+    internal const UnixFileMode OwnerOnlyFile = UnixFileMode.UserRead | UnixFileMode.UserWrite;
+
     /// <summary>Obergrenze beim Lesen – schützt vor einer riesigen (fremden) Datei, die den Speicher füllt.</summary>
     internal const long MaxReadBytes = 256L * 1024 * 1024;
+
+    /// <summary>Rechte einer vorhandenen Datei, sonst null.</summary>
+    private static UnixFileMode? ExistingMode(string path)
+    {
+        if (OperatingSystem.IsWindows()) return null;
+        try { return File.Exists(path) ? File.GetUnixFileMode(path) : null; }
+        catch (Exception ex) when (FileProblems.IsExpected(ex)) { return null; }
+    }
 
     private static void WithRetries(Action action) => WithRetries(() => { action(); return true; });
 

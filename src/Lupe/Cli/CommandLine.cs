@@ -4,12 +4,13 @@ using Lupe.Core.Decoding;
 using Lupe.Core.Input;
 using Lupe.Core.Model;
 using Lupe.Core.Resources;
+using Lupe.Services;
 
 namespace Lupe.Cli;
 
 /// <summary>
-/// Befehlszeile derselben Exe: <c>lesen</c> und <c>--hilfe</c>. Für Skripte zählt der Exitcode
-/// (0 = mindestens ein Code gefunden, 1 = keiner, 3 = Fehler oder Abbruch).
+/// Befehlszeile derselben Exe: <c>lesen</c> (auch <c>read</c>), <c>--hilfe</c>, <c>--version</c> und <c>--info</c>. Für
+/// Skripte zählt der Exitcode (0 = mindestens ein Code gefunden, 1 = keiner, 3 = Fehler oder Abbruch).
 /// </summary>
 internal static class CommandLine
 {
@@ -17,7 +18,7 @@ internal static class CommandLine
     public const int ExitNothing = 1;
     public const int ExitError = 3;
 
-    private static readonly string[] HelpWords = ["--hilfe", "-hilfe", "hilfe", "--help", "-h", "-?", "/?", "/h"];
+    private static readonly string[] HelpWords = ["--hilfe", "-hilfe", "hilfe", "--help", "help", "-h", "-?", "/?", "/h"];
 
     public static int Run(string[] args)
     {
@@ -30,20 +31,26 @@ internal static class CommandLine
                 PrintHelp();
                 return ExitFound;
             }
-            return command.ToLowerInvariant() switch
+            var lower = command.ToLowerInvariant();
+            if (lower is "--version" or "--info")
             {
-                "lesen" => Read(args.Skip(1).ToArray()),
-                "--screenshots" => throw new UsageException(Strings.App_Cli_UsageScreenshots),
-                "--demo" => throw new UsageException(string.Format(Strings.App_Cli_StandsAlone, "--demo")),
-                "--hintergrund" => throw new UsageException(string.Format(Strings.App_Cli_StandsAlone, "--hintergrund")),
-                "--bildschirm" => throw new UsageException(string.Format(Strings.App_Cli_StandsAlone, "--bildschirm")),
+                if (args.Length > 1) throw new UsageException(string.Format(Strings.App_Cli_StandsAlone, command, CommandName));
+                Console.WriteLine(lower == "--version" ? VersionLine() : InfoText());
+                return ExitFound;
+            }
+            return lower switch
+            {
+                "lesen" or "read" => Read(args.Skip(1).ToArray()),
+                "--screenshots" => throw new UsageException(string.Format(Strings.App_Cli_UsageScreenshots, CommandName)),
+                "--demo" or "--hintergrund" or "--background" or "--bildschirm" or "--screen"
+                    => throw new UsageException(string.Format(Strings.App_Cli_StandsAlone, command, CommandName)),
                 _ => throw new UsageException(string.Format(Strings.App_Cli_UnknownCommand, command)),
             };
         }
         catch (UsageException ex)
         {
             Console.Error.WriteLine(string.Format(Strings.App_Cli_Error, ex.Message));
-            Console.Error.WriteLine(Strings.App_Cli_HelpHint);
+            Console.Error.WriteLine(string.Format(Strings.App_Cli_HelpHint, CommandName));
             return ExitError;
         }
         catch (OperationCanceledException)
@@ -60,7 +67,14 @@ internal static class CommandLine
 
     // ================= lesen =================
 
-    private static int Read(string[] args)
+    private static int Read(string[] args) => Read(args, Console.Out, Console.Error, ImageFile.LoadAsync, formats => new BarcodeDecoder(formats));
+
+    /// <summary>
+    /// <c>lesen</c> mit austauschbarer Ausgabe, Bildquelle und Erkennung (Tests setzen hier etwa einen Ladefehler der
+    /// Erkennung ein).
+    /// </summary>
+    internal static int Read(string[] args, TextWriter output, TextWriter error,
+        Func<string, CancellationToken, Task<PixelImage>> load, Func<IReadOnlyList<string>?, BarcodeDecoder> createDecoder)
     {
         var inputs = new List<string>();
         var formatArgs = new List<string>();
@@ -78,7 +92,7 @@ internal static class CommandLine
             else if (arg.StartsWith("--", StringComparison.Ordinal)) throw new UsageException(string.Format(Strings.App_Cli_UnknownOption, arg));
             else inputs.Add(arg);
         }
-        if (inputs.Count == 0) throw new UsageException(Strings.App_Cli_NoImage);
+        if (inputs.Count == 0) throw new UsageException(string.Format(Strings.App_Cli_NoImage, CommandName, Strings.App_Cli_ExampleFile));
 
         // Formate vor den Dateien prüfen: ein Tippfehler soll nicht erst nach dem Lesen vieler Bilder auffallen
         var formats = ResolveFormats(formatArgs);
@@ -103,7 +117,7 @@ internal static class CommandLine
                     cts.Token.ThrowIfCancellationRequested();
                     if (problem is not null)
                     {
-                        Console.Error.WriteLine(problem);
+                        error.WriteLine(problem);
                         failed = true;
                         continue;
                     }
@@ -112,27 +126,34 @@ internal static class CommandLine
                     {
                         // Laden auf einem Pool-Thread: Main ist ein STA-Thread, und WinRT-Aufrufe (Windows) sollen nicht
                         // auf einen blockierten STA-Thread zurückmüssen
-                        var image = Task.Run(() => ImageFile.LoadAsync(path, cts.Token), cts.Token).GetAwaiter().GetResult();
-                        decoder ??= new BarcodeDecoder(formats);
+                        var image = Task.Run(() => load(path, cts.Token), cts.Token).GetAwaiter().GetResult();
+                        decoder ??= createDecoder(formats);
                         codes = decoder.Decode(image, cts.Token);
                     }
                     catch (OperationCanceledException)
                     {
                         throw;
                     }
+                    catch (DecoderUnavailableException ex)
+                    {
+                        // Die Erkennung lädt auf diesem System nicht – kein „nichts gefunden“, und jedes weitere Bild
+                        // scheiterte genauso: abbrechen mit Fehlercode und Exitcode 3
+                        error.WriteLine(ex.Message);
+                        return ExitError;
+                    }
                     catch (Exception ex)
                     {
-                        Console.Error.WriteLine(string.Format(Strings.App_Cli_ReadFailed, path, ex.Message));
+                        error.WriteLine(string.Format(Strings.App_Cli_ReadFailed, path, ex.Message));
                         failed = true;
                         continue;
                     }
                     // Ausgabe außerhalb: Bricht die Pipe ab (… | Select-Object -First 1), ist das kein Fehler dieses Bildes
-                    foreach (var code in codes) Console.Out.WriteLine(CodeLine.Format(code));
-                    if (codes.Count == 0) Console.Error.WriteLine(string.Format(Strings.App_Cli_NoCodeFound, IsPattern(input) ? Path.GetFileName(path) : input));
+                    foreach (var code in codes) output.WriteLine(CodeLine.Format(code));
+                    if (codes.Count == 0) error.WriteLine(string.Format(Strings.App_Cli_NoCodeFound, IsPattern(input) ? Path.GetFileName(path) : input));
                     found += codes.Count;
                 }
             }
-            Console.Out.Flush();
+            output.Flush();
             return failed ? ExitError : found > 0 ? ExitFound : ExitNothing;
         }
         finally
@@ -196,7 +217,46 @@ internal static class CommandLine
         catch (Exception) { formats = Strings.App_Cli_FormatsFallback; }
         var hotkey = HotkeyText.Format(Hotkey.PlatformDefault);
 
-        Console.WriteLine(string.Format(Strings.App_Cli_Help, AppInfo.Version, hotkey, formats));
+        Console.WriteLine(HelpText(AppInfo.Version, hotkey, formats));
+    }
+
+    /// <summary>Die Hilfe für dieses System: Befehlsname, Bildformate, Beispielpfad und (nur Windows) das Warten mit start /wait.</summary>
+    internal static string HelpText(string version, string hotkey, string formats) => string.Format(Strings.App_Cli_Help, version, hotkey, formats,
+        CommandName,
+        OperatingSystem.IsWindows() ? Strings.App_Cli_ImagesWindows : OperatingSystem.IsMacOS() ? Strings.App_Cli_ImagesMac : Strings.App_Cli_ImagesLinux,
+        ExamplePattern, OperatingSystem.IsWindows() ? Strings.App_Cli_WindowsWait : "", Strings.App_Cli_ExampleFile);
+
+    /// <summary>
+    /// So ruft man Lupe auf diesem System auf: Lupe.exe (Windows), lupe (Linux: .deb und install.sh legen den Befehl an),
+    /// unter macOS das Programm im Bündel (es gibt keinen Befehl „lupe“ im PATH).
+    /// </summary>
+    internal static string CommandName => OperatingSystem.IsWindows() ? "Lupe.exe"
+        : OperatingSystem.IsMacOS() ? MacCommand(Environment.ProcessPath)
+        : "lupe";
+
+    internal static string MacCommand(string? processPath) =>
+        processPath is not null && processPath.Contains(".app/Contents/MacOS/", StringComparison.Ordinal) && !processPath.Contains("/AppTranslocation/", StringComparison.Ordinal)
+            ? processPath
+            : "/Applications/Lupe.app/Contents/MacOS/Lupe";
+
+    /// <summary>Beispiel für Platzhalter im Dateinamen.</summary>
+    internal static string ExamplePattern => OperatingSystem.IsWindows() ? @"C:\Scans\*.jpg" : "~/Scans/*.jpg";
+
+    /// <summary>„Lupe 0.1.0 · Build abc1234 · .NET 10.0.1“ – für Fehlerberichte (<c>--version</c>).</summary>
+    internal static string VersionLine() => "Lupe " + (AppInfo.Build.Length > 0
+        ? string.Format(Strings.Page_Info_VersionBuild, AppInfo.Version, AppInfo.Build, Environment.Version.ToString(3))
+        : string.Format(Strings.Page_Info_Version, AppInfo.Version, Environment.Version.ToString(3)));
+
+    /// <summary>Die Angaben der Info-Seite als Text (<c>--info</c>, Richtlinie 07): Version, Lizenz, Links, Datenschutz.</summary>
+    internal static string InfoText() => string.Format(Strings.App_Cli_Info, VersionLine(), AppInfo.Copyright,
+        Local(ThirdPartyNotices.LicenseFileName, AppInfo.LicenseUrl), Local(ThirdPartyNotices.FileName, AppInfo.RepositoryUrl + "/blob/main/THIRD-PARTY-NOTICES.txt"),
+        AppInfo.RepositoryUrl, AppInfo.WebsiteUrl, AppInfo.ImprintUrl, AppInfo.PrivacyUrl, AppInfo.SupportUrl);
+
+    /// <summary>Die Datei neben dem Programm, wenn es sie gibt (Pakete), sonst die Adresse im Repository.</summary>
+    private static string Local(string fileName, string url)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, fileName);
+        return File.Exists(path) ? path : url;
     }
 
     private sealed class UsageException(string message) : Exception(message);
@@ -208,12 +268,15 @@ internal static class CodeLine
     public static string Format(DecodedCode code) => $"{code.Format}\t{Escape(code.Text)}";
 
     /// <summary>
-    /// Steuerzeichen so maskieren, dass jeder Code genau eine Zeile bleibt: \n, \r, \t und \xHH. Der umgekehrte
-    /// Schrägstrich selbst bleibt unverändert – WLAN-Codes (<c>WIFI:S:Netz\;…</c>) und Pfade bleiben so lesbar.
+    /// Steuerzeichen so maskieren, dass jeder Code genau eine Zeile bleibt: \n, \r, \t und \xHH (auch C1-Steuerzeichen
+    /// U+0080–U+009F wie NEL), Zeilen- und Absatztrenner (U+2028, U+2029) und Zeichen zur Schreibrichtung (U+200E/F,
+    /// U+202A–U+202E, U+2066–U+2069, U+061C) als \uXXXX – sie könnten eine Zeile teilen oder die Anzeige im Terminal
+    /// verdrehen. Der umgekehrte Schrägstrich selbst bleibt unverändert – WLAN-Codes (<c>WIFI:S:Netz\;…</c>) und Pfade
+    /// bleiben so lesbar.
     /// </summary>
     public static string Escape(string text)
     {
-        if (!text.Any(c => c < 0x20 || c == 0x7F)) return text;
+        if (!text.Any(NeedsEscape)) return text;
         var sb = new StringBuilder(text.Length + 8);
         foreach (var c in text)
         {
@@ -222,10 +285,18 @@ internal static class CodeLine
                 case '\n': sb.Append(@"\n"); break;
                 case '\r': sb.Append(@"\r"); break;
                 case '\t': sb.Append(@"\t"); break;
-                case < (char)0x20 or (char)0x7F: sb.Append(@"\x").Append(((int)c).ToString("X2", System.Globalization.CultureInfo.InvariantCulture)); break;
+                case < (char)0x20 or (>= (char)0x7F and <= (char)0x9F):
+                    sb.Append(@"\x").Append(((int)c).ToString("X2", System.Globalization.CultureInfo.InvariantCulture)); break;
+                case var other when NeedsEscape(other):
+                    sb.Append(@"\u").Append(((int)other).ToString("X4", System.Globalization.CultureInfo.InvariantCulture)); break;
                 default: sb.Append(c); break;
             }
         }
         return sb.ToString();
     }
+
+    private static bool NeedsEscape(char c) =>
+        c < 0x20 || c is >= (char)0x7F and <= (char)0x9F
+        || c is '\u2028' or '\u2029' or '\u200E' or '\u200F' or '\u061C'
+        || c is >= '\u202A' and <= '\u202E' || c is >= '\u2066' and <= '\u2069';
 }

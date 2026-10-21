@@ -2,9 +2,9 @@
 
 # Data & privacy
 
-What Lupe looks at, what it keeps where, and how to get rid of it. In short: pictures stay in memory, results stay on your PC, and nothing goes to the internet.
+What Lupe looks at, what it keeps where, and how to get rid of it. In short: pictures stay in memory, results stay on your computer, and nothing goes to the internet. The main part describes Windows; [Linux and macOS](#linux-and-macos) has the paths and the few differences there.
 
-**Contents:** [What Lupe looks at](#what-lupe-looks-at) · [What is stored where](#what-is-stored-where) · [The history file](#the-history-file) · [CSV export](#csv-export) · [Clipboard and typing](#clipboard-and-typing) · [Registry](#registry) · [Network connections](#network-connections) · [Removing everything](#removing-everything)
+**Contents:** [What Lupe looks at](#what-lupe-looks-at) · [What is stored where](#what-is-stored-where) · [The history file](#the-history-file) · [CSV export](#csv-export) · [Clipboard and typing](#clipboard-and-typing) · [Registry](#registry) · [Network connections](#network-connections) · [Removing everything](#removing-everything) · [Linux and macOS](#linux-and-macos)
 
 ## What Lupe looks at
 
@@ -15,7 +15,7 @@ What Lupe looks at, what it keeps where, and how to get rid of it. In short: pic
 | Image files | files you open, drop or pass to `lesen` | read only, never modified |
 | Clipboard | only when you click *Aus Zwischenablage* or press <kbd>Ctrl</kbd>+<kbd>V</kbd> in Lupe | read only |
 
-Lupe **never saves a picture** – no camera frame, no screenshot, no copy of a file. (The developer switch `--screenshots` writes images of the built-in demo, not of your screen.)
+Lupe **never keeps a picture** – no camera frame, no screenshot, no copy of a file. On Windows and X11 the screenshot never touches the disk. On **macOS** and under **Wayland** the system hands the screenshot over as a PNG file (macOS: `screencapture` into the user's temporary folder; Wayland: the desktop portal, often in `~/Pictures`), which Lupe reads and deletes right away. (The developer switch `--screenshots` writes images of the built-in demo, not of your screen.)
 
 ## What is stored where
 
@@ -111,6 +111,22 @@ Lupe reads and writes very little:
 4. Uninstall the MSI, or delete `Lupe.exe`.
 
 Uninstalling alone leaves steps 1 and 3 undone – see [Installation › Updates and uninstalling](installation.md#updates-and-uninstalling).
+
+## Linux and macOS
+
+What Lupe looks at and what the history contains is the same as on Windows. Settings and history are readable only by your user: new folders are created with mode `0700`, the files with `0600`. A CSV export goes where you choose and is not restricted this way: a new file follows your umask, an existing file you overwrite keeps its permissions.
+
+| | Linux | macOS |
+|---|---|---|
+| Settings | `~/.config/lupe/einstellungen.json` (or `$XDG_CONFIG_HOME/lupe`) | `~/Library/Application Support/Lupe/einstellungen.json` |
+| History | `~/.local/share/lupe/verlauf.json` (or `$XDG_DATA_HOME/lupe`) | `~/Library/Application Support/Lupe/verlauf.json` |
+| Keyboard permission (Wayland) | `~/.config/lupe/remotedesktop-token` – the desktop portal's token, so it does not ask again at every start | – |
+| Autostart | `~/.config/autostart/lupe.desktop` | `~/Library/LaunchAgents/de.ict-baden.lupe.plist` |
+| One Lupe per session | `lupe-<user>.lock` and the socket `lupe-<user>.sock` in `$XDG_RUNTIME_DIR` (without it: the temporary folder) | the same two files in the user's temporary folder |
+| Temporary files | the hit sound `treffer.wav` in a new folder `lupe-…` of the temporary folder, removed when Lupe quits; under Wayland the portal's screenshot PNG, deleted after reading | the hit sound as on Linux; the screenshot PNG `lupe-<process>-….png` in the user's temporary folder, deleted after reading |
+| Licence texts | if the package has no `THIRD-PARTY-NOTICES.txt` or `LICENSE.txt` next to the program, Lupe writes a copy to `Lupe/` in the temporary folder before opening it | same |
+
+There is no registry. **Removing everything:** switch off autostart in the settings, quit Lupe, delete the folders and files above, then remove the program (`sudo apt remove ictbaden-lupe`, `~/.local/opt/lupe/install.sh --entfernen`, or move `Lupe.app` to the bin). On macOS also remove Lupe from *System Settings › Privacy & Security* (Camera, Screen Recording, Accessibility) if you like.
 
 ---
 

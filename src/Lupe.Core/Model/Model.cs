@@ -129,7 +129,7 @@ public sealed record LupeSettings
     /// <summary>Beim Schließen des Fensters im Infobereich weiterlaufen – das Tastenkürzel bleibt dann aktiv.</summary>
     public bool KeepRunningInTray { get; init; } = true;
     /// <summary>
-    /// Sprache der Oberfläche: "" = wie das Betriebssystem, sonst ein Code aus <c>UiLanguage.Supported</c> ("en", "de").
+    /// Sprache der Oberfläche: "" = wie das Betriebssystem, sonst ein Code aus <c>UiLanguage.Supported</c> ("en", "de", "es", "fr", "zh-Hans").
     /// Wirkt beim nächsten Start; lässt sich mit einer verteilten einstellungen.json vorgeben.
     /// </summary>
     public string Language { get; init; } = "";

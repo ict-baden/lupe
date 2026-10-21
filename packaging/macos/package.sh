@@ -2,7 +2,11 @@
 # SPDX-License-Identifier: MIT
 # Lupe.app aus einer Veröffentlichung (dotnet publish -r osx-<arch> --self-contained), gepackt als ZIP:
 #   package.sh <publish-ordner> <arch: arm64|x64> <version> <ausgabe-ordner> [<dateisuffix>]
-# Nur ad hoc signiert, nicht notarisiert – Gatekeeper verlangt beim ersten Start Rechtsklick → Öffnen.
+# Signatur: ohne MACOS_SIGN_IDENTITY ad hoc (Gatekeeper verlangt beim ersten Start „Dennoch öffnen“, siehe
+# docs/installation.md). Mit MACOS_SIGN_IDENTITY ("Developer ID Application: …", Zertifikat im Schlüsselbund) jede Datei
+# mit Hardened Runtime und Zeitstempel; mit MACOS_NOTARY_APPLE_ID, MACOS_NOTARY_TEAM_ID und MACOS_NOTARY_PASSWORD
+# (app-spezifisches Passwort) zusätzlich notarisiert und das Ticket angeheftet. CI setzt sie nur, wenn die Zugangsdaten
+# hinterlegt sind (.github/workflows/build.yml).
 set -euo pipefail
 pub=$1; arch=$2; version=$3; out=$4; suffix=${5:-}
 here=$(cd "$(dirname "$0")" && pwd)
@@ -17,8 +21,12 @@ mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp -R "$pub"/. "$app/Contents/MacOS/"
 chmod 755 "$app/Contents/MacOS/Lupe"
 short=${version%%-*}
-sed -e "s/@SHORTVERSION@/$short/" -e "s/@VERSION@/$version/" "$here/Info.plist" > "$app/Contents/Info.plist"
+# CFBundleVersion muss aus höchstens drei Zahlen bestehen (Apple): „0.1.0“ statt „0.1.0-ci.33“ – die volle Version
+# zeigen die Info-Seite und „Lupe --version“
+sed -e "s/@SHORTVERSION@/$short/" -e "s/@BUNDLEVERSION@/$short/" "$here/Info.plist" > "$app/Contents/Info.plist"
 plutil -lint "$app/Contents/Info.plist"
+# Texte der macOS-Abfragen (Kamera) in jeder Sprache der Oberfläche
+for lproj in "$here"/*.lproj; do cp -R "$lproj" "$app/Contents/Resources/"; done
 printf 'APPL????' > "$app/Contents/PkgInfo"
 
 # Symbol: lupe.png (256 px) → lupe.icns
@@ -32,8 +40,25 @@ for s in 16 32 128 256; do
 done
 iconutil -c icns "$iconset" -o "$app/Contents/Resources/lupe.icns"
 
-# Ad-hoc-Signatur über das ganze Bündel (Apple Silicon startet unsignierten Code nicht)
-codesign --force --deep --sign - "$app"
-codesign --verify --deep "$app"
+identity=${MACOS_SIGN_IDENTITY:-}
+if [ -z "$identity" ]; then
+    # Ad-hoc-Signatur über das ganze Bündel (Apple Silicon startet unsignierten Code nicht)
+    codesign --force --deep --sign - "$app"
+else
+    # Developer ID: jede Datei in Contents/MacOS einzeln (auch die .NET-Assemblys), dann das Bündel – mit Hardened
+    # Runtime, Zeitstempel und den Berechtigungen für JIT und Kamera
+    find "$app/Contents/MacOS" -type f | while IFS= read -r f; do
+        codesign --force --timestamp --options runtime --entitlements "$here/Lupe.entitlements" --sign "$identity" "$f"
+    done
+    codesign --force --timestamp --options runtime --entitlements "$here/Lupe.entitlements" --sign "$identity" "$app"
+fi
+codesign --verify --deep --strict "$app"
+
+if [ -n "$identity" ] && [ -n "${MACOS_NOTARY_APPLE_ID:-}" ] && [ -n "${MACOS_NOTARY_TEAM_ID:-}" ] && [ -n "${MACOS_NOTARY_PASSWORD:-}" ]; then
+    ditto -c -k --keepParent "$app" "$work/notarisieren.zip"
+    xcrun notarytool submit "$work/notarisieren.zip" --apple-id "$MACOS_NOTARY_APPLE_ID" --team-id "$MACOS_NOTARY_TEAM_ID" \
+        --password "$MACOS_NOTARY_PASSWORD" --wait --timeout 30m
+    xcrun stapler staple "$app"
+fi
 ditto -c -k --keepParent "$app" "$out/Lupe$suffix-macos-$arch.zip"
 echo "Gebaut: $out/Lupe$suffix-macos-$arch.zip"

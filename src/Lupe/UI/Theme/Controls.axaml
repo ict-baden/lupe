@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: MIT -->
 <!-- Lupe-eigene Stile (von Zutritt und Vitrine übernommen). Standard-Steuerelemente stylt Avalonia Fluent; Farben
      kommen aus Colors.axaml und ThemeManager, Schriften (UiFont, DisplayFont, IconFont, MonoFont) setzt ThemeManager je System. -->
 <Styles xmlns="https://github.com/avaloniaui"

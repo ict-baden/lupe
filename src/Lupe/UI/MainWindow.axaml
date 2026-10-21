@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: MIT -->
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ui="clr-namespace:Lupe.UI"
@@ -11,13 +12,14 @@
 
         <!-- ===================== Navigation ===================== -->
         <DockPanel Margin="12,12,8,12">
-            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="12,8,0,20">
-                <Image Source="avares://Lupe/Assets/lupe.png" Width="34" Height="34" RenderOptions.BitmapInterpolationMode="HighQuality"/>
-                <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
+            <!-- Grid statt waagerechtem StackPanel: Die Unterzeile bricht in längeren Sprachen um, statt in die Seite zu laufen -->
+            <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" Margin="12,8,0,20">
+                <Image Source="avares://Lupe/Assets/lupe.png" Width="34" Height="34" RenderOptions.BitmapInterpolationMode="HighQuality" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
                     <TextBlock x:Name="AppTitle" Text="Lupe" Classes="bodyStrong" FontSize="16"/>
-                    <TextBlock Text="{x:Static l:Strings.App_Main_Tagline}" Classes="caption"/>
+                    <TextBlock Text="{x:Static l:Strings.App_Main_Tagline}" Classes="caption" TextWrapping="Wrap"/>
                 </StackPanel>
-            </StackPanel>
+            </Grid>
 
             <!-- Tastenkürzel für den Bildschirm-Scan: bereit oder belegt -->
             <Border DockPanel.Dock="Top" Margin="4,0,4,14" CornerRadius="8" Padding="12,10" Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
@@ -31,7 +33,7 @@
                         <TextBlock x:Name="StatusTitle" Classes="bodyStrong" FontSize="13"
                                    TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
                         <TextBlock x:Name="StatusDetail" Text="{x:Static l:Strings.App_Main_StatusReady}" Classes="caption"
-                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap"/>
+                                   TextWrapping="Wrap"/>
                     </StackPanel>
                 </Grid>
             </Border>

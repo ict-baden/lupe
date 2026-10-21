@@ -266,6 +266,21 @@ public sealed class ScanLoopTests
     }
 
     [Fact]
+    public async Task Nicht_ladbare_Erkennung_meldet_Fehlercode_statt_Neustart_Hinweis()
+    {
+        const string message = "LUP-0001: Lupe kann auf diesem System keine Codes lesen …";
+        await using var loop = CreateLoop(decode: _ => throw new Lupe.Core.Decoding.DecoderUnavailableException(message));
+        await loop.StartAsync();
+        _source.Push(Marker(1));
+        await WithTimeout(loop.CurrentDecode);
+
+        // Unverändert: kein „Kamera neu starten“ (hilft nicht) und kein technischer Typname davor
+        Assert.Equal(message, Assert.Single(_failed));
+        Assert.False(loop.IsRunning);
+        Assert.Empty(_detected);
+    }
+
+    [Fact]
     public async Task Abbruch_in_der_Erkennung_ist_kein_Fehler()
     {
         int calls = 0;

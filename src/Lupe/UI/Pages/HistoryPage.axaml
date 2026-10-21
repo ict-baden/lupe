@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: MIT -->
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:pages="clr-namespace:Lupe.UI.Pages"
@@ -60,7 +61,7 @@
             <Grid RowDefinitions="Auto,*">
                 <!-- Spaltenköpfe: Klick sortiert, zweiter Klick dreht um -->
                 <Border BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Padding="4,0">
-                    <Grid x:Name="HeaderGrid" ColumnDefinitions="150,150,120,*" Height="34">
+                    <Grid x:Name="HeaderGrid" ColumnDefinitions="180,150,120,*" Height="34">
                         <Button x:Name="SortTime" Classes="header" Tag="Time" Click="Sort_Click" Content="{x:Static l:Strings.Page_History_ColumnTime}"/>
                         <Button x:Name="SortSource" Grid.Column="1" Classes="header" Tag="SourceLabel" Click="Sort_Click" Content="{x:Static l:Strings.Page_History_ColumnSource}"/>
                         <Button x:Name="SortFormat" Grid.Column="2" Classes="header" Tag="FormatLabel" Click="Sort_Click" Content="{x:Static l:Strings.Page_History_ColumnFormat}"/>
@@ -80,7 +81,7 @@
                     </ListBox.ContextMenu>
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="pages:HistoryRow">
-                            <Grid ColumnDefinitions="150,150,120,*" Background="Transparent">
+                            <Grid ColumnDefinitions="180,150,120,*" Background="Transparent">
                                 <TextBlock Text="{Binding TimeText}" Classes="cell" Margin="8,0,10,0"/>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,10,0">
                                     <TextBlock Text="{Binding SourceGlyph}" Classes="icon" FontSize="13" Margin="0,0,8,0"

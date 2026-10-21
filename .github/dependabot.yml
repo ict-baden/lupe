@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 version: 2
 updates:
   - package-ecosystem: nuget
@@ -7,7 +8,20 @@ updates:
     groups:
       nuget:
         patterns: ["*"]
+    ignore:
+      # Avalonia 12 bindet SkiaSharp 3.119.x und HarfBuzzSharp 8.x; eine neue Hauptversion nur zusammen mit Avalonia
+      # (sonst passen verwaltete und native Teile nicht zusammen, siehe PR #5)
+      - dependency-name: "SkiaSharp*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "HarfBuzzSharp*"
+        update-types: ["version-update:semver-major"]
+      # ZXingCpp: Ein Update braucht auch packaging/zxing/versions.env (Tag und Commit der nativen Bibliothek) –
+      # die CI-Prüfung packaging/zxing/check.sh schlägt sonst fehl
   - package-ecosystem: github-actions
     directory: "/"
+    schedule:
+      interval: monthly
+  - package-ecosystem: npm
+    directory: "/tools/screenshots"
     schedule:
       interval: monthly

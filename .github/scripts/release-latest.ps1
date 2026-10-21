@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT
 <#
 .SYNOPSIS
     Aktualisiert das rollierende Release „latest“ an Ort und Stelle – die Download-Links bleiben gültig.
@@ -29,7 +30,6 @@
     ./.github/scripts/release-latest.ps1 -Notes $notes -Title "Latest Build (main) – 0.1.0-ci.9" -Expected 'Lupe-x64.msi', 'Lupe.exe'
 
 #>
-# SPDX-License-Identifier: MIT
 param(
     [Parameter(Mandatory)] [string] $Notes,
     [string] $Title = 'Latest Build (main)',

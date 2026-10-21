@@ -9,7 +9,7 @@
   <img alt="macOS 12 or later, Apple Silicon and Intel" src="https://img.shields.io/badge/macOS-12%2B-111111?logo=apple&logoColor=white">
   <img alt=".NET 10" src="https://img.shields.io/badge/.NET-10-512BD4?logo=dotnet&logoColor=white">
   <img alt="Data stays on this PC" src="https://img.shields.io/badge/Data-stays%20local-2E7D32">
-  <img alt="User interface in English and German" src="https://img.shields.io/badge/UI-English%20%7C%20German-6B7280">
+  <img alt="User interface in English, German, Spanish, French and Chinese" src="https://img.shields.io/badge/UI-en%20%7C%20de%20%7C%20es%20%7C%20fr%20%7C%20zh--Hans-6B7280">
   <a href="LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/badge/Licence-MIT-blue"></a>
   <img alt="Status: pre-release" src="https://img.shields.io/badge/Status-pre--release-E3A008">
   <a href="https://github.com/ict-baden/lupe/actions/workflows/build.yml"><img alt="Build" src="https://github.com/ict-baden/lupe/actions/workflows/build.yml/badge.svg"></a>
@@ -37,10 +37,10 @@
 </p>
 
 > [!NOTE]
-> **Deutsch:** Lupe liest QR- und Barcodes per Webcam, aus einem Bildschirmausschnitt, aus Bilddateien und aus der Zwischenablage, unter Windows, Linux und macOS. Das Ergebnis wird kopiert, in das Programm vorn eingetippt oder als Link geöffnet. Download: [Release „latest“](https://github.com/ict-baden/lupe/releases/tag/latest). Die Oberfläche ist Deutsch oder Englisch und folgt der Sprache des Systems; diese Doku ist Englisch.
+> **Deutsch:** Lupe liest QR- und Barcodes per Webcam, aus einem Bildschirmausschnitt, aus Bilddateien und aus der Zwischenablage, unter Windows, Linux und macOS. Das Ergebnis wird kopiert, in das Programm vorn eingetippt oder als Link geöffnet. Download: [Release „latest“](https://github.com/ict-baden/lupe/releases/tag/latest). Die Oberfläche gibt es auf Deutsch, Englisch, Spanisch, Französisch und Chinesisch (die letzten drei maschinell übersetzt, noch nicht gegengelesen); sie folgt der Sprache des Systems. Diese Doku ist Englisch.
 
 > [!NOTE]
-> **The application speaks English and German.** It follows the language of the operating system (English for any other language) and can be switched under *Settings › Language*. This documentation still quotes the German labels with their English meaning, for example *Bildschirm* (Screen), *Eintippen* (Type) or *Link öffnen* (Open link).
+> **The application speaks English, German, Spanish, French and Chinese (simplified)** – the last three are machine translations that native speakers have not reviewed yet. It follows the language of the operating system (English for any other language) and can be switched under *Settings › Language*. This documentation still quotes the German labels with their English meaning, for example *Bildschirm* (Screen), *Eintippen* (Type) or *Link öffnen* (Open link).
 
 ## What Lupe does
 
@@ -138,8 +138,8 @@
 | [`Lupe.exe`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe.exe) | A single file that runs without installation; .NET included. |
 | [`Lupe-win-x64-framework.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-win-x64-framework.zip) | Small variant; needs the .NET 10 Runtime. |
 | [`lupe_amd64.deb`](https://github.com/ict-baden/lupe/releases/download/latest/lupe_amd64.deb) | Linux package for Debian and Ubuntu (x64): `sudo apt install ./lupe_amd64.deb`. |
-| [`Lupe-linux-x64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-x64.tar.gz), [`Lupe-linux-arm64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-arm64.tar.gz) | Linux, any distribution: unpack and run `lupe/install.sh` (per user, no root). |
-| [`Lupe-macos-arm64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-arm64.zip), [`Lupe-macos-x64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-x64.zip) | `Lupe.app` for Apple Silicon or Intel Macs, not notarised: the first time, right-click → *Öffnen* (*Open*). |
+| [`Lupe-linux-x64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-x64.tar.gz), [`Lupe-linux-arm64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-arm64.tar.gz) | Linux, any distribution with glibc 2.31 or later (Ubuntu 20.04, Debian 11 and newer): unpack and run `lupe/install.sh` (per user, no root). |
+| [`Lupe-macos-arm64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-arm64.zip), [`Lupe-macos-x64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-x64.zip) | `Lupe.app` for Apple Silicon or Intel Macs, not yet notarised: the first time, allow it under *System Settings › Privacy & Security › Open Anyway* ([how](docs/installation.md#macos)). |
 
 All variants include .NET except the framework ZIP. On macOS the default shortcut is <kbd>⌘</kbd>+<kbd>⌥</kbd>+<kbd>Q</kbd> (<kbd>⌘</kbd>+<kbd>⇧</kbd>+<kbd>Q</kbd> logs out there).
 
@@ -235,7 +235,7 @@ Lupe is a rewrite of Till's [Barcode-Reader](https://github.com/pieewiee/Barcode
     <td valign="top"><a href="docs/link-rules.md"><b>Link rules</b></a><br><sub>Pattern and prefix, the three ways a link is built, examples, and the safety checks</sub></td>
   </tr>
   <tr>
-    <td valign="top"><a href="docs/command-line.md"><b>Command line</b></a><br><sub>Reading images with <code>lesen</code>, choosing formats, output and exit codes, encoding, waiting with <code>start /wait</code>, start switches</sub></td>
+    <td valign="top"><a href="docs/command-line.md"><b>Command line</b></a><br><sub>Reading images with <code>lesen</code>, choosing formats, output and exit codes, encoding, waiting with <code>start /wait</code>, Linux and macOS, <code>--version</code> and <code>--info</code>, start switches</sub></td>
     <td valign="top"><a href="docs/how-it-works.md"><b>How it works</b></a><br><sub>Decoding stages, live vs. thorough search, phantom-code protection, screen capture and DPI, typing, camera</sub></td>
   </tr>
   <tr>
@@ -243,7 +243,8 @@ Lupe is a rewrite of Till's [Barcode-Reader](https://github.com/pieewiee/Barcode
     <td valign="top"><a href="docs/limitations.md"><b>Limitations</b></a><br><sub>What was not tested on real hardware, elevated windows, control characters, encodings and other honest limits</sub></td>
   </tr>
   <tr>
-    <td colspan="2" valign="top"><a href="docs/development.md"><b>Development</b></a><br><sub>Building with .NET 10, about 1,300 tests and which ones skip themselves, architecture, CI and releases, MSI, regenerating the screenshots</sub></td>
+    <td valign="top"><a href="docs/error-codes.md"><b>Error codes</b></a><br><sub>Messages with a code such as <code>LUP-0001</code>: what they mean and what to do</sub></td>
+    <td valign="top"><a href="docs/development.md"><b>Development</b></a><br><sub>Building with .NET 10, about 1,300 tests and which ones skip themselves, architecture, CI and releases, the self-built zxing-cpp library, MSI, regenerating the screenshots</sub></td>
   </tr>
 </table>
 
@@ -256,7 +257,7 @@ Lupe is a rewrite of Till's [Barcode-Reader](https://github.com/pieewiee/Barcode
 - **Command line into a pipe** uses the console's code page; characters outside it are replaced. Redirect into a file for lossless UTF-8.
 - **Linux and macOS are new and less tested than Windows.** On Wayland the screen scan, typing and the shortcut go through the desktop portals, which ask for permission and are not offered by every desktop; Lupe cannot see which window is in front there. The macOS build has not run on a real Mac yet. Details: [Limitations › Linux and macOS](docs/limitations.md#linux-and-macos).
 - **Pre-release 0.1.0, not code-signed.** SmartScreen may warn; macOS Gatekeeper asks once.
-- **Licence: MIT.** Lupe is under the [MIT licence](LICENSE), like all ICT-Baden software. The licences of the bundled third-party components (zxing-cpp with libzint and libzueci, C#/WinRT, .NET) are in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which ships next to `Lupe.exe` and opens from *Info › Erkennung › Lizenztexte*.
+- **Licence: MIT.** Lupe is under the [MIT licence](LICENSE), like all ICT-Baden software. The licences of the bundled third-party components (zxing-cpp with libzint and libzueci, Avalonia, SkiaSharp and HarfBuzzSharp with the libraries compiled into them, ANGLE, MicroCom, C#/WinRT, the Windows SDK projection, .NET and more) are in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which ships in every package and opens from *Info › Recognition and user interface › License texts* (*Erkennung und Oberfläche › Lizenztexte*).
 
 Everything else: **[Limitations →](docs/limitations.md)**
 
@@ -285,6 +286,7 @@ Licence: <a href="LICENSE">MIT</a> &nbsp;·&nbsp;
 Third-party licences: <a href="THIRD-PARTY-NOTICES.txt">THIRD-PARTY-NOTICES.txt</a> &nbsp;·&nbsp;
 Support: free via GitHub, guaranteed with a <a href="SUPPORT.md">support contract</a> &nbsp;·&nbsp;
 <a href="SECURITY.md">Security</a> &nbsp;·&nbsp;
-<a href="CHANGELOG.md">Changes</a>
-<!-- Link „Impressum“ folgt, sobald die Webseite steht (Domain offen, richtlinien/OFFEN.md) -->
+<a href="CHANGELOG.md">Changes</a> &nbsp;·&nbsp;
+Website: <a href="https://ict-baden.de/">ict-baden.de</a> &nbsp;·&nbsp;
+<a href="https://ict-baden.de/index.html?page=imprint">Impressum</a>
 </sub>

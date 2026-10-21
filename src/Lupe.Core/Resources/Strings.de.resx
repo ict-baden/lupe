@@ -58,6 +58,9 @@
   <data name="App_Cli_Error" xml:space="preserve">
     <value>Fehler: {0}</value>
   </data>
+  <data name="App_Cli_ExampleFile" xml:space="preserve">
+    <value>etikett.png</value>
+  </data>
   <data name="App_Cli_FileNotFound" xml:space="preserve">
     <value>Datei nicht gefunden: {0}</value>
   </data>
@@ -74,15 +77,25 @@
     <value>Lupe {0} – QR- und Barcodes lesen
 
 Aufruf:
-  Lupe.exe                              Oberfläche starten
-  Lupe.exe lesen &lt;bild&gt; [&lt;bild&gt; …] [--format &lt;format&gt;]
-  Lupe.exe --hintergrund                nur im Infobereich starten (für den Autostart)
-  Lupe.exe --bildschirm                 gleich einen Ausschnitt scannen (läuft Lupe schon,
-                                        scannt diese) – für ein eigenes Tastenkürzel
-  Lupe.exe --demo                       Oberfläche mit Demo-Kamera und Beispielverlauf
-                                        (speichert nichts, ohne globales Tastenkürzel)
-  Lupe.exe --screenshots &lt;ordner&gt; [--theme hell|dunkel|beide]
-  Lupe.exe --hilfe
+  {3}
+      Oberfläche starten
+  {3} lesen &lt;bild&gt; [&lt;bild&gt; …] [--format &lt;format&gt;]
+  {3} --hintergrund
+      nur im Infobereich starten (für den Autostart)
+  {3} --bildschirm
+      gleich einen Ausschnitt scannen (läuft Lupe schon,
+      scannt diese) – für ein eigenes Tastenkürzel
+  {3} --demo
+      Oberfläche mit Demo-Kamera und Beispielverlauf
+      (speichert nichts, ohne globales Tastenkürzel)
+  {3} --screenshots &lt;ordner&gt; [--theme hell|dunkel|beide]
+  {3} --hilfe
+  {3} --version
+      Version, für Fehlerberichte
+  {3} --info
+      Version, Lizenz, Webseite, Impressum, Datenschutz
+      und Support
+Englische Namen gehen ebenso: read, --background, --screen, --help, --theme light|dark|both.
 
 Bildschirm-Scan: {1} (Standard, in den Einstellungen änderbar) liest einen
 Ausschnitt des Bildschirms – aus jedem Programm, solange Lupe läuft.
@@ -90,11 +103,13 @@ Ausschnitt des Bildschirms – aus jedem Programm, solange Lupe läuft.
 „lesen“ sucht in jedem Bild alle Codes und schreibt je Code eine Zeile:
   FORMAT&lt;Tab&gt;Inhalt                     z. B. QR_CODE&lt;Tab&gt;https://example.org
 Steuerzeichen im Inhalt erscheinen maskiert: \n (Zeilenumbruch), \r, \t (Tabulator),
-andere als \xHH – etwa \x1D, das Trennzeichen in GS1-Codes. Hinweise („Kein Code
-gefunden“) und Fehler gehen nach stderr, die Ausgabe bleibt so gut weiterzuverarbeiten.
+andere als \xHH – etwa \x1D, das Trennzeichen in GS1-Codes. Zeilen- und Absatztrenner
+sowie Zeichen zur Schreibrichtung erscheinen als \uXXXX (z. B. \u2028, \u202E).
+Hinweise („Kein Code gefunden“) und Fehler gehen nach stderr, die Ausgabe bleibt so
+gut weiterzuverarbeiten.
 
-Bilder: PNG, JPEG, BMP, GIF, TIFF und was Windows sonst lesen kann. Platzhalter im
-Dateinamen sind erlaubt, z. B. C:\Scans\*.jpg.
+{4} Platzhalter im Dateinamen sind
+erlaubt, z. B. {5}.
 
 Optionen für „lesen“:
   --format &lt;format&gt;   nur diese Formate suchen (mehrfach oder mit Komma getrennt),
@@ -109,17 +124,33 @@ Exitcodes:
      wenn in anderen Bildern Codes gefunden wurden
 
 Beispiele:
-  Lupe.exe lesen etikett.png
-  Lupe.exe lesen C:\Scans\*.jpg --format QR_CODE &gt; codes.txt     (cmd: UTF-8 mit BOM)
-
-Lupe.exe ist ein Fensterprogramm; damit die Eingabeaufforderung auf das Ende wartet:
-  start /wait Lupe.exe lesen …        (cmd, Ausgabe in der Konsole)
-  Lupe.exe lesen … | Out-Default      (PowerShell)
-Mit Umleitung (&gt; codes.txt) ohne „start“ aufrufen – „start“ gibt die Umleitung nicht
-an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.</value>
+  {3} lesen {7}
+  {3} lesen {5} --format QR_CODE &gt; codes.txt{6}</value>
   </data>
   <data name="App_Cli_HelpHint" xml:space="preserve">
-    <value>Hilfe: Lupe.exe --hilfe</value>
+    <value>Hilfe: {0} --hilfe</value>
+  </data>
+  <data name="App_Cli_ImagesLinux" xml:space="preserve">
+    <value>Bilder: PNG, JPEG, BMP, GIF, WebP und ICO (kein TIFF).</value>
+  </data>
+  <data name="App_Cli_ImagesMac" xml:space="preserve">
+    <value>Bilder: PNG, JPEG, HEIC, TIFF, GIF, BMP, WebP und was macOS sonst lesen kann.</value>
+  </data>
+  <data name="App_Cli_ImagesWindows" xml:space="preserve">
+    <value>Bilder: PNG, JPEG, BMP, GIF, TIFF und was Windows sonst lesen kann.</value>
+  </data>
+  <data name="App_Cli_Info" xml:space="preserve">
+    <value>{0}
+{1} – MIT-Lizenz
+Diese Software sendet keine Daten an ICT-Baden.
+
+Lizenz:                {2}
+Drittanbieter-Lizenzen: {3}
+Quellcode:             {4}
+Webseite:              {5}
+Impressum:             {6}
+Datenschutz:           {7}
+Support:               {8}</value>
   </data>
   <data name="App_Cli_InvalidPath" xml:space="preserve">
     <value>„{0}“ ist kein gültiger Pfad.</value>
@@ -131,7 +162,7 @@ an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.</v
     <value>Kein Code gefunden: {0}</value>
   </data>
   <data name="App_Cli_NoImage" xml:space="preserve">
-    <value>Bitte mindestens ein Bild angeben, z. B. Lupe.exe lesen etikett.png</value>
+    <value>Bitte mindestens ein Bild angeben, z. B. {0} lesen {1}</value>
   </data>
   <data name="App_Cli_NoMatch" xml:space="preserve">
     <value>Keine Datei passt zu „{0}“.</value>
@@ -140,7 +171,7 @@ an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.</v
     <value>„{0}“ ließ sich nicht lesen: {1}</value>
   </data>
   <data name="App_Cli_StandsAlone" xml:space="preserve">
-    <value>„{0}“ steht allein: Lupe.exe {0}</value>
+    <value>„{0}“ steht allein: {1} {0}</value>
   </data>
   <data name="App_Cli_UnknownCommand" xml:space="preserve">
     <value>Unbekannter Befehl „{0}“.</value>
@@ -152,7 +183,17 @@ an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.</v
     <value>Unbekannte Option „{0}“.</value>
   </data>
   <data name="App_Cli_UsageScreenshots" xml:space="preserve">
-    <value>Aufruf: Lupe.exe --screenshots &lt;ordner&gt; [--theme hell|dunkel|beide]</value>
+    <value>Aufruf: {0} --screenshots &lt;ordner&gt; [--theme hell|dunkel|beide]</value>
+  </data>
+  <data name="App_Cli_WindowsWait" xml:space="preserve">
+    <value>
+
+Lupe.exe ist ein Fensterprogramm; damit die Eingabeaufforderung auf das Ende wartet:
+  start /wait Lupe.exe lesen …        (cmd, Ausgabe in der Konsole)
+  Lupe.exe lesen … | Out-Default      (PowerShell)
+Mit Umleitung (&gt; codes.txt) ohne „start“ aufrufen – „start“ gibt die Umleitung nicht
+an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.
+In cmd in eine Datei umgeleitet, ist die Ausgabe UTF-8 mit BOM.</value>
   </data>
   <data name="App_Code_Copy" xml:space="preserve">
     <value>Kopieren</value>
@@ -498,6 +539,12 @@ an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.</v
   </data>
   <data name="Core_Camera_FallbackName" xml:space="preserve">
     <value>Kamera</value>
+  </data>
+  <data name="Core_Decoder_MissingFunctions" xml:space="preserve">
+    <value>in {0} fehlen die Funktionen {1}</value>
+  </data>
+  <data name="Core_Decoder_Unavailable" xml:space="preserve">
+    <value>Lupe kann auf diesem System keine Codes lesen, weil sich die Erkennungsbibliothek (zxing-cpp) nicht laden ließ. Bitte die Systemvoraussetzungen in der Installationsanleitung prüfen oder den Fehler mit diesem Code melden. Einzelheiten: {0}</value>
   </data>
   <data name="Core_File_AccessDenied" xml:space="preserve">
     <value>Zugriff verweigert – keine Berechtigung, Datei schreibgeschützt oder in einem anderen Programm geöffnet</value>
@@ -1028,7 +1075,7 @@ an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.</v
     <value>Keine Verbindung zum X-Server – nichts eingetippt.</value>
   </data>
   <data name="Linux_Autostart_Comment" xml:space="preserve">
-    <value>QR- und Strichcodes von Kamera, Bildschirm und Dateien lesen</value>
+    <value>QR- und Barcodes von Kamera, Bildschirm und Dateien lesen</value>
   </data>
   <data name="Linux_Autostart_DisableFailed" xml:space="preserve">
     <value>Autostart ließ sich nicht entfernen: {0}</value>
@@ -1730,6 +1777,15 @@ an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.</v
   <data name="Page_Info_ExitCode3Text" xml:space="preserve">
     <value>Fehler – Bild fehlt oder ist nicht lesbar, falscher Aufruf</value>
   </data>
+  <data name="Page_Info_Imprint" xml:space="preserve">
+    <value>Impressum</value>
+  </data>
+  <data name="Page_Info_ImprintOpenName" xml:space="preserve">
+    <value>Impressum im Browser öffnen</value>
+  </data>
+  <data name="Page_Info_ImprintText" xml:space="preserve">
+    <value>Angaben zu ICT-Baden auf der Webseite</value>
+  </data>
   <data name="Page_Info_Keyboard" xml:space="preserve">
     <value>Tastatur</value>
   </data>
@@ -1743,7 +1799,7 @@ an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.</v
     <value>MIT-Lizenz – © 2026 ICT-Baden GmbH</value>
   </data>
   <data name="Page_Info_LicenseOpenName" xml:space="preserve">
-    <value>Den Text der MIT-Lizenz im Browser öffnen</value>
+    <value>Den Text der MIT-Lizenz anzeigen</value>
   </data>
   <data name="Page_Info_LicenseTexts" xml:space="preserve">
     <value>Lizenztexte</value>
@@ -1765,6 +1821,9 @@ an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.</v
   </data>
   <data name="Page_Info_Publisher" xml:space="preserve">
     <value>Herausgeber</value>
+  </data>
+  <data name="Page_Info_ShowText" xml:space="preserve">
+    <value>Anzeigen</value>
   </data>
   <data name="Page_Info_SourceCode" xml:space="preserve">
     <value>Quellcode und Fragen</value>
@@ -1789,6 +1848,12 @@ an Lupe weiter, die Datei bliebe leer. In .cmd-Dateien wartet cmd von selbst.</v
   </data>
   <data name="Page_Info_VersionBuild" xml:space="preserve">
     <value>Version {0} · Build {1} · .NET {2}</value>
+  </data>
+  <data name="Page_Info_Website" xml:space="preserve">
+    <value>Webseite</value>
+  </data>
+  <data name="Page_Info_WebsiteOpenName" xml:space="preserve">
+    <value>Webseite von ICT-Baden im Browser öffnen</value>
   </data>
   <data name="Page_Info_YourData" xml:space="preserve">
     <value>Ihre Daten</value>

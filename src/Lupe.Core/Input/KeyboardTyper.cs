@@ -49,6 +49,25 @@ public static class KeyboardTyper
     private const ushort ScanTab = 0x0F;
     private const ushort ScanReturn = 0x1C;
     private const char ReplacementCharacter = (char)0xFFFD;
+    /// <summary>
+    /// Für Codes vor der Kamera: Zeilenumbrüche (CR, LF, CRLF, NEL, U+2028, U+2029) als je ein Leerzeichen. Die Kamera
+    /// tippt wie ein Handscanner in das Programm vorn, auch wenn Lupe unbeaufsichtigt läuft – ein mehrzeiliger Code darf
+    /// dort nicht selbst Enter drücken (etwa Befehle in ein Terminal). Die eingestellte Taste nach dem Tippen kommt weiter.
+    /// </summary>
+    public static string WithoutLineBreaks(string text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        if (text.IndexOfAny(['\r', '\n', NextLine, LineSeparator, ParagraphSeparator]) < 0) return text;
+        var sb = new System.Text.StringBuilder(text.Length);
+        for (int i = 0; i < text.Length; i++)
+        {
+            char c = text[i];
+            if (c == '\r' && i + 1 < text.Length && text[i + 1] == '\n') i++;
+            sb.Append(c is '\r' or '\n' or NextLine or LineSeparator or ParagraphSeparator ? ' ' : c);
+        }
+        return sb.ToString();
+    }
+
     private const char NextLine = (char)0x0085;
     private const char LineSeparator = (char)0x2028;
     private const char ParagraphSeparator = (char)0x2029;

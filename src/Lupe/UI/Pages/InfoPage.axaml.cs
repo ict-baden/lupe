@@ -10,8 +10,8 @@ using Lupe.Services;
 namespace Lupe.UI.Pages;
 
 /// <summary>
-/// Info (Richtlinie 07): Version und Build, Herausgeber, Lizenz, Repo, Erkennung und Oberfläche mit Lizenztexten,
-/// Datenschutz, Hilfe und Support, Daten, Befehlszeile, Tastatur.
+/// Info (Richtlinie 07): Version und Build, Herausgeber, Lizenz, Webseite, Impressum, Repo, Erkennung und Oberfläche mit
+/// Lizenztexten, Datenschutz, Hilfe und Support, Daten, Befehlszeile, Tastatur.
 /// </summary>
 public partial class InfoPage : UserControl, IPage
 {
@@ -24,17 +24,19 @@ public partial class InfoPage : UserControl, IPage
         VersionText.Text = AppInfo.Build.Length > 0
             ? string.Format(Strings.Page_Info_VersionBuild, AppInfo.Version, AppInfo.Build, Environment.Version.ToString(3))
             : string.Format(Strings.Page_Info_Version, AppInfo.Version, Environment.Version.ToString(3));
+        // Befehl und Beispiel für dieses System (unter macOS gibt es keinen Befehl „lupe“, nur das Programm im Bündel)
+        var command = Lupe.Cli.CommandLine.CommandName;
+        if (command.Contains(' ', StringComparison.Ordinal)) command = $"\"{command}\"";
+        var folder = OperatingSystem.IsWindows() ? @"C:\Scans\" : "~/Scans/";
+        CommandExample.Text = $"{command} lesen {folder}{Strings.App_Cli_ExampleFile} --format QR_CODE";
+        CommandHelp.Text = string.Format(Strings.Page_Info_CommandHelp, $"{command} --hilfe");
         if (OperatingSystem.IsWindows())
         {
-            CommandExample.Text = "Lupe.exe lesen C:\\Scans\\etikett.png --format QR_CODE";
-            CommandHelp.Text = string.Format(Strings.Page_Info_CommandHelp, "Lupe.exe --hilfe");
             DataCard.Description = string.Format(Strings.Page_Info_DataText, "%LocalAppData%\\Lupe");
         }
         else
         {
             CommandIntro.Text = Strings.Page_Info_CommandIntro;
-            CommandExample.Text = "lupe lesen ~/Scans/etikett.png --format QR_CODE";
-            CommandHelp.Text = string.Format(Strings.Page_Info_CommandHelp, "lupe --hilfe");
             DataCard.Description = DataFolderText();
         }
         if (state.IsDemo && !state.Strict) DataCard.Description = Strings.Page_Info_DataDemo;
@@ -84,7 +86,15 @@ public partial class InfoPage : UserControl, IPage
 
     private void OpenRepository_Click(object? sender, RoutedEventArgs e) => Open(AppInfo.RepositoryUrl);
 
-    private void OpenLicense_Click(object? sender, RoutedEventArgs e) => Open(AppInfo.LicenseUrl);
+    /// <summary>Lupes Lizenz aus dem Paket (LICENSE.txt neben dem Programm, sonst eingebettet) – ohne Browser und Netz.</summary>
+    private void OpenLicense_Click(object? sender, RoutedEventArgs e)
+    {
+        if (ThirdPartyNotices.Open(ThirdPartyNotices.LicenseFileName) is { } error) _state.Report(NoticeKind.Warning, error);
+    }
+
+    private void OpenWebsite_Click(object? sender, RoutedEventArgs e) => Open(AppInfo.WebsiteUrl);
+
+    private void OpenImprint_Click(object? sender, RoutedEventArgs e) => Open(AppInfo.ImprintUrl);
 
     private void OpenPrivacy_Click(object? sender, RoutedEventArgs e) => Open(AppInfo.PrivacyUrl);
 

@@ -14,6 +14,41 @@ public sealed class AtomicFileTests : IDisposable
     public void Dispose() => _temp.Dispose();
 
     [Fact]
+    public void Unter_Linux_und_macOS_nur_fuer_den_Benutzer_lesbar()
+    {
+        if (OperatingSystem.IsWindows()) return; // Windows: Rechte erbt der Ordner %LocalAppData%\Lupe
+        var path = _temp.File("neu", "verlauf.json");
+
+        AtomicFile.Write(path, "geheim"u8.ToArray());
+
+        Assert.Equal(AtomicFile.OwnerOnlyFolder, File.GetUnixFileMode(Path.GetDirectoryName(path)!));
+        Assert.Equal(AtomicFile.OwnerOnlyFile, File.GetUnixFileMode(path));
+        // Auch beim Ersetzen einer vorhandenen, lesbaren Datei
+        File.SetUnixFileMode(path, AtomicFile.OwnerOnlyFile | UnixFileMode.GroupRead | UnixFileMode.OtherRead);
+        AtomicFile.Write(path, "neu"u8.ToArray());
+        Assert.Equal(AtomicFile.OwnerOnlyFile, File.GetUnixFileMode(path));
+    }
+
+    [Fact]
+    public void Export_folgt_der_umask_und_behaelt_die_Rechte_einer_vorhandenen_Datei()
+    {
+        if (OperatingSystem.IsWindows()) return;
+        var reference = _temp.File("vergleich.csv");
+        File.WriteAllText(reference, "x"); // neue Datei wie jedes Programm: 0666 ohne umask
+        var path = _temp.File("export.csv");
+
+        AtomicFile.Write(path, "neu"u8.ToArray(), ownerOnly: false);
+        Assert.Equal(File.GetUnixFileMode(reference), File.GetUnixFileMode(path));
+
+        // Eine vorhandene Datei (z. B. für die Gruppe freigegeben) behält beim Überschreiben ihre Rechte
+        var shared = AtomicFile.OwnerOnlyFile | UnixFileMode.GroupRead | UnixFileMode.GroupWrite;
+        File.SetUnixFileMode(path, shared);
+        AtomicFile.Write(path, "noch neuer"u8.ToArray(), ownerOnly: false);
+        Assert.Equal(shared, File.GetUnixFileMode(path));
+        Assert.Equal("noch neuer", File.ReadAllText(path));
+    }
+
+    [Fact]
     public void Schreibt_neue_Datei_und_legt_Ordner_an()
     {
         var path = _temp.File("a", "b", "c.json");
