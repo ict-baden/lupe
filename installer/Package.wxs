@@ -22,6 +22,11 @@
 
     <Icon Id="LupeIcon" SourceFile="$(AssetsDir)\lupe.ico" />
     <Property Id="ARPPRODUCTICON" Value="LupeIcon" />
+    <!-- Beim Update auch Dateien gleicher Version ersetzen (e statt o im Standard omus), nie neuere durch ältere. Lupes
+         eigene Dateien tragen die Lauf-Nummer in der Version, Fremd-DLLs nicht: Eine neu signierte ZXing.dll hätte neue
+         Bytes bei gleicher Version 3.1.1.0 und bliebe sonst alt stehen. Alles liegt nur in Program Files\Lupe, nichts
+         wird mit anderen Programmen geteilt. CI prüft nach jedem Update die Prüfsumme jeder Datei. -->
+    <Property Id="REINSTALLMODE" Value="emus" />
     <Property Id="ARPURLINFOABOUT" Value="https://ict-baden.de/produkte/lupe/" />
 
     <!-- Laufende Instanzen beenden, sonst sind die Dateien gesperrt -->
