@@ -242,6 +242,8 @@ jobs:
   windows:
     needs: [version, zxing-windows]
     runs-on: windows-latest
+    # Ein hängender Schritt soll nicht 6 Stunden blockieren (üblich sind 10–15 min)
+    timeout-minutes: 60
     permissions:
       contents: read
       id-token: write # für die Anmeldung bei Azure Artifact Signing (OIDC)
@@ -415,6 +417,7 @@ jobs:
 
       - name: MSI installieren, Updates von latest und von der letzten Version, deinstallieren
         shell: pwsh
+        timeout-minutes: 20
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -427,9 +430,27 @@ jobs:
           $installer = New-Object -ComObject WindowsInstaller.Installer
           # Produktcodes aller installierten Lupe-Pakete (wie in docs/installation.md beim stillen Deinstallieren)
           function Related { @(foreach ($product in $installer.RelatedProducts($upgradeCode)) { $product }) }
+          # Startet ein Programm und wartet höchstens $seconds; hängt es, zeigt das Log, was läuft, statt still zu warten.
+          # Gibt den Exitcode zurück.
+          function Start-Bounded([string] $file, [string[]] $arguments, [int] $seconds, [string] $what, [string] $log = '', [string] $stdout = '') {
+            $params = @{ FilePath = $file; ArgumentList = $arguments; PassThru = $true }
+            if ($stdout) { $params.RedirectStandardOutput = $stdout; $params.NoNewWindow = $true }
+            $p = Start-Process @params
+            $null = $p.Handle # sonst fehlt der Exitcode, wenn der Prozess schon beendet ist
+            if (-not $p.WaitForExit($seconds * 1000)) {
+              Write-Host "::error::${what} hängt (über $seconds s)"
+              Get-CimInstance Win32_Process | Where-Object Name -match 'msiexec|Lupe|bash' |
+                Format-Table ProcessId, ParentProcessId, Name, CommandLine -AutoSize | Out-String -Width 400 | Write-Host
+              if ($log -and (Test-Path $log)) { Get-Content $log -Tail 60 | Write-Host }
+              Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+              throw "${what} hängt"
+            }
+            $p.WaitForExit()
+            $p.ExitCode
+          }
           function Invoke-Msi([string] $action, [string] $item, [string] $what, [string] $log) {
-            $p = Start-Process msiexec.exe -ArgumentList $action, "`"$item`"", '/qn', '/l*v', $log -Wait -PassThru
-            if ($p.ExitCode -ne 0) { Get-Content $log -Tail 40; throw "${what}: Exitcode $($p.ExitCode)" }
+            $code = Start-Bounded msiexec.exe @($action, "`"$item`"", '/qn', '/l*v', $log) 600 $what $log
+            if ($code -ne 0) { Get-Content $log -Tail 40 | Write-Host; throw "${what}: Exitcode $code" }
           }
           function Remove-All {
             foreach ($product in @(Related)) { Invoke-Msi '/x' $product "Deinstallation $product" 'msi-uninstall.log' }
@@ -454,12 +475,13 @@ jobs:
             if ($stale) { throw "${what}: nicht die neuen Dateien (alte stehen geblieben?): $($stale -join ', ')" }
             $exeVersion = (Get-Item "$target\Lupe.exe").VersionInfo.FileVersion
             if ($exeVersion -ne $fileVersion) { throw "${what}: Lupe.exe hat die Dateiversion $exeVersion statt $fileVersion" }
-            $p = Start-Process "$target\Lupe.exe" -ArgumentList '--version' -RedirectStandardOutput installed-version.txt -Wait -PassThru -NoNewWindow
+            $code = Start-Bounded "$target\Lupe.exe" @('--version') 60 "${what}: Lupe.exe --version" -stdout installed-version.txt
             $reported = (Get-Content installed-version.txt -Raw).Trim()
-            if ($p.ExitCode -ne 0 -or $reported -notmatch [regex]::Escape(" $version ")) { throw "${what}: Lupe.exe meldet nicht ${version}: $reported" }
+            if ($code -ne 0 -or $reported -notmatch [regex]::Escape(" $version ")) { throw "${what}: Lupe.exe meldet nicht ${version}: $reported" }
             # Git Bash ausdrücklich: „bash“ allein kann unter Windows die WSL-Bash sein
-            & "$env:ProgramFiles\Git\bin\bash.exe" packaging/smoke.sh "$target\Lupe.exe"
-            if ($LASTEXITCODE -ne 0) { throw "${what}: Rauchtest der installierten Lupe fehlgeschlagen" }
+            $code = Start-Bounded "$env:ProgramFiles\Git\bin\bash.exe" @('packaging/smoke.sh', "`"$target\Lupe.exe`"") 180 "${what}: Rauchtest" -stdout smoke.txt
+            Get-Content smoke.txt | Write-Host
+            if ($code -ne 0) { throw "${what}: Rauchtest der installierten Lupe fehlgeschlagen" }
             Write-Host "${what}: ok - $($expected.Count) Dateien, Lupe.exe $exeVersion, $reported"
           }
           function Test-Update([string] $what, [string] $oldMsi) {
