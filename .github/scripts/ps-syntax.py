@@ -12,18 +12,24 @@ import sys
 import yaml
 
 out = []
-for path in sorted(glob.glob(".github/workflows/*.yml")):
+paths = sorted(glob.glob(".github/workflows/*.yml") + glob.glob(".github/workflows/*.yaml"))
+for path in paths:
     with open(path, encoding="utf-8") as f:
         doc = yaml.safe_load(f)
     default = ((doc.get("defaults") or {}).get("run") or {}).get("shell")
     for job_name, job in (doc.get("jobs") or {}).items():
         job_default = ((job.get("defaults") or {}).get("run") or {}).get("shell") or default
-        windows = "windows" in str(job.get("runs-on", ""))
+        # Windows-Runner (Standard-Shell pwsh), auch über eine Matrix wie runs-on: ${{ matrix.os }}
+        runs_on = str(job.get("runs-on", "")).lower()
+        if "matrix" in runs_on:
+            runs_on += str((job.get("strategy") or {}).get("matrix", "")).lower()
+        windows = "windows" in runs_on
         for i, step in enumerate(job.get("steps") or []):
             if "run" not in step:
                 continue
-            shell = step.get("shell") or job_default or ("pwsh" if windows else "bash")
-            if shell in ("pwsh", "powershell"):
+            shell = str(step.get("shell") or job_default or ("pwsh" if windows else "bash"))
+            # auch eigene Aufrufe wie "pwsh -command ... {0}"
+            if shell.split()[0] in ("pwsh", "powershell"):
                 out.append({"name": f"{path}:{job_name}:{step.get('name', i)}", "code": step["run"]})
 
 json.dump(out, sys.stdout)
