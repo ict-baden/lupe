@@ -36,6 +36,14 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: PowerShell-Syntax (alle Workflow-Schritte und Skripte)
+        # Auch die Schritte, die nur bei Tags oder auf main laufen: Typografische Anführungszeichen in einem PowerShell-Text
+        # beenden ihn (ParserError) – im PR fiel das nicht auf, erst im Release-Job. Hier zuerst, damit alles gleich abbricht.
+        run: |
+          python3 -m pip install --quiet pyyaml
+          python3 .github/scripts/ps-syntax.py > "$RUNNER_TEMP/ps-blocks.json"
+          pwsh -NoProfile -File .github/scripts/ps-syntax.ps1 -Blocks "$RUNNER_TEMP/ps-blocks.json"
+
       - name: Version bestimmen
         id: version
         shell: pwsh

@@ -4,8 +4,14 @@ All notable changes to Lupe. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+## [0.1.2] – 2026-10-22
+
 ### Fixed
-- Windows: the program files carry the build number in their file version in every build, releases included (e.g. `0.1.2.70` instead of `0.1.2.0`). A release used to have the same file version as the builds of `latest` before it, and Windows Installer only replaces files with a higher version during an update – an MSI update from such a build to the release could leave files out. CI now tests a fresh installation and the updates from the newest build in `latest` and from the last version, and checks every installed file.
+- Windows: an MSI update from a build of the pre-release `latest` to the release of the same version could keep the old `Lupe.exe`: both had the same file version (e.g. `0.1.2.0`), and Windows Installer only replaces a file with a higher version. The program files now carry the build number in their file version in every build, releases included (e.g. `0.1.2.70`). Updates to 0.1.1 were not affected; an update from a `latest` build to 0.1.0 kept that build's program file, which had the same code.
+
+### Changed
+- CI tests the MSI as a fresh installation, as an update of the newest build in `latest` and as an update of the last version: exactly one installed product, every file present, `Lupe.exe` with the new file version.
+- CI checks every PowerShell step of the workflow and every script before anything is built – also the steps that only run for tags – for parser errors and for typographic quotation marks that end a text.
 
 ## [0.1.1] – 2026-10-21
 
