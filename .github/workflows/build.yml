@@ -38,8 +38,8 @@ jobs:
 
       - name: PowerShell-Syntax (alle Workflow-Schritte und Skripte)
         # Auch die Schritte, die nur bei Tags oder auf main laufen: Typografische Anführungszeichen in einem PowerShell-Text
-        # beenden ihn (ParserError) – im PR fiel das nicht auf, erst im Release-Job. Hier zuerst: Die Build-Jobs warten auf
-        # diesen Job und starten bei einem Fehler gar nicht.
+        # beenden ihn (ParserError) – im PR fiel das nicht auf, erst im Release-Job. Hier zuerst: Die Jobs windows, linux
+        # und macos warten auf diesen Job und starten bei einem Fehler gar nicht.
         run: |
           python3 -m pip install --quiet pyyaml
           python3 .github/scripts/ps-syntax.py > "$RUNNER_TEMP/ps-blocks.json"
@@ -460,8 +460,8 @@ jobs:
           # Nach jeder Installation und jedem Update muss jede Datei des Publish-Ordners (ohne .pdb, wie im MSI) genau so
           # installiert sein – verglichen über die Prüfsumme. Windows Installer ersetzt beim Update nur Dateien mit höherer
           # Version: Eine gleich alte bleibt stehen (0.1.0-ci.57 -> v0.1.0 behielt die Exe des CI-Builds), eine neuere kann
-          # ganz fehlen. Deshalb trägt Lupes Dateiversion die Lauf-Nummer; eine Fremd-DLL mit neuem Inhalt bei gleicher
-          # Version fiele hier auf.
+          # ganz fehlen. Deshalb trägt Lupes Dateiversion die Lauf-Nummer, und das MSI ersetzt auch gleich alte Dateien
+          # (REINSTALLMODE=emus, für Fremd-DLLs mit neuem Inhalt bei gleicher Version); beides prüft dieser Vergleich.
           $source = (Resolve-Path out/self-contained).Path
           $expected = @(Get-ChildItem $source -Recurse -File | Where-Object Extension -ne '.pdb' |
             ForEach-Object { [IO.Path]::GetRelativePath($source, $_.FullName) })

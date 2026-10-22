@@ -21,9 +21,19 @@ for path in paths:
         job_default = ((job.get("defaults") or {}).get("run") or {}).get("shell") or default
         # Windows-Runner (Standard-Shell pwsh), auch über eine Matrix wie runs-on: ${{ matrix.os }}
         runs_on = str(job.get("runs-on", "")).lower()
-        if "matrix" in runs_on:
-            runs_on += str((job.get("strategy") or {}).get("matrix", "")).lower()
         windows = "windows" in runs_on
+        if "matrix" in runs_on:
+            # Werte der Matrix, die mit „windows“ beginnen (windows-latest, windows-2022 …)
+            def values(x):
+                if isinstance(x, dict):
+                    for v in x.values():
+                        yield from values(v)
+                elif isinstance(x, list):
+                    for v in x:
+                        yield from values(v)
+                else:
+                    yield str(x).lower()
+            windows = any(v.startswith("windows") for v in values((job.get("strategy") or {}).get("matrix") or {}))
         for i, step in enumerate(job.get("steps") or []):
             if "run" not in step:
                 continue

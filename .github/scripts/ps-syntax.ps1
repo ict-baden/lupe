@@ -38,7 +38,8 @@ $fail = 0
 $items = @(Get-Content $Blocks -Raw | ConvertFrom-Json)
 if ($items.Count -eq 0) { Write-Host '::error::Keine PowerShell-Schritte gefunden - ps-syntax.py prüfen'; exit 1 }
 foreach ($b in $items) {
-    $code = $b.code -replace '(?s)\$\{\{.*?\}\}', 'X'
+    # ${{ … }} durch X ersetzen, mit gleich vielen Zeilen (sonst stimmen die Zeilennummern danach nicht)
+    $code = $b.code -replace '(?s)\$\{\{.*?\}\}', { 'X' + ("`n" * ($_.Value.Split("`n").Count - 1)) }
     $tokens = $null; $errors = $null
     [void][System.Management.Automation.Language.Parser]::ParseInput($code, [ref]$tokens, [ref]$errors)
     foreach ($m in Test-Code $tokens $errors) { $fail++; Write-Host "::error::$($b.name), Zeile $($m[0]) des Schritts: $($m[1])" }
