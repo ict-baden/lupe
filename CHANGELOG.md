@@ -8,6 +8,7 @@ All notable changes to Lupe. The format follows [Keep a Changelog](https://keepa
 
 ### Fixed
 - Windows: an MSI update from a build of the pre-release `latest` to the release of the same version could keep the old `Lupe.exe`: both had the same file version (`x.y.z.0`), and Windows Installer only replaces a file with a higher version. Lupe's own program files now carry the build number in their file version in every build, releases included (e.g. `0.1.2.70`). Updates to 0.1.1 were not affected; an update from a `latest` build to 0.1.0 kept that build's program file, which had the same code.
+- Release run: a tag for a pre-release (e.g. `v1.0.0-rc1`) would have failed to create its release – PowerShell passed `--prerelease` to `gh` letter by letter. Not used so far.
 
 ### Changed
 - CI tests the MSI as a fresh installation, as an update of the newest build in `latest` and as an update of the last version: exactly one installed product, every file installed with the checksum of the new build, `Lupe.exe` with the new file version.

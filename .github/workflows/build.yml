@@ -823,7 +823,8 @@ jobs:
         shell: pwsh
         run: |
           # v1.0.0-rc1 und ähnliche: Vorabversion, nicht „Latest“
-          $pre = if ($env:GITHUB_REF_NAME -match '-') { @('--prerelease') } else { @() }
+          # @( if … ): Ein if gibt ein Array mit einem Element als Text zurück, @pre zerlegte ihn dann in Zeichen
+          $pre = @(if ($env:GITHUB_REF_NAME -match '-') { '--prerelease' })
           $notes = ./.github/scripts/release-notes.ps1 -Tag $env:GITHUB_REF_NAME -Version $env:VERSION `
             -Suffix $env:SUFFIX -Signed ($env:SIGN -eq 'true') -Notarized ($env:NOTARIZED -eq 'true')
           gh release create $env:GITHUB_REF_NAME (Get-ChildItem dist/*).FullName --title "Lupe $env:GITHUB_REF_NAME" --notes $notes @pre
