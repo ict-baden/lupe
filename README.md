@@ -130,7 +130,7 @@
   </tr>
 </table>
 
-**① Download** – the current version is the release marked [**Latest**](https://github.com/ict-baden/lupe/releases/latest) under *Releases* on the right of the repository page; its file names carry the version (e.g. `Lupe-0.1.1-x64.msi`; only `Lupe.exe` keeps its name). The pre-release [**latest**](https://github.com/ict-baden/lupe/releases/tag/latest) is rebuilt on every push to `main` and keeps its file names, so these links always deliver the newest build:
+**① Download** – the current version is the release marked [**Latest**](https://github.com/ict-baden/lupe/releases/latest) under *Releases* on the right of the repository page; its file names carry the version (e.g. `Lupe-0.1.1-x64.msi`; only `Lupe.exe` keeps its name). The pre-release [**latest**](https://github.com/ict-baden/lupe/releases/tag/latest) is rebuilt from `main` every night (when `main` has changed) and keeps its file names, so these links always deliver the newest build:
 
 | File | What it is |
 |---|---|

@@ -24,7 +24,7 @@ Which file to download, what it needs, how to let Lupe use the camera, and how t
 There are two kinds of release, both on the repository page under *Releases* on the right:
 
 - **Versions** such as `v0.1.1` – the release marked [**Latest**](https://github.com/ict-baden/lupe/releases/latest) is the current one. The MSI, the ZIP and the Linux and macOS packages carry the version in their names (e.g. `Lupe-0.1.1-x64.msi`); `Lupe.exe` keeps its name, so scripts that call it and the autostart entry keep working when you replace it. What changed is in the [CHANGELOG](../CHANGELOG.md).
-- **The pre-release [latest](https://github.com/ict-baden/lupe/releases/tag/latest)** – GitHub Actions rebuilds it on every push to `main`. The file names stay the same, so these links always deliver the newest build:
+- **The pre-release [latest](https://github.com/ict-baden/lupe/releases/tag/latest)** – GitHub Actions rebuilds it from `main` every night when `main` has changed. The file names stay the same, so these links always deliver the newest build:
 
 | File | Runtime | Use it for |
 |---|---|---|

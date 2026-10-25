@@ -1,20 +1,30 @@
 name: Build
 
+# Wann wie viel gebaut wird, steht in Richtlinie 04 („Wann die CI baut“). Kurz: Pushs und PRs bauen nur den
+# billigen Linux-Teil (version, zxing-cpp x64, Build und Tests unter Linux), den vollen Build (Windows, macOS, ARM,
+# Pakete, Rauchtests, Releases) gibt es nachts (nur wenn main neu ist), bei Tags, von Hand, mit [voll] in der
+# Commit-Nachricht und bei PRs mit Label voll-bauen oder Pfaden aus FULL_PATHS (Job gate). Reine Doku startet nichts.
 on:
   push:
     branches: [main]
-    tags: ['v*']
+    tags: ['v*'] # Pfadfilter gelten für Tags nicht, ein Tag baut immer
+    paths-ignore: ['**.md', 'docs/**', 'LICENSE', '.github/ISSUE_TEMPLATE/**']
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
+    paths-ignore: ['**.md', 'docs/**', 'LICENSE', '.github/ISSUE_TEMPLATE/**']
+  schedule:
+    - cron: '35 2 * * *' # Minute je Repo anders, damit nicht alle gleichzeitig starten
   workflow_dispatch:
 
 # Nur lesen; Schreibrechte bekommen die Jobs, die sie brauchen (release: Releases, windows: Anmeldung bei Azure)
 permissions:
   contents: read
 
-# Läufe auf demselben Branch nacheinander, damit sich die 'latest'-Releases nicht überholen
+# Läufe auf demselben Branch nacheinander, damit sich die 'latest'-Releases nicht überholen.
+# In PRs bricht ein neuer Push den alten Lauf ab.
 concurrency:
   group: build-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   DOTNET_NOLOGO: true
@@ -26,7 +36,58 @@ env:
   SIGN: ${{ vars.SIGNING_ACCOUNT != '' && github.event_name != 'pull_request' }}
 
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      run: ${{ steps.gate.outputs.run }}
+      full: ${{ steps.gate.outputs.full }}
+    steps:
+      - name: Umfang bestimmen
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          MSG: ${{ github.event.head_commit.message }}
+          LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+          PR: ${{ github.event.pull_request.number }}
+          # Geänderte Dateien, bei denen ein PR die volle Matrix braucht. Je Repo anpassen.
+          # Lupe: Installer, Pakete (alle Plattformen, die Paketprüfungen laufen nur im vollen Build), Windows- und
+          # macOS-Anbindung, der Windows-Teil der App (LUPE_WINDOWS, Interop) und alles, was Abhängigkeiten oder SDK ändert
+          FULL_PATHS: '^(\.github/|installer/|packaging/|src/Lupe\.Platform\.(Windows|MacOS)/|src/Lupe/(Program\.cs|app\.manifest|Interop/)|Directory\.Build\.props$|global\.json$|THIRD-PARTY-NOTICES\.txt$)|\.csproj$'
+          # Reine Doku, wie paths-ignore oben
+          DOC_PATHS: '(\.md$|^docs/|^LICENSE$|^\.github/ISSUE_TEMPLATE/)'
+        run: |
+          set -euo pipefail
+          run=true; full=false
+          case "$EVENT" in
+            workflow_dispatch) full=true ;;
+            push)
+              # Bei mehreren Commits in einem Push zählt die Nachricht des letzten
+              if [ "$GITHUB_REF_TYPE" = tag ] || [[ "$MSG" == *"[voll]"* ]]; then full=true; fi ;;
+            pull_request)
+              files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --jq '.[].filename')
+              if [[ ",$LABELS," == *",voll-bauen,"* ]] || grep -qE "$FULL_PATHS" <<< "$files"; then full=true; fi ;;
+            schedule)
+              # Der Tag 'latest' steht auf dem Commit des letzten vollen Builds von main
+              built=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/latest" --jq .object.sha 2>/dev/null || true)
+              if [ "$built" = "$GITHUB_SHA" ]; then
+                run=false
+              else
+                # Scheitert der Vergleich (kein 'latest', Verlauf umgeschrieben), wird voll gebaut
+                changed=$(gh api "repos/$GITHUB_REPOSITORY/compare/$built...$GITHUB_SHA" --jq '.files[].filename' 2>/dev/null || echo '?')
+                if [ -n "$built" ] && ! grep -qvE "$DOC_PATHS" <<< "$changed"; then run=false; else full=true; fi # sonst nur Doku
+              fi ;;
+          esac
+          echo "Ereignis: $EVENT  run=$run  full=$full"
+          { echo "run=$run"; echo "full=$full"; } >> "$GITHUB_OUTPUT"
+
   version:
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -90,12 +151,13 @@ jobs:
   # Je Plattform ein eigener Job, damit Windows und Linux nicht auf einen freien macOS-Runner warten.
   zxing-linux:
     name: zxing-cpp (${{ matrix.name }})
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - { name: linux-x64, os: ubuntu-latest, rids: linux-x64 }
-          - { name: linux-arm64, os: ubuntu-24.04-arm, rids: linux-arm64 }
+        # arm64 (ARM-Runner) nur im vollen Build, der Linux-Teil braucht nur x64
+        include: ${{ fromJSON(needs.gate.outputs.full == 'true' && '[{"name":"linux-x64","os":"ubuntu-latest","rids":"linux-x64"},{"name":"linux-arm64","os":"ubuntu-24.04-arm","rids":"linux-arm64"}]' || '[{"name":"linux-x64","os":"ubuntu-latest","rids":"linux-x64"}]') }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7
@@ -141,6 +203,8 @@ jobs:
 
   zxing-macos:
     name: zxing-cpp (${{ matrix.name }})
+    needs: gate
+    if: needs.gate.outputs.full == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -191,6 +255,8 @@ jobs:
 
   zxing-windows:
     name: zxing-cpp (${{ matrix.name }})
+    needs: gate
+    if: needs.gate.outputs.full == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -240,7 +306,8 @@ jobs:
           retention-days: 1
 
   windows:
-    needs: [version, zxing-windows]
+    needs: [gate, version, zxing-windows]
+    if: needs.gate.outputs.full == 'true'
     runs-on: windows-latest
     # Ein hängender Schritt soll nicht 6 Stunden blockieren (üblich sind 10–15 min)
     timeout-minutes: 60
@@ -552,8 +619,11 @@ jobs:
           # Der Release-Job holt sie sofort ab; länger aufbewahrt sprengen sie den Artifact-Speicher (Free-Plan: 500 MB)
           retention-days: 1
 
+  # Läuft bei jedem Push und PR (Build und Tests unter Xvfb). Pakete, SBOM und Rauchtests nur im vollen Build: Sie
+  # brauchen zxing-cpp für arm64 (ARM-Runner) und gehen in die Releases.
   linux:
-    needs: [version, zxing-linux]
+    needs: [gate, version, zxing-linux]
+    if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -594,6 +664,7 @@ jobs:
           retention-days: 3
 
       - name: Publish und Pakete
+        if: needs.gate.outputs.full == 'true'
         run: |
           v='${{ needs.version.outputs.version }}'
           for arch in x64 arm64; do
@@ -604,6 +675,7 @@ jobs:
           ls -l dist
 
       - name: Pakete prüfen
+        if: needs.gate.outputs.full == 'true'
         run: |
           dpkg-deb --info dist/*.deb
           test "$(dpkg-deb --field dist/*.deb Package)" = ictbaden-lupe
@@ -619,6 +691,7 @@ jobs:
           done
 
       - name: SBOM (Stückliste aller Pakete)
+        if: needs.gate.outputs.full == 'true'
         run: |
           # deps.json aller Plattformen (Windows und macOS nur veröffentlicht, nicht gepackt), dazu zxing-cpp und .NET
           v='${{ needs.version.outputs.version }}'
@@ -630,6 +703,7 @@ jobs:
           python3 -c "import json,sys; b=json.load(open(sys.argv[1])); print(len(b['components']), 'Bestandteile')" dist/Lupe*-sbom.cdx.json
 
       - name: Rauchtest auf älteren Systemen (x64)
+        if: needs.gate.outputs.full == 'true'
         run: |
           # .deb auf Ubuntu 22.04 (apt holt die Abhängigkeiten), tar.gz auf Ubuntu 20.04 (glibc 2.31) und Debian 12
           docker run --rm -v "$PWD/dist:/dist:ro" -v "$PWD/packaging:/p:ro" ubuntu:22.04 sh -c \
@@ -641,6 +715,7 @@ jobs:
           done
 
       - uses: actions/upload-artifact@v7
+        if: needs.gate.outputs.full == 'true'
         with:
           name: Pakete-linux
           path: dist/*
@@ -649,7 +724,8 @@ jobs:
           retention-days: 1
 
   linux-arm64-rauchtest:
-    needs: linux
+    needs: [gate, linux]
+    if: needs.gate.outputs.full == 'true'
     runs-on: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v7
@@ -668,7 +744,8 @@ jobs:
           done
 
   macos:
-    needs: [version, zxing-macos]
+    needs: [gate, version, zxing-macos]
+    if: needs.gate.outputs.full == 'true'
     runs-on: macos-latest
     outputs:
       notarized: ${{ steps.signing.outputs.notarize }}
@@ -808,9 +885,10 @@ jobs:
           # Der Release-Job holt sie sofort ab; länger aufbewahrt sprengen sie den Artifact-Speicher (Free-Plan: 500 MB)
           retention-days: 1
 
+  # Nur nach einem vollen Build: Ein Nur-Linux-Lauf darf kein Release anlegen oder halb aktualisieren
   release:
-    needs: [version, windows, linux, linux-arm64-rauchtest, macos]
-    if: github.event_name != 'pull_request' && (github.ref_type == 'tag' || github.ref == 'refs/heads/main')
+    needs: [gate, version, windows, linux, linux-arm64-rauchtest, macos]
+    if: needs.gate.outputs.full == 'true' && github.event_name != 'pull_request' && (github.ref_type == 'tag' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     permissions:
       contents: write # für die Releases
@@ -865,7 +943,8 @@ jobs:
           }
 
       - name: "Release 'latest' aktualisieren (main)"
-        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        # Nachtlauf, von Hand oder [voll]-Push; das Skript setzt den Tag 'latest' auf den gebauten Commit (Vergleich in gate)
+        if: needs.gate.outputs.full == 'true' && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.version.outputs.version }}
