@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.12.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="4.0.1" />
   </ItemGroup>
@@ -27,7 +27,7 @@
     <ProjectReference Include="..\..\src\Lupe.Core\Lupe.Core.csproj" />
     <!-- Die Avalonia-App selbst: Oberflächentests ohne Bildschirm (Ui/, Avalonia.Headless) auf jedem System -->
     <ProjectReference Include="..\..\src\Lupe\Lupe.csproj" />
-    <PackageReference Include="Avalonia.Headless" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Headless" Version="12.1.6" />
   </ItemGroup>
 
   <!-- QR-Code des Rauchtests der Pakete, für InvariantGlobalizationTests (lesen im eigenen Prozess) -->
