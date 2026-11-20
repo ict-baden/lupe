@@ -202,6 +202,12 @@ public partial class FilePage : UserControl, IPage
         View.Markers = [];
         DropHint.IsVisible = false;
         _results.Clear();
+        // Kopf, Zusammenfassung und „Alle kopieren“ des vorigen Bildes nicht stehen lassen (auch nicht, wenn die Erkennung scheitert)
+        ResultTitle.Text = Strings.Page_File_FoundCodes;
+        ResultDone.Text = "";
+        ResultDone.IsVisible = false;
+        ResultEmpty.IsVisible = false;
+        CopyAllButton.IsVisible = false;
         SetBusy(Strings.Page_File_SearchingCodes);
 
         IReadOnlyList<DecodedCode> codes;
@@ -272,6 +278,7 @@ public partial class FilePage : UserControl, IPage
 
     private async void CopyAll_Click(object? sender, RoutedEventArgs e)
     {
+        if (_results.Count == 0) return;
         if (await _state.Hits.CopyAllAsync([.. _results]) is { } error) _state.Report(NoticeKind.Error, error);
         else _state.Report(NoticeKind.Success, string.Format(Strings.Page_Shared_CopiedAll, _results.Count));
     }
