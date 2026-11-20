@@ -268,4 +268,31 @@ public sealed class AppLogicTests
         Assert.Contains("DISPLAY=:5 ist nicht erreichbar", NoDisplay(":5", null));
         Assert.DoesNotContain("XWayland", NoDisplay(":5", null));
     }
+
+    // ================= Bildschirm-Scan: Overlay je Monitor =================
+
+    private static double PixelScale(bool macOS, MonitorArea monitor, double renderScaling) =>
+        (double)AppInternals.Call("Lupe.UI.OverlayWindow", "PixelScale", macOS, monitor, renderScaling)!;
+
+    private static (int X, int Y) WindowPosition(bool macOS, MonitorArea monitor) =>
+        ((int, int))AppInternals.Call("Lupe.UI.OverlayWindow", "WindowPosition", macOS, monitor)!;
+
+    [AppFact]
+    public void Overlay_auf_dem_Mac_mit_gemischter_Skalierung()
+    {
+        // Retina (2x) links, externer 1920-Punkt-Monitor (1x) rechts: gemeinsamer Pixelraum mit Faktor 2
+        var external = new MonitorArea(new PixelRect(2880, 0, 3840, 2160), new PixelRect(2880, 0, 3840, 2160), 2, false, "2");
+        Assert.Equal(2, PixelScale(true, external, renderScaling: 1));     // Fenster 3840 / 2 = 1920 Punkte breit
+        Assert.Equal((1440, 0), WindowPosition(true, external));          // Avalonia.Native: Lage in Punkten
+    }
+
+    [AppFact]
+    public void Overlay_unter_Windows_und_Linux_nach_der_Skalierung_des_Monitors()
+    {
+        // Linux meldet Scale 1, auch wenn RenderScaling 2 ist; Windows: Bounds in echten Pixeln je Monitor
+        var monitor = new MonitorArea(new PixelRect(1920, 0, 3840, 2160), new PixelRect(1920, 0, 3840, 2040), 1, false, "2");
+        Assert.Equal(2, PixelScale(false, monitor, renderScaling: 2));
+        Assert.Equal(1, PixelScale(false, monitor, renderScaling: 0));
+        Assert.Equal((1920, 0), WindowPosition(false, monitor));
+    }
 }

@@ -170,8 +170,8 @@ internal sealed class OverlayWindow : Window
 
         if (!screenshot)
         {
-            // Lage in Pixeln; die Größe in Punkten folgt, sobald die Skalierung des Monitors feststeht
-            Position = new PixelPoint(monitor.Bounds.X, monitor.Bounds.Y);
+            // Lage in Fensterkoordinaten; die Größe in Punkten folgt, sobald die Skalierung des Monitors feststeht
+            Position = PositionOn(monitor);
             double guess = monitor.Scale > 0 ? monitor.Scale : 1;
             Width = monitor.Bounds.Width / guess;
             Height = monitor.Bounds.Height / guess;
@@ -218,12 +218,32 @@ internal sealed class OverlayWindow : Window
 
     // ================= Lage und Maßstab =================
 
+    /// <summary>
+    /// Pixel des Monitors je Punkt des Fensters. Windows und Linux: die Skalierung des Monitors selbst (Bounds sind dort
+    /// echte Pixel je Monitor). macOS: der gemeinsame Faktor des Pixelraums (DisplayLayout, größter Faktor aller
+    /// Bildschirme) – auf einem 1x-Monitor neben einem Retina-Bildschirm also 2, nicht die RenderScaling 1.
+    /// </summary>
+    internal static double PixelScale(bool macOS, MonitorArea monitor, double renderScaling) =>
+        macOS && monitor.Scale > 0 ? monitor.Scale : renderScaling > 0 ? renderScaling : 1;
+
+    /// <summary>Lage des Fensters: Avalonia.Native setzt sie in Punkten, die übrigen Plattformen in Pixeln.</summary>
+    internal static (int X, int Y) WindowPosition(bool macOS, MonitorArea monitor) =>
+        macOS && monitor.Scale > 0
+            ? ((int)Math.Round(monitor.Bounds.X / monitor.Scale), (int)Math.Round(monitor.Bounds.Y / monitor.Scale))
+            : (monitor.Bounds.X, monitor.Bounds.Y);
+
+    private static PixelPoint PositionOn(MonitorArea monitor)
+    {
+        var (x, y) = WindowPosition(OperatingSystem.IsMacOS(), monitor);
+        return new PixelPoint(x, y);
+    }
+
     private void FitToMonitor()
     {
-        double scale = RenderScaling > 0 ? RenderScaling : 1;
+        double scale = PixelScale(OperatingSystem.IsMacOS(), _monitor, RenderScaling);
         if (!IsWayland)
         {
-            Position = new PixelPoint(_monitor.Bounds.X, _monitor.Bounds.Y);
+            Position = PositionOn(_monitor);
             Width = _monitor.Bounds.Width / scale;
             Height = _monitor.Bounds.Height / scale;
         }
@@ -232,7 +252,7 @@ internal sealed class OverlayWindow : Window
 
     private void UpdateScale()
     {
-        double scale = _screenshot ? 1 : RenderScaling > 0 ? RenderScaling : 1;
+        double scale = _screenshot ? 1 : PixelScale(OperatingSystem.IsMacOS(), _monitor, RenderScaling);
         _scale.ScaleX = _scale.ScaleY = 1 / scale;
         // Hinweis, Größenangabe und Rahmen sollen in normaler Größe erscheinen, nicht in Bildpixeln
         _uiScale.ScaleX = _uiScale.ScaleY = scale;
