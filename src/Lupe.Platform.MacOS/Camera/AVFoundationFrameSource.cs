@@ -15,8 +15,9 @@ internal sealed class AVFoundationFrameSource : IFrameSource
 {
     private readonly CameraInfo _camera;
     private readonly SemaphoreSlim _lifecycle = new(1, 1);
-    private nint _handle;
-    private GCHandle _self;
+    private readonly Lock _sync = new();
+    private nint _handle;     // unter _sync
+    private GCHandle _self;   // unter _sync, gehört zu _handle
     private volatile bool _active;
     private volatile bool _disposed;
     private int _failedRaised;
@@ -42,8 +43,11 @@ internal sealed class AVFoundationFrameSource : IFrameSource
         await _lifecycle.WaitAsync(ct).ConfigureAwait(false);
         try
         {
-            if (_handle != 0 && _active) return;
-            Release();
+            lock (_sync)
+                if (_handle != 0 && _active) return;
+            // Nicht auf dem Aufrufer-Thread schließen: Das kann ein Rückruf dieser Quelle sein (Neustart aus Failed), und
+            // die Bibliothek wartet beim Schließen auf genau diesen Rückruf
+            await Task.Run(Release, CancellationToken.None).ConfigureAwait(false);
             _failedRaised = 0;
             // Erlaubnis-Dialog und startRunning blockieren – nicht auf dem Aufrufer-Thread
             failure = await Task.Run(Open, ct).ConfigureAwait(false);
@@ -72,15 +76,22 @@ internal sealed class AVFoundationFrameSource : IFrameSource
         int best = FormatChooser.Choose(formats);
         var (width, height) = best < 0 ? (0, 0) : (formats[best].Width, formats[best].Height);
 
-        _self = GCHandle.Alloc(this);
-        nint handle = NativeCamera.Open(_camera.Id, width, height, &OnFrame, &OnError, GCHandle.ToIntPtr(_self), out int error);
+        var self = GCHandle.Alloc(this);
+        nint handle = NativeCamera.Open(_camera.Id, width, height, &OnFrame, &OnError, GCHandle.ToIntPtr(self), out int error);
         if (handle == 0)
         {
+            self.Free();
             Trace.TraceWarning($"Lupe: Kamera {Name} nicht startbar (Code {error}).");
             return NativeCamera.Describe(error, Name);
         }
-        _handle = handle;
+        lock (_sync)
+        {
+            _handle = handle;
+            _self = self;
+        }
         _active = true;
+        // Fällt die Kamera schon hier aus und hält ein Empfänger von Failed sie an, holt Detach die eben gesetzte Sitzung ab
+        // und schließt sie. Open meldet trotzdem Erfolg – Failed ist dann schon gemeldet und _active false.
         NativeCamera.Start(handle);
         return null;
     }
@@ -155,8 +166,11 @@ internal sealed class AVFoundationFrameSource : IFrameSource
         _active = false;
         if (t_callbackOwner == this)
         {
-            // Aus dem eigenen Ereignis heraus: die Bibliothek wartet beim Anhalten auf genau diesen Rückruf
-            _ = Task.Run(StopCoreAsync);
+            // Aus dem eigenen Ereignis heraus: die Bibliothek wartet beim Anhalten auf genau diesen Rückruf. Die Sitzung
+            // gleich hier abholen und im Hintergrund genau sie schließen – ein späterer Neustart bekommt eine neue, die
+            // dieser Stopp nicht mehr trifft.
+            var session = Detach();
+            _ = Task.Run(() => CloseLaterAsync(session));
             return Task.CompletedTask;
         }
         return StopCoreAsync();
@@ -175,24 +189,54 @@ internal sealed class AVFoundationFrameSource : IFrameSource
         }
     }
 
-    /// <summary>Hält an, gibt das Gerät frei; danach kommt kein Rückruf mehr, erst dann fällt der GCHandle.</summary>
+    /// <summary>Unter der Lebenszyklus-Sperre: Ein neuer Start wartet, bis das alte Gerät wirklich zu ist.</summary>
+    private async Task CloseLaterAsync((nint Handle, GCHandle Self) session)
+    {
+        await _lifecycle.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            Close(session);
+        }
+        finally
+        {
+            _lifecycle.Release();
+        }
+    }
+
+    /// <summary>Hält an und gibt das aktuelle Gerät frei.</summary>
     private void Release()
     {
         _active = false;
-        nint handle = _handle;
-        _handle = 0;
-        if (handle != 0)
+        Close(Detach());
+    }
+
+    /// <summary>Nimmt die aktuelle Sitzung (Gerät und GCHandle) heraus; danach gehört sie dem Aufrufer.</summary>
+    private (nint Handle, GCHandle Self) Detach()
+    {
+        lock (_sync)
+        {
+            var session = (_handle, _self);
+            _handle = 0;
+            _self = default;
+            return session;
+        }
+    }
+
+    /// <summary>Schließt genau diese Sitzung; danach kommt von ihr kein Rückruf mehr, erst dann fällt ihr GCHandle.</summary>
+    private void Close((nint Handle, GCHandle Self) session)
+    {
+        if (session.Handle != 0)
         {
             try
             {
-                NativeCamera.Close(handle);
+                NativeCamera.Close(session.Handle);
             }
             catch (Exception ex)
             {
                 Trace.TraceWarning($"Lupe: Kamera {Name} ließ sich nicht freigeben: {ex.Message}");
             }
         }
-        if (_self.IsAllocated) _self.Free();
+        if (session.Self.IsAllocated) session.Self.Free();
     }
 
     public async ValueTask DisposeAsync()
