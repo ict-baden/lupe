@@ -385,25 +385,32 @@ public sealed class BarcodeDecoderTests
     public void Abbruch_waehrend_der_Erkennung_greift_schnell()
     {
         var img = DecodingImages.Busy(3840, 2160, seed: 8);
-        using var cts = new CancellationTokenSource();
-        // Eigener Thread statt CancelAfter: Dessen Timer läuft über den Threadpool, und den belegen die Erkennung und parallel
-        // laufende Tests auf GitHub-Runnern mit wenigen Kernen – dort kam der Abbruch erst, als die Erkennung schon fertig war.
-        // 10 ms: auf schnellen Macs ist die Erkennung nach 40 ms schon durch.
-        var canceller = new Thread(() =>
-        {
-            Thread.Sleep(10);
-            try { cts.Cancel(); }
-            catch (ObjectDisposedException) { } // Test schon gescheitert und aufgeräumt – nicht den Testprozess abstürzen lassen
-        }) { IsBackground = true };
-        var sw = Stopwatch.StartNew();
-        canceller.Start();
+        // Wie viele Lesevorgänge die Erkennung ohne Abbruch macht (das Bild hat keinen Code, also alle Stufen)
+        int total = 0;
+        var counting = new BarcodeDecoder { Reader = (g, s) => { Interlocked.Increment(ref total); return NativeReader.Read(g, s); } };
+        Assert.Empty(counting.Decode(img));
 
-        Assert.ThrowsAny<OperationCanceledException>(() => Decoder.Decode(img, cts.Token));
-        canceller.Join();
+        // Abbruch beim ersten echten Lesevorgang, also sicher mitten in der Erkennung – ohne Wettlauf mit einem Zeitgeber
+        // oder Thread, der unter Last zu spät drankommt (auf schnellen Macs ist die Erkennung nach 40 ms durch)
+        using var cts = new CancellationTokenSource();
+        int calls = 0;
+        var decoder = new BarcodeDecoder
+        {
+            Reader = (g, s) =>
+            {
+                if (Interlocked.Increment(ref calls) == 1) cts.Cancel();
+                return NativeReader.Read(g, s);
+            },
+        };
+        var sw = Stopwatch.StartNew();
+
+        Assert.ThrowsAny<OperationCanceledException>(() => decoder.Decode(img, cts.Token));
 
         Assert.True(sw.ElapsedMilliseconds < 1000, $"Abbruch erst nach {sw.ElapsedMilliseconds} ms");
+        // Nur die schon laufenden Lesevorgänge enden noch, die übrigen beginnen nicht mehr
+        Assert.True(Volatile.Read(ref calls) < total, $"{calls} von {total} Lesevorgängen trotz Abbruch");
         // Die Instanz bleibt benutzbar
-        Assert.Equal("weiter", Assert.Single(Decoder.Decode(TestCodes.Render("weiter"))).Text);
+        Assert.Equal("weiter", Assert.Single(decoder.Decode(TestCodes.Render("weiter"))).Text);
     }
 
     [Fact]
