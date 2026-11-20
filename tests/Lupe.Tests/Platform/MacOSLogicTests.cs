@@ -8,6 +8,7 @@ using Lupe.Platform.MacOS.Camera;
 using Lupe.Platform.MacOS.Imaging;
 using Lupe.Platform.MacOS.Input;
 using Lupe.Platform.MacOS.Screen;
+using Lupe.Tests.TestSupport;
 
 namespace Lupe.Tests.Platform;
 
@@ -113,10 +114,9 @@ public sealed class MacOSLogicTests
         Assert.Equal(release.Length, strokes[^1].Consumed);
     }
 
-    [Fact]
+    [NotMacOSFact]
     public void Tastatur_ausserhalb_von_macOS_meldet_nicht_verfuegbar()
     {
-        if (OperatingSystem.IsMacOS()) return;
         var keyboard = new MacOSKeyboard();
         Assert.Equal(0, keyboard.Send(KeyboardTyper.BuildInputs("a", null), out int code));
         Assert.Contains("nicht verfügbar", keyboard.DescribeRejection(code));
@@ -239,10 +239,9 @@ public sealed class MacOSLogicTests
         if (max > 0) Assert.True((long)rw * rh <= max);
     }
 
-    [Fact]
+    [NotMacOSFact]
     public async Task Bilddatei_ausserhalb_von_macOS_meldet_nicht_verfuegbar()
     {
-        if (OperatingSystem.IsMacOS()) return;
         var decoder = new MacOSImageDecoder();
         var ex = await Assert.ThrowsAsync<InvalidDataException>(() => decoder.DecodeAsync(new MemoryStream([1]), "a.png", 100, default));
         Assert.Contains("a.png", ex.Message);

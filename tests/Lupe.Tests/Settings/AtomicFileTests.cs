@@ -13,10 +13,10 @@ public sealed class AtomicFileTests : IDisposable
 
     public void Dispose() => _temp.Dispose();
 
-    [Fact]
+    // Windows: Rechte erbt der Ordner %LocalAppData%\Lupe
+    [NotWindowsFact, System.Runtime.Versioning.UnsupportedOSPlatform("windows")]
     public void Unter_Linux_und_macOS_nur_fuer_den_Benutzer_lesbar()
     {
-        if (OperatingSystem.IsWindows()) return; // Windows: Rechte erbt der Ordner %LocalAppData%\Lupe
         var path = _temp.File("neu", "verlauf.json");
 
         AtomicFile.Write(path, "geheim"u8.ToArray());
@@ -29,10 +29,9 @@ public sealed class AtomicFileTests : IDisposable
         Assert.Equal(AtomicFile.OwnerOnlyFile, File.GetUnixFileMode(path));
     }
 
-    [Fact]
+    [NotWindowsFact, System.Runtime.Versioning.UnsupportedOSPlatform("windows")]
     public void Export_folgt_der_umask_und_behaelt_die_Rechte_einer_vorhandenen_Datei()
     {
-        if (OperatingSystem.IsWindows()) return;
         var reference = _temp.File("vergleich.csv");
         File.WriteAllText(reference, "x"); // neue Datei wie jedes Programm: 0666 ohne umask
         var path = _temp.File("export.csv");
