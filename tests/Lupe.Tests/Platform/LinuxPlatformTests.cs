@@ -8,6 +8,7 @@ using Lupe.Platform.Linux;
 using Lupe.Platform.Linux.Camera;
 using Lupe.Platform.Linux.Imaging;
 using Lupe.Platform.Linux.Input;
+using Lupe.Platform.Linux.Native;
 using Lupe.Platform.Linux.Screen;
 using SkiaSharp;
 
@@ -244,6 +245,18 @@ public sealed class LinuxLogicTests
         Assert.Equal(1u | 64u, LinuxHotkeys.Modifiers(Hotkey.Default)); // Shift + Mod4 (Super)
         Assert.Equal(4u | 8u, LinuxHotkeys.Modifiers(new Hotkey(true, true, false, false, 0x51)));
         Assert.Equal(4, LinuxHotkeys.IgnoredVariants.Length);
+    }
+
+    [Fact]
+    public void X11_Wiederholung_beim_Halten_erkannt()
+    {
+        static XKeyEvent Key(int type, uint keycode, nuint time) => new() { type = type, keycode = keycode, time = time };
+        var release = Key(X11.KeyRelease, 24, 1000);
+        Assert.True(LinuxHotkeys.IsAutoRepeat(release, Key(X11.KeyPress, 24, 1000)));
+        Assert.False(LinuxHotkeys.IsAutoRepeat(release, Key(X11.KeyPress, 24, 1030)));   // echtes Loslassen, neu gedrückt
+        Assert.False(LinuxHotkeys.IsAutoRepeat(release, Key(X11.KeyPress, 25, 1000)));   // andere Taste
+        Assert.False(LinuxHotkeys.IsAutoRepeat(release, Key(X11.KeyRelease, 24, 1000)));
+        Assert.False(LinuxHotkeys.IsAutoRepeat(Key(X11.KeyPress, 24, 1000), Key(X11.KeyPress, 24, 1000)));
     }
 
     // ---------- Pfade, Sitzung, Autostart ----------

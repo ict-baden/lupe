@@ -99,6 +99,9 @@ internal static unsafe partial class X11
     [DllImport(LibX11)] public static extern int XFlush(nint display);
     [DllImport(LibX11)] public static extern int XPending(nint display);
     [DllImport(LibX11)] public static extern int XNextEvent(nint display, XEvent* ev);
+    [DllImport(LibX11)] public static extern int XPeekEvent(nint display, XEvent* ev);
+    /// <summary>Gehaltene Taste: KeyRelease erst beim echten Loslassen statt bei jeder Wiederholung (gilt je Verbindung, Xlib-Bool ist int).</summary>
+    [DllImport(LibX11)] public static extern int XkbSetDetectableAutoRepeat(nint display, int detectable, out int supported);
     [DllImport(LibX11)] public static extern int XDisplayKeycodes(nint display, out int min, out int max);
     [DllImport(LibX11)] public static extern nuint* XGetKeyboardMapping(nint display, byte first, int count, out int keysymsPerKeycode);
     [DllImport(LibX11)] public static extern int XChangeKeyboardMapping(nint display, int first, int keysymsPerKeycode, nuint* keysyms, int count);

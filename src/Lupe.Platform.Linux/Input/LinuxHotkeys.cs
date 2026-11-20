@@ -67,6 +67,13 @@ public sealed class LinuxHotkeys : IGlobalHotkeyProvider
         uint keysym = Keysyms.FromVirtualKey(vk);
         return keysym == Keysyms.NoSymbol ? (byte)0 : X11.XKeysymToKeycode(display, keysym);
     }
+
+    /// <summary>
+    /// Ohne erkennbare Wiederholung schickt X11 beim Halten für jede Wiederholung KeyRelease und gleich danach KeyPress
+    /// derselben Taste mit demselben Zeitstempel. true, wenn <paramref name="next"/> diesen Druck nach <paramref name="release"/> ist.
+    /// </summary>
+    internal static bool IsAutoRepeat(in XKeyEvent release, in XKeyEvent next) =>
+        release.type == X11.KeyRelease && next.type == X11.KeyPress && next.keycode == release.keycode && next.time == release.time;
 }
 
 /// <summary>
@@ -103,6 +110,8 @@ internal sealed unsafe class X11Hotkey : IGlobalHotkey
             return;
         }
         nint root = X11.XDefaultRootWindow(display);
+        // Sonst kommt beim Halten für jede Wiederholung ein KeyRelease, und das Kürzel löst immer wieder aus
+        X11.XkbSetDetectableAutoRepeat(display, 1, out _);
         byte keycode = LinuxHotkeys.KeycodeFor(display, _hotkey.Key);
         uint mods = LinuxHotkeys.Modifiers(_hotkey);
         try
@@ -165,6 +174,13 @@ internal sealed unsafe class X11Hotkey : IGlobalHotkey
                 uint state = ev.key.state & (X11.ShiftMask | X11.ControlMask | X11.Mod1Mask | X11.Mod4Mask);
                 if (ev.type == X11.KeyRelease)
                 {
+                    // Server ohne XKB: Wiederholung am gleich folgenden Druck mit demselben Zeitstempel erkennen
+                    if (X11.XPending(display) > 0)
+                    {
+                        XEvent next;
+                        X11.XPeekEvent(display, &next);
+                        if (LinuxHotkeys.IsAutoRepeat(ev.key, next.key)) continue;
+                    }
                     down = false;
                     continue;
                 }
