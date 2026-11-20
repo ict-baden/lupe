@@ -15,6 +15,9 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "HarfBuzzSharp*"
         update-types: ["version-update:semver-major"]
+      # Tmds.DBus.Protocol (0.x, jede Stufe zählt als Minor): nur von Hand heben, und zwar auf die Version, die
+      # Avalonia.FreeDesktop verlangt (siehe project.assets.json), damit die App nur eine Fassung lädt
+      - dependency-name: "Tmds.DBus.Protocol"
       # ZXingCpp: Ein Update braucht auch packaging/zxing/versions.env (Tag und Commit der nativen Bibliothek) –
       # die CI-Prüfung packaging/zxing/check.sh schlägt sonst fehl
   - package-ecosystem: github-actions

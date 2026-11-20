@@ -64,7 +64,7 @@ Which files ship depends on the package: Windows (Lupe-x64.msi, Lupe.exe, Lupe-w
    Licence: MIT (section D). The notices that come with the runtime pack are reproduced unchanged in appendix 2;
    the build checks that they match the runtime pack of each package.
 
-5. Avalonia 12.1.4 - user interface
+5. Avalonia 12.1.6 - user interface
    Packages: Avalonia, Avalonia.Desktop, Avalonia.Themes.Fluent, Avalonia.Skia, Avalonia.HarfBuzz, Avalonia.Headless,
    Avalonia.Fonts.Inter, Avalonia.Remote.Protocol and the platform parts Avalonia.Win32, Avalonia.X11,
    Avalonia.FreeDesktop, Avalonia.FreeDesktop.AtSpi and Avalonia.Native
@@ -113,7 +113,7 @@ Which files ship depends on the package: Windows (Lupe-x64.msi, Lupe.exe, Lupe-w
     Copyright (c) 2020 Microsoft Corporation
     Licence: MIT (section D)
 
-12. FlashCap 1.12.0 - webcam access on Linux (V4L2)
+12. FlashCap 1.13.0 - webcam access on Linux (V4L2)
     Files: FlashCap.dll, FlashCap.Core.dll (NuGet packages "FlashCap" and "FlashCap.Core")
     Source: https://github.com/kekyo/FlashCap
     Copyright (c) Kouji Matsui (@kozy_kekyo, @kekyo@mi.kekyo.net)

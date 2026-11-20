@@ -22,7 +22,7 @@ messages come from the language files (`Strings*.resx`) in the UI language (Engl
 
 | Feature | X11 | Wayland |
 | --- | --- | --- |
-| Camera | FlashCap 1.12.0 (V4L2, `/dev/video*`), same on both | same |
+| Camera | FlashCap 1.13.0 (V4L2, `/dev/video*`), same on both | same |
 | Screenshot | `XGetImage` on the root window, monitors from XRandR (`XRRGetMonitors`), work area from `_NET_WORKAREA` | `org.freedesktop.portal.Screenshot` with `interactive=false`; the PNG the portal writes is read with SkiaSharp and deleted |
 | Typing | XTest (`libXtst`), layout-independent | `org.freedesktop.portal.RemoteDesktop`, `NotifyKeyboardKeysym` |
 | Global hotkey | `XGrabKey` on the root window, also with Caps Lock / Num Lock | `org.freedesktop.portal.GlobalShortcuts` (KDE Plasma, GNOME 48+, Hyprland …); the desktop decides the final keys |
@@ -73,7 +73,7 @@ $USER`, then log in again).
 
 `libx11-6`, `libxtst6`, `libxrandr2` (X11), `libfontconfig1` (SkiaSharp), on Wayland a running `xdg-desktop-portal`
 with a backend for the desktop. The native SkiaSharp library comes from `SkiaSharp.NativeAssets.Linux` (x64 and arm64).
-Package versions match Avalonia 12.1.4 (SkiaSharp 3.119.4, Tmds.DBus.Protocol 0.94.1) so the app loads only one copy.
+Package versions match Avalonia 12.1.6 (SkiaSharp 3.119.4, Tmds.DBus.Protocol 0.94.1) so the app loads only one copy.
 
 ## Tested
 

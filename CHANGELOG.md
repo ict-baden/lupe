@@ -14,6 +14,9 @@ All notable changes to Lupe. The format follows [Keep a Changelog](https://keepa
 - File page: the heading, the summary and *Copy all* of the previous image stayed visible while the next one was decoded, and for good if decoding failed.
 - Settings: *After typing* shows the key names in the interface language (as the shortcut does) instead of always “Enter” and “Tab”.
 
+### Changed
+- Avalonia 12.1.6 and FlashCap 1.13.0. Tmds.DBus.Protocol stays at 0.94.1, the version Avalonia's Linux parts are built against, so the app loads only one copy; `THIRD-PARTY-NOTICES.txt` names the shipped versions.
+
 ## [0.1.2] – 2026-10-22
 
 ### Fixed
