@@ -31,7 +31,10 @@ public partial class ResultToast : Window
     /// <summary>Für den XAML-Vorschauer.</summary>
     public ResultToast() => InitializeComponent();
 
-    internal ResultToast(AppState state, CodeItem? item, string title, string done, string problems, MonitorArea? monitor, bool screenshot = false)
+    /// <param name="content">Text unter dem Titel, wenn kein Code da ist (etwa der Tipp nach „Kein Code gefunden“). Bei Fehlern
+    /// leer lassen: Die Meldung steht dann in <paramref name="problems"/>.</param>
+    internal ResultToast(AppState state, CodeItem? item, string title, string done, string problems, MonitorArea? monitor, bool screenshot = false,
+        string? content = null)
     {
         InitializeComponent();
         _state = state;
@@ -40,7 +43,8 @@ public partial class ResultToast : Window
 
         TitleText.Text = title;
         SubtitleText.Text = $"Lupe · {(item is null ? Strings.App_Nav_Screen : item.FormatLabel)}";
-        ContentText.Text = item?.Text ?? Strings.App_Toast_NoCodeTip;
+        ContentText.Text = item?.Text ?? content ?? "";
+        ContentText.IsVisible = ContentText.Text.Length > 0;
         ToolTip.SetTip(ContentText, item?.ToolTipText);
         DoneText.Text = done;
         DoneRow.IsVisible = done.Length > 0;
@@ -95,6 +99,7 @@ public partial class ResultToast : Window
             _page = "kamera",
         };
         toast.ContentText.Text = text;
+        toast.ContentText.IsVisible = text.Length > 0;
         toast.SubtitleText.Text = "Lupe";
         toast.IconGlyph.Text = "\uE946";
         toast.IconCircle.SetResource(Border.BackgroundProperty, "AccentFillColorDefaultBrush");

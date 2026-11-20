@@ -152,7 +152,7 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
             else
             {
                 ReturnFocus(typeTarget);
-                new ResultToast(state, null, title, "", failure is null ? "" : detail, monitor).Present();
+                new ResultToast(state, null, title, "", failure is null ? "" : detail, monitor, content: Strings.App_Toast_NoCodeTip).Present();
             }
             return;
         }
