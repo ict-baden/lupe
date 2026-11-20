@@ -8,7 +8,7 @@ namespace Lupe.Tests.App;
 /// </summary>
 public sealed class ScreenshotTests
 {
-    [AppCoreFact]
+    [AppFact]
     public void Rendert_alle_Seiten_Overlay_und_Hinweis()
     {
         using var temp = new TempFolder();
@@ -29,7 +29,7 @@ public sealed class ScreenshotTests
         Assert.False(File.Exists(temp.File("kamera-dunkel.png")), "Nur das helle Theme war verlangt.");
     }
 
-    [AppCoreFact]
+    [AppFact]
     public void Overlay_Bild_enthaelt_den_lesbaren_Code_der_Demo_Rechnung()
     {
         // Ende-zu-Ende: Was das Overlay zeigt, liest die Befehlszeile derselben Exe wieder

@@ -12,7 +12,7 @@ public sealed class WindowTests
 {
     private static readonly TimeSpan StartTimeout = TimeSpan.FromSeconds(30);
 
-    [AppCoreFact]
+    [AppFact]
     public void Schliessen_beendet_die_Demo()
     {
         using var process = StartDemo();
@@ -32,7 +32,7 @@ public sealed class WindowTests
         }
     }
 
-    [AppCoreFact]
+    [AppFact]
     public void Zweimal_schliessen_laesst_keinen_unsichtbaren_Prozess_zurueck()
     {
         // Früher: Das erste Schließen scheiterte still (Close() während Closing), das zweite schloss nur das Fenster –
@@ -117,7 +117,6 @@ public sealed class AppInteractiveFactAttribute : FactAttribute
     public AppInteractiveFactAttribute()
     {
         if (AppExe.Path is null) Skip = "Lupe.exe ist nicht gebaut – vorher dotnet build Lupe.sln.";
-        else if (!AppExe.HasCore) Skip = "Die Core-Bausteine sind in diesem Zweig noch Stubs – erst nach dem Zusammenführen prüfbar.";
         else if (Input.InteractiveDesktop.SkipReason is { } reason) Skip = reason;
     }
 }

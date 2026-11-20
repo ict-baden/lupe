@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 using System.Diagnostics;
 using System.Text;
-using Lupe.Core.Decoding;
 using Lupe.Core.Model;
 
 namespace Lupe.Tests.App;
@@ -14,12 +13,8 @@ namespace Lupe.Tests.App;
 internal static class AppExe
 {
     private static readonly Lazy<string?> PathLazy = new(Find);
-    private static readonly Lazy<bool> CoreReady = new(CheckCore);
 
     public static string? Path => PathLazy.Value;
-
-    /// <summary>Die Core-Bausteine sind echt (keine Stubs mehr) – nötig für Lesen und Screenshots.</summary>
-    public static bool HasCore => CoreReady.Value;
 
     public sealed record Result(int ExitCode, string Out, string Err)
     {
@@ -66,20 +61,6 @@ internal static class AppExe
             return File.Exists(exe) ? exe : null;
         }
         return null;
-    }
-
-    private static bool CheckCore()
-    {
-        try
-        {
-            _ = BarcodeDecoder.AllFormats;
-            _ = new BarcodeDecoder().Decode(new PixelImage(8, 8, new byte[8 * 8 * 4]));
-            return true;
-        }
-        catch (NotImplementedException)
-        {
-            return false;
-        }
     }
 
     // ================= Bilddateien für die Tests =================
@@ -139,13 +120,12 @@ public sealed class AppFactAttribute : FactAttribute
     }
 }
 
-/// <summary>Braucht Lupe.exe und die echten Core-Bausteine (Erkennung, Bilddateien) – in einem Baustein-Zweig mit Stubs übersprungen.</summary>
-public sealed class AppCoreFactAttribute : FactAttribute
+/// <summary>Wie <see cref="AppFactAttribute"/>, für Theorien.</summary>
+public sealed class AppTheoryAttribute : TheoryAttribute
 {
-    public AppCoreFactAttribute()
+    public AppTheoryAttribute()
     {
         if (AppExe.Path is null) Skip = "Lupe.exe ist nicht gebaut – vorher dotnet build Lupe.sln.";
-        else if (!AppExe.HasCore) Skip = "Die Core-Bausteine sind in diesem Zweig noch Stubs – erst nach dem Zusammenführen prüfbar.";
     }
 }
 

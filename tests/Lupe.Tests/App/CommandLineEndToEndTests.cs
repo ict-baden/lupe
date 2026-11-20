@@ -46,7 +46,7 @@ public sealed class CommandLineEndToEndTests : IDisposable
         return canvas;
     }
 
-    [AppCoreTheory]
+    [AppTheory]
     [MemberData(nameof(Encoders))]
     public async Task Liest_alle_Codes_aus_jedem_Bildformat(string extension, string kind)
     {
@@ -62,7 +62,7 @@ public sealed class CommandLineEndToEndTests : IDisposable
         Assert.Equal("", r.Err);
     }
 
-    [AppCoreFact]
+    [AppFact]
     public async Task Mehrere_Dateien_verschiedener_Formate_in_einem_Aufruf_in_Reihenfolge()
     {
         var paths = new List<string>();
@@ -75,7 +75,7 @@ public sealed class CommandLineEndToEndTests : IDisposable
         Assert.Equal(["QR_CODE\tDatei TIFF", "QR_CODE\tDatei PNG", "QR_CODE\tDatei GIF", "QR_CODE\tDatei JPEG", "QR_CODE\tDatei BMP"], r.Lines);
     }
 
-    [AppCoreFact]
+    [AppFact]
     public async Task Kein_Code_in_allen_Bildern_ergibt_1_und_nennt_jede_Datei()
     {
         var blank = DecodingImages.Solid(640, 480, 230);
@@ -90,7 +90,7 @@ public sealed class CommandLineEndToEndTests : IDisposable
         Assert.Contains($"Kein Code gefunden: {jpg}", r.Err);
     }
 
-    [AppCoreFact]
+    [AppFact]
     public async Task Ein_Bild_mit_Code_genuegt_fuer_0()
     {
         var empty = await _files.WriteAsync("leer.png", BitmapEncoder.PngEncoderId, null, DecodingImages.Solid(300, 300, 255));
@@ -111,7 +111,7 @@ public sealed class CommandLineEndToEndTests : IDisposable
         { "zufall.tif", "Zufallsbytes" },
     };
 
-    [AppCoreTheory]
+    [AppTheory]
     [MemberData(nameof(BrokenFiles))]
     public async Task Kaputte_Datei_ergibt_3_mit_deutscher_Meldung(string name, string what)
     {
@@ -146,7 +146,7 @@ public sealed class CommandLineEndToEndTests : IDisposable
         Assert.DoesNotContain("Exception", r.Err);
     }
 
-    [AppCoreFact]
+    [AppFact]
     public async Task Umleitung_in_Datei_mit_Umlauten_und_Emoji_im_Namen_und_Inhalt()
     {
         const string text = "Grüße aus Baden – 10 € – Maß – 😀";
@@ -164,7 +164,7 @@ public sealed class CommandLineEndToEndTests : IDisposable
         Assert.Equal(0, new FileInfo(errors).Length);
     }
 
-    [AppCoreFact]
+    [AppFact]
     public async Task Fehler_mit_Umlauten_landen_lesbar_in_der_Fehlerdatei()
     {
         var broken = _files.PathFor("Prüfbericht ß.png");
@@ -188,15 +188,5 @@ public sealed class CommandLineEndToEndTests : IDisposable
         for (int row = 0; row < image.Height && y + row < canvas.Height; row++)
             Buffer.BlockCopy(image.Bgra, row * image.Stride, px, (y + row) * canvas.Stride + x * 4, Math.Min(image.Width, canvas.Width - x) * 4);
         return new PixelImage(canvas.Width, canvas.Height, px, canvas.Stride);
-    }
-}
-
-/// <summary>Wie <see cref="AppCoreFactAttribute"/>, für Theorien.</summary>
-public sealed class AppCoreTheoryAttribute : TheoryAttribute
-{
-    public AppCoreTheoryAttribute()
-    {
-        if (AppExe.Path is null) Skip = "Lupe.exe ist nicht gebaut – vorher dotnet build Lupe.sln.";
-        else if (!AppExe.HasCore) Skip = "Die Core-Bausteine sind in diesem Zweig noch Stubs – erst nach dem Zusammenführen prüfbar.";
     }
 }

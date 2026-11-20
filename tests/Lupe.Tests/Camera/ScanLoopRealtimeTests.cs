@@ -170,7 +170,7 @@ public sealed class ScanLoopRealtimeTests
         Assert.True(await WaitUntil(() => Volatile.Read(ref rec.Frames) > before));
     }
 
-    [DecoderFact]
+    [Fact]
     public async Task Mit_dem_echten_BarcodeDecoder()
     {
         var decoder = new BarcodeDecoder();
@@ -187,37 +187,5 @@ public sealed class ScanLoopRealtimeTests
 
         Assert.Equal(["Echt-1", "Echt-2"], rec.Detections.Select(d => d.Code.Text).Order());
         Assert.Empty(rec.Failures);
-    }
-}
-
-/// <summary>
-/// Test mit dem echten <see cref="BarcodeDecoder"/>. Solange der Baustein „decoding“ in diesem Zweig nur ein Stub ist,
-/// wird er übersprungen – nach dem Zusammenführen läuft er automatisch mit.
-/// </summary>
-public sealed class DecoderFactAttribute : FactAttribute
-{
-    public DecoderFactAttribute()
-    {
-        if (!IsAvailable) Skip = "Baustein „decoding“ ist noch nicht zusammengeführt (Stub wirft NotImplementedException).";
-    }
-
-    public static bool IsAvailable { get; } = Probe();
-
-    private static bool Probe()
-    {
-        try
-        {
-            _ = new BarcodeDecoder().Decode(TestCodes.Render("probe", width: 100, height: 100));
-            return true;
-        }
-        catch (NotImplementedException)
-        {
-            return false;
-        }
-        catch
-        {
-            // Anderer Fehler: nicht überspringen, der Test soll ihn zeigen
-            return true;
-        }
     }
 }

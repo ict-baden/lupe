@@ -128,7 +128,7 @@ public sealed class CommandLineTests
 
     // ================= mit Erkennung (nach dem Zusammenführen) =================
 
-    [AppCoreFact]
+    [AppFact]
     public void Liest_QR_Code_als_Zeile_mit_Format_und_Inhalt()
     {
         using var temp = new TempFolder();
@@ -140,7 +140,7 @@ public sealed class CommandLineTests
         Assert.Equal(["QR_CODE\thttps://example.org/lupe?id=42"], r.Lines);
     }
 
-    [AppCoreFact]
+    [AppFact]
     public void Mehrere_Codes_in_einem_Bild_je_eine_Zeile()
     {
         using var temp = new TempFolder();
@@ -157,7 +157,7 @@ public sealed class CommandLineTests
         Assert.Equal(2, r.Lines.Length);
     }
 
-    [AppCoreFact]
+    [AppFact]
     public void Steuerzeichen_im_Inhalt_werden_maskiert()
     {
         using var temp = new TempFolder();
@@ -169,7 +169,7 @@ public sealed class CommandLineTests
         Assert.Equal(["QR_CODE\tZeile 1\\nZeile 2\\tEnde\\x1D!"], r.Lines);
     }
 
-    [AppCoreFact]
+    [AppFact]
     public void GS1_Trennzeichen_erscheint_maskiert()
     {
         // GS1-128: nach der Charge (10, variable Länge) steht ein Gruppentrennzeichen – ZXing.Net ließ es weg
@@ -183,7 +183,7 @@ public sealed class CommandLineTests
         Assert.Equal(["CODE_128\t010401234500000910ABC123\\x1D21XYZ987"], r.Lines);
     }
 
-    [AppCoreFact]
+    [AppFact]
     public void Bild_ohne_Code_ergibt_Exitcode_1()
     {
         using var temp = new TempFolder();
@@ -196,7 +196,7 @@ public sealed class CommandLineTests
         Assert.Contains("Kein Code gefunden", r.Err);
     }
 
-    [AppCoreFact]
+    [AppFact]
     public void Format_filtert_und_versteht_Kurzformen()
     {
         using var temp = new TempFolder();
@@ -208,7 +208,7 @@ public sealed class CommandLineTests
         Assert.Equal(0, AppExe.Run("lesen", file, "--format=ean13,qr-code").ExitCode);
     }
 
-    [AppCoreFact]
+    [AppFact]
     public void Unbekanntes_Format_ist_Fehler_und_nennt_die_moeglichen()
     {
         using var temp = new TempFolder();
@@ -221,7 +221,7 @@ public sealed class CommandLineTests
         Assert.Contains("QR_CODE", r.Err);
     }
 
-    [AppCoreFact]
+    [AppFact]
     public void Platzhalter_liest_alle_passenden_Dateien_sortiert()
     {
         using var temp = new TempFolder();
@@ -234,7 +234,7 @@ public sealed class CommandLineTests
         Assert.Equal(["QR_CODE\tA-EINS", "QR_CODE\tB-ZWEI"], r.Lines);
     }
 
-    [AppCoreFact]
+    [AppFact]
     public void Fehler_bei_einem_Bild_ergibt_3_auch_wenn_andere_Codes_haben()
     {
         using var temp = new TempFolder();
