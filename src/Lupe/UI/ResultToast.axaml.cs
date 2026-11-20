@@ -143,7 +143,7 @@ public partial class ResultToast : Window
             DoneText.Text = Labels.Actions(ResultActions.Kopieren);
             _state.Hits.Record(_item, ResultActions.Kopieren);
         }
-        DoneRow.IsVisible = true;
+        DoneRow.IsVisible = DoneText.Text?.Length > 0;
         ProblemText.IsVisible = ProblemText.Text?.Length > 0;
     }
 
