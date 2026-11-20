@@ -67,7 +67,7 @@ internal sealed class FlashCapFrameSource : IFrameSource
                 _height = format.Height;
                 generation = ++_generation;
             }
-            CaptureDevice device;
+            CaptureDevice? device = null;
             try
             {
                 device = await descriptor.OpenAsync(format, TranscodeFormats.DoNotTranscode, isScattering: false,
@@ -76,10 +76,12 @@ internal sealed class FlashCapFrameSource : IFrameSource
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
+                await AbandonAsync(device).ConfigureAwait(false);
                 throw;
             }
             catch (Exception ex)
             {
+                await AbandonAsync(device).ConfigureAwait(false);
                 failure = Describe(ex, Name);
                 return;
             }
@@ -140,6 +142,17 @@ internal sealed class FlashCapFrameSource : IFrameSource
             _watchdog = null;
             return device;
         }
+    }
+
+    /// <summary>
+    /// Gibt ein geöffnetes, aber nicht fertig gestartetes Gerät sofort wieder frei. V4L2 lässt nur einen Besitzer zu:
+    /// Bliebe es offen, meldete der nächste Versuch „Kamera wird verwendet“, obwohl Lupe sie selbst hält.
+    /// </summary>
+    private async Task AbandonAsync(CaptureDevice? device)
+    {
+        if (device is null) return;
+        lock (_sync) _generation++;   // späte Bilder des halb gestarteten Geräts verwerfen
+        await ReleaseAsync(device).ConfigureAwait(false);
     }
 
     private static async Task ReleaseAsync(CaptureDevice device)
