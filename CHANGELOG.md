@@ -4,6 +4,16 @@ All notable changes to Lupe. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+### Fixed
+- Linux camera: if the camera opened but failed to start streaming (e.g. `EBUSY` or too little USB bandwidth), Lupe kept the device open, and every *Try again* reported the camera as in use by another program. The device is now released right away.
+- macOS camera: a stop from within a camera event could close a session started right after it, so the preview froze without an error. The stop now closes only its own session.
+- macOS screen scan: with a Retina display next to a 1x display, the selection overlay on the 1x display was twice as large and its right and lower half could not be selected. Not yet tried on a real Mac.
+- X11: holding the shortcut fired it again about every 30 ms; it now fires once per press.
+- Camera page: without permission for the camera (macOS, Linux user not in the group `video`), the page said to connect a webcam. It now shows the reason, with a button to the system settings where there is one.
+- Notification after a screen scan: the tip “drag the rectangle a little larger” appeared also when the screenshot failed or the recognition did not load; it now only appears for “No code found”. A failed copy no longer shows a green check mark.
+- File page: the heading, the summary and *Copy all* of the previous image stayed visible while the next one was decoded, and for good if decoding failed.
+- Settings: *After typing* shows the key names in the interface language (as the shortcut does) instead of always “Enter” and “Tab”.
+
 ## [0.1.2] – 2026-10-22
 
 ### Fixed
