@@ -666,6 +666,13 @@ jobs:
         timeout-minutes: 20
         run: xvfb-run -a -s "-screen 0 1280x1024x24" dotnet test tests/Lupe.Tests -c Release -f net10.0 --no-build --blame-hang-timeout 4m --blame-hang-dump-type none --logger "console;verbosity=normal" --logger "trx;LogFileName=tests-linux.trx" --results-directory TestResults
 
+      - name: Windows-Ziel übersetzen (ohne Tests)
+        # Die Nur-Windows-Tests (App/, Screen/ …) und der LUPE_WINDOWS-Code der App würden sonst nur im vollen Build
+        # übersetzt; dank EnableWindowsTargeting geht das auch unter Linux. Läuft auch nach roten Tests, damit beide
+        # Fehler sichtbar werden.
+        if: ${{ !cancelled() }}
+        run: dotnet build tests/Lupe.Tests -c Release -f net10.0-windows10.0.19041.0
+
       - name: Testergebnisse
         if: always()
         # Ein Upload-Problem (z. B. voller Artifact-Speicher) soll Publish und Release nicht blockieren

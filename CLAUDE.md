@@ -27,7 +27,7 @@ Unter Linux und macOS gibt es nur das Ziel `net10.0`: `dotnet test tests/Lupe.Te
 
 - Tests mit Webcam, sichtbarem Desktop oder Windows-Eigenheiten überspringen sich selbst, wo das fehlt.
 - Echtzeit-Tests der Kamera-Schleife laufen in der Sammlung „Echtzeit“ allein. Lang laufende Schleifen und Barrieren in Tests auf eigene Threads (`TestSupport/OwnThreads`), nicht auf den Thread-Pool: Der macOS-Runner hat nur 3 Kerne.
-- CI (`.github/workflows/build.yml`): nach Richtlinie 04 bauen Pushs und PRs nur den Linux-Teil; Windows, macOS, ARM, Pakete und Release „latest“ gibt es nachts (wenn `main` neu ist), von Hand, mit `[voll]` in der Commit-Nachricht und bei PRs mit Label `voll-bauen` oder Pfaden aus `FULL_PATHS` (Job `gate`). Artifacts nur kurz aufbewahren (`retention-days`), der Speicher im Free-Plan ist klein.
+- CI (`.github/workflows/build.yml`): nach Richtlinie 04 bauen Pushs und PRs nur den Linux-Teil (der das Windows-Ziel der Tests auch übersetzt, aber nicht ausführt); Windows, macOS, ARM, Pakete und Release „latest“ gibt es nachts (wenn `main` neu ist), von Hand, mit `[voll]` in der Commit-Nachricht und bei PRs mit Label `voll-bauen` oder Pfaden aus `FULL_PATHS` (Job `gate`). Artifacts nur kurz aufbewahren (`retention-days`), der Speicher im Free-Plan ist klein.
 - Die macOS-Kamera läuft über einen eigenen Swift-Helfer (`src/Lupe.Platform.MacOS/Native`). Auf einem echten Mac (Apple Silicon) sind bisher Start mit Fenster, Demo-Kamera und Befehlszeile geprüft; Bildschirm-Scan, Eintippen, Kürzel und echte Kamera dort noch nicht.
 - Dateinamen im rollierenden Release „latest“ sind fest (Links in Doku, Softwareverteilung und Lesezeichen), nicht umbenennen. Tag-Releases tragen die Version im Namen, außer `Lupe.exe`.
 
