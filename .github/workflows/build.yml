@@ -591,7 +591,21 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Die Releases ließen sich nicht abfragen' }
           $previous = $tags | Where-Object { $_ -match '^v\d+\.\d+\.\d+$' -and [version]($_.Substring(1)) -le $build } |
             Sort-Object { [version]($_.Substring(1)) } -Descending | Select-Object -First 1
-          if (-not $previous) { Write-Host "::warning::Keine veröffentlichte Version bis $build - Update von einer Version nicht geprüft." }
+          if (-not $previous) {
+            # Neues Repo ohne eigene Version (z. B. vor dem ersten Tag): MSIs früherer Versionen aus der Vorabversion
+            # "altversionen" (Tag außerhalb von v*, startet keinen Lauf, steht nicht in der Liste oben). Ohne sie bricht
+            # ein Tag ab - sonst ginge genau das Update der vorhandenen Installationen ungeprüft hinaus.
+            gh release view altversionen -R $env:GITHUB_REPOSITORY --json tagName -q '.tagName' | Out-Null
+            if ($LASTEXITCODE -eq 0) {
+              gh release download altversionen -R $env:GITHUB_REPOSITORY -p '*.msi' -D from-old
+              if ($LASTEXITCODE -ne 0) { throw 'MSIs aus altversionen ließen sich nicht laden' }
+              $oldMsis = @(Get-ChildItem from-old/*.msi)
+              if ($oldMsis.Count -eq 0) { throw 'Die Vorabversion altversionen enthält kein MSI' }
+              foreach ($oldMsi in $oldMsis) { Test-Update "altversionen ($($oldMsi.Name))" $oldMsi.FullName }
+            }
+            elseif ($env:GITHUB_REF_TYPE -eq 'tag') { throw "Keine veröffentlichte Version bis $build und keine Vorabversion altversionen - ein Tag braucht den Update-Test." }
+            else { Write-Host "::warning::Keine veröffentlichte Version bis $build - Update von einer Version nicht geprüft." }
+          }
           else {
             gh release download $previous -R $env:GITHUB_REPOSITORY -p '*-x64.msi' -D from-release
             if ($LASTEXITCODE -ne 0) { throw "MSI von $previous ließ sich nicht laden" }

@@ -16,6 +16,7 @@ All notable changes to Lupe. The format follows [Keep a Changelog](https://keepa
 
 ### Changed
 - Avalonia 12.1.6 and FlashCap 1.13.0. Tmds.DBus.Protocol stays at 0.94.1, the version Avalonia's Linux parts are built against, so the app loads only one copy; `THIRD-PARTY-NOTICES.txt` names the shipped versions.
+- CI: in a repository without a release of its own, the MSI update test uses the MSIs of earlier versions from the pre-release `altversionen`; a tag without any earlier version to update from fails instead of passing with a warning.
 
 ## [0.1.2] – 2026-10-22
 
