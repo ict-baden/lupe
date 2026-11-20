@@ -89,6 +89,8 @@ jobs:
     needs: gate
     if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
+    # Ein hängender Schritt soll nicht bis zum GitHub-Limit von 6 Stunden laufen
+    timeout-minutes: 5
     outputs:
       version: ${{ steps.version.outputs.version }}
       msi: ${{ steps.version.outputs.msi }}
@@ -159,6 +161,9 @@ jobs:
         # arm64 (ARM-Runner) nur im vollen Build, der Linux-Teil braucht nur x64
         include: ${{ fromJSON(needs.gate.outputs.full == 'true' && '[{"name":"linux-x64","os":"ubuntu-latest","rids":"linux-x64"},{"name":"linux-arm64","os":"ubuntu-24.04-arm","rids":"linux-arm64"}]' || '[{"name":"linux-x64","os":"ubuntu-latest","rids":"linux-x64"}]') }}
     runs-on: ${{ matrix.os }}
+    # Ein hängender Schritt soll nicht bis zum GitHub-Limit von 6 Stunden laufen
+    # Ohne Cache baut zxing-cpp neu
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
 
@@ -211,6 +216,9 @@ jobs:
         include:
           - { name: macos, os: macos-latest, rids: osx-arm64 osx-x64 }
     runs-on: ${{ matrix.os }}
+    # Ein hängender Schritt soll nicht bis zum GitHub-Limit von 6 Stunden laufen
+    # Ohne Cache baut zxing-cpp neu (zwei Architekturen)
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
 
@@ -263,6 +271,9 @@ jobs:
         include:
           - { name: windows, os: windows-latest, rids: win-x64 }
     runs-on: ${{ matrix.os }}
+    # Ein hängender Schritt soll nicht bis zum GitHub-Limit von 6 Stunden laufen
+    # Ohne Cache baut zxing-cpp neu
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
 
@@ -639,6 +650,8 @@ jobs:
     needs: [gate, version, zxing-linux]
     if: needs.gate.outputs.run == 'true'
     runs-on: ubuntu-latest
+    # Ein hängender Schritt soll nicht bis zum GitHub-Limit von 6 Stunden laufen
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
 
@@ -725,6 +738,7 @@ jobs:
 
       - name: Rauchtest auf älteren Systemen (x64)
         if: needs.gate.outputs.full == 'true'
+        timeout-minutes: 15
         run: |
           # .deb auf Ubuntu 22.04 (apt holt die Abhängigkeiten), tar.gz auf Ubuntu 20.04 (glibc 2.31) und Debian 12
           docker run --rm -v "$PWD/dist:/dist:ro" -v "$PWD/packaging:/p:ro" ubuntu:22.04 sh -c \
@@ -748,6 +762,8 @@ jobs:
     needs: [gate, linux]
     if: needs.gate.outputs.full == 'true'
     runs-on: ubuntu-24.04-arm
+    # Ein hängender Schritt soll nicht bis zum GitHub-Limit von 6 Stunden laufen
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
 
@@ -757,6 +773,7 @@ jobs:
           path: dist
 
       - name: Rauchtest auf älteren Systemen (arm64)
+        timeout-minutes: 15
         run: |
           for image in ubuntu:20.04 debian:12; do
             echo "== $image"
@@ -768,6 +785,9 @@ jobs:
     needs: [gate, version, zxing-macos]
     if: needs.gate.outputs.full == 'true'
     runs-on: macos-latest
+    # Ein hängender Schritt soll nicht bis zum GitHub-Limit von 6 Stunden laufen
+    # Build, bis zu 20 min Tests, zweimal Publish mit Signieren und bis zu 2 × 30 min Notarisierung
+    timeout-minutes: 120
     outputs:
       notarized: ${{ steps.signing.outputs.notarize }}
     steps:
@@ -848,6 +868,7 @@ jobs:
           rm "$RUNNER_TEMP/lupe.p12"
 
       - name: Publish und Lupe.app
+        timeout-minutes: 75
         env:
           # Leer = ad hoc signiert (package.sh); sonst Developer ID mit Hardened Runtime und, mit den Notar-Angaben, notarisiert
           MACOS_SIGN_IDENTITY: ${{ env.MACOS_SIGN == 'true' && secrets.MACOS_SIGN_IDENTITY || '' }}
@@ -864,6 +885,7 @@ jobs:
           ls -l dist
 
       - name: Lupe.app prüfen
+        timeout-minutes: 15
         run: |
           for arch in arm64 x64; do
             mkdir -p /tmp/lupe-probe-$arch && ditto -x -k dist/Lupe*-macos-$arch.zip /tmp/lupe-probe-$arch
@@ -915,6 +937,8 @@ jobs:
     needs: [gate, version, windows, linux, linux-arm64-rauchtest, macos]
     if: needs.gate.outputs.full == 'true' && github.event_name != 'pull_request' && (github.ref_type == 'tag' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
+    # Ein hängender Schritt soll nicht bis zum GitHub-Limit von 6 Stunden laufen
+    timeout-minutes: 20
     permissions:
       contents: write # für die Releases
     steps:
