@@ -78,6 +78,12 @@ public sealed class MacOSSystemTests
         Assert.All(problems, p => Assert.False(string.IsNullOrWhiteSpace(p.Message)));
     }
 
+    // Lädt nur die Bibliothek (dlopen), fragt nicht nach der Kamera-Erlaubnis. Ohne sie fände Lupe still keine Kamera,
+    // und der Test darunter bestünde mit einer leeren Liste.
+    [MacOSFact]
+    public void Kamerabibliothek_laedt() =>
+        Assert.True(Lupe.Platform.MacOS.Camera.NativeCamera.Available, "libLupeCamera.dylib fehlt oder lädt nicht");
+
     [MacOSFact]
     public async Task Kameras_auflisten_wirft_nicht()
     {

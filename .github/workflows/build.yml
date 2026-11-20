@@ -850,6 +850,10 @@ jobs:
             plutil -p $app/Contents/Info.plist | grep -E 'NSCameraUsageDescription|LSMinimumSystemVersion|CFBundleVersion'
             codesign --verify --deep --strict $app
             cmp zxing/osx-$arch/libZXing.dylib out/osx-$arch/libZXing.dylib
+            # Ohne libLupeCamera.dylib (Swift-Helfer) findet Lupe still keine Kamera; check-natives.sh verlangt keine bestimmte Datei
+            test -f $app/Contents/MacOS/libLupeCamera.dylib || { echo "::error::libLupeCamera.dylib fehlt in Lupe.app ($arch)"; exit 1; }
+            lipo -archs $app/Contents/MacOS/libLupeCamera.dylib | grep -q arm64 && lipo -archs $app/Contents/MacOS/libLupeCamera.dylib | grep -q x86_64 \
+              || { echo "::error::libLupeCamera.dylib in Lupe.app ($arch) ist nicht universal (arm64 und x86_64)"; exit 1; }
             # Keine mitgelieferte Bibliothek verlangt ein neueres macOS als LSMinimumSystemVersion
             rid=osx-$arch; packaging/check-natives.sh $rid $app/Contents/MacOS
             python3 packaging/check-notices.py out/osx-$arch/Lupe.deps.json out/osx-$arch
