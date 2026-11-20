@@ -51,6 +51,12 @@
                                 <TextBlock x:Name="PlaceholderStartText" Text="{x:Static l:Strings.Page_Camera_StartCamera}" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
+                        <Button x:Name="PlaceholderSystemSettings" Classes="accent" Click="SystemSettings_Click" Margin="4,0" IsVisible="False">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE713;" Classes="glyph"/>
+                                <TextBlock Text="{x:Static l:Strings.Page_Settings_SystemSettings}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
                         <Button x:Name="GoScreen" Click="GoScreen_Click" Margin="4,0">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xE7F4;" Classes="glyph"/>

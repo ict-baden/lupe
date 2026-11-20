@@ -22,7 +22,8 @@ namespace Lupe.UI.Pages;
 /// </summary>
 public partial class CameraPage : UserControl, IPage
 {
-    private enum Hint { None, Stopped, Starting, NoCamera, Error }
+    /// <summary><c>Blocked</c>: keine Kamera in der Liste, weil die Berechtigung fehlt (macOS, Linux-Gruppe „video“, Windows-Datenschutz).</summary>
+    private enum Hint { None, Stopped, Starting, NoCamera, Blocked, Error }
 
     private sealed record MarkerUpdate(IReadOnlyList<CodeMarker> Markers, int Generation);
 
@@ -32,6 +33,7 @@ public partial class CameraPage : UserControl, IPage
     private readonly SemaphoreSlim _gate = new(1, 1);
     private IReadOnlyList<CameraInfo> _cameras = [];
     private bool _listed;
+    private string? _systemSettingsLink;
     private bool _resumeOnShow;
     private bool _suppressSelection;
     private bool _starting;
@@ -140,9 +142,29 @@ public partial class CameraPage : UserControl, IPage
         _suppressSelection = false;
         CameraBox.IsEnabled = list.Count > 0;
 
-        if (list.Count == 0) ShowHint(Hint.NoCamera, problem);
+        // Leere Liste ohne Fehler: Fehlt nur die Berechtigung, das sagen statt „Webcam anschließen“
+        _systemSettingsLink = null;
+        if (list.Count == 0 && problem is null && CameraProblem() is { } blocked)
+        {
+            _systemSettingsLink = blocked.SettingsLink;
+            ShowHint(Hint.Blocked, blocked.Message);
+        }
+        else if (list.Count == 0) ShowHint(Hint.NoCamera, problem);
         else if (_loop is null) ShowHint(Hint.Stopped);
         UpdateButtons();
+    }
+
+    /// <summary>Was die Plattform zur Kamera meldet (fehlende Berechtigung), oder null.</summary>
+    private PlatformProblem? CameraProblem()
+    {
+        if (_state.IsDemo) return null;
+        try { return LupePlatform.Current.Problems.Check().FirstOrDefault(p => p.Feature == PlatformFeature.Camera); }
+        catch (Exception ex) when (ex is not OutOfMemoryException) { return null; }
+    }
+
+    private void SystemSettings_Click(object? sender, RoutedEventArgs e)
+    {
+        if (_systemSettingsLink is { } link && Shell.OpenSystemSettings(link) is { } error) _state.Report(NoticeKind.Warning, error);
     }
 
     private void Refresh_Click(object? sender, RoutedEventArgs e) => Ui.Run(_state, ListCamerasAsync, Strings.Page_Camera_SearchCameras);
@@ -377,12 +399,14 @@ public partial class CameraPage : UserControl, IPage
     {
         Placeholder.IsVisible = hint != Hint.None;
         PlaceholderStart.IsVisible = hint is Hint.Stopped or Hint.Error;
-        GoScreen.IsVisible = GoFile.IsVisible = hint is Hint.NoCamera or Hint.Error;
+        PlaceholderSystemSettings.IsVisible = hint == Hint.Blocked && _systemSettingsLink is not null;
+        GoScreen.IsVisible = GoFile.IsVisible = hint is Hint.NoCamera or Hint.Blocked or Hint.Error;
         (PlaceholderGlyph.Text, PlaceholderTitle.Text, PlaceholderText.Text, PlaceholderStartText.Text) = hint switch
         {
             Hint.Starting => ("\uE722", Strings.Page_Camera_Starting, "", ""),
             Hint.NoCamera => ("\uE722", Strings.Page_Camera_NoCameraTitle,
                 detail is null ? Strings.Page_Camera_NoCameraText : string.Format(Strings.Page_Camera_NoCameraTextWithDetail, detail), ""),
+            Hint.Blocked => ("\uE7BA", Strings.Page_Camera_UnavailableTitle, detail ?? "", ""),
             Hint.Error => ("\uE7BA", Strings.Page_Camera_UnavailableTitle, detail ?? Strings.Page_Camera_StartFailed, Strings.Page_Camera_TryAgain),
             _ => ("\uE722", Strings.Page_Camera_Off, Strings.Page_Camera_OffText, Strings.Page_Camera_StartCamera),
         };

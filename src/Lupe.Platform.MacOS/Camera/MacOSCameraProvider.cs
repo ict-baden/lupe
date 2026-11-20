@@ -14,7 +14,8 @@ public sealed class MacOSCameraProvider : ICameraProvider
     {
         ct.ThrowIfCancellationRequested();
         if (!OperatingSystem.IsMacOS()) return [];
-        // Ohne Erlaubnis gar nicht erst fragen; die Kamera-Seite zeigt den Hinweis aus MacOSPermissions
+        // Ohne Erlaubnis gar nicht erst fragen; bei leerer Liste fragt die Kamera-Seite IPlatformProblems ab und zeigt
+        // den Hinweis aus MacOSPermissions mit Knopf in die Systemeinstellungen
         if (MacOSPermissions.Camera() is CameraAuthorization.Denied or CameraAuthorization.Restricted) return [];
         List<(string Id, string Name)> cameras;
         try

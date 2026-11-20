@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: MIT
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
@@ -185,17 +184,7 @@ public partial class SettingsPage : UserControl, IPage
     private void OpenSystemSettings_Click(object? sender, RoutedEventArgs e)
     {
         if ((sender as Control)?.DataContext is not ProblemRow { Link: { } link }) return;
-        // Nur Links in die Systemeinstellungen (Windows: ms-settings:, macOS: x-apple.systempreferences:)
-        if (!link.StartsWith("ms-settings:", StringComparison.OrdinalIgnoreCase) && !link.StartsWith("x-apple.systempreferences:", StringComparison.OrdinalIgnoreCase)) return;
-        try
-        {
-            var info = OperatingSystem.IsMacOS() ? new ProcessStartInfo("/usr/bin/open", [link]) : new ProcessStartInfo(link) { UseShellExecute = true };
-            Process.Start(info)?.Dispose();
-        }
-        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException)
-        {
-            _state.Report(NoticeKind.Warning, string.Format(Strings.Page_Settings_SystemSettingsFailed, ex.Message));
-        }
+        if (Shell.OpenSystemSettings(link) is { } error) _state.Report(NoticeKind.Warning, error);
     }
 
     private static string SafeSettingsPath()

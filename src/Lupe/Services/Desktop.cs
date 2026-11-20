@@ -170,6 +170,26 @@ internal static class Shell
         }
     }
 
+    /// <summary>
+    /// Öffnet eine Seite der Systemeinstellungen (Windows: <c>ms-settings:</c>, macOS: <c>x-apple.systempreferences:</c>).
+    /// Andere Links werden nie geöffnet. Fehlermeldung oder null.
+    /// </summary>
+    public static string? OpenSystemSettings(string link)
+    {
+        if (!link.StartsWith("ms-settings:", StringComparison.OrdinalIgnoreCase) && !link.StartsWith("x-apple.systempreferences:", StringComparison.OrdinalIgnoreCase))
+            return null;
+        try
+        {
+            var info = OperatingSystem.IsMacOS() ? new ProcessStartInfo("/usr/bin/open", [link]) : new ProcessStartInfo(link) { UseShellExecute = true };
+            Process.Start(info)?.Dispose();
+            return null;
+        }
+        catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException or IOException)
+        {
+            return string.Format(Strings.Page_Settings_SystemSettingsFailed, ex.Message);
+        }
+    }
+
     /// <summary>Ordner im Dateimanager zeigen (Datei markiert, wenn es sie gibt und das System das kann).</summary>
     public static string? ShowInExplorer(string path)
     {
