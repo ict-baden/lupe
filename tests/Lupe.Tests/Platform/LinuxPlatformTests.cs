@@ -266,16 +266,16 @@ public sealed class LinuxLogicTests
     {
         string? Env(string name) => name switch
         {
-            "HOME" => "/home/anna",
+            "HOME" => "/home/benutzer",
             "XDG_CONFIG_HOME" => "/tmp/konfig",
             "XDG_DATA_HOME" => "relativ/zaehlt/nicht",
             _ => null,
         };
         Assert.Equal(Path.Combine("/tmp/konfig", "lupe"), AppPaths.Resolve(config: true, windows: false, macOS: false, Env));
-        Assert.Equal(Path.Combine("/home/anna", ".local", "share", "lupe"), AppPaths.Resolve(config: false, windows: false, macOS: false, Env));
-        Assert.Equal(Path.Combine("/home/anna", ".config", "lupe"),
-            AppPaths.Resolve(config: true, windows: false, macOS: false, n => n == "HOME" ? "/home/anna" : null));
-        Assert.Equal(Path.Combine("/home/anna", "Library", "Application Support", "Lupe"),
+        Assert.Equal(Path.Combine("/home/benutzer", ".local", "share", "lupe"), AppPaths.Resolve(config: false, windows: false, macOS: false, Env));
+        Assert.Equal(Path.Combine("/home/benutzer", ".config", "lupe"),
+            AppPaths.Resolve(config: true, windows: false, macOS: false, n => n == "HOME" ? "/home/benutzer" : null));
+        Assert.Equal(Path.Combine("/home/benutzer", "Library", "Application Support", "Lupe"),
             AppPaths.Resolve(config: true, windows: false, macOS: true, Env));
     }
 
