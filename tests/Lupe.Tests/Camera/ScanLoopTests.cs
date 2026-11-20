@@ -544,7 +544,8 @@ public sealed class ScanLoopTests
     {
         await using var loop = CreateLoop(0);
         var pushing = new CancellationTokenSource();
-        var pusher = Task.Run(() =>
+        // Eigener Thread: Schleife bis Testende (CLAUDE.md, TestSupport/OwnThreads)
+        var pusher = OwnThreads.Start(() =>
         {
             while (!pushing.IsCancellationRequested) _source.Push(Marker(1));
         });
