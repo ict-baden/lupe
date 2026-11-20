@@ -7,7 +7,7 @@
     <Description>Erkennung, Verlauf, Einstellungen, Scan-Schleife, Tipp-Logik und Plattform-Schnittstellen für Lupe – ohne Oberfläche und ohne Systemaufrufe.</Description>
   </PropertyGroup>
 
-  <!-- Texte der Oberfläche (Richtlinie 13): Strings.resx = Englisch (Rückfallsprache), Strings.de.resx = Deutsch.
+  <!-- Texte der Oberfläche: Strings.resx = Englisch (Rückfallsprache), Strings.de.resx = Deutsch.
        Die Klasse Lupe.Core.Resources.Strings erzeugt der Build, keine Designer-Datei im Repo. -->
   <PropertyGroup>
     <NeutralLanguage>en</NeutralLanguage>

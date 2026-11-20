@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""SBOM (Stückliste) der Lupe-Pakete im Format CycloneDX 1.5 (JSON), Richtlinie 06.
+"""SBOM (Stückliste) der Lupe-Pakete im Format CycloneDX 1.5 (JSON).
 
     python3 sbom.py <version> <Lupe.deps.json>... > Lupe-sbom.cdx.json
 

@@ -4,7 +4,7 @@
 #   package.sh <publish-ordner> <arch: x64|arm64> <version> <ausgabe-ordner> [<dateisuffix>]
 # Ergebnis: Lupe<suffix>-linux-<arch>.tar.gz, für x64 zusätzlich das .deb (dpkg-deb):
 #   ohne Suffix (main) lupe_amd64.deb – fester Link auf „latest“, mit Suffix (Tag) lupe_<version>_amd64.deb;
-#   der Paketname darin ist ictbaden-lupe (richtlinien/12), der Dateiname bleibt wegen der festen Links
+#   der Paketname darin ist ictbaden-lupe (wie alle ICT-Baden-Pakete), der Dateiname bleibt wegen der festen Links
 set -euo pipefail
 pub=$1; arch=$2; version=$3; out=$4; suffix=${5:-}
 here=$(cd "$(dirname "$0")" && pwd)
@@ -61,7 +61,7 @@ glibc=$(find "$deb/opt/lupe" -type f \( -name '*.so' -o -name Lupe -o -name crea
     | grep -o 'GLIBC_[0-9.]*' | sed 's/GLIBC_//' | sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)
 [ -n "$glibc" ] || { echo "glibc-Version der Bibliotheken nicht ermittelt (objdump fehlt?)" >&2; exit 1; }
 {
-    # Paketname nach richtlinien/12 (ictbaden-<name>); ersetzt das frühere Paket „lupe“ sauber
+    # Paketname ictbaden-<name>, einheitlich für alle ICT-Baden-Pakete; ersetzt das frühere Paket „lupe“ sauber
     echo "Package: ictbaden-lupe"
     echo "Version: $debversion"
     echo "Architecture: amd64"

@@ -7,7 +7,7 @@ using Lupe.Core.Localization;
 
 namespace Lupe.Tests.Localization;
 
-/// <summary>Sprachdateien und Sprachwahl (Richtlinie 13).</summary>
+/// <summary>Sprachdateien und Sprachwahl.</summary>
 public sealed partial class LocalizationTests
 {
     // Die Sprachdateien liegen als Kopie neben der Test-DLL (Lupe.Tests.csproj): In der CI schreibt
@@ -125,7 +125,7 @@ public sealed partial class LocalizationTests
     }
 
     [Fact]
-    public void Richtlinie_13_alle_fuenf_Sprachen()
+    public void Alle_fuenf_Sprachen()
     {
         Assert.Equal(["en", "de", "es", "fr", "zh-Hans"], UiLanguage.Supported);
         foreach (var code in UiLanguage.Supported.Where(c => c != UiLanguage.Fallback))

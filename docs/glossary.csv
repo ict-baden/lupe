@@ -1,0 +1,11 @@
+en,de,es,fr,zh-Hans,hinweis
+printer,Drucker,impresora,imprimante,打印机,
+label,Etikett,etiqueta,étiquette,标签,
+scanner,Scanner,escáner,scanner,扫描器,Handscanner für Barcodes
+barcode,Barcode,código de barras,code-barres,条码,
+device,Gerät,dispositivo,appareil,设备,
+profile,Profil,perfil,profil,配置文件,
+settings,Einstellungen,configuración,paramètres,设置,
+report,Bericht,informe,rapport,报告,
+audit trail,Audit-Trail,registro de auditoría,piste d'audit,审计追踪,GMP-Begriff; überall gleich übersetzen
+read-only,schreibgeschützt,solo lectura,lecture seule,只读,

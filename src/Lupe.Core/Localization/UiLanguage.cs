@@ -4,7 +4,7 @@ using System.Globalization;
 namespace Lupe.Core.Localization;
 
 /// <summary>
-/// Sprache der Oberfläche (Richtlinie 13): folgt dem Betriebssystem, lässt sich in den Einstellungen festlegen
+/// Sprache der Oberfläche: folgt dem Betriebssystem, lässt sich in den Einstellungen festlegen
 /// (<see cref="Model.LupeSettings.Language"/>, auch per verteilter einstellungen.json). Fehlt ein Text, zeigt .NET den
 /// englischen aus Strings.resx.
 /// </summary>
@@ -17,7 +17,7 @@ public static class UiLanguage
     public const string Fallback = "en";
 
     /// <summary>
-    /// Sprachen mit eigener Sprachdatei, in der Reihenfolge der Auswahlliste (Richtlinie 13). es, fr und zh-Hans sind
+    /// Sprachen mit eigener Sprachdatei, in der Reihenfolge der Auswahlliste. es, fr und zh-Hans sind
     /// maschinell vorübersetzt und noch nicht gegengelesen (Kopf der jeweiligen Strings.*.resx).
     /// </summary>
     public static IReadOnlyList<string> Supported { get; } = ["en", "de", "es", "fr", "zh-Hans"];

@@ -1,5 +1,5 @@
 <Project>
-  <!-- Gemeinsame Einstellungen für alle Projekte im Repo (Vorlage aus ict-baden/richtlinien) -->
+  <!-- Gemeinsame Einstellungen für alle Projekte im Repo -->
   <PropertyGroup>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -11,7 +11,7 @@
     <Company>ICT-Baden</Company>
     <Product>Lupe</Product>
     <Copyright>© 2026 ICT-Baden GmbH</Copyright>
-    <!-- Strings.resx ist Englisch und Rückfallsprache, siehe richtlinien/13 -->
+    <!-- Strings.resx ist Englisch und Rückfallsprache, siehe docs/development.md („Languages“) -->
     <NeutralLanguage>en</NeutralLanguage>
     <!-- Nur die Sprachen mitliefern, für die es Sprachdateien gibt (eigene und fremde Pakete), wie UiLanguage.Supported -->
     <SatelliteResourceLanguages>en;de;es;fr;zh-Hans</SatelliteResourceLanguages>

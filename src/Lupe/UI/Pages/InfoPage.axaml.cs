@@ -10,7 +10,7 @@ using Lupe.Services;
 namespace Lupe.UI.Pages;
 
 /// <summary>
-/// Info (Richtlinie 07): Version und Build, Herausgeber, Lizenz, Webseite, Impressum, Repo, Erkennung und Oberfläche mit
+/// Info: Version und Build, Herausgeber, Lizenz, Webseite, Impressum, Repo, Erkennung und Oberfläche mit
 /// Lizenztexten, Datenschutz, Hilfe und Support, Daten, Befehlszeile, Tastatur.
 /// </summary>
 public partial class InfoPage : UserControl, IPage

@@ -12,7 +12,7 @@ namespace Lupe.Core.Decoding;
 /// </summary>
 public sealed class DecoderUnavailableException(string message) : Exception(message)
 {
-    /// <summary>Fehlercode für den Support (Richtlinie 13, Regel 9).</summary>
+    /// <summary>Fehlercode für den Support.</summary>
     public string Code => ErrorCodes.DecoderUnavailable;
 }
 

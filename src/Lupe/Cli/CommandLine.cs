@@ -247,7 +247,7 @@ internal static class CommandLine
         ? string.Format(Strings.Page_Info_VersionBuild, AppInfo.Version, AppInfo.Build, Environment.Version.ToString(3))
         : string.Format(Strings.Page_Info_Version, AppInfo.Version, Environment.Version.ToString(3)));
 
-    /// <summary>Die Angaben der Info-Seite als Text (<c>--info</c>, Richtlinie 07): Version, Lizenz, Links, Datenschutz.</summary>
+    /// <summary>Die Angaben der Info-Seite als Text (<c>--info</c>): Version, Lizenz, Links, Datenschutz.</summary>
     internal static string InfoText() => string.Format(Strings.App_Cli_Info, VersionLine(), AppInfo.Copyright,
         Local(ThirdPartyNotices.LicenseFileName, AppInfo.LicenseUrl), Local(ThirdPartyNotices.FileName, AppInfo.RepositoryUrl + "/blob/main/THIRD-PARTY-NOTICES.txt"),
         AppInfo.RepositoryUrl, AppInfo.WebsiteUrl, AppInfo.ImprintUrl, AppInfo.PrivacyUrl, AppInfo.SupportUrl);

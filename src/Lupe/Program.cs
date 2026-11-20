@@ -22,7 +22,7 @@ internal static class Program
     {
         // Systemfunktionen (Kamera, Bildschirm, Tippen, Tastenkürzel …) über die Anbindung des laufenden Systems
         LupePlatform.Use(CreatePlatform());
-        // Sprache vor dem ersten Text: eingestellt oder wie das System (Richtlinie 13)
+        // Sprache vor dem ersten Text: eingestellt oder wie das System
         UiLanguage.Apply(SettingsStore.Load().Language);
         var options = StartOptions.Parse(args);
         if (options.Mode == AppMode.CommandLine) return CommandLine.Run(args);

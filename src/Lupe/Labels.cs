@@ -10,14 +10,14 @@ public static class AppInfo
 {
     public const string RepositoryUrl = "https://github.com/ict-baden/lupe";
     public const string Publisher = "ICT-Baden";
-    // Info-Seite und lupe --info (Richtlinien 07 und 10)
+    // Info-Seite und lupe --info
     public const string LicenseUrl = RepositoryUrl + "/blob/main/LICENSE";
     /// <summary>Datenschutzhinweise zu Lupe auf der Webseite; Einzelheiten zu den Dateien in docs/data-and-privacy.md.</summary>
     public const string PrivacyUrl = "https://ict-baden.de/datenschutz/lupe/";
     public const string SupportUrl = RepositoryUrl + "/blob/main/SUPPORT.md";
     /// <summary>Die Produktseite von Lupe.</summary>
     public const string WebsiteUrl = "https://ict-baden.de/produkte/lupe/";
-    /// <summary>Das eine Impressum auf der Webseite (Richtlinie 07).</summary>
+    /// <summary>Das eine Impressum auf der Webseite.</summary>
     public const string ImprintUrl = "https://ict-baden.de/impressum/";
 
     /// <summary>„© 2026 …“ aus den Assembly-Angaben (Directory.Build.props).</summary>

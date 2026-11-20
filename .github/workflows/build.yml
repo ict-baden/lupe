@@ -1,6 +1,6 @@
 name: Build
 
-# Wann wie viel gebaut wird, steht in Richtlinie 04 („Wann die CI baut“). Kurz: Pushs und PRs bauen nur den
+# Wann wie viel gebaut wird, steht in docs/development.md („CI and releases“). Kurz: Pushs und PRs bauen nur den
 # billigen Linux-Teil (version, zxing-cpp x64, Build und Tests unter Linux), den vollen Build (Windows, macOS, ARM,
 # Pakete, Rauchtests, Releases) gibt es nachts (nur wenn main neu ist), bei Tags, von Hand, mit [voll] in der
 # Commit-Nachricht und bei PRs mit Label voll-bauen oder Pfaden aus FULL_PATHS (Job gate). Reine Doku startet nichts.
@@ -31,7 +31,7 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   # Avalonia schickt beim Build sonst Nutzungsdaten (Avalonia.BuildServices, AvaloniaStatsTask)
   AVALONIA_TELEMETRY_OPTOUT: '1'
-  # Signieren nur, wenn die Organisation Artifact Signing eingerichtet hat (siehe richtlinien/05-signieren.md)
+  # Signieren nur, wenn die Organisation Artifact Signing eingerichtet hat (siehe docs/development.md, „CI and releases“)
   # und nicht bei Pull Requests (dort gibt es kein OIDC-Token mit den nötigen Rechten). Bis dahin unsigniert.
   SIGN: ${{ vars.SIGNING_ACCOUNT != '' && github.event_name != 'pull_request' }}
 

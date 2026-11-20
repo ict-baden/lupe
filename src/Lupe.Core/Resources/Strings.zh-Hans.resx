@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- Chinesisch (vereinfacht) (zh-Hans): maschinell vorübersetzt (Claude, 2026-10-20), Fachbegriffe nach ict-baden/richtlinien/sprachen/glossar.csv.
-       NOCH NICHT GEGENGELESEN – vor dem ersten öffentlichen Release liest ein Muttersprachler jede Zeile gegen
-       (Richtlinie 13). Schlüssel und Platzhalter wie in Strings.resx (Englisch); LocalizationTests prüft beides. -->
+  <!-- Chinesisch (vereinfacht) (zh-Hans): maschinell vorübersetzt (Claude, 2026-10-20), Fachbegriffe nach docs/glossary.csv.
+       NOCH NICHT GEGENGELESEN – vor dem ersten öffentlichen Release liest ein Muttersprachler jede Zeile gegen.
+       Schlüssel und Platzhalter wie in Strings.resx (Englisch); LocalizationTests prüft beides. -->
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
   <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
