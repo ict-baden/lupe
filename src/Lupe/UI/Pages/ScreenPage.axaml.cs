@@ -46,7 +46,11 @@ public partial class ScreenPage : UserControl, IPage
         var parts = new List<string>();
         if (actions.HasFlag(ResultActions.Kopieren)) parts.Add(Strings.Page_Screen_ActionCopy);
         if (actions.HasFlag(ResultActions.Eintippen))
-            parts.Add(settings.TypeSuffix is "Enter" or "Tab" ? string.Format(Strings.Page_Screen_ActionTypeThen, settings.TypeSuffix) : Strings.Page_Screen_ActionType);
+        {
+            // Gespeichert ist der englische Tastenname, angezeigt wird der übersetzte (wie in der Auswahl der Einstellungen)
+            var key = settings.TypeSuffix switch { "Enter" => Strings.Core_Key_Enter, "Tab" => Strings.Core_Key_Tab, _ => null };
+            parts.Add(key is null ? Strings.Page_Screen_ActionType : string.Format(Strings.Page_Screen_ActionTypeThen, key));
+        }
         if (actions.HasFlag(ResultActions.LinkOeffnen)) parts.Add(Strings.Page_Screen_ActionOpenLink);
         var list = string.Join(Strings.Page_Screen_ActionSeparator, parts);
         if (list.Length > 0) list = char.ToUpper(list[0], CultureInfo.CurrentCulture) + list[1..];

@@ -60,8 +60,8 @@
                             Description="{x:Static l:Strings.Page_Settings_AfterTypingText}">
                 <ComboBox x:Name="SuffixBox" Width="160" SelectionChanged="Suffix_SelectionChanged" AutomationProperties.Name="{x:Static l:Strings.Page_Settings_AfterTypingName}">
                     <ComboBoxItem Content="{x:Static l:Strings.Page_Settings_SuffixNone}" Tag=""/>
-                    <ComboBoxItem Content="Enter" Tag="Enter"/>
-                    <ComboBoxItem Content="Tab" Tag="Tab"/>
+                    <ComboBoxItem Content="{x:Static l:Strings.Core_Key_Enter}" Tag="Enter"/>
+                    <ComboBoxItem Content="{x:Static l:Strings.Core_Key_Tab}" Tag="Tab"/>
                 </ComboBox>
             </ui:SettingCard>
             <ui:SettingCard Glyph="&#xE916;" Header="{x:Static l:Strings.Page_Settings_TypeDelay}"
