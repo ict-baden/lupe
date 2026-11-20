@@ -13,6 +13,7 @@ All notable changes to Lupe. The format follows [Keep a Changelog](https://keepa
 - Notification after a screen scan: the tip “drag the rectangle a little larger” appeared also when the screenshot failed or the recognition did not load; it now only appears for “No code found”. A failed copy no longer shows a green check mark.
 - File page: the heading, the summary and *Copy all* of the previous image stayed visible while the next one was decoded, and for good if decoding failed.
 - Settings: *After typing* shows the key names in the interface language (as the shortcut does) instead of always “Enter” and “Tab”.
+- Linux: licence texts that were not next to the program were written under a fixed name to the shared /tmp, where another user could plant a symlink that Lupe then overwrote. Like the hit sound, they now go to a new folder of their own, removed when Lupe quits. The regular packages ship the files and were not affected.
 
 ### Changed
 - Avalonia 12.1.6 and FlashCap 1.13.0. Tmds.DBus.Protocol stays at 0.94.1, the version Avalonia's Linux parts are built against, so the app loads only one copy; `THIRD-PARTY-NOTICES.txt` names the shipped versions.

@@ -23,6 +23,25 @@ internal static class ThirdPartyNotices
         return reader.ReadToEnd();
     }
 
+    /// <summary>
+    /// Ordner für die eingebetteten Texte: einer je Prozess, neu angelegt mit zufälligem Namen (unter Linux und macOS nur
+    /// für den Benutzer, 0700) – nicht unter festem Namen im gemeinsamen /tmp, wo ein anderer Benutzer vorher einen
+    /// Symlink anlegen könnte, dessen Ziel Lupe dann mit dem Lizenztext überschriebe. Wird beim Beenden entfernt.
+    /// </summary>
+    private static readonly Lazy<DirectoryInfo> s_folder = new(() =>
+    {
+        var folder = Directory.CreateTempSubdirectory("lupe-");
+        AppDomain.CurrentDomain.ProcessExit += (_, _) =>
+        {
+            try { folder.Delete(recursive: true); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        };
+        return folder;
+    });
+
+    /// <summary>Ordner, in den <see cref="Open"/> eingebettete Texte schreibt (Tests).</summary>
+    internal static string TempFolder => s_folder.Value.FullName;
+
     /// <summary>Öffnet einen der Lizenztexte im Standard-Texteditor. Fehlermeldung oder null.</summary>
     public static string? Open(string fileName = FileName)
     {
@@ -33,10 +52,13 @@ internal static class ThirdPartyNotices
             {
                 var text = Text(fileName);
                 if (text is null) return Strings.App_Notices_Missing;
-                var folder = Path.Combine(Path.GetTempPath(), "Lupe");
-                Directory.CreateDirectory(folder);
-                path = Path.Combine(folder, fileName);
-                File.WriteAllText(path, text);
+                path = Path.Combine(s_folder.Value.FullName, fileName);
+                if (!File.Exists(path))
+                {
+                    using var stream = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+                    using var writer = new StreamWriter(stream);
+                    writer.Write(text);
+                }
             }
             Shell.OpenFile(path);
             return null;

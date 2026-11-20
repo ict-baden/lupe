@@ -124,7 +124,7 @@ What Lupe looks at and what the history contains is the same as on Windows. Sett
 | Autostart | `~/.config/autostart/lupe.desktop` | `~/Library/LaunchAgents/de.ict-baden.lupe.plist` |
 | One Lupe per session | `lupe-<user>.lock` and the socket `lupe-<user>.sock` in `$XDG_RUNTIME_DIR` (without it: the temporary folder) | the same two files in the user's temporary folder |
 | Temporary files | the hit sound `treffer.wav` in a new folder `lupe-…` of the temporary folder, removed when Lupe quits; under Wayland the portal's screenshot PNG, deleted after reading | the hit sound as on Linux; the screenshot PNG `lupe-<process>-….png` in the user's temporary folder, deleted after reading |
-| Licence texts | if the package has no `THIRD-PARTY-NOTICES.txt` or `LICENSE.txt` next to the program, Lupe writes a copy to `Lupe/` in the temporary folder before opening it | same |
+| Licence texts | if the package has no `THIRD-PARTY-NOTICES.txt` or `LICENSE.txt` next to the program, Lupe writes a copy to a new folder `lupe-…` of the temporary folder (one per run, readable only by the user on Linux and macOS) before opening it, removed when Lupe quits | same |
 
 There is no registry. **Removing everything:** switch off autostart in the settings, quit Lupe, delete the folders and files above, then remove the program (`sudo apt remove ictbaden-lupe`, `~/.local/opt/lupe/install.sh --remove` (`--entfernen` for an installation of 0.1.0), or move `Lupe.app` to the bin). On macOS also remove Lupe from *System Settings › Privacy & Security* (Camera, Screen Recording, Accessibility) if you like.
 
