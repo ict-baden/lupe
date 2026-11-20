@@ -143,12 +143,15 @@ public sealed class FakeFrameSourceTests
         await using var source = new FakeFrameSource([Marker(1)], framesPerSecond: 10);
         int count = 0;
         source.FrameArrived += (_, _) => Interlocked.Increment(ref count);
+        var sw = Stopwatch.StartNew();
         await Task.WhenAll(Enumerable.Range(0, 8).Select(_ => source.StartAsync()));
         await source.StartAsync();
         await Task.Delay(1050);
         await source.StopAsync();
-        // Eine Schleife: ~11 Bilder; acht Schleifen wären ~80
-        Assert.InRange(Volatile.Read(ref count), 5, 16);
+        long elapsedMs = sw.ElapsedMilliseconds;
+        // 10 B/s, gemessen an der tatsächlich vergangenen Zeit (ein langsamer Runner wartet länger als 1050 ms): eine
+        // Schleife bringt ~elapsedMs/100 Bilder, acht Schleifen das Achtfache – die Obergrenze bleibt weit darunter
+        Assert.InRange(Volatile.Read(ref count), 2, (int)(elapsedMs / 100 * 1.5) + 2);
     }
 
     [Fact]
@@ -161,11 +164,16 @@ public sealed class FakeFrameSourceTests
             Interlocked.Increment(ref count);
             Thread.Sleep(100);
         };
+        var sw = Stopwatch.StartNew();
         await source.StartAsync();
         await Task.Delay(1000);
+        // StopAsync wartet auf das laufende Ereignis (bis zu 100 ms) – die Zeit zählt mit
         await source.StopAsync();
-        // Bei 200 B/s wären es 200 Bilder; bei 100 ms Verarbeitung höchstens ~10 (verpasste Takte verfallen)
-        Assert.InRange(Volatile.Read(ref count), 3, 13);
+        long elapsedMs = sw.ElapsedMilliseconds;
+        // „Kein Stau“: Takte, die während der Verarbeitung verfallen, holt die Quelle nicht nach (keine Warteschlange).
+        // Bei 200 B/s wären es ~elapsedMs/5 Bilder; bei 100 ms Verarbeitung höchstens ~elapsedMs/100, gemessen an der
+        // tatsächlich vergangenen Zeit (auf ausgelasteten Runnern dauert das Warten länger als 1 s)
+        Assert.InRange(Volatile.Read(ref count), 2, (int)(elapsedMs / 100) + 3);
     }
 
     [Fact]
