@@ -37,11 +37,14 @@ Builds from `main` carry the next version with the number of the build run, e.g.
 For scripted downloads, e.g. to package the MSI for Intune, the links work directly – with `curl`, `Invoke-WebRequest` or the [GitHub CLI](https://cli.github.com/):
 
 ```powershell
+# the current version (gh without a tag takes the release marked Latest)
+gh release download -R ict-baden/lupe -p 'Lupe-*-x64.msi' -p SHA256SUMS.txt --clobber
+Invoke-WebRequest https://github.com/ict-baden/lupe/releases/latest/download/Lupe.exe -OutFile Lupe.exe
+# the newest build from main
 Invoke-WebRequest https://github.com/ict-baden/lupe/releases/download/latest/Lupe-x64.msi -OutFile Lupe-x64.msi
-gh release download latest -R ict-baden/lupe -p Lupe-x64.msi --clobber
 ```
 
-Check the file against [`SHA256SUMS.txt`](https://github.com/ict-baden/lupe/releases/download/latest/SHA256SUMS.txt) of the same release (`Get-FileHash Lupe-x64.msi`).
+Check the file against `SHA256SUMS.txt` of the same release (`Get-FileHash Lupe-1.0.0-x64.msi`).
 
 ## MSI installer
 
@@ -108,7 +111,7 @@ Lupe only **reads** these settings to explain the problem; it never changes them
 Other camera problems get their own message as well, for example when another program such as Teams or Zoom holds the camera (*is being used by another program*), when it was unplugged, or when Windows lacks the media features (*Media Feature Pack*). If the camera cannot be opened exclusively – typically because another program holds it – Lupe tries once more in shared read-only mode before it reports the problem. Details: [How it works › Camera](how-it-works.md#camera).
 
 > [!NOTE]
-> The camera code was developed without a real webcam and is tested against a simulated frame source only – see [Limitations](limitations.md#not-tested-on-real-hardware).
+> The automated tests of the camera code use a simulated frame source; real cameras were tried only in the release tests, and on macOS not at all yet – see [Limitations](limitations.md#automated-tests-and-real-hardware).
 
 ## Start with Windows
 
@@ -140,10 +143,10 @@ Lupe runs on X11 and Wayland desktops, x64 and arm64, on distributions with glib
 
 | File | Install |
 |---|---|
-| [`lupe_amd64.deb`](https://github.com/ict-baden/lupe/releases/download/latest/lupe_amd64.deb) | Debian, Ubuntu and derivatives (x64): `sudo apt install ./lupe_amd64.deb`. Installs to `/opt/lupe`, the command `lupe` and a menu entry; `sudo apt remove ictbaden-lupe` removes it (the package was called `lupe` before; installing the new one replaces it). |
-| [`Lupe-linux-x64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-x64.tar.gz), [`Lupe-linux-arm64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-arm64.tar.gz) | Any distribution with glibc 2.31 or later: `tar -xzf Lupe-linux-x64.tar.gz && lupe/install.sh`. Installs for the current user only (no root) into `~/.local/opt/lupe`, with the command `lupe` in `~/.local/bin` and a menu entry. `./Lupe` inside the folder also runs it without installing. Remove with `~/.local/opt/lupe/install.sh --remove` (an installation of version 0.1.0 only knows `--entfernen`). |
+| [`lupe_1.0.0_amd64.deb`](https://github.com/ict-baden/lupe/releases/download/v1.0.0/lupe_1.0.0_amd64.deb) | Debian, Ubuntu and derivatives (x64): `sudo apt install ./lupe_1.0.0_amd64.deb`. Installs to `/opt/lupe`, the command `lupe` and a menu entry; `sudo apt remove ictbaden-lupe` removes it (the package was called `lupe` before; installing the new one replaces it). |
+| [`Lupe-1.0.0-linux-x64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/v1.0.0/Lupe-1.0.0-linux-x64.tar.gz), [`Lupe-1.0.0-linux-arm64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/v1.0.0/Lupe-1.0.0-linux-arm64.tar.gz) | Any distribution with glibc 2.31 or later: `tar -xzf Lupe-1.0.0-linux-x64.tar.gz && lupe/install.sh`. Installs for the current user only (no root) into `~/.local/opt/lupe`, with the command `lupe` in `~/.local/bin` and a menu entry. `./Lupe` inside the folder also runs it without installing. Remove with `~/.local/opt/lupe/install.sh --remove` (an installation of version 0.1.0 only knows `--entfernen`). |
 
-Tagged releases name the package `lupe_1.2.3_amd64.deb`. The libraries Lupe needs are part of every desktop installation; on a minimal system install `libx11-6 libxtst6 libxrandr2 libxi6 libice6 libsm6 libfontconfig1` and ICU, e.g. `libicu72` on Debian 12 (`apt-cache search --names-only '^libicu[0-9]+$'` shows the name; the `.deb` pulls them in). Without ICU Lupe does not start; without fontconfig it cannot read image files. If Lupe reports `LUP-0001`, the recognition library cannot be loaded – see [Error codes](error-codes.md#lup-0001).
+These are the files of version 1.0.0; later versions carry their own number. The pre-release [latest](https://github.com/ict-baden/lupe/releases/tag/latest) has the same files without a version in the name: [`lupe_amd64.deb`](https://github.com/ict-baden/lupe/releases/download/latest/lupe_amd64.deb), [`Lupe-linux-x64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-x64.tar.gz), [`Lupe-linux-arm64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-arm64.tar.gz). The libraries Lupe needs are part of every desktop installation; on a minimal system install `libx11-6 libxtst6 libxrandr2 libxi6 libice6 libsm6 libfontconfig1` and ICU, e.g. `libicu72` on Debian 12 (`apt-cache search --names-only '^libicu[0-9]+$'` shows the name; the `.deb` pulls them in). Without ICU Lupe does not start; without fontconfig it cannot read image files. If Lupe reports `LUP-0001`, the recognition library cannot be loaded – see [Error codes](error-codes.md#lup-0001).
 
 - **Camera:** your user must be in the group `video` – `sudo usermod -aG video $USER`, then sign out and in again. Lupe says so on the page *Camera* when the device is there but not readable.
 - **X11:** the screen scan, typing (XTest) and the shortcut work without asking. If another program holds the shortcut, Lupe reports it as taken.
@@ -154,7 +157,9 @@ Tagged releases name the package `lupe_1.2.3_amd64.deb`. The libraries Lupe need
 
 ## macOS
 
-Lupe runs on macOS 12 or later. Download [`Lupe-macos-arm64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-arm64.zip) for Apple Silicon (M1 and later) or [`Lupe-macos-x64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-x64.zip) for Intel Macs, unzip it and move `Lupe.app` to *Applications*. .NET is included. Unzip with the Finder (double-click) or `ditto -x -k Lupe-macos-arm64.zip .` – the command-line tool `unzip` drops the extended attributes that carry the signatures of the bundled .NET files, and macOS then refuses the app as damaged.
+Lupe runs on macOS 12 or later. On macOS, Lupe 1.0.0 is only partly tested: the start with the window, the demo camera and the command line work on a real Mac; the screen scan, typing, the shortcut and a real camera have not been tried there yet ([Limitations](limitations.md#linux-and-macos)).
+
+Download [`Lupe-1.0.0-macos-arm64.zip`](https://github.com/ict-baden/lupe/releases/download/v1.0.0/Lupe-1.0.0-macos-arm64.zip) for Apple Silicon (M1 and later) or [`Lupe-1.0.0-macos-x64.zip`](https://github.com/ict-baden/lupe/releases/download/v1.0.0/Lupe-1.0.0-macos-x64.zip) for Intel Macs (in the pre-release `latest`: [`Lupe-macos-arm64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-arm64.zip), [`Lupe-macos-x64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-x64.zip)), unzip it and move `Lupe.app` to *Applications*. .NET is included. Unzip with the Finder (double-click) or `ditto -x -k Lupe-1.0.0-macos-arm64.zip .` – the command-line tool `unzip` drops the extended attributes that carry the signatures of the bundled .NET files, and macOS then refuses the app as damaged.
 
 - **Gatekeeper:** the app is only ad-hoc signed, not yet signed with a Developer ID and not notarised, so macOS refuses the first start with *“Lupe.app” cannot be opened* (or *Apple could not verify …*). Once per download:
   1. Open `Lupe.app` once and close the message with *Done* / *OK*.

@@ -19,7 +19,7 @@ The message ends with the reason the operating system gives, for example:
 
 | Reason in the message | Cause | What to do |
 |---|---|---|
-| `version 'GLIBC_2.38' not found` | The Linux system is older than the library (Lupe's own builds need glibc 2.31 or later: Ubuntu 20.04, Debian 11 and newer). | Use a current Lupe build from the release *latest*, or update the system. |
+| `version 'GLIBC_2.38' not found` | The Linux system is older than the library (Lupe's own builds need glibc 2.31 or later: Ubuntu 20.04, Debian 11 and newer). | Use the current Lupe version (the release marked *Latest*), or update the system. |
 | `cannot open shared object file`, `image not found`, `The specified module could not be found` | The file is missing – usually an incomplete copy of the program folder. | Install or unpack Lupe again. |
 | `… lacks the functions …` | The library belongs to a different zxing-cpp version than the rest of Lupe. | Do not replace files in the program folder; install Lupe again. |
 | `bad ELF`, `wrong architecture`, `is not a valid Win32 application` | The library is for a different processor (e.g. an x64 package on an ARM machine). | Download the package for your processor. |

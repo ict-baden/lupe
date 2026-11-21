@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/ict-baden/lupe/releases/tag/latest"><img alt="Download: latest" src="https://img.shields.io/badge/Download-latest-2ea44f?logo=github&logoColor=white"></a>
+  <a href="https://github.com/ict-baden/lupe/releases/latest"><img alt="Download: current version" src="https://img.shields.io/github/v/release/ict-baden/lupe?label=Download&logo=github&logoColor=white&color=2ea44f"></a>
   <img alt="Windows 10 and 11, x64" src="https://img.shields.io/badge/Windows-10%20%7C%2011%20x64-0078D4">
   <img alt="Linux x64 and arm64, X11 and Wayland" src="https://img.shields.io/badge/Linux-x64%20%7C%20arm64-E95420?logo=linux&logoColor=white">
   <img alt="macOS 12 or later, Apple Silicon and Intel" src="https://img.shields.io/badge/macOS-12%2B-111111?logo=apple&logoColor=white">
@@ -11,12 +11,12 @@
   <img alt="Data stays on this PC" src="https://img.shields.io/badge/Data-stays%20local-2E7D32">
   <img alt="User interface in English, German, Spanish, French and Chinese" src="https://img.shields.io/badge/UI-en%20%7C%20de%20%7C%20es%20%7C%20fr%20%7C%20zh--Hans-6B7280">
   <a href="LICENSE"><img alt="Licence: MIT" src="https://img.shields.io/badge/Licence-MIT-blue"></a>
-  <img alt="Status: early version 0.x" src="https://img.shields.io/badge/Status-early%20version%200.x-E3A008">
+  <img alt="Status: version 1.0, macOS partly tested" src="https://img.shields.io/badge/Status-1.0%20%C2%B7%20macOS%20partly%20tested-2E7D32">
   <a href="https://github.com/ict-baden/lupe/actions/workflows/build.yml"><img alt="Build" src="https://github.com/ict-baden/lupe/actions/workflows/build.yml/badge.svg"></a>
 </p>
 
 <p align="center">
-  <b><a href="https://github.com/ict-baden/lupe/releases/tag/latest">Download</a></b>
+  <b><a href="https://github.com/ict-baden/lupe/releases/latest">Download</a></b>
   &nbsp;·&nbsp; <a href="#what-lupe-does">Features</a>
   &nbsp;·&nbsp; <a href="#quick-start">Quick start</a>
   &nbsp;·&nbsp; <a href="#supported-formats">Formats</a>
@@ -130,7 +130,23 @@
   </tr>
 </table>
 
-**① Download** – the current version is the release marked [**Latest**](https://github.com/ict-baden/lupe/releases/latest) under *Releases* on the right of the repository page; its file names carry the version (e.g. `Lupe-0.1.1-x64.msi`; only `Lupe.exe` keeps its name). The pre-release [**latest**](https://github.com/ict-baden/lupe/releases/tag/latest) is rebuilt from `main` every night (when `main` has changed) and keeps its file names, so these links always deliver the newest build:
+**① Download** – the current version is **Lupe 1.0.0**, the release marked [**Latest**](https://github.com/ict-baden/lupe/releases/latest) under *Releases* on the right of the repository page. Its file names carry the version; only `Lupe.exe` keeps its name, so [`releases/latest/download/Lupe.exe`](https://github.com/ict-baden/lupe/releases/latest/download/Lupe.exe) always delivers the current version:
+
+| File | What it is |
+|---|---|
+| [`Lupe-1.0.0-x64.msi`](https://github.com/ict-baden/lupe/releases/download/v1.0.0/Lupe-1.0.0-x64.msi) | Installer for all users, Start menu entry, no autostart; .NET included. |
+| [`Lupe.exe`](https://github.com/ict-baden/lupe/releases/download/v1.0.0/Lupe.exe) | A single file that runs without installation; .NET included. |
+| [`Lupe-1.0.0-win-x64-framework.zip`](https://github.com/ict-baden/lupe/releases/download/v1.0.0/Lupe-1.0.0-win-x64-framework.zip) | Small variant; needs the .NET 10 Runtime. |
+| [`lupe_1.0.0_amd64.deb`](https://github.com/ict-baden/lupe/releases/download/v1.0.0/lupe_1.0.0_amd64.deb) | Linux package for Debian and Ubuntu (x64): `sudo apt install ./lupe_1.0.0_amd64.deb`. |
+| [`Lupe-1.0.0-linux-x64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/v1.0.0/Lupe-1.0.0-linux-x64.tar.gz), [`Lupe-1.0.0-linux-arm64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/v1.0.0/Lupe-1.0.0-linux-arm64.tar.gz) | Linux, any distribution with glibc 2.31 or later (Ubuntu 20.04, Debian 11 and newer): unpack and run `lupe/install.sh` (per user, no root). |
+| [`Lupe-1.0.0-macos-arm64.zip`](https://github.com/ict-baden/lupe/releases/download/v1.0.0/Lupe-1.0.0-macos-arm64.zip), [`Lupe-1.0.0-macos-x64.zip`](https://github.com/ict-baden/lupe/releases/download/v1.0.0/Lupe-1.0.0-macos-x64.zip) | `Lupe.app` for Apple Silicon or Intel Macs, not yet notarised: the first time, allow it under *System Settings › Privacy & Security › Open Anyway* ([how](docs/installation.md#macos)). macOS is only partly tested, see [Limits](#limits-honestly). |
+
+Checksums of all files: [`SHA256SUMS.txt`](https://github.com/ict-baden/lupe/releases/download/v1.0.0/SHA256SUMS.txt). What changed: [CHANGELOG](CHANGELOG.md).
+
+<details>
+<summary><b>Newest build from <code>main</code></b> (pre-release <i>latest</i>, for trying out changes, not for distribution)</summary>
+
+The pre-release [**latest**](https://github.com/ict-baden/lupe/releases/tag/latest) is rebuilt from `main` every night when `main` has changed. It is tested like a version but may contain changes that are not released yet. Its file names stay the same, so these links always deliver the newest build:
 
 | File | What it is |
 |---|---|
@@ -140,6 +156,8 @@
 | [`lupe_amd64.deb`](https://github.com/ict-baden/lupe/releases/download/latest/lupe_amd64.deb) | Linux package for Debian and Ubuntu (x64): `sudo apt install ./lupe_amd64.deb`. |
 | [`Lupe-linux-x64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-x64.tar.gz), [`Lupe-linux-arm64.tar.gz`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-linux-arm64.tar.gz) | Linux, any distribution with glibc 2.31 or later (Ubuntu 20.04, Debian 11 and newer): unpack and run `lupe/install.sh` (per user, no root). |
 | [`Lupe-macos-arm64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-arm64.zip), [`Lupe-macos-x64.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-macos-x64.zip) | `Lupe.app` for Apple Silicon or Intel Macs, not yet notarised: the first time, allow it under *System Settings › Privacy & Security › Open Anyway* ([how](docs/installation.md#macos)). |
+
+</details>
 
 All variants include .NET except the framework ZIP. On macOS the default shortcut is <kbd>⌘</kbd>+<kbd>⌥</kbd>+<kbd>Q</kbd> (<kbd>⌘</kbd>+<kbd>⇧</kbd>+<kbd>Q</kbd> logs out there).
 
@@ -240,7 +258,7 @@ Lupe is a rewrite of the earlier internal Barcode-Reader (.NET Framework 4.5.2, 
   </tr>
   <tr>
     <td valign="top"><a href="docs/data-and-privacy.md"><b>Data &amp; privacy</b></a><br><sub>What is stored where, the history file, clipboard, autostart entry, network connections</sub></td>
-    <td valign="top"><a href="docs/limitations.md"><b>Limitations</b></a><br><sub>What was not tested on real hardware, elevated windows, control characters, encodings and other honest limits</sub></td>
+    <td valign="top"><a href="docs/limitations.md"><b>Limitations</b></a><br><sub>What was tested where (macOS only partly), elevated windows, control characters, encodings and other honest limits</sub></td>
   </tr>
   <tr>
     <td valign="top"><a href="docs/error-codes.md"><b>Error codes</b></a><br><sub>Messages with a code such as <code>LUP-0001</code>: what they mean and what to do</sub></td>
@@ -250,14 +268,15 @@ Lupe is a rewrite of the earlier internal Barcode-Reader (.NET Framework 4.5.2, 
 
 ## Limits, honestly
 
-- **No real webcam during development.** The camera path is tested against a simulated frame source only. Screen capture, the global shortcut and typing have tests that need a visible desktop; they skip themselves in the build environment and on CI.
+- **Tested on Windows and Linux, on macOS only partly.** On a real Mac, Lupe 1.0.0 has been started with its window, the demo camera and the command line; the screen scan, typing, the shortcut and a real camera are untested there. Details: [Limitations › Status](docs/limitations.md#status).
+- **Automated tests without webcam and desktop.** On CI the camera path runs against a simulated frame source; screen capture, the global shortcut and typing have tests that need a visible desktop and skip themselves there.
 - **Windows protects elevated windows.** Lupe cannot type into a program that runs as administrator unless Lupe runs as administrator too. It detects this, types nothing and says so in the result notification.
 - **Control characters are not typed.** The group separator in GS1 codes, for example, is dropped when typing; the command line shows it as `\x1D`.
 - **MaxiCode** is only found in clean, upright images.
 - **Command line into a pipe** uses the console's code page; characters outside it are replaced. Redirect into a file for lossless UTF-8.
-- **Linux and macOS are new and less tested than Windows.** On Wayland the screen scan, typing and the shortcut go through the desktop portals, which ask for permission and are not offered by every desktop; Lupe cannot see which window is in front there. On a real Mac, Lupe has so far been started with its window, the demo camera and the command line; screen scan, typing, the shortcut and a real camera are untested there. Details: [Limitations › Linux and macOS](docs/limitations.md#linux-and-macos).
+- **Wayland goes through the desktop portals.** The screen scan, typing and the shortcut ask for permission there, and not every desktop offers every portal; Lupe cannot see which window is in front. Details: [Limitations › Linux and macOS](docs/limitations.md#linux-and-macos).
 - **Not code-signed yet.** SmartScreen may warn; macOS Gatekeeper asks once.
-- **Licence: MIT.** Lupe is under the [MIT licence](LICENSE), like all ICT-Baden software. The licences of the bundled third-party components (zxing-cpp with libzint and libzueci, Avalonia, SkiaSharp and HarfBuzzSharp with the libraries compiled into them, ANGLE, MicroCom, C#/WinRT, the Windows SDK projection, .NET and more) are in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which ships in every package and opens from *About › Recognition and user interface › License texts*.
+- **Licence: MIT.** Lupe is under the [MIT licence](LICENSE), like all software of ICT Baden GmbH. The licences of the bundled third-party components (zxing-cpp with libzint and libzueci, Avalonia, SkiaSharp and HarfBuzzSharp with the libraries compiled into them, ANGLE, MicroCom, C#/WinRT, the Windows SDK projection, .NET and more) are in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), which ships in every package and opens from *About › Recognition and user interface › License texts*.
 
 Everything else: **[Limitations →](docs/limitations.md)**
 
@@ -271,23 +290,23 @@ dotnet run --project src/Lupe -- --demo      # window with demo camera and sampl
 
 Needs the .NET 10 SDK (`global.json`: 10.0.100, roll forward to the latest feature band). MSI, CI, architecture and screenshots: **[Development →](docs/development.md)**
 
+## Publisher
+
+Lupe is published by **ICT Baden GmbH** – free and open source software under the [MIT licence](LICENSE).
+
+| | |
+|---|---|
+| Product page | [ict-baden.de/produkte/lupe](https://ict-baden.de/produkte/lupe/) |
+| Legal notice (Impressum) | [ict-baden.de/impressum](https://ict-baden.de/impressum/) |
+| Privacy notice for Lupe (Datenschutz) | [ict-baden.de/datenschutz/lupe](https://ict-baden.de/datenschutz/lupe/) – what the app stores locally: [Data & privacy](docs/data-and-privacy.md) |
+| Support | free via GitHub, guaranteed with a [support contract](SUPPORT.md) |
+| Security | [SECURITY.md](SECURITY.md) |
+| Changes | [CHANGELOG.md](CHANGELOG.md) |
+| Third-party licences | [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) |
+
 <br>
 
 <p align="center">
   <img src="docs/assets/logo.svg" alt="" width="48"><br>
-  <sub><b>Lupe</b> · Every code, from anywhere · A tool by ICT-Baden</sub>
+  <sub><b>Lupe</b> · Every code, from anywhere · published by ICT Baden GmbH</sub>
 </p>
-
----
-
-<sub>
-Lupe is free and open source software by <b>ICT-Baden</b>. &nbsp;·&nbsp;
-Licence: <a href="LICENSE">MIT</a> &nbsp;·&nbsp;
-Third-party licences: <a href="THIRD-PARTY-NOTICES.txt">THIRD-PARTY-NOTICES.txt</a> &nbsp;·&nbsp;
-Support: free via GitHub, guaranteed with a <a href="SUPPORT.md">support contract</a> &nbsp;·&nbsp;
-<a href="SECURITY.md">Security</a> &nbsp;·&nbsp;
-<a href="CHANGELOG.md">Changes</a> &nbsp;·&nbsp;
-Website: <a href="https://ict-baden.de/produkte/lupe/">ict-baden.de</a> &nbsp;·&nbsp;
-<a href="https://ict-baden.de/impressum/">Impressum</a> &nbsp;·&nbsp;
-<a href="https://ict-baden.de/datenschutz/lupe/">Datenschutz</a>
-</sub>

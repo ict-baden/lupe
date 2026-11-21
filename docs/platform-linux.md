@@ -84,5 +84,5 @@ Package versions match Avalonia 12.1.6 (SkiaSharp 3.119.4, Tmds.DBus.Protocol 0.
   detection, `XGrabKey` with Num Lock and the "already taken" error, foreground window and activation, US layout keys.
 - `LinuxWaylandTests` in sway headless with `xdg-desktop-portal-wlr`: Screenshot portal capture; the German messages
   when RemoteDesktop and GlobalShortcuts are missing.
-- Not tested on real hardware: a real webcam (no device in the test container – only "no camera" and the conversions),
+- Not covered by the automated tests: a real webcam (no device in the test container – only "no camera" and the conversions),
   RemoteDesktop and GlobalShortcuts portals (KDE/GNOME), multi-monitor and HiDPI layouts.
