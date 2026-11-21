@@ -2,13 +2,13 @@
   <!--
     MSI für Lupe. Erwartet die veröffentlichten Programmdateien in $(PublishDir):
       dotnet publish src/Lupe/Lupe.csproj -c Release -r win-x64 -p:PublishSingleFile=true -o publish
-      dotnet build installer/Lupe.Installer.wixproj -c Release -p:ProductVersion=1.0.0
+      dotnet build installer/Lupe.Installer.wixproj -c Release -p:ProductVersion=1.0.1
   -->
   <PropertyGroup>
     <OutputName>Lupe</OutputName>
     <OutputType>Package</OutputType>
     <InstallerPlatform>x64</InstallerPlatform>
-    <ProductVersion Condition="'$(ProductVersion)' == ''">1.0.0</ProductVersion>
+    <ProductVersion Condition="'$(ProductVersion)' == ''">1.0.1</ProductVersion>
     <PublishDir Condition="'$(PublishDir)' == ''">$(MSBuildThisFileDirectory)..\publish\</PublishDir>
     <DefineConstants>ProductVersion=$(ProductVersion);PublishDir=$(PublishDir);AssetsDir=$(MSBuildThisFileDirectory)..\src\Lupe\Assets</DefineConstants>
     <!-- Bis 0.1.0 de-DE; das MSI ersetzt ältere Pakete trotzdem (MajorUpgrade IgnoreLanguage, siehe Package.wxs) -->
