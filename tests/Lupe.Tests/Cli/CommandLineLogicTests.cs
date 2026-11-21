@@ -67,7 +67,8 @@ public sealed class CommandLineLogicTests
         Assert.Contains(AppInfo.WebsiteUrl, info);
         Assert.Contains(AppInfo.SupportUrl, info);
         Assert.Contains(AppInfo.PrivacyUrl, info);
-        Assert.Contains("ICT-Baden", info);
+        Assert.Contains(AppInfo.Publisher, info);
+        Assert.Contains(AppInfo.Publisher, AppInfo.Copyright);
         Assert.Contains("THIRD-PARTY-NOTICES.txt", info);
     }
 

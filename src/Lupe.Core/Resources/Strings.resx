@@ -162,7 +162,7 @@ Examples:
   <data name="App_Cli_Info" xml:space="preserve">
     <value>{0}
 {1} – MIT licence
-This software sends no data to ICT-Baden.
+This software sends no data to ICT Baden GmbH.
 
 Licence:               {2}
 Third-party licences:  {3}
@@ -171,7 +171,7 @@ Website:               {5}
 Legal notice:          {6}
 Privacy:               {7}
 Support:               {8}</value>
-    <comment>Output of 'Lupe --info'. {0} = version line, e.g. 'Lupe Version 0.1.0 · Build abc1234 · .NET 10.0.1'; {1} = copyright, e.g. '© 2026 ICT-Baden GmbH'; {2} = licence file or URL; {3} = third-party licences file or URL; {4} = source code URL; {5} = website URL; {6} = legal notice (Impressum) URL; {7} = privacy URL; {8} = support URL. Keep the labels aligned.</comment>
+    <comment>Output of 'Lupe --info'. {0} = version line, e.g. 'Lupe Version 0.1.0 · Build abc1234 · .NET 10.0.1'; {1} = copyright, e.g. '© 2026 ICT Baden GmbH'; {2} = licence file or URL; {3} = third-party licences file or URL; {4} = source code URL; {5} = website URL; {6} = legal notice (Impressum) URL; {7} = privacy URL; {8} = support URL. Keep the labels aligned.</comment>
   </data>
   <data name="App_Cli_InvalidPath" xml:space="preserve">
     <value>“{0}” is not a valid path.</value>
@@ -2195,7 +2195,7 @@ Redirected into a file from cmd, the output is UTF-8 with BOM.</value>
     <comment>Accessible name of the legal notice button</comment>
   </data>
   <data name="Page_Info_ImprintText" xml:space="preserve">
-    <value>Company details of ICT-Baden on the website</value>
+    <value>Company details of ICT Baden GmbH on the website</value>
   </data>
   <data name="Page_Info_Keyboard" xml:space="preserve">
     <value>Keyboard</value>
@@ -2209,7 +2209,7 @@ Redirected into a file from cmd, the output is UTF-8 with BOM.</value>
     <value>License</value>
   </data>
   <data name="Page_Info_LicenseMit" xml:space="preserve">
-    <value>MIT licence – © 2026 ICT-Baden GmbH</value>
+    <value>MIT licence – © 2026 ICT Baden GmbH</value>
   </data>
   <data name="Page_Info_LicenseOpenName" xml:space="preserve">
     <value>Show the text of the MIT licence</value>
@@ -2232,7 +2232,7 @@ Redirected into a file from cmd, the output is UTF-8 with BOM.</value>
     <value>Open the data and privacy page in the browser</value>
   </data>
   <data name="Page_Info_PrivacyText" xml:space="preserve">
-    <value>This software sends no data to ICT-Baden. What Lupe stores, where, and how to delete it.</value>
+    <value>This software sends no data to ICT Baden GmbH. What Lupe stores, where, and how to delete it.</value>
   </data>
   <data name="Page_Info_Publisher" xml:space="preserve">
     <value>Publisher</value>
@@ -2251,7 +2251,7 @@ Redirected into a file from cmd, the output is UTF-8 with BOM.</value>
     <value>Open help and support in the browser</value>
   </data>
   <data name="Page_Info_SupportText" xml:space="preserve">
-    <value>Free via GitHub, guaranteed with a support contract from ICT-Baden.</value>
+    <value>Free via GitHub, guaranteed with a support contract from ICT Baden GmbH.</value>
   </data>
   <data name="Page_Info_Tagline" xml:space="preserve">
     <value>Reads QR codes and barcodes from the webcam, a screen region, a file and the clipboard.</value>
@@ -2272,7 +2272,7 @@ Redirected into a file from cmd, the output is UTF-8 with BOM.</value>
     <value>Website</value>
   </data>
   <data name="Page_Info_WebsiteOpenName" xml:space="preserve">
-    <value>Open the ICT-Baden website in the browser</value>
+    <value>Open the ICT Baden GmbH website in the browser</value>
     <comment>Accessible name of the website button</comment>
   </data>
   <data name="Page_Info_YourData" xml:space="preserve">

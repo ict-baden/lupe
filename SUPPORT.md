@@ -13,7 +13,7 @@ We read everything but cannot promise response times. Everything there is public
 
 ## Verbindlich: Supportvertrag / Guaranteed: support contract
 
-Mit einem Supportvertrag von ICT-Baden bekommen Sie:
+Mit einem Supportvertrag der ICT Baden GmbH bekommen Sie:
 
 - zugesicherte Reaktionszeiten
 - Hilfe bei Einrichtung, Verteilung und Betrieb in Ihrer Umgebung, per E-Mail, Telefon oder Fernsitzung
@@ -21,8 +21,8 @@ Mit einem Supportvertrag von ICT-Baden bekommen Sie:
 - Vorrang bei Fehlerbehebungen und Sicherheitsinformationen vorab
 - Anpassungen und Schulungen nach Absprache
 
-Kontakt für Supportverträge: über die [Kontaktseite von ICT-Baden](https://ict-baden.de/#kontakt).
-Contact for support contracts: the [ICT-Baden contact page](https://ict-baden.de/#kontakt).
+Kontakt für Supportverträge: über die [Kontaktseite der ICT Baden GmbH](https://ict-baden.de/#kontakt).
+Contact for support contracts: the [contact page of ICT Baden GmbH](https://ict-baden.de/#kontakt).
 
 ## Was hilft / What helps
 

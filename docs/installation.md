@@ -161,7 +161,7 @@ Lupe runs on macOS 12 or later. Download [`Lupe-macos-arm64.zip`](https://github
   2. Open *System Settings › Privacy & Security*, scroll to *Security* – there is a line about Lupe with the button ***Open Anyway***. Click it and confirm with your password or Touch ID.
   3. Start Lupe again and click *Open*.
 
-  On macOS 12 to 14, *right-click `Lupe.app` → Open* and confirming also works; macOS 15 and later only offer the way above. Alternatively, in Terminal: `xattr -dr com.apple.quarantine /Applications/Lupe.app`. The CI is prepared to sign and notarise Lupe as soon as ICT-Baden has an Apple Developer ID; then this step disappears.
+  On macOS 12 to 14, *right-click `Lupe.app` → Open* and confirming also works; macOS 15 and later only offer the way above. Alternatively, in Terminal: `xattr -dr com.apple.quarantine /Applications/Lupe.app`. The CI is prepared to sign and notarise Lupe as soon as ICT Baden GmbH has an Apple Developer ID; then this step disappears.
 - **Permissions** – macOS asks for each one the first time Lupe needs it; when one is missing, Lupe shows a hint with a button to the right page in *System Settings › Privacy & Security*:
   - *Camera* for the page *Camera*,
   - *Screen Recording* for the screen scan – after allowing it, quit and start Lupe again,

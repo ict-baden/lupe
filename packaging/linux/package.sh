@@ -69,7 +69,7 @@ glibc=$(find "$deb/opt/lupe" -type f \( -name '*.so' -o -name Lupe -o -name crea
     echo "Conflicts: lupe"
     echo "Replaces: lupe"
     # Eine eigene Adresse statt der von GitHub; eine echte Kontaktadresse für Pakete steht noch aus
-    echo "Maintainer: ICT-Baden <noreply@ict-baden.de>"
+    echo "Maintainer: ICT Baden GmbH <noreply@ict-baden.de>"
     echo "Installed-Size: $size"
     echo "Depends: libc6 (>= $glibc), libstdc++6, libgcc-s1 | libgcc1, libx11-6, libxtst6, libxrandr2, libxi6, libice6, libsm6, libfontconfig1, libicu78 | libicu76 | libicu74 | libicu72 | libicu71 | libicu70 | libicu67 | libicu66"
     echo "Section: utils"

@@ -149,7 +149,7 @@ Exemples :
   <data name="App_Cli_Info" xml:space="preserve">
     <value>{0}
 {1} – licence MIT
-Ce logiciel n’envoie aucune donnée à ICT-Baden.
+Ce logiciel n’envoie aucune donnée à ICT Baden GmbH.
 
 Licence :               {2}
 Licences tierces :      {3}
@@ -1803,7 +1803,7 @@ Redirigée vers un fichier depuis cmd, la sortie est en UTF-8 avec BOM.</value>
     <value>Ouvrir les mentions légales dans le navigateur</value>
   </data>
   <data name="Page_Info_ImprintText" xml:space="preserve">
-    <value>Informations sur la société ICT-Baden sur le site web</value>
+    <value>Informations sur la société ICT Baden GmbH sur le site web</value>
   </data>
   <data name="Page_Info_Keyboard" xml:space="preserve">
     <value>Clavier</value>
@@ -1815,7 +1815,7 @@ Redirigée vers un fichier depuis cmd, la sortie est en UTF-8 avec BOM.</value>
     <value>Licence</value>
   </data>
   <data name="Page_Info_LicenseMit" xml:space="preserve">
-    <value>Licence MIT – © 2026 ICT-Baden GmbH</value>
+    <value>Licence MIT – © 2026 ICT Baden GmbH</value>
   </data>
   <data name="Page_Info_LicenseOpenName" xml:space="preserve">
     <value>Afficher le texte de la licence MIT</value>
@@ -1836,7 +1836,7 @@ Redirigée vers un fichier depuis cmd, la sortie est en UTF-8 avec BOM.</value>
     <value>Ouvrir la page Données et confidentialité dans le navigateur</value>
   </data>
   <data name="Page_Info_PrivacyText" xml:space="preserve">
-    <value>Ce logiciel n’envoie aucune donnée à ICT-Baden. Ce que Lupe enregistre, où, et comment le supprimer.</value>
+    <value>Ce logiciel n’envoie aucune donnée à ICT Baden GmbH. Ce que Lupe enregistre, où, et comment le supprimer.</value>
   </data>
   <data name="Page_Info_Publisher" xml:space="preserve">
     <value>Éditeur</value>
@@ -1854,7 +1854,7 @@ Redirigée vers un fichier depuis cmd, la sortie est en UTF-8 avec BOM.</value>
     <value>Ouvrir l’aide et le support dans le navigateur</value>
   </data>
   <data name="Page_Info_SupportText" xml:space="preserve">
-    <value>Gratuit via GitHub, garanti avec un contrat de support d’ICT-Baden.</value>
+    <value>Gratuit via GitHub, garanti avec un contrat de support d’ICT Baden GmbH.</value>
   </data>
   <data name="Page_Info_Tagline" xml:space="preserve">
     <value>Lit les QR codes et les codes-barres depuis la webcam, une zone de l’écran, un fichier et le presse-papiers.</value>
@@ -1872,7 +1872,7 @@ Redirigée vers un fichier depuis cmd, la sortie est en UTF-8 avec BOM.</value>
     <value>Site web</value>
   </data>
   <data name="Page_Info_WebsiteOpenName" xml:space="preserve">
-    <value>Ouvrir le site web d’ICT-Baden dans le navigateur</value>
+    <value>Ouvrir le site web d’ICT Baden GmbH dans le navigateur</value>
   </data>
   <data name="Page_Info_YourData" xml:space="preserve">
     <value>Vos données</value>

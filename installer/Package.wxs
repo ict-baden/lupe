@@ -7,7 +7,7 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
   <Package Name="Lupe"
-           Manufacturer="ICT-Baden"
+           Manufacturer="ICT Baden GmbH"
            Version="$(ProductVersion)"
            UpgradeCode="B5E63BC4-65DB-46E9-B6B1-5A3167B381D1"
            Scope="perMachine"

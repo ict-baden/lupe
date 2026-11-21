@@ -18,6 +18,6 @@
   <key>NSHighResolutionCapable</key><true/>
   <key>NSPrincipalClass</key><string>NSApplication</string>
   <key>NSCameraUsageDescription</key><string>Lupe reads QR codes and barcodes from the camera image. The image stays on this Mac.</string>
-  <key>NSHumanReadableCopyright</key><string>ICT-Baden</string>
+  <key>NSHumanReadableCopyright</key><string>© 2026 ICT Baden GmbH</string>
 </dict>
 </plist>

@@ -9,7 +9,8 @@ namespace Lupe;
 public static class AppInfo
 {
     public const string RepositoryUrl = "https://github.com/ict-baden/lupe";
-    public const string Publisher = "ICT-Baden";
+    /// <summary>Herausgeber wie im Impressum; dieselbe Firmierung steht in Directory.Build.props (Company, Copyright).</summary>
+    public const string Publisher = "ICT Baden GmbH";
     // Info-Seite und lupe --info
     public const string LicenseUrl = RepositoryUrl + "/blob/main/LICENSE";
     /// <summary>Datenschutzhinweise zu Lupe auf der Webseite; Einzelheiten zu den Dateien in docs/data-and-privacy.md.</summary>

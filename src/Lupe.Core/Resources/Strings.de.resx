@@ -145,7 +145,7 @@ Beispiele:
   <data name="App_Cli_Info" xml:space="preserve">
     <value>{0}
 {1} – MIT-Lizenz
-Diese Software sendet keine Daten an ICT-Baden.
+Diese Software sendet keine Daten an ICT Baden GmbH.
 
 Lizenz:                {2}
 Drittanbieter-Lizenzen: {3}
@@ -1799,7 +1799,7 @@ In cmd in eine Datei umgeleitet, ist die Ausgabe UTF-8 mit BOM.</value>
     <value>Impressum im Browser öffnen</value>
   </data>
   <data name="Page_Info_ImprintText" xml:space="preserve">
-    <value>Angaben zu ICT-Baden auf der Webseite</value>
+    <value>Angaben zu ICT Baden GmbH auf der Webseite</value>
   </data>
   <data name="Page_Info_Keyboard" xml:space="preserve">
     <value>Tastatur</value>
@@ -1811,7 +1811,7 @@ In cmd in eine Datei umgeleitet, ist die Ausgabe UTF-8 mit BOM.</value>
     <value>Lizenz</value>
   </data>
   <data name="Page_Info_LicenseMit" xml:space="preserve">
-    <value>MIT-Lizenz – © 2026 ICT-Baden GmbH</value>
+    <value>MIT-Lizenz – © 2026 ICT Baden GmbH</value>
   </data>
   <data name="Page_Info_LicenseOpenName" xml:space="preserve">
     <value>Den Text der MIT-Lizenz anzeigen</value>
@@ -1832,7 +1832,7 @@ In cmd in eine Datei umgeleitet, ist die Ausgabe UTF-8 mit BOM.</value>
     <value>Die Seite „Daten und Datenschutz“ im Browser öffnen</value>
   </data>
   <data name="Page_Info_PrivacyText" xml:space="preserve">
-    <value>Diese Software sendet keine Daten an ICT-Baden. Was Lupe wo speichert und wie man es löscht.</value>
+    <value>Diese Software sendet keine Daten an ICT Baden GmbH. Was Lupe wo speichert und wie man es löscht.</value>
   </data>
   <data name="Page_Info_Publisher" xml:space="preserve">
     <value>Herausgeber</value>
@@ -1850,7 +1850,7 @@ In cmd in eine Datei umgeleitet, ist die Ausgabe UTF-8 mit BOM.</value>
     <value>Hilfe und Support im Browser öffnen</value>
   </data>
   <data name="Page_Info_SupportText" xml:space="preserve">
-    <value>Kostenlos über GitHub, verbindlich mit einem Supportvertrag von ICT-Baden.</value>
+    <value>Kostenlos über GitHub, verbindlich mit einem Supportvertrag von ICT Baden GmbH.</value>
   </data>
   <data name="Page_Info_Tagline" xml:space="preserve">
     <value>Liest QR- und Barcodes per Webcam, Bildschirmausschnitt, Datei und Zwischenablage.</value>
@@ -1868,7 +1868,7 @@ In cmd in eine Datei umgeleitet, ist die Ausgabe UTF-8 mit BOM.</value>
     <value>Webseite</value>
   </data>
   <data name="Page_Info_WebsiteOpenName" xml:space="preserve">
-    <value>Webseite von ICT-Baden im Browser öffnen</value>
+    <value>Webseite von ICT Baden GmbH im Browser öffnen</value>
   </data>
   <data name="Page_Info_YourData" xml:space="preserve">
     <value>Ihre Daten</value>
