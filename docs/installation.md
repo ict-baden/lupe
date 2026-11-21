@@ -23,7 +23,7 @@ Which file to download, what it needs, how to let Lupe use the camera, and how t
 
 There are two kinds of release, both on the repository page under *Releases* on the right:
 
-- **Versions** such as `v0.1.1` – the release marked [**Latest**](https://github.com/ict-baden/lupe/releases/latest) is the current one. The MSI, the ZIP and the Linux and macOS packages carry the version in their names (e.g. `Lupe-0.1.1-x64.msi`); `Lupe.exe` keeps its name, so scripts that call it and the autostart entry keep working when you replace it. What changed is in the [CHANGELOG](../CHANGELOG.md).
+- **Versions** such as `v1.0.0` – the release marked [**Latest**](https://github.com/ict-baden/lupe/releases/latest) is the current one. The MSI, the ZIP and the Linux and macOS packages carry the version in their names (e.g. `Lupe-1.0.0-x64.msi`); `Lupe.exe` keeps its name, so scripts that call it and the autostart entry keep working when you replace it. What changed is in the [CHANGELOG](../CHANGELOG.md).
 - **The pre-release [latest](https://github.com/ict-baden/lupe/releases/tag/latest)** – GitHub Actions rebuilds it from `main` every night when `main` has changed. The file names stay the same, so these links always deliver the newest build:
 
 | File | Runtime | Use it for |
@@ -32,7 +32,7 @@ There are two kinds of release, both on the repository page under *Releases* on 
 | [`Lupe.exe`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe.exe) | included | Running without installation, e.g. from a user folder or a USB stick. |
 | [`Lupe-win-x64-framework.zip`](https://github.com/ict-baden/lupe/releases/download/latest/Lupe-win-x64-framework.zip) | .NET 10 Runtime | A small download where the runtime is already installed. |
 
-Builds from `main` carry the next version with the number of the build run, e.g. `0.1.2-ci.12` after version 0.1.1; the release title names the version of the current files. They are tested like a version but meant for trying out changes – for distribution, use a version.
+Builds from `main` carry the next version with the number of the build run, e.g. `1.0.1-ci.12` after version 1.0.0; the release title names the version of the current files. They are tested like a version but meant for trying out changes – for distribution, use a version.
 
 For scripted downloads, e.g. to package the MSI for Intune, the links work directly – with `curl`, `Invoke-WebRequest` or the [GitHub CLI](https://cli.github.com/):
 
@@ -127,7 +127,7 @@ If you regularly type into an elevated program, start Lupe with *Run as administ
 
 ## Updates and uninstalling
 
-- **MSI:** install the newer MSI over the old one. Builds from `main` replace each other – in either direction: Windows Installer compares only the first three parts of the version (`0.1.0`), and the package allows the same version to be installed again, so an older build from `main` also installs over a newer one. A release with a higher version replaces them as well. Only an MSI whose first three parts are *lower* than those of the installed version is refused (*A newer version of Lupe is already installed.*). The language of the installed package does not matter (version 0.1.0 was a German package, later ones are English). The way back is the exception: the 0.1.0 MSI only recognises German packages, so uninstall a later version before installing 0.1.0 again – otherwise both end up installed.
+- **MSI:** install the newer MSI over the old one. Builds from `main` replace each other – in either direction: Windows Installer compares only the first three parts of the version (`1.0.0`), and the package allows the same version to be installed again, so an older build from `main` also installs over a newer one. A release with a higher version replaces them as well. Only an MSI whose first three parts are *lower* than those of the installed version is refused (*A newer version of Lupe is already installed.*). The language of the installed package does not matter (version 0.1.0 was a German package, later ones are English). The way back is the exception: the 0.1.0 MSI only recognises German packages, so uninstall a later version before installing 0.1.0 again – otherwise both end up installed.
 - **Exe and ZIP:** replace the files. Keep the path if *Start with Windows* is on.
 - **Settings and history** stay where they are and are read by the new version.
 - **Uninstalling** (*Settings › Apps › Installed apps › Lupe* – on Windows 10 *Apps & features* –, or silently as shown under [MSI installer](#msi-installer)) removes the program files and the Start menu entry. It does **not** remove:

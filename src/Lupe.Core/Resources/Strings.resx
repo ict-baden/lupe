@@ -171,7 +171,7 @@ Website:               {5}
 Legal notice:          {6}
 Privacy:               {7}
 Support:               {8}</value>
-    <comment>Output of 'Lupe --info'. {0} = version line, e.g. 'Lupe Version 0.1.0 · Build abc1234 · .NET 10.0.1'; {1} = copyright, e.g. '© 2026 ICT Baden GmbH'; {2} = licence file or URL; {3} = third-party licences file or URL; {4} = source code URL; {5} = website URL; {6} = legal notice (Impressum) URL; {7} = privacy URL; {8} = support URL. Keep the labels aligned.</comment>
+    <comment>Output of 'Lupe --info'. {0} = version line, e.g. 'Lupe Version 1.0.0 · Build abc1234 · .NET 10.0.1'; {1} = copyright, e.g. '© 2026 ICT Baden GmbH'; {2} = licence file or URL; {3} = third-party licences file or URL; {4} = source code URL; {5} = website URL; {6} = legal notice (Impressum) URL; {7} = privacy URL; {8} = support URL. Keep the labels aligned.</comment>
   </data>
   <data name="App_Cli_InvalidPath" xml:space="preserve">
     <value>“{0}” is not a valid path.</value>

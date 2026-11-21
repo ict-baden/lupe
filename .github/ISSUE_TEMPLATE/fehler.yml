@@ -12,7 +12,7 @@ body:
     attributes:
       label: Version
       description: Aus dem Info-Fenster oder `--version`. / From the About window or `--version`.
-      placeholder: 0.1.0-ci.12
+      placeholder: 1.0.0
     validations:
       required: true
   - type: dropdown
