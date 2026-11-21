@@ -4,6 +4,12 @@ All notable changes to Lupe. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+## [1.0.0] – 2026-11-21
+
+First stable version: from now on, a change that breaks the command line, the settings file or the exit codes needs a new major version.
+
+Tested on Windows and Linux. On macOS, Lupe 1.0.0 is only partly tested: on a real Mac (Apple Silicon), the start with the window, the demo camera and the command line work; the screen scan, typing, the shortcut and a real camera have not been tried there yet ([Limitations](https://github.com/ict-baden/lupe/blob/v1.0.0/docs/limitations.md#linux-and-macos)).
+
 ### Fixed
 - Linux camera: if the camera opened but failed to start streaming (e.g. `EBUSY` or too little USB bandwidth), Lupe kept the device open, and every *Try again* reported the camera as in use by another program. The device is now released right away.
 - macOS camera: a stop from within a camera event could close a session started right after it, so the preview froze without an error. The stop now closes only its own session.
@@ -17,6 +23,9 @@ All notable changes to Lupe. The format follows [Keep a Changelog](https://keepa
 
 ### Changed
 - Avalonia 12.1.6 and FlashCap 1.13.0. Tmds.DBus.Protocol stays at 0.94.1, the version Avalonia's Linux parts are built against, so the app loads only one copy; `THIRD-PARTY-NOTICES.txt` names the shipped versions.
+- Publisher: *About*, `--info`, the MSI, the packages and the licence name the publisher as in the legal notice, ICT Baden GmbH.
+- Documentation: *Download* leads to the current version (the release marked *Latest*); the pre-release `latest` is named as what it is, the newest build of `main`.
+- CI: pushes and pull requests build and test only the Linux part (and compile the Windows tests); Windows, macOS, ARM, the packages and the pre-release `latest` are built nightly when `main` has changed, for tags, by hand or on request. Every job has a time limit.
 - CI: in a repository without a release of its own, the MSI update test uses the MSIs of earlier versions from the pre-release `altversionen`; a tag without any earlier version to update from fails instead of passing with a warning.
 
 ## [0.1.2] – 2026-10-22
