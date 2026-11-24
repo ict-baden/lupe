@@ -4,6 +4,10 @@ All notable changes to Lupe. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+### Changed
+- `SECURITY.md` and the issue chooser: without a GitHub account, vulnerabilities are reported by email to security@ict-baden.de (policy: https://ict-baden.de/en/security/) instead of through the contact page. Customers with a support contract also receive security fixes for the previous major version until twelve months after its successor appears.
+- `CLAUDE.md` no longer refers to internal repositories; it points to `CONTRIBUTING.md` and `docs/development.md`.
+
 ## [1.0.0] – 2026-11-21
 
 First stable version: from now on, a change that breaks the command line, the settings file or the exit codes needs a new major version.
