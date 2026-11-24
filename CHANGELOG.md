@@ -34,6 +34,8 @@ Tested on Windows and Linux. On macOS, Lupe 1.0.0 is only partly tested: on a re
 
 ## [0.1.2] – 2026-10-22
 
+Not published as a release; the changes are part of 1.0.0.
+
 ### Fixed
 - Windows: an MSI update from a build of the pre-release `latest` to the release of the same version could keep the old `Lupe.exe`: both had the same file version (`x.y.z.0`), and Windows Installer only replaces a file with a higher version. Lupe's own program files now carry the build number in their file version in every build, releases included (e.g. `0.1.2.70`), and the MSI also replaces files of an equal version (relevant for bundled libraries whose content changes but whose version does not). Updates to 0.1.1 were not affected; an update from a `latest` build to 0.1.0 kept that build's program file, which had the same code.
 - Release run: a tag for a pre-release (e.g. `v1.0.0-rc1`) would have failed to create its release – PowerShell passed `--prerelease` to `gh` letter by letter. Not used so far.
