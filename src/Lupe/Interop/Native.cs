@@ -7,7 +7,8 @@ namespace Lupe.Interop;
 /// <summary>
 /// Die wenigen Windows-Aufrufe der Oberfläche: Fenster ohne Ein-/Ausblend-Animation und ohne Aktivierung (DWM, Stile),
 /// Vordergrund-Recht für die zweite Instanz, Ton aus dem Speicher, Konsole für die Befehlszeile. Nur unter Windows
-/// aufgerufen; Kamera, Bildschirm, Tastatur und Tastenkürzel liegen in Lupe.Platform.Windows.
+/// aufgerufen (Ausnahmen für macOS: <see cref="ShowOnEverySpace"/>, <see cref="BeginOverOtherApps"/>); Kamera, Bildschirm, Tastatur und Tastenkürzel liegen
+/// in Lupe.Platform.Windows.
 /// </summary>
 internal static partial class Native
 {
@@ -97,6 +98,35 @@ internal static partial class Native
         if (!OperatingSystem.IsWindows() || Hwnd(window) is not (not 0 and var hwnd)) return;
         var style = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
         SetWindowLongPtr(hwnd, GWL_EXSTYLE, (nint)((long)style | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW));
+    }
+
+    /// <summary>
+    /// macOS: Das Fenster erscheint auf dem gerade sichtbaren Schreibtisch, auch über einer App im Vollbild – nicht auf
+    /// dem, zu dem Lupe gehört (Bildschirm-Scan, Code-Auswahl, Ergebnis-Hinweis). Vor dem Zeigen und beim Öffnen aufrufen.
+    /// </summary>
+    public static void ShowOnEverySpace(TopLevel window)
+    {
+#if !LUPE_WINDOWS
+        if (!OperatingSystem.IsMacOS()) return;
+        if (window.TryGetPlatformHandle() is Avalonia.Platform.IMacOSTopLevelPlatformHandle mac)
+            Lupe.Platform.MacOS.MacOSWindows.ShowOnEverySpace(mac.NSWindow);
+#endif
+    }
+
+    /// <summary>macOS: Lupe-Fenster dürfen über eine fremde App im Vollbild (Hilfs-App ohne Dock-Symbol), bis <see cref="EndOverOtherApps"/>.</summary>
+    public static void BeginOverOtherApps()
+    {
+#if !LUPE_WINDOWS
+        if (OperatingSystem.IsMacOS()) Lupe.Platform.MacOS.MacOSWindows.BeginOverOtherApps();
+#endif
+    }
+
+    /// <summary>Gegenstück zu <see cref="BeginOverOtherApps"/>.</summary>
+    public static void EndOverOtherApps()
+    {
+#if !LUPE_WINDOWS
+        if (OperatingSystem.IsMacOS()) Lupe.Platform.MacOS.MacOSWindows.EndOverOtherApps();
+#endif
     }
 
     /// <summary>Unter Windows: warten, bis DWM ein ausgeblendetes Fenster wirklich entfernt hat; sonst kurz warten.</summary>

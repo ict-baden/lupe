@@ -32,8 +32,14 @@ internal sealed class ScreenScan(AppState state, Func<MainWindow?> mainWindow)
         // Tastenkürzel während eines laufenden Scans (Overlay offen) nicht doppelt auslösen
         if (_busy) return;
         _busy = true;
+        // macOS: Auswahl und Code-Auswahl auch über einer App im Vollbild zeigen
+        Native.BeginOverOtherApps();
         try { await RunCoreAsync(external); }
-        finally { _busy = false; }
+        finally
+        {
+            Native.EndOverOtherApps();
+            _busy = false;
+        }
     }
 
     private async Task RunCoreAsync(bool external)
