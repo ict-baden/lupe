@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Lupe.Core.Model;
 using Lupe.Core.Resources;
+using Lupe.Interop;
 using Lupe.Services;
 using MonitorArea = Lupe.Core.Screen.MonitorArea;
 
@@ -42,6 +43,7 @@ public partial class CodeChoiceWindow : Window
         AddHandler(KeyDownEvent, OnKey, RoutingStrategies.Tunnel);
         Opened += (_, _) =>
         {
+            Native.ShowOnEverySpace(this);
             Place();
             Activate();
             List.Focus();
@@ -55,6 +57,7 @@ public partial class CodeChoiceWindow : Window
     /// <summary>Zeigt die Auswahl und wartet auf die Entscheidung.</summary>
     public Task<(Outcome Outcome, DecodedCode? Code)> ChooseAsync()
     {
+        Native.ShowOnEverySpace(this);
         Show();
         return _result.Task;
     }

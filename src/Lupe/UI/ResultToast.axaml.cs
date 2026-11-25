@@ -26,6 +26,7 @@ public partial class ResultToast : Window
     private readonly CodeItem? _item;
     private readonly CorePixelRect? _workArea;
     private readonly DispatcherTimer _timer = new();
+    private bool _overOtherApps;
     private string _page = "bildschirm";
 
     /// <summary>Für den XAML-Vorschauer.</summary>
@@ -79,6 +80,7 @@ public partial class ResultToast : Window
             Opened += (_, _) =>
             {
                 Native.MakeNoActivate(this);
+                Native.ShowOnEverySpace(this);
                 Place();
             };
             SizeChanged += (_, _) => Place();
@@ -88,6 +90,11 @@ public partial class ResultToast : Window
         {
             _timer.Stop();
             if (_open == this) _open = null;
+            if (_overOtherApps)
+            {
+                _overOtherApps = false;
+                Native.EndOverOtherApps();
+            }
         };
     }
 
@@ -114,6 +121,13 @@ public partial class ResultToast : Window
     {
         CloseOpen();
         _open = this;
+        if (!_overOtherApps)
+        {
+            // macOS: auch über einer App im Vollbild, solange der Hinweis zu sehen ist
+            _overOtherApps = true;
+            Native.BeginOverOtherApps();
+        }
+        Native.ShowOnEverySpace(this);
         Show();
         _timer.Start();
     }
