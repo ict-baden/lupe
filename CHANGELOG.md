@@ -4,6 +4,10 @@ All notable changes to Lupe. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+### Changed
+- `SECURITY.md` and the issue chooser: without a GitHub account, vulnerabilities are reported by email to security@ict-baden.de (policy: https://ict-baden.de/en/security/) instead of through the contact page. Customers with a support contract also receive security fixes for the previous major version until twelve months after its successor appears.
+- `CLAUDE.md` no longer refers to internal repositories; it points to `CONTRIBUTING.md` and `docs/development.md`.
+
 ### Fixed
 - macOS screen scan: on a second desktop with an app in full screen (e.g. Chrome), the shortcut ⌥⌘Q showed the selection on the desktop of the Lupe window instead of the current one. The selection, the choice of several codes and the notification now appear on the current desktop, also over an app in full screen. While they are shown, Lupe has no Dock icon; macOS only lets such windows over another app in full screen then. Tested on a real Mac (Apple Silicon, macOS 26).
 
@@ -32,6 +36,8 @@ Tested on Windows and Linux. On macOS, Lupe 1.0.0 is only partly tested: on a re
 - CI: in a repository without a release of its own, the MSI update test uses the MSIs of earlier versions from the pre-release `altversionen`; a tag without any earlier version to update from fails instead of passing with a warning.
 
 ## [0.1.2] – 2026-10-22
+
+Not published as a release; the changes are part of 1.0.0.
 
 ### Fixed
 - Windows: an MSI update from a build of the pre-release `latest` to the release of the same version could keep the old `Lupe.exe`: both had the same file version (`x.y.z.0`), and Windows Installer only replaces a file with a higher version. Lupe's own program files now carry the build number in their file version in every build, releases included (e.g. `0.1.2.70`), and the MSI also replaces files of an equal version (relevant for bundled libraries whose content changes but whose version does not). Updates to 0.1.1 were not affected; an update from a `latest` build to 0.1.0 kept that build's program file, which had the same code.
