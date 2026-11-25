@@ -57,6 +57,9 @@ internal sealed class SelectionOverlay
             first = false;
             var window = new OverlayWindow(_desktop, _virtual, monitor, primary, screenshot: false);
             window.Finished += Finish;
+            // macOS: auf dem gerade sichtbaren Schreibtisch, auch über einer App im Vollbild (sonst wartet die Auswahl
+            // unsichtbar auf dem Schreibtisch des Lupe-Fensters)
+            Native.ShowOnEverySpace(window);
             window.Deactivated += (_, _) => Dispatcher.UIThread.Post(CheckActive, DispatcherPriority.Background);
             _windows.Add(window);
         }
@@ -181,6 +184,7 @@ internal sealed class OverlayWindow : Window
             Opened += (_, _) =>
             {
                 Native.DisableTransitions(this);
+                Native.ShowOnEverySpace(this);
                 FitToMonitor();
                 if (primary) Activate();
             };

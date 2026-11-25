@@ -271,7 +271,7 @@ internal static partial class CoreServices
         uint options, uint* deadKeyState, nuint maxLength, nuint* actualLength, char* text);
 }
 
-/// <summary>Objective-C-Laufzeit (für AVCaptureDevice, NSWorkspace, NSRunningApplication).</summary>
+/// <summary>Objective-C-Laufzeit (für AVCaptureDevice, NSWorkspace, NSRunningApplication, NSWindow).</summary>
 internal static partial class ObjC
 {
     // Class objc_getClass(const char *name);  SEL sel_registerName(const char *str);
@@ -292,6 +292,10 @@ internal static partial class ObjC
     [LibraryImport(Lib.ObjC, EntryPoint = "objc_msgSend")] public static partial nint SendPtrInt(nint self, nint sel, int arg);
     // BOOL -[NSRunningApplication activateWithOptions:(NSApplicationActivationOptions = NSUInteger)]
     [LibraryImport(Lib.ObjC, EntryPoint = "objc_msgSend")] public static partial byte SendByteNUInt(nint self, nint sel, nuint arg);
+    // NSWindowCollectionBehavior (NSUInteger) -[NSWindow collectionBehavior]
+    [LibraryImport(Lib.ObjC, EntryPoint = "objc_msgSend")] public static partial nuint SendNUInt(nint self, nint sel);
+    // void -[NSWindow setCollectionBehavior:(NSWindowCollectionBehavior = NSUInteger)]
+    [LibraryImport(Lib.ObjC, EntryPoint = "objc_msgSend")] public static partial void SendVoidNUInt(nint self, nint sel, nuint arg);
 
     /// <summary>Ruft <paramref name="action"/> in einem eigenen Autorelease-Pool auf (für Aufrufe außerhalb des Haupt-Threads).</summary>
     public static T InPool<T>(Func<T> action)
